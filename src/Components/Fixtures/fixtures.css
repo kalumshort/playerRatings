@@ -1,0 +1,243 @@
+.latest-fixture {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 20px 0;
+  min-height: 350px;
+  cursor: pointer;
+}
+
+.fixture-countdown {
+  font-size: 30px;
+}
+
+.fixture-countdown-title {
+  font-size: 10px;
+}
+
+.latest-fixture-teams {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.fixture-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 20px 0;
+  min-height: 350px;
+  position: relative;
+}
+
+.fixture-header > * {
+  flex: 1 1 33%;
+}
+
+.team-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 8px;
+  text-align: center;
+}
+
+.team-logo {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+}
+
+.team-name {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.team-logo-small {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+}
+
+.team-versus {
+  margin: 0 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.fixture-time {
+  font-size: 16px;
+  text-align: center;
+}
+
+.fixture-time-header {
+  position: absolute;
+  top: 10px;
+  font-size: 16px;
+  text-align: center;
+}
+.prev-upcom-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin: 20px 20px 0px 20px;
+}
+.previous-fixtures-list,
+.upcoming-fixtures-list {
+  position: relative;
+  flex: 1 1 50%;
+  justify-content: center;
+  overflow-y: scroll;
+  max-height: 350px;
+}
+
+.fixture-list-item {
+  padding: 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.fixture-list-item:last-child {
+  border-bottom: none;
+}
+
+.fixture-teams {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fixture-meta {
+  display: flex;
+  align-items: center;
+}
+
+.league-logo {
+  height: 30px;
+  background-color: white;
+  padding: 4px;
+  border-radius: 8px;
+  margin-right: 10px;
+}
+
+.fixture-status-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 100%;
+  background: linear-gradient(to bottom right, #4e73df, #9b59b6);
+  border-radius: 8px;
+  min-height: 200px;
+  padding: 20px;
+  max-width: 250px;
+}
+
+.fixture-status-short {
+  font-size: 30px;
+  font-weight: 300;
+}
+
+.scoreboard-Container {
+  padding: 10px;
+  margin: 0px;
+  height: 100px;
+  border-radius: 8px;
+}
+
+.scoreboard {
+  font-size: 50px;
+}
+
+.halftime-scoreboard {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.fixure-events-list {
+  list-style: none;
+  font-weight: 500;
+  margin: 0px;
+  padding: 0px;
+}
+
+.fixure-events-list-item {
+  margin-bottom: 5px;
+}
+.fixture-item-scoreboard {
+  padding: 3px 10px;
+  margin: 0px 15px;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .team-logo {
+    height: 80px;
+  }
+
+  .scoreboard {
+    font-size: 40px;
+  }
+
+  .fixture-header > * {
+    flex: 1 1 30%;
+  }
+
+  .team-name {
+    font-size: 18px;
+  }
+
+  .fixture-status-container {
+    padding: 10px;
+  }
+
+  .team-container {
+    flex-direction: column;
+  }
+  .fixure-events-list-item {
+    font-size: 13px;
+  }
+  .prev-upcom-container {
+    flex-direction: row;
+  }
+  .previous-fixtures-list,
+  .upcoming-fixtures-list {
+    max-height: 500px;
+  }
+  .fixture-list-item {
+    position: relative;
+    padding: 10px;
+    justify-content: center;
+  }
+  .fixture-list-item .fixture-time {
+    position: absolute;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 5px;
+    text-align: center;
+  }
+  .fixture-list-item .fixture-list-teamname {
+    font-size: 0px;
+  }
+  .fixture-list-item .league-logo {
+    position: absolute;
+    background: none !important;
+    bottom: 0px;
+    right: 0px;
+    text-align: center;
+    display: none;
+  }
+  .fixture-item-scoreboard {
+    padding: 3px 5px;
+    margin: 0px 10px;
+    border-radius: 5px;
+  }
+}
