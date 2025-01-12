@@ -1,6 +1,6 @@
 import React from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
-import CountdownTimer from "../../Hooks/Helper_Functions";
+import { CountdownTimer } from "../../Hooks/Helper_Functions";
 import FixtureEventsList from "./FixtureEventsList";
 
 export default function FixtureHeader({ fixture, onClick }) {

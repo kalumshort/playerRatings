@@ -7,6 +7,7 @@ import FixtureHeader from "./FixtureHeader";
 import Lineup from "./Fixture-Components/Lineup";
 import Statistics from "./Fixture-Components/Statistics";
 import Events from "./Fixture-Components/Events";
+import ScorePrediction from "./Fixture-Components/ScorePrediction";
 
 export default function Fixture() {
   const { matchId } = useParams();
@@ -16,6 +17,8 @@ export default function Fixture() {
   if (!fixture) {
     return <div>Loading...</div>;
   }
+  const isPreMatch = fixture?.fixture?.status?.short === "NS";
+
   return (
     <>
       <FixtureHeader fixture={fixture} />
@@ -25,6 +28,7 @@ export default function Fixture() {
           flexWrap: "wrap",
         }}
       >
+        {isPreMatch && <ScorePrediction fixture={fixture} />}
         <Lineup fixture={fixture} />
         <div className="lineup-sidebar">
           {fixture?.events && fixture.statistics && (

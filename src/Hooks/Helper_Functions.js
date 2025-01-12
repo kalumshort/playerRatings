@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 
-const CountdownTimer = ({ targetTime }) => {
+export const CountdownTimer = ({ targetTime }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
 
   useEffect(() => {
@@ -25,33 +25,94 @@ const CountdownTimer = ({ targetTime }) => {
   if (seconds || displayParts.length === 0) displayParts.push(`${seconds}s`);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-      }}
-    >
-      <span className="fixture-countdown-title">Match starts in</span>
-      <span className="fixture-countdown">{displayParts.join(" ")}</span>
+    <div className="countdownContianer">
+      <div className="countdownInterval">
+        <span className="gradient-text">{days}</span>
+        <span className="countdownIntervalSmall">Days</span>
+      </div>
+      <div className="countdownInterval">
+        <span className="gradient-text">{hours}</span>
+        <span className="countdownIntervalSmall">Hrs</span>
+      </div>
+      <div className="countdownInterval">
+        <span className="gradient-text">{minutes}</span>
+        <span className="countdownIntervalSmall">Mins</span>
+      </div>
+      <div className="countdownInterval">
+        <span className="gradient-text">{seconds}</span>
+        <span className="countdownIntervalSmall">Secs</span>
+      </div>
     </div>
   );
 };
 
-// Helper function to calculate time left
-const calculateTimeLeft = (targetTime) => {
+export const calculateTimeLeft = (targetTime) => {
   const now = Math.floor(Date.now() / 1000); // Current time in seconds
   const diff = targetTime - now;
 
   if (diff <= 0) return null;
 
-  const days = Math.floor(diff / (24 * 60 * 60));
-  const hours = Math.floor((diff % (24 * 60 * 60)) / (60 * 60));
-  const minutes = Math.floor((diff % (60 * 60)) / 60);
-  const seconds = diff % 60;
+  const days = Math.floor(diff / (24 * 60 * 60))
+    .toString()
+    .padStart(2, "0");
+  const hours = Math.floor((diff % (24 * 60 * 60)) / (60 * 60))
+    .toString()
+    .padStart(2, "0");
+  const minutes = Math.floor((diff % (60 * 60)) / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (diff % 60).toString().padStart(2, "0");
 
   return { days, hours, minutes, seconds };
 };
 
-export default CountdownTimer;
+export const useLocalStorage = (key) => {
+  const [value, setValue] = useState(localStorage.getItem(key));
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === key) {
+        setValue(e.newValue);
+      }
+    };
+
+    // Add event listener for "storage" changes
+    window.addEventListener("storage", handleStorageChange);
+
+    // Add custom event listener for single-tab updates
+    const handleCustomEvent = (e) => {
+      if (e.detail.key === key) {
+        setValue(e.detail.value);
+      }
+    };
+    window.addEventListener("localStorageChange", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("localStorageChange", handleCustomEvent);
+    };
+  }, [key]);
+
+  return value;
+};
+
+// Wrapper function for updating localStorage and emitting events
+export const setLocalStorageItem = (key, value) => {
+  localStorage.setItem(key, value);
+  const event = new CustomEvent("localStorageChange", {
+    detail: { key, value },
+  });
+  window.dispatchEvent(event);
+};
+
+export const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
+};

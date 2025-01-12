@@ -6,7 +6,7 @@
   width: 100%;
   margin: 20px 20px 0;
   display: flex;
-  max-height: 800px;
+  position: relative;
 }
 
 .pitch {
@@ -48,10 +48,11 @@
   background-color: #282828;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   max-width: 150px;
+  /* overflow: hidden; */
 }
 .player-substitute {
   width: 75px;
-  height: auto !important;
+  height: 100px !important;
   margin: 5px;
   font-size: 15px;
 }
@@ -60,7 +61,14 @@
 }
 
 .lineup-player-img {
-  width: 75px;
+  height: 100%;
+}
+.lineup-player-name {
+  position: absolute;
+  bottom: 0px !important;
+  background-color: #282828;
+  font-size: 15px;
+  width: 100%;
 }
 .lineup-player-number {
   position: absolute;
@@ -132,18 +140,20 @@
 .DraggableSquadContainer {
   display: flex;
   flex-wrap: wrap;
-  flex: 40%; /* Takes up 40% of the container */
-  padding: 10px; /* Optional: add padding if needed */
+  flex: 40%;
+  padding: 10px;
   overflow-y: scroll;
+  max-width: 500px;
+  justify-content: center;
 }
 
 .DroppablePitchContainer {
-  flex: 60%; /* Takes up 60% of the container */
-  padding: 10px; /* Optional: add padding if needed */
-  min-height: 500px;
+  flex: 60%;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  position: relative;
 }
 .DroppablePitchRow {
   display: flex;
@@ -151,17 +161,45 @@
   justify-content: space-evenly;
 }
 
+.predictTeamSubmit {
+  position: absolute !important;
+  top: 15px !important;
+  right: 30px !important;
+}
+
 @media (min-width: 768px) {
   .lineup-container {
-    width: calc(
-      60% - 40px
-    ); /* 60% width minus the margin (adjust 20px for your margin) */
+    width: calc(60% - 40px);
   }
 
   .lineup-sidebar {
-    width: calc(40% - 40px); /* 40% width minus the margin */
+    width: calc(40% - 40px);
   }
   .player {
     height: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .player {
+    height: 75px;
+    width: 75px;
+    margin: 3px;
+    font-size: 15px;
+  }
+
+  .DraggableSquadContainer {
+    min-width: 90%;
+  }
+  .DroppablePitchContainer {
+  }
+  .Prediction-lineup-container {
+    flex-direction: column;
+  }
+  .DraggableSquadTabs {
+    /* width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: center; */
   }
 }

@@ -177,6 +177,82 @@
   border-radius: 8px;
 }
 
+/* ScorePrediction */
+
+.scorePredictionContainer {
+  margin: 20px 20px 0;
+  height: 150px;
+  width: 100%;
+  position: relative;
+}
+.scorePredictionResultsContainer {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: stretch; /* Stretch the children vertically */
+  min-height: 150px;
+  margin: 20px 20px 0;
+  width: 100%;
+  padding: 10px;
+}
+
+.scorePredictionResultsInnerContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Stack the heading and content vertically */
+  justify-content: center; /* Center the content vertically */
+  align-items: center; /* Center the content horizontally */
+  height: 100%; /* Ensure it takes the full height */
+  width: 100%; /* Ensure it takes the full width */
+}
+
+.scorePredictionInnerHeading {
+  font-size: 15px;
+  text-align: center;
+  padding: 0px;
+  margin: 0px;
+  margin-bottom: 10px; /* Space between heading and content */
+  position: absolute;
+  top: 0px;
+  font-weight: 300;
+  color: grey;
+}
+.scorePredictionTeams {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  gap: 30px;
+}
+.scorePredictionTeam {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.predict-team-logo {
+  height: 80px;
+  margin: 30px;
+}
+.scorePredictButtons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.predictionScore {
+  font-size: 40px;
+}
+.usersScorePrediction {
+  font-size: 50px;
+}
+.predictScoreSubmit {
+  position: absolute !important;
+  top: 50% !important;
+  right: 10% !important;
+  transform: translateY(-50%) !important;
+}
+
 @media (max-width: 768px) {
   .team-logo {
     height: 80px;
@@ -239,5 +315,20 @@
     padding: 3px 5px;
     margin: 0px 10px;
     border-radius: 5px;
+  }
+
+  .predictScoreSubmit {
+    position: absolute !important;
+    top: 20px !important;
+    right: 5px !important;
+  }
+  .scorePredictionResultsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40%, 1fr));
+    gap: 20px;
+  }
+  .scorePredictionResultsInnerContainer {
+    flex-direction: column;
+    padding-top: 30px;
   }
 }

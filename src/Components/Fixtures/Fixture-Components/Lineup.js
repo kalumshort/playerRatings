@@ -10,8 +10,9 @@ export default function Lineup({ fixture }) {
   if (!fixture.lineups) {
     return (
       <ContentContainer className="Prediction-lineup-container">
-        <DroppablePitch />
-        <DraggableSquad />
+        <h1 className="smallHeading">Preferred Lineup </h1>
+        <DroppablePitch fixture={fixture} />
+        <DraggableSquad fixture={fixture} />
       </ContentContainer>
     );
   }
@@ -22,10 +23,8 @@ export default function Lineup({ fixture }) {
 
   return (
     <ContentContainer className="lineup-container">
-      <div>
-        <h2 className="heading2" style={{ textAlign: "center" }}>
-          Lineup
-        </h2>
+      <div style={{ position: "relative" }}>
+        <h1 className="smallHeading">Lineup</h1>
         <div className="pitch">
           {unitedLineup
             .reduce((rows, { player }) => {
@@ -56,7 +55,7 @@ export default function Lineup({ fixture }) {
             <LineupPlayer
               player={substitute.player}
               fixture={fixture}
-              className="player-substitute"
+              // className="player-substitute"
             />
           ))}
         </div>

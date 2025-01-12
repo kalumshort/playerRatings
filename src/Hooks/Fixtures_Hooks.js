@@ -1,5 +1,8 @@
 import { useDispatch } from "react-redux";
-import { firebaseGetCollecion } from "../Firebase/Firebase";
+import {
+  firebaseGetCollecion,
+  firebaseGetDocument,
+} from "../Firebase/Firebase";
 import {
   fetchFixturesFailure,
   latestFixtureReducer,
@@ -8,6 +11,7 @@ import {
   fetchFixturesSuccess,
   fetchFixturesStart,
 } from "../redux/Reducers/fixturesReducer";
+import { fetchMatchPrediction } from "../redux/Reducers/predictionsReducer";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -27,15 +31,12 @@ export const fetchFixtures = () => async (dispatch) => {
     const fixtures = await firebaseGetCollecion("fixtures/2024/data");
     const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
-    // Sort the fixtures by timestamp in descending order (latest first)
     fixtures.sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
-    // Filter and sort previous fixtures (latest to oldest)
     const previousFixtures = fixtures
       .filter((fixture) => fixture.fixture.timestamp < now)
       .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
-    // Filter and sort upcoming fixtures (soonest to furthest)
     const upcomingFixtures = fixtures
       .filter((fixture) => fixture.fixture.timestamp > now)
       .sort((a, b) => a.fixture.timestamp - b.fixture.timestamp);
@@ -54,14 +55,33 @@ export const fetchFixtures = () => async (dispatch) => {
       }
     }
 
-    // Dispatch the sorted and filtered fixtures to the Redux store
     dispatch(previousFixturesReducer(previousFixtures));
     dispatch(upcomingFixturesReducer(upcomingFixtures));
     dispatch(latestFixtureReducer(latestFixture));
-    dispatch(fetchFixturesSuccess()); // Stop loading
+    dispatch(fetchFixturesSuccess());
   } catch (error) {
     console.error("Error getting fixtures:", error);
-    dispatch(fetchFixturesFailure(error.message)); // Handle error
+    dispatch(fetchFixturesFailure(error.message));
+  }
+};
+
+export const fetchMatchPredictions = (matchId) => async (dispatch) => {
+  if (!matchId) {
+    return;
+  }
+  try {
+    const matchPredictions = await firebaseGetDocument(`predictions`, matchId);
+    if (!matchPredictions) {
+      return;
+    }
+    dispatch(
+      fetchMatchPrediction({
+        matchId: matchPredictions.id,
+        data: matchPredictions,
+      })
+    );
+  } catch (error) {
+    console.error("Error getting fixtures:", error);
   }
 };
 

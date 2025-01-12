@@ -64,7 +64,7 @@ export default function LineupPlayer({
       onDrop={onDrop}
     >
       <img src={player?.img || playerData?.img} className="lineup-player-img" />
-      <span>{player.name}</span>
+      <span className="lineup-player-name">{player.name}</span>
       <span className="lineup-player-number">{player.number}</span>
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (

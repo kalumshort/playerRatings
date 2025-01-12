@@ -4,10 +4,12 @@ import {
   getFirestore,
   collection,
   getDocs,
+  getDoc,
   addDoc,
   doc,
   setDoc,
   onSnapshot,
+  increment,
 } from "firebase/firestore";
 
 import { getAnalytics } from "firebase/analytics";
@@ -56,7 +58,22 @@ export const firebaseGetCollecion = async (path) => {
   }
 };
 
-// 2. Firestore ADD Document
+export const firebaseGetDocument = async (path, docId) => {
+  try {
+    const docRef = doc(db, path, docId);
+    const docSnapshot = await getDoc(docRef);
+    if (docSnapshot.exists()) {
+      return { id: docSnapshot.id, ...docSnapshot.data() };
+    } else {
+      console.error("No such document!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting document: ", error);
+    return null;
+  }
+};
+
 export const firebaseAddDoc = async ({ path, data }) => {
   try {
     const docRef = await addDoc(collection(db, path), data);
@@ -66,7 +83,6 @@ export const firebaseAddDoc = async ({ path, data }) => {
   }
 };
 
-// 3. Firestore SET Document
 export const firebaseSetDoc = async ({
   path,
   docId = `${Date.now()}`,
@@ -82,6 +98,37 @@ export const firebaseSetDoc = async ({
   }
 };
 
+export const handlePredictTeamSubmit = async ({ players, matchId }) => {
+  await firebaseAddDoc({
+    path: `predictions/${matchId}/teamSubmissions`,
+    data: players,
+  });
+  await firebaseSetDoc({
+    path: `predictions`,
+    docId: matchId,
+    data: { totalTeamSubmits: increment(1) },
+  });
+
+  for (const [key, player] of Object.entries(players)) {
+    await firebaseSetDoc({
+      path: `predictions`,
+      docId: matchId,
+      data: { totalPlayersSubmits: { [player.id]: increment(1) } },
+    });
+  }
+};
+
+export const handlePredictTeamScore = async (data) => {
+  await firebaseSetDoc({
+    path: `predictions`,
+    docId: data.matchId,
+    data: {
+      scorePrecitions: { [data.score]: increment(1) },
+      homeGoals: { [data.homeGoals]: increment(1) },
+      awayGoals: { [data.awayGoals]: increment(1) },
+    },
+  });
+};
 // // 4. Firestore Collection Listener Component
 // export const CollectionListener = ({ path }) => {
 //   const dispatch = useDispatch();

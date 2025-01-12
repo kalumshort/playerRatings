@@ -52,6 +52,9 @@ export const ThemeProvider = ({ children }) => {
                   primary: "#000000",
                   secondary: "#555555",
                 },
+                primary: {
+                  main: "#DA291C",
+                },
               }
             : {
                 background: {
@@ -62,7 +65,24 @@ export const ThemeProvider = ({ children }) => {
                   primary: "#ffffff",
                   secondary: "#aaaaaa",
                 },
+                primary: {
+                  main: "#DA291C",
+                },
               }),
+        },
+        components: {
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                fontSize: "1rem",
+                padding: "8px 16px",
+                "@media (max-width:600px)": {
+                  fontSize: "0.75rem",
+                  padding: "4px 8px",
+                },
+              },
+            },
+          },
         },
       }),
     [themeMode] // Recreate the theme when themeMode changes

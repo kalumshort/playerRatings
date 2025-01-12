@@ -35,7 +35,7 @@ const squadData = createSlice({
       id: 545,
       name: "N. Mazraoui",
       number: 3,
-      position: "M",
+      position: "D",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p230001.png",
     },
     51494: {
@@ -56,7 +56,7 @@ const squadData = createSlice({
       id: 886,
       name: "Diogo Dalot",
       number: 20,
-      position: "M",
+      position: "D",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p216051.png",
     },
     157997: {
@@ -70,7 +70,7 @@ const squadData = createSlice({
       id: 1485,
       name: "Bruno Fernandes",
       number: 8,
-      position: "F",
+      position: "M",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p141746.png",
     },
     288006: {
@@ -168,7 +168,7 @@ const squadData = createSlice({
       id: 37145,
       name: "T. Malacia",
       number: 12,
-      position: "M",
+      position: "D",
       grid: "3:1",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p222690.png",
     },
@@ -183,7 +183,7 @@ const squadData = createSlice({
       id: 909,
       name: "M. Rashford",
       number: 10,
-      position: "M",
+      position: "F",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p176297.png",
     },
     153434: {

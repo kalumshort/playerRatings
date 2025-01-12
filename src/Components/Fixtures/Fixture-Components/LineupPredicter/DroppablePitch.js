@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import LineupPlayer from "../LineupPlayer";
 import { useSelector } from "react-redux";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
+import { Button } from "@mui/material";
+import {
+  firebaseAddDoc,
+  handlePredictTeamSubmit,
+} from "../../../../Firebase/Firebase";
 
-export default function DroppablePitch() {
+export default function DroppablePitch({ fixture }) {
   const squadData = useSelector(selectSquadData);
 
   const [chosenTeam, setTeam] = useState({});
@@ -76,6 +81,21 @@ export default function DroppablePitch() {
     });
   };
 
+  const handleTeamSubmit = async () => {
+    const filteredPlayers = Object.keys(chosenTeam).reduce((result, key) => {
+      const playerId = chosenTeam[key];
+      if (squadData[playerId]) {
+        result[key] = squadData[playerId];
+      }
+      return result;
+    }, {});
+
+    await handlePredictTeamSubmit({
+      players: filteredPlayers,
+      matchId: fixture.id,
+    });
+  };
+
   return (
     <div
       className="DroppablePitchContainer"
@@ -111,6 +131,7 @@ export default function DroppablePitch() {
                     droppedPlayerId: droppedData,
                   });
                 }}
+                // className={"player-substitute"}
               />
             ) : (
               <div
@@ -131,6 +152,15 @@ export default function DroppablePitch() {
           )}
         </div>
       ))}
+      {Object.keys(chosenTeam).length === 11 && (
+        <Button
+          variant="contained"
+          className="predictTeamSubmit"
+          onClick={handleTeamSubmit}
+        >
+          Submit
+        </Button>
+      )}
     </div>
   );
 }
