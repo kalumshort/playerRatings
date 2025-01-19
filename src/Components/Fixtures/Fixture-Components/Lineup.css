@@ -195,17 +195,11 @@
   .DraggableSquadContainer {
     min-width: 90%;
   }
-  .DroppablePitchContainer {
-  }
+
   .Prediction-lineup-container {
     flex-direction: column;
   }
-  .DraggableSquadTabs {
-    /* width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: center; */
-  }
+
   .lineupAndRatings-Container {
     width: 100%;
   }

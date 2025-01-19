@@ -10,8 +10,12 @@ import {
   useLocalStorage,
 } from "../../../Hooks/Helper_Functions";
 import ScorePredictionResults from "./ScorePredictionResults";
+import { useDispatch } from "react-redux";
+import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 
 export default function ScorePrediction({ fixture }) {
+  const dispatch = useDispatch();
+
   const [homeTeamScore, setHomeTeamScore] = useState(0);
   const [homeAwayScore, setAwayTeamScore] = useState(0);
 
@@ -31,9 +35,13 @@ export default function ScorePrediction({ fixture }) {
       homeGoals: homeTeamScore,
       awayGoals: homeAwayScore,
     });
+
+    dispatch(fetchMatchPredictions(fixture.id));
   };
   return storedUsersPredictedScore ? (
-    <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
+    <div style={{ margin: "20px 20px 00px " }}>
+      <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
+    </div>
   ) : (
     <ContentContainer className="scorePredictionContainer">
       <h1 className="smallHeading">Score Prediction</h1>

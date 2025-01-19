@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import LineupPlayer from "../LineupPlayer";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
 import {
@@ -11,12 +11,15 @@ import {
   setLocalStorageItem,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
+import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 
 export default function DroppablePitch({
   fixture,
   readOnly = false,
   readOnlyTeam,
 }) {
+  const dispatch = useDispatch();
+
   const squadData = useSelector(selectSquadData);
 
   const [chosenTeam, setTeam] = useState(readOnlyTeam ? readOnlyTeam : {});
@@ -115,6 +118,7 @@ export default function DroppablePitch({
       players: filteredPlayers,
       matchId: fixture.id,
     });
+    dispatch(fetchMatchPredictions(fixture.id));
   };
 
   return (

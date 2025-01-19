@@ -464,8 +464,7 @@
   .PlayerRatingsChoices {
     margin-left: 5px;
   }
-  .PlayerRatingsButtonGroup {
-  }
+
   .PlayerRatingsButton {
     /* padding: 0px !important; */
     font-size: 20px !important;
@@ -477,8 +476,6 @@
   }
   .PlayerRatingName {
     font-size: 22px;
-  }
-  .PlayerRatingsCommunityScore {
   }
 }
 
