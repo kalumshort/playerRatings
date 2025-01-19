@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import PlayerRatings from "./Fixture-Components/PlayerRatings/PlayerRatings";
 import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings";
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
+import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
 
 export default function Fixture() {
   const dispatch = useDispatch();
@@ -60,6 +61,7 @@ export default function Fixture() {
             </>
           )}
         </div>
+        {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
       </div>
     </>
   );

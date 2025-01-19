@@ -43,7 +43,7 @@ function ChosenLineup({ fixture, readOnlyTeam }) {
   );
 }
 
-function CommunityTeamStats({ fixture }) {
+export function CommunityTeamStats({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const squadData = useSelector(selectSquadData);
 

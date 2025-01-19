@@ -167,7 +167,7 @@ exports.prevIds = onRequest(async (req, res) => {
 });
 
 exports.fetchSingleFixtureData = onRequest(async (req, res) => {
-  const fixtureId = 1208218;
+  const fixtureId = 1208239;
   if (!fixtureId) {
     return res.status(400).send("Fixture ID is required.");
   }

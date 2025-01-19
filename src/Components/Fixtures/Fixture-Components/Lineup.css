@@ -188,7 +188,7 @@
   .lineup-player-number {
     position: absolute;
     right: 1px;
-    top: 1px;
+    top: 10px;
     font-weight: 500;
   }
 
@@ -246,12 +246,13 @@
 }
 
 .percentage-bar-container {
-  position: relative;
+  position: absolute;
   width: 100%; /* Full width of the container */
   height: 8px; /* Height of the percentage bar */
   background-color: #3e3d3d; /* Light background for the bar */
   margin-top: 8px; /* Spacing above the bar */
   border-radius: 4px; /* Rounded corners for the bar */
+  bottom: -10px;
 }
 
 .percentage-bar {
