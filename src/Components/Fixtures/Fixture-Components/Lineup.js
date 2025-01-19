@@ -3,28 +3,18 @@ import React from "react";
 import "./Lineup.css"; // Importing external CSS file
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import LineupPlayer from "./LineupPlayer";
-import DraggableSquad from "./LineupPredicter/DraggableSquad";
-import DroppablePitch from "./LineupPredicter/DroppablePitch";
+
+import LineupPredictor from "./LineupPredicter/LineupPredictor";
 
 export default function Lineup({ fixture }) {
-  if (!fixture.lineups) {
-    return (
-      <ContentContainer className="Prediction-lineup-container">
-        <h1 className="smallHeading">Preferred Lineup </h1>
-        <DroppablePitch fixture={fixture} />
-        <DraggableSquad fixture={fixture} />
-      </ContentContainer>
-    );
-  }
   const unitedLineup =
     fixture.lineups.find((team) => team.team.id === 33)?.startXI || [];
   const unitedSubs =
     fixture.lineups.find((team) => team.team.id === 33)?.substitutes || [];
 
   return (
-    <ContentContainer className="lineup-container">
+    <div className="lineup-container">
       <div style={{ position: "relative" }}>
-        <h1 className="smallHeading">Lineup</h1>
         <div className="pitch">
           {unitedLineup
             .reduce((rows, { player }) => {
@@ -60,6 +50,6 @@ export default function Lineup({ fixture }) {
           ))}
         </div>
       </div>
-    </ContentContainer>
+    </div>
   );
 }

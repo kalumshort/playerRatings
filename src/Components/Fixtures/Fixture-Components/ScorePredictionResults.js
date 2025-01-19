@@ -32,11 +32,6 @@ export default function ScorePredictionResults({ fixture }) {
     matchPredictions?.scorePrecitions
   );
 
-  // Fetch data on component mount
-  useEffect(() => {
-    dispatch(fetchMatchPredictions(fixture.id));
-  }, [dispatch, fixture.id]);
-
   // Check if match predictions are loaded
   if (!matchPredictions) {
     return <div>Loading...</div>; // Or a spinner/loading component

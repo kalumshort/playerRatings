@@ -7,13 +7,24 @@ import {
   firebaseAddDoc,
   handlePredictTeamSubmit,
 } from "../../../../Firebase/Firebase";
+import {
+  setLocalStorageItem,
+  useLocalStorage,
+} from "../../../../Hooks/Helper_Functions";
 
-export default function DroppablePitch({ fixture }) {
+export default function DroppablePitch({
+  fixture,
+  readOnly = false,
+  readOnlyTeam,
+}) {
   const squadData = useSelector(selectSquadData);
 
-  const [chosenTeam, setTeam] = useState({});
+  const [chosenTeam, setTeam] = useState(readOnlyTeam ? readOnlyTeam : {});
 
   const handlePlayerDrop = ({ droppedPlayerId, droppedLocation }) => {
+    if (readOnly) {
+      return;
+    }
     setTeam((prevTeam) => {
       const updatedTeam = { ...prevTeam };
 
@@ -73,6 +84,9 @@ export default function DroppablePitch({ fixture }) {
   };
 
   const handlePlayerDelete = (playerId) => {
+    if (readOnly) {
+      return;
+    }
     setTeam((prevTeam) => {
       const updatedTeam = Object.fromEntries(
         Object.entries(prevTeam).filter(([_, id]) => id !== String(playerId))
@@ -82,6 +96,9 @@ export default function DroppablePitch({ fixture }) {
   };
 
   const handleTeamSubmit = async () => {
+    if (readOnly) {
+      return;
+    }
     const filteredPlayers = Object.keys(chosenTeam).reduce((result, key) => {
       const playerId = chosenTeam[key];
       if (squadData[playerId]) {
@@ -90,6 +107,10 @@ export default function DroppablePitch({ fixture }) {
       return result;
     }, {});
 
+    setLocalStorageItem(
+      `userPredictedTeam-${fixture.id}`,
+      JSON.stringify(chosenTeam)
+    );
     await handlePredictTeamSubmit({
       players: filteredPlayers,
       matchId: fixture.id,
@@ -114,8 +135,8 @@ export default function DroppablePitch({ fixture }) {
               <LineupPlayer
                 key={id} // Ensure each component has a unique key
                 player={squadData[chosenTeam[id]]}
-                onDelete={handlePlayerDelete}
-                draggable={true}
+                onDelete={!readOnly && handlePlayerDelete}
+                draggable={!readOnly}
                 onDragStart={(e) => {
                   e.dataTransfer.setData(
                     "text/plain",
@@ -133,6 +154,8 @@ export default function DroppablePitch({ fixture }) {
                 }}
                 // className={"player-substitute"}
               />
+            ) : readOnlyTeam ? (
+              <></>
             ) : (
               <div
                 className="player"
@@ -152,7 +175,7 @@ export default function DroppablePitch({ fixture }) {
           )}
         </div>
       ))}
-      {Object.keys(chosenTeam).length === 11 && (
+      {Object.keys(chosenTeam).length === 11 && !readOnly && (
         <Button
           variant="contained"
           className="predictTeamSubmit"

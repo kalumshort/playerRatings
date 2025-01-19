@@ -103,7 +103,9 @@ code {
 .barChart {
   font-size: 15px;
 }
-
+.marginBottom {
+  margin-bottom: 30px !important;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);

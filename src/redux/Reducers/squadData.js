@@ -249,6 +249,12 @@ const squadData = createSlice({
       position: "G",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png",
     },
+    696969: {
+      id: 696969,
+      name: "Ruben Amorim",
+      position: "Manager",
+      img: "https://focus.sundayworld.com/thumbor/tHt7FXqxZCZR_R6yuZUtvwuZ0Eo=/187x0:5000x3610/960x720/prod-mh-ireland/be93c1f9-f987-4260-b0b7-ea6e342e90b6/296a033d-b665-4edb-a76c-2f1aef237a7e/be93c1f9-f987-4260-b0b7-ea6e342e90b6.jpg",
+    },
   },
   reducers: {},
 });

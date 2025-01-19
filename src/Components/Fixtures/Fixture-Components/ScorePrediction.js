@@ -18,7 +18,7 @@ export default function ScorePrediction({ fixture }) {
   const storedUsersPredictedScore = useLocalStorage(
     `userPredictedScore-${fixture.id}`
   );
-  console.log(storedUsersPredictedScore);
+
   const handleTeamScoreSubmit = async () => {
     setLocalStorageItem(
       `userPredictedScore-${fixture.id}`,

@@ -47,9 +47,9 @@ export const newDocKey = Date.now();
 export const firebaseGetCollecion = async (path) => {
   try {
     const querySnapshot = await getDocs(collection(db, path));
-    const documents = []; // Array to store the fetched documents
+    const documents = {};
     querySnapshot.forEach((doc) => {
-      documents.push({ id: doc.id, ...doc.data() }); // Include the document ID and its data
+      documents[doc.id] = { ...doc.data(), id: doc.id };
     });
     return documents; // Return the array of documents
   } catch (error) {
@@ -90,8 +90,23 @@ export const firebaseSetDoc = async ({
   merge = true,
 }) => {
   try {
+    console.log(path, docId, data);
+    // Validate inputs
+    if (!path || typeof path !== "string") {
+      throw new Error("Invalid path provided.");
+    }
+    if (!docId || typeof docId !== "string") {
+      throw new Error("Invalid docId provided.");
+    }
+
+    // Sanitize data
+    const sanitizedData = Object.fromEntries(
+      Object.entries(data).filter(([_, value]) => value !== undefined)
+    );
+
+    // Firestore reference and write
     const docRef = doc(db, path, docId);
-    await setDoc(docRef, data, { merge });
+    await setDoc(docRef, sanitizedData, { merge });
     console.log("Document successfully written/updated!");
   } catch (e) {
     console.error("Error setting document: ", e);
@@ -126,6 +141,44 @@ export const handlePredictTeamScore = async (data) => {
       scorePrecitions: { [data.score]: increment(1) },
       homeGoals: { [data.homeGoals]: increment(1) },
       awayGoals: { [data.awayGoals]: increment(1) },
+    },
+  });
+};
+export const handlePlayerRatingSubmit = async (data) => {
+  await firebaseSetDoc({
+    path: `playerRatings/${data.matchId}/players`,
+    docId: data.playerId,
+    data: {
+      totalSubmits: increment(1),
+      totalRating: increment(data.rating),
+    },
+  });
+  await firebaseSetDoc({
+    path: `players/${data.playerId}/matches`,
+    docId: data.matchId,
+    data: {
+      totalSubmits: increment(1),
+      totalRating: increment(data.rating),
+    },
+  });
+  await firebaseSetDoc({
+    path: `players`,
+    docId: data.playerId,
+    data: {
+      totalSubmits: increment(1),
+      totalRating: increment(data.rating),
+    },
+  });
+};
+export const handleMatchMotmVote = async (data) => {
+  await firebaseSetDoc({
+    path: `playerRatings`,
+    docId: data.matchId,
+    data: {
+      motmTotalVotes: increment(data.value),
+      playerVotes: {
+        [data.playerId]: increment(1),
+      },
     },
   });
 };

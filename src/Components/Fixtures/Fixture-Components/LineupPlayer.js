@@ -12,6 +12,7 @@ export default function LineupPlayer({
   draggable,
   onDragStart,
   onDrop,
+  percentage,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
@@ -63,9 +64,16 @@ export default function LineupPlayer({
       onDragStart={onDragStart}
       onDrop={onDrop}
     >
-      <img src={player?.img || playerData?.img} className="lineup-player-img" />
+      <div class="img-wrapper">
+        <img
+          src={player?.img || playerData?.img}
+          className="lineup-player-img"
+        />
+      </div>
       <span className="lineup-player-name">{player.name}</span>
-      <span className="lineup-player-number">{player.number}</span>
+      <span className="lineup-player-number gradient-text">
+        {player.number}
+      </span>
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (
           <Tooltip
@@ -110,7 +118,7 @@ export default function LineupPlayer({
       <span className="lineup-player-substitution">
         {substitution && (
           <Tooltip
-            title={`Substituted in at ${substitution.time.elapsed}' from ${substitution.player.name} to ${substitution.assist.name}`}
+            title={`Substituted in at ${substitution.time.elapsed}' from ${substitution.assist.name} to ${substitution.player.name}`}
             placement="top"
           >
             <img
@@ -128,6 +136,15 @@ export default function LineupPlayer({
             onClick={() => onDelete(player.id)}
           />
         </span>
+      )}
+      {percentage && (
+        <div className="percentage-bar-container">
+          <div
+            className="percentage-bar"
+            style={{ width: `${percentage}%` }}
+          ></div>
+          <span className="percentage-text">{percentage.toFixed(2)}%</span>
+        </div>
       )}
     </div>
   );

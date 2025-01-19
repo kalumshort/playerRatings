@@ -1,5 +1,5 @@
 .lineup-container {
-  width: 50%;
+  width: 100%;
   margin: 20px 20px 0;
 }
 .Prediction-lineup-container {
@@ -41,14 +41,13 @@
   align-items: center;
   margin: 10px;
   font-weight: 500;
-  /* border: 2px solid rgb(0, 0, 0); */
   border-radius: 8px;
   padding: 5px;
   position: relative;
   background-color: #282828;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   max-width: 150px;
-  /* overflow: hidden; */
+  overflow: visible;
 }
 .player-substitute {
   width: 75px;
@@ -59,9 +58,12 @@
 .player-substitute .lineup-player-img {
   width: 50px;
 }
-
-.lineup-player-img {
+.img-wrapper {
+  overflow: hidden;
   height: 100%;
+}
+.lineup-player-img {
+  width: 100%;
 }
 .lineup-player-name {
   position: absolute;
@@ -69,13 +71,16 @@
   background-color: #282828;
   font-size: 15px;
   width: 100%;
+  padding: 5px 0px;
+  opacity: 0.9;
+  border-radius: 8px;
 }
 .lineup-player-number {
   position: absolute;
   right: 10px;
   top: 10px;
   font-size: 20px;
-  font-weight: 100;
+  font-weight: 300;
 }
 .subs-container {
   display: flex;
@@ -168,23 +173,16 @@
 }
 
 @media (min-width: 768px) {
-  .lineup-container {
-    width: calc(60% - 40px);
-  }
-
   .lineup-sidebar {
     width: calc(40% - 40px);
-  }
-  .player {
-    height: 120px;
   }
 }
 
 @media (max-width: 768px) {
   .player {
-    height: 75px;
-    width: 75px;
-    margin: 3px;
+    height: 150px;
+    width: 100px;
+    margin: 5px;
     font-size: 15px;
   }
 
@@ -201,5 +199,74 @@
     text-align: center;
     display: flex;
     justify-content: center; */
+  }
+  .lineupAndRatings-Container {
+    width: 100%;
+  }
+}
+
+/* chosenLineup */
+.chosen-lineup-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 20px 20px 0px;
+  width: 100%; /* Ensure the container spans the full width */
+  gap: 20px; /* Add a 20px gap between items */
+}
+
+.chosen-lineup {
+  position: relative;
+  flex: 1 1 calc(50% - 10px); /* Take 50% width minus spacing */
+  box-sizing: border-box; /* Prevent padding/border from breaking layout */
+}
+.community-team-stats {
+  padding: 25px 10px 10px 0px;
+  position: relative;
+  flex: 1 1 calc(50% - 10px); /* Take 50% width minus spacing */
+  box-sizing: border-box; /* Prevent padding/border from breaking layout */
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align children at the top of the container */
+  overflow: scroll;
+  max-height: 800px;
+}
+
+.lineup-player-container {
+  display: flex;
+  flex-direction: column; /* Stack the LineupPlayer and percentage bar vertically */
+  align-items: center; /* Center-align the content */
+  width: 100%; /* Ensure consistent width */
+}
+
+.percentage-bar-container {
+  position: relative;
+  width: 100%; /* Full width of the container */
+  height: 8px; /* Height of the percentage bar */
+  background-color: #3e3d3d; /* Light background for the bar */
+  margin-top: 8px; /* Spacing above the bar */
+  border-radius: 4px; /* Rounded corners for the bar */
+}
+
+.percentage-bar {
+  height: 100%;
+  background: linear-gradient(
+    to bottom right,
+    #4e73df,
+    #9b59b6
+  ); /* Gradient background */
+  border-radius: 2px; /* Rounded corners for the filled part */
+  transition: width 0.3s ease; /* Smooth transition for dynamic updates */
+}
+
+.percentage-text {
+  margin-top: 4px; /* Space above the percentage text */
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .chosen-lineup {
+    flex: 1 1 100%; /* Full width on smaller screens */
   }
 }

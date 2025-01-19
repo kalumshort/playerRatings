@@ -7,7 +7,10 @@
   min-height: 350px;
   cursor: pointer;
 }
-
+.lineupAndRatings-Container {
+  margin: 20px 20px 0;
+  width: calc(60%);
+}
 .fixture-countdown {
   font-size: 30px;
 }
@@ -190,10 +193,9 @@
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
-  align-items: stretch; /* Stretch the children vertically */
+  align-items: stretch;
   min-height: 150px;
   margin: 20px 20px 0;
-  width: 100%;
   padding: 10px;
 }
 
@@ -203,7 +205,6 @@
   flex-direction: column; /* Stack the heading and content vertically */
   justify-content: center; /* Center the content vertically */
   align-items: center; /* Center the content horizontally */
-  height: 100%; /* Ensure it takes the full height */
   width: 100%; /* Ensure it takes the full width */
 }
 
@@ -253,6 +254,131 @@
   transform: translateY(-50%) !important;
 }
 
+/* Player Ratings */
+.PlayerRatingsItemsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-height: 1000px;
+  overflow: scroll;
+}
+.PlayerRatingItem {
+  position: relative;
+  width: 100%;
+  background-color: #282828;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+  margin: 10px;
+  /* padding: 10px 10px 0px 10px; */
+  border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  max-width: 850px;
+  /* align-items: flex-start; */
+}
+.PlayerRatingImg {
+  width: 125px;
+  object-fit: cover;
+  background: linear-gradient(to bottom right, #4e73df, #9b59b6);
+}
+.PlayerRatingInner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.PlayerRatingsNameContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.PlayerRatingName {
+  letter-spacing: 1.4px;
+  font-weight: 500;
+  margin-left: 30px;
+}
+.PlayerRatingsIcon {
+  /* width: 25px; */
+  height: 25px;
+  margin: 0px 5px;
+  object-fit: contain;
+}
+.PlayerRatingsButtonGroup {
+  /* display: flex;
+  justify-content: center; 
+  align-items: center; */
+
+  flex: 1 1 calc(20% - 10px);
+  display: flex;
+
+  /* display: flex;
+  flex-direction: column;
+  width: 100%; */
+}
+.PlayerRatingsChoices {
+  /* display: grid;
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 5px; 
+  padding: 10px;
+  margin-left: 20px;
+ */
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.PlayerRatingsButton {
+  flex: 5 !important;
+
+  /* padding: 0px !important; */
+}
+.PlayerRatingsButton2 {
+  flex: 1 !important;
+
+  /* font-size: 15px !important;
+  padding: 0px !important; */
+}
+
+.PlayerRatingsCommunityContainer {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: center;
+}
+.PlayerRatingsCommunityTitle {
+  font-size: 13px;
+  font-weight: 300;
+  color: grey;
+  margin: 0px;
+  padding: 0px;
+}
+.PlayerRatingsCommunityScore {
+  font-size: 50px;
+  margin: 0px 20px;
+}
+.PlayerRatingsResults {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  gap: 10px;
+}
+.PlayerRatingMotm {
+  cursor: pointer;
+  background-color: #1f1f1f;
+  padding: 5px;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  border-radius: 0px 10px 0px 0px;
+}
+.motm {
+  animation: boxShadowPulse 2s infinite alternate;
+}
 @media (max-width: 768px) {
   .team-logo {
     height: 80px;
@@ -330,5 +456,37 @@
   .scorePredictionResultsInnerContainer {
     flex-direction: column;
     padding-top: 30px;
+  }
+  .PlayerRatingImg {
+    width: 100px;
+  }
+  .PlayerRatingsChoices {
+    margin-left: 5px;
+  }
+  .PlayerRatingsButtonGroup {
+  }
+  .PlayerRatingsButton {
+    /* padding: 0px !important; */
+    font-size: 20px !important;
+    /* padding: 0px 10px !important; */
+  }
+  .PlayerRatingsButton2 {
+    padding: 0px !important;
+    font-size: 15px !important;
+  }
+  .PlayerRatingName {
+    font-size: 22px;
+  }
+  .PlayerRatingsCommunityScore {
+  }
+}
+
+@keyframes boxShadowPulse {
+  0% {
+    box-shadow: 0 0 5px gold;
+  }
+
+  100% {
+    box-shadow: 0 0 5px red;
   }
 }

@@ -12,6 +12,10 @@ import {
   fetchFixturesStart,
 } from "../redux/Reducers/fixturesReducer";
 import { fetchMatchPrediction } from "../redux/Reducers/predictionsReducer";
+import {
+  fetchMatchPlayerRatingsAction,
+  matchMotmVotesAction,
+} from "../redux/Reducers/playerRatingsReducer";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -28,8 +32,10 @@ export const fetchFixtures = () => async (dispatch) => {
   try {
     dispatch(fetchFixturesStart()); // Start loading
 
-    const fixtures = await firebaseGetCollecion("fixtures/2024/data");
+    const fixturesData = await firebaseGetCollecion("fixtures/2024/data");
     const now = Math.floor(Date.now() / 1000); // Current time in seconds
+
+    const fixtures = Object.values(fixturesData); // Convert object to array
 
     fixtures.sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
@@ -62,6 +68,26 @@ export const fetchFixtures = () => async (dispatch) => {
   } catch (error) {
     console.error("Error getting fixtures:", error);
     dispatch(fetchFixturesFailure(error.message));
+  }
+};
+
+export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
+  if (!matchId) {
+    return;
+  }
+  try {
+    const playerRatings = await firebaseGetCollecion(
+      `playerRatings/${matchId}/players`
+    );
+
+    const matchMotmVotes = await firebaseGetDocument(`playerRatings`, matchId);
+
+    dispatch(
+      fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
+    );
+    dispatch(matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes }));
+  } catch (error) {
+    console.log(error);
   }
 };
 

@@ -175,7 +175,6 @@ exports.fetchSingleFixtureData = onRequest(async (req, res) => {
   try {
     // Fetch data from various sources
     const fixtureData = await fetchFixtureData(fixtureId);
-    // console.log(`fixtureData`, fixtureData);
 
     const fixtureStatsData = await fetchStatisticsData(fixtureId);
 
