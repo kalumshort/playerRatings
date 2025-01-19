@@ -1,12 +1,20 @@
 import React from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
-import { CountdownTimer } from "../../Hooks/Helper_Functions";
+import {
+  CountdownTimer,
+  footballClubsColours,
+} from "../../Hooks/Helper_Functions";
 import FixtureEventsList from "./FixtureEventsList";
 
 export default function FixtureHeader({ fixture, onClick }) {
+  const footballClubsColors = footballClubsColours;
+
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
-
+  console.log(footballClubsColors);
+  console.log(
+    `linear-gradient(to right, ${footballClubsColors[homeTeamId]}, ${footballClubsColors[awayTeamId]})`
+  );
   const homeEvents = fixture?.events?.filter(
     (event) => event.team.id === homeTeamId
   );
@@ -28,6 +36,9 @@ export default function FixtureHeader({ fixture, onClick }) {
   return (
     <ContentContainer
       className="fixture-header"
+      style={{
+        background: `linear-gradient(95deg, ${footballClubsColors[homeTeamId]}, transparent 50%, ${footballClubsColors[awayTeamId]})`,
+      }}
       onClick={() => (onClick ? onClick(fixture.id) : null)}
     >
       <div className="fixture-time-header">{matchTime}</div>

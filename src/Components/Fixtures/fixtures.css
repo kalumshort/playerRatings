@@ -82,6 +82,8 @@
   top: 10px;
   font-size: 16px;
   text-align: center;
+  font-weight: 500;
+  font-style: italic;
 }
 .prev-upcom-container {
   display: flex;
@@ -185,7 +187,6 @@
 .scorePredictionContainer {
   margin: 20px 20px 0;
   height: 150px;
-  width: 100%;
   position: relative;
 }
 .scorePredictionResultsContainer {

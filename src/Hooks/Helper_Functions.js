@@ -13,7 +13,11 @@ export const CountdownTimer = ({ targetTime }) => {
   }, [targetTime]);
 
   if (!timeLeft) {
-    return <Typography variant="subtitle1">Match has started!</Typography>;
+    return (
+      <div className="countdownContianer">
+        <Typography variant="subtitle1">Match has started!</Typography>
+      </div>
+    );
   }
 
   const { days, hours, minutes, seconds } = timeLeft;
@@ -115,4 +119,27 @@ export const useIsMobile = () => {
   }, []);
 
   return isMobile;
+};
+
+export const footballClubsColours = {
+  33: "#DA291C", // Man United
+  40: "#C8102E", // Liverpool
+  50: "#6CABDD", // Man City
+  42: "#EF0107", // Arsenal
+  65: "#DD0000", // Nottingham Forrest
+  34: "#241F20", // Newcastle
+  49: "#034694", // Chelsea
+  35: "#DA291C", // Bournemouth
+  66: "#660033", // Aston Villa
+  36: "#FFFFFF", // Fulham
+  51: "#005DAA", // Brighton
+  55: "#D20000", // Brentford
+  52: "#1B458F", // Crystal Palace
+  48: "#7C2C3B", // West Ham
+  47: "#132257", // Tottenham
+  45: "#003399", // Everton
+  39: "#FDB913", // Wolves
+  57: "#1C3473", // Ipswich
+  46: "#0053A0", // Leicester
+  41: "#D71920", // Southhampton
 };

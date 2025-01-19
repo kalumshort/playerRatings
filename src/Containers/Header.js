@@ -10,6 +10,7 @@ import {
 // import MenuIcon from "@mui/icons-material/Menu"; // Menu icon for smaller screens
 import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
+import { useNavigate } from "react-router-dom";
 
 const HeaderContainer = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
@@ -22,17 +23,17 @@ const Header = () => {
     <HeaderContainer position="static">
       <Toolbar>
         {/* Logo/Title */}
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          My App
-        </Typography>
+        <Button
+          onClick={() => {
+            window.history.pushState({}, "", "/");
+            window.dispatchEvent(new PopStateEvent("popstate"));
+          }}
+        >
+          Home
+        </Button>
 
         {/* Navigation Links */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
-          <Button color="inherit">Home</Button>
-          <Button color="inherit">About</Button>
-          <Button color="inherit">Services</Button>
-          <Button color="inherit">Contact</Button>
-        </Box>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}></Box>
         {/* Theme Toggle */}
         <ThemeToggle />
 

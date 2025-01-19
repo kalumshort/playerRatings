@@ -47,10 +47,13 @@ export const ThemeProvider = ({ children }) => {
                 background: {
                   default: "#ffffff",
                   paper: "#f7f7f7",
+                  gradient:
+                    "linear-gradient(150deg, #f7f7f7,rgb(218, 218, 218))",
                 },
                 text: {
                   primary: "#000000",
                   secondary: "#555555",
+                  shadow: "0 1px 2px rgba(0, 0, 0, 0.4)", // Light mode text shadow
                 },
                 primary: {
                   main: "#DA291C",
@@ -60,16 +63,19 @@ export const ThemeProvider = ({ children }) => {
                 background: {
                   default: "#121212",
                   paper: "#1e1e1e",
+                  gradient: "linear-gradient(150deg, #1E1E1E,rgb(61, 61, 61))",
                 },
                 text: {
                   primary: "#ffffff",
                   secondary: "#aaaaaa",
+                  shadow: "0 1px 2px rgba(0, 0, 0, 0.8)", // Dark mode text shadow
                 },
                 primary: {
                   main: "#DA291C",
                 },
               }),
         },
+
         components: {
           MuiButton: {
             styleOverrides: {
