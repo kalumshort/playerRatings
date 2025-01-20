@@ -26,12 +26,14 @@
   justify-content: center;
   margin-bottom: 10px;
 }
-
+.fixture-header-outer {
+  margin: 20px 20px 0;
+  overflow: hidden;
+}
 .fixture-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 20px 20px 0;
   min-height: 350px;
   position: relative;
 }
@@ -47,6 +49,12 @@
   justify-content: space-evenly;
   gap: 8px;
   text-align: center;
+}
+.scorers-Contianer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 10px 0px;
 }
 
 .team-logo {
@@ -138,7 +146,6 @@
   justify-content: space-evenly;
   align-items: center;
   height: 100%;
-  background: linear-gradient(to bottom right, #4e73df, #9b59b6);
   border-radius: 8px;
   min-height: 200px;
   padding: 20px;
@@ -159,11 +166,13 @@
 
 .scoreboard {
   font-size: 50px;
+  font-weight: 600;
 }
 
 .halftime-scoreboard {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 300;
+  color: grey;
 }
 
 .fixure-events-list {
@@ -388,7 +397,9 @@
   .scoreboard {
     font-size: 40px;
   }
-
+  .fixture-header {
+    min-height: 200px;
+  }
   .fixture-header > * {
     flex: 1 1 30%;
   }
@@ -399,8 +410,13 @@
 
   .fixture-status-container {
     padding: 10px;
+    min-height: 75px;
+    max-width: 120px;
   }
-
+  .fixture-status-short {
+    font-size: 14px;
+    color: grey;
+  }
   .team-container {
     flex-direction: column;
   }

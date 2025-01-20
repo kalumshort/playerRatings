@@ -19,5 +19,11 @@ export default function LatestFixtureItem() {
     return <div className="latest-fixture-container">No upcoming fixture</div>;
   }
 
-  return <FixtureHeader fixture={latestFixture} onClick={handleFixtureClick} />;
+  return (
+    <FixtureHeader
+      fixture={latestFixture}
+      onClick={handleFixtureClick}
+      showDate={true}
+    />
+  );
 }

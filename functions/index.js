@@ -253,8 +253,6 @@ exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
       latestFixture = lastFixtureData;
     }
 
-    console.log("latestFixture", latestFixture);
-
     res.status(200).send(`Fixture data saved for latest match`);
   } catch (error) {
     console.error("Error fetching match data:", error);
