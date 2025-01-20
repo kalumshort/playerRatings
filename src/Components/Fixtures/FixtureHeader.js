@@ -8,6 +8,7 @@ import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
 
 export default function FixtureHeader({ fixture, onClick, showDate = false }) {
+  console.log(fixture);
   const footballClubsColors = footballClubsColours;
 
   const homeTeamId = fixture.teams.home.id;
@@ -95,6 +96,12 @@ export default function FixtureHeader({ fixture, onClick, showDate = false }) {
               <span className="scoreboard">
                 {fixture.goals.home} - {fixture.goals.away}
               </span>
+              {fixture.score.penalty.home !== null && (
+                <span className="halftime-scoreboard">
+                  Penalty: {fixture.score.penalty.home}-
+                  {fixture.score.penalty.away}
+                </span>
+              )}
               {fixture.score.halftime.home !== null && (
                 <span className="halftime-scoreboard">
                   Halftime: {fixture.score.halftime.home}-
@@ -131,6 +138,7 @@ export default function FixtureHeader({ fixture, onClick, showDate = false }) {
           <FixtureEventsList events={awayEvents} eventTypes={["Goal"]} />
         )}
       </div>
+
       <div className="match-small-details">
         <p
           className="match-small-details-text"

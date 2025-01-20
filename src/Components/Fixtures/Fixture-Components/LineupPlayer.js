@@ -18,7 +18,10 @@ export default function LineupPlayer({
 
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
-    (event) => event.type === "Goal" && event.player?.id === player.id
+    (event) =>
+      event.type === "Goal" &&
+      event.player?.id === player.id &&
+      event.detail !== "Penalty"
   );
 
   // Filter: Assists for goals by the player
@@ -85,9 +88,14 @@ export default function LineupPlayer({
           >
             <img
               key={index}
-              src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
+              src={
+                goal.detail === "Own Goal"
+                  ? "https://img.icons8.com/?size=100&id=LDze7ETPiEDu&format=png&color=FA5252"
+                  : "https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
+              }
               alt="Goal Icon"
               width={25}
+              height={25}
               style={{ margin: "0px -1px" }}
             />
           </Tooltip>

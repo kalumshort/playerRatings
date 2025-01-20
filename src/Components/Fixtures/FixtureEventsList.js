@@ -8,7 +8,9 @@ export default function FixtureEventsList({
 }) {
   // Filter events based on eventTypes prop
   const filteredEvents = events?.filter(
-    (event) => eventTypes.includes(event.type) && event.detail === "Normal Goal"
+    (event) =>
+      (eventTypes.includes(event.type) && event.detail === "Normal Goal") ||
+      event.detail === "Own Goal"
   );
 
   return (
