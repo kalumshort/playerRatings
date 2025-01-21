@@ -6,9 +6,9 @@ import {
 } from "../../Hooks/Helper_Functions";
 import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
+import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 
 export default function FixtureHeader({ fixture, onClick, showDate = false }) {
-  console.log(fixture);
   const footballClubsColors = footballClubsColours;
 
   const homeTeamId = fixture.teams.home.id;
@@ -20,6 +20,11 @@ export default function FixtureHeader({ fixture, onClick, showDate = false }) {
   const awayEvents = fixture?.events?.filter(
     (event) => event.team.id === awayTeamId
   );
+  const penaltyEvents = fixture?.events?.filter(
+    (event) => event.comments === "Penalty Shootout"
+  );
+  console.log("penaltyEvents", penaltyEvents);
+
   const matchTime = new Date(fixture.fixture.timestamp * 1000).toLocaleString(
     "en-GB",
     {
@@ -138,6 +143,9 @@ export default function FixtureHeader({ fixture, onClick, showDate = false }) {
           <FixtureEventsList events={awayEvents} eventTypes={["Goal"]} />
         )}
       </div>
+      {fixture.score.penalty.home && (
+        <PenaltyTimeline penaltyEvents={penaltyEvents} />
+      )}
 
       <div className="match-small-details">
         <p
