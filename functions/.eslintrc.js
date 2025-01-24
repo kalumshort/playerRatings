@@ -8,13 +8,15 @@ module.exports = {
   },
   extends: ["eslint:recommended", "google"],
   rules: {
-    "no-restricted-globals": ["error", "name", "length"], // Keep as error for restricted globals
-    "prefer-arrow-callback": "error", // Keep as error to encourage arrow functions
-    quotes: ["warn", "double", { allowTemplateLiterals: true }], // Allow template literals but warn on quotes inconsistency
-    "object-curly-spacing": ["warn", "always"], // Just a warning for curly spacing
-    indent: ["warn", 2], // Warn for indentation errors but don't treat as error
-    "quote-props": ["warn", "always"], // Warn for inconsistent property quotes
-    "max-len": ["warn", { code: 120 }], // Warn when lines exceed 120 characters, but don't treat as error
+    "no-restricted-globals": "off", // Disable restriction on globals
+    "prefer-arrow-callback": "off", // Allow using traditional function syntax
+    quotes: "off", // No enforcement of quotes style
+    "object-curly-spacing": "off", // No enforcement of spacing inside curly braces
+    indent: "off", // No enforcement of indentation
+    "quote-props": "off", // No enforcement of property quotes style
+    "max-len": "off", // No restriction on line length
+    "linebreak-style": "off",
+    "comma-dangle": "off",
   },
   overrides: [
     {

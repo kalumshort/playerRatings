@@ -17,6 +17,7 @@ import PlayerRatings from "./Fixture-Components/PlayerRatings/PlayerRatings";
 import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings";
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
+import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
 
 export default function Fixture() {
   const dispatch = useDispatch();
@@ -39,9 +40,10 @@ export default function Fixture() {
 
   return (
     <>
-      <FixtureHeader fixture={fixture} />
+      <FixtureHeader fixture={fixture} showDetails={true} />
 
       {isPreMatch && <ScorePrediction fixture={fixture} />}
+      {isPreMatch && <PreMatchMOTM fixture={fixture} />}
 
       <div
         style={{

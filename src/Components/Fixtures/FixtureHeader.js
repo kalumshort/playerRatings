@@ -8,7 +8,12 @@ import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 
-export default function FixtureHeader({ fixture, onClick, showDate = false }) {
+export default function FixtureHeader({
+  fixture,
+  onClick,
+  showDate = false,
+  showDetails = false,
+}) {
   const footballClubsColors = footballClubsColours;
 
   const homeTeamId = fixture.teams.home.id;
@@ -147,20 +152,22 @@ export default function FixtureHeader({ fixture, onClick, showDate = false }) {
         <PenaltyTimeline penaltyEvents={penaltyEvents} />
       )}
 
-      <div className="match-small-details">
-        <p
-          className="match-small-details-text"
-          style={{ textAlign: "center", fontSize: "10px", color: "grey" }}
-        >
-          <span style={{ fontWeight: "900" }}>Kick Off: {matchTimeHour}</span>
-          <br></br>
-          {matchTimeDay}
-          <br></br>
-          {fixture.fixture.venue.name}, {fixture.fixture.venue.city}
-          <br></br>
-          Referee: {fixture.fixture.referee}
-        </p>
-      </div>
+      {showDetails && (
+        <div className="match-small-details">
+          <p
+            className="match-small-details-text"
+            style={{ textAlign: "center", fontSize: "10px", color: "grey" }}
+          >
+            <span style={{ fontWeight: "900" }}>Kick Off: {matchTimeHour}</span>
+            <br></br>
+            {matchTimeDay}
+            <br></br>
+            {fixture.fixture.venue.name}, {fixture.fixture.venue.city}
+            <br></br>
+            Referee: {fixture.fixture.referee}
+          </p>
+        </div>
+      )}
     </ContentContainer>
   );
 }

@@ -1,5 +1,7 @@
 const axios = require("axios");
 
+const { getFirestore } = require("firebase-admin/firestore");
+
 const fetchFixtureData = async (fixtureId) => {
   try {
     const response = await axios.get(
@@ -116,9 +118,59 @@ const fetchLineupData = async (fixtureId) => {
   }
 };
 
+const fetchAllMatchData = async (fixtureId) => {
+  console.log(fixtureId);
+  try {
+    const fixtureData = await fetchFixtureData(fixtureId);
+
+    const fixtureStatsData = await fetchStatisticsData(fixtureId);
+
+    const fixtureLineupData = await fetchLineupData(fixtureId);
+
+    const fixtureEventsData = await fetchEventsData(fixtureId);
+
+    const combinedFixtureData = {
+      ...fixtureData,
+      statistics: fixtureStatsData,
+      lineups: fixtureLineupData,
+      events: fixtureEventsData,
+    };
+
+    const year = combinedFixtureData?.league?.season;
+
+    if (!year) {
+      throw new Error("League season not found in the fixture data.");
+    }
+
+    await getFirestore()
+      .collection("fixtures")
+      .doc(year.toString())
+      .collection("data")
+      .doc(fixtureId.toString())
+      .set(combinedFixtureData, { merge: true });
+
+    return;
+  } catch (error) {
+    console.error(
+      `Error fetching or saving data for fixture ${fixtureId}:`,
+      error.stack
+    );
+    return;
+  }
+};
+
+//  if (process.env.FIRESTORE_EMULATOR_HOST) {
+//   console.log(
+//     "Using Firestore Emulator:",
+//     process.env.FIRESTORE_EMULATOR_HOST
+//   );
+// } else {
+//   console.log("Using Firestore Production Database");
+// }
 module.exports = {
   fetchFixtureData,
   fetchStatisticsData,
   fetchLineupData,
   fetchEventsData,
+  fetchAllMatchData,
 };
