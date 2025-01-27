@@ -28,7 +28,6 @@ export default function FixtureHeader({
   const penaltyEvents = fixture?.events?.filter(
     (event) => event.comments === "Penalty Shootout"
   );
-  console.log("penaltyEvents", penaltyEvents);
 
   const matchTime = new Date(fixture.fixture.timestamp * 1000).toLocaleString(
     "en-GB",

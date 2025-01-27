@@ -2,7 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 import { forEach } from "lodash";
-import { Button, ButtonGroup } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  ButtonGroup,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import {
   setLocalStorageItem,
   useIsMobile,
@@ -21,8 +29,6 @@ import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import StarIcon from "@mui/icons-material/Star";
 
 export default function PlayerRatings({ fixture }) {
-  const isMobile = useIsMobile();
-  const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
   );
@@ -81,86 +87,31 @@ export default function PlayerRatings({ fixture }) {
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
   };
 
-  return !isMatchRatingsSubmitted ? (
-    <>Submitted</>
+  return isMatchRatingsSubmitted ? (
+    <SubmittedPlayerRatings
+      motmPercentages={motmPercentages}
+      combinedPlayers={combinedPlayers}
+      fixture={fixture}
+      isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+      handleRatingsSubmit={handleRatingsSubmit}
+    />
   ) : (
-    <div className="PlayerRatingsItemsContainer">
-      {combinedPlayers.map((player, rowIndex) => (
-        <PlayerRatingItem
-          player={player}
-          fixture={fixture}
-          isMobile={isMobile}
-          matchRatings={matchRatings}
-        />
-      ))}
-      <PlayerRatingItem
-        player={{ id: 696969 }}
-        fixture={fixture}
-        isMobile={isMobile}
-        matchRatings={matchRatings}
-      />
-      {!isMatchRatingsSubmitted && (
-        <Button
-          onClick={() => handleRatingsSubmit()}
-          variant="contained"
-          fontSize="large"
-          className="PlayerRatingSubmit"
-        >
-          Submit
-        </Button>
-      )}
-      {isMatchRatingsSubmitted && (
-        <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
-          <img src={motmPercentages[0].img} className="PlayerRatingImg" />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: "1",
-              justifyContent: "space-Evenly",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: "20px",
-              }}
-            >
-              <h2 className="gradient-text">{motmPercentages[0].name}</h2>
-              <h2 className="gradient-text" style={{ fontSize: "50px" }}>
-                {motmPercentages[0].percentage}%
-              </h2>
-            </div>
-            {/* <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                fontSize: "10px",
-                color: "grey",
-                position: "absolute",
-                bottom: "2px",
-                gap: "2px",
-              }}
-            >
-              {motmPercentages.map((player) => (
-                <>
-                  <p>
-                    {player.name}-{player.percentage}%
-                  </p>
-                </>
-              ))}
-            </div> */}
-          </div>
-        </div>
-      )}
-    </div>
+    <PlayerRatingsItems
+      combinedPlayers={combinedPlayers}
+      fixture={fixture}
+      isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+      handleRatingsSubmit={handleRatingsSubmit}
+    />
   );
 }
 
-const PlayerRatingItem = ({ player, fixture, isMobile, matchRatings }) => {
+const PlayerRatingItem = ({
+  player,
+  fixture,
+  isMobile,
+  matchRatings,
+  readOnly,
+}) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
   const storedUsersPlayerRating = useLocalStorage(
@@ -215,6 +166,9 @@ const PlayerRatingItem = ({ player, fixture, isMobile, matchRatings }) => {
     });
   };
   const handleMotmClick = async () => {
+    if (readOnly) {
+      return;
+    }
     if (isMOTM) {
       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, null);
     } else {
@@ -286,17 +240,157 @@ const PlayerRatingItem = ({ player, fixture, isMobile, matchRatings }) => {
           </div>
         )}
       </div>
-      <div className="PlayerRatingMotm">
+      <div
+        className="PlayerRatingMotm"
+        style={{
+          cursor: readOnly ? "default" : "pointer",
+          pointerEvents: readOnly ? "none" : "auto",
+        }}
+      >
         {isMOTM ? (
           <StarIcon
             fontSize="large"
             onClick={() => handleMotmClick()}
             color="primary"
           />
+        ) : readOnly ? (
+          <></>
         ) : (
           <StarOutlineIcon fontSize="small" onClick={() => handleMotmClick()} />
         )}
       </div>
     </div>
+  );
+};
+
+const PlayerRatingsItems = ({
+  combinedPlayers,
+  fixture,
+  isMatchRatingsSubmitted,
+  handleRatingsSubmit,
+  readOnly,
+}) => {
+  const isMobile = useIsMobile();
+  const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
+
+  return (
+    <div className="PlayerRatingsItemsContainer">
+      {combinedPlayers.map((player, rowIndex) => (
+        <PlayerRatingItem
+          player={player}
+          fixture={fixture}
+          isMobile={isMobile}
+          matchRatings={matchRatings}
+          readOnly={readOnly}
+        />
+      ))}
+      <PlayerRatingItem
+        player={{ id: 696969 }}
+        fixture={fixture}
+        isMobile={isMobile}
+        matchRatings={matchRatings}
+        readOnly={readOnly}
+      />
+      {!isMatchRatingsSubmitted && (
+        <Button
+          onClick={() => handleRatingsSubmit()}
+          variant="contained"
+          fontSize="large"
+          className="PlayerRatingSubmit"
+        >
+          Submit
+        </Button>
+      )}
+    </div>
+  );
+};
+
+const SubmittedPlayerRatings = ({
+  motmPercentages,
+  combinedPlayers,
+  fixture,
+  isMatchRatingsSubmitted,
+  handleRatingsSubmit,
+}) => {
+  return (
+    <>
+      <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
+        <img src={motmPercentages[0].img} className="PlayerRatingImg" />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: "1",
+            justifyContent: "space-Evenly",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              // gap: "10px",
+              padding: "10px",
+            }}
+          >
+            <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
+              MOTM
+            </h5>
+            <h2>{motmPercentages[0].name}</h2>
+            <h2
+              className="gradient-text"
+              style={{ fontSize: "50px", margin: "0px" }}
+            >
+              {motmPercentages[0].percentage}%
+            </h2>
+          </div>
+        </div>
+      </div>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          MOTM Votes
+        </AccordionSummary>
+        <AccordionDetails>
+          <ul
+            style={{
+              margin: "10px",
+              color: "grey",
+              display: "flex",
+              flexDirection: "column",
+              fontSize: "15px",
+            }}
+          >
+            {motmPercentages.map((player) => (
+              <li>
+                {player.name} - {player.percentage}%
+              </li>
+            ))}
+          </ul>
+        </AccordionDetails>
+      </Accordion>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          Squad Ratings
+        </AccordionSummary>
+        <AccordionDetails>
+          <PlayerRatingsItems
+            combinedPlayers={combinedPlayers}
+            fixture={fixture}
+            isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+            handleRatingsSubmit={handleRatingsSubmit}
+            readOnly={true}
+          />
+        </AccordionDetails>
+      </Accordion>
+    </>
   );
 };

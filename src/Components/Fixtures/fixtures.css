@@ -288,6 +288,9 @@
   max-width: 850px;
   /* align-items: flex-start; */
 }
+.PlayerRatingMotmContainer {
+  width: calc(100% - 20px) !important;
+}
 .PlayerRatingImg {
   width: 125px;
   object-fit: cover;

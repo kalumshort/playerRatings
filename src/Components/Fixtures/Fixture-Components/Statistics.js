@@ -23,7 +23,9 @@ export default function Statistics({ fixture }) {
   }
 
   const [team1, team2] = fixture?.statistics;
-
+  if (!team1 || !team2) {
+    return;
+  }
   return (
     <ContentContainer className="statistics-container">
       <div style={{ color: "#fff", fontFamily: "Arial, sans-serif" }}>

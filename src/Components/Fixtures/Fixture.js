@@ -26,6 +26,8 @@ export default function Fixture() {
 
   const fixture = useSelector(selectFixtureById(matchId));
 
+  console.log(fixture);
+
   // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchMatchPredictions(matchId));
@@ -51,12 +53,14 @@ export default function Fixture() {
           flexWrap: "wrap",
         }}
       >
-        {!fixture.lineups && <LineupPredictor fixture={fixture} />}
+        {fixture.lineups.length === 0 && <LineupPredictor fixture={fixture} />}
 
-        {fixture.lineups && <LineupAndPlayerRatings fixture={fixture} />}
+        {fixture.lineups.length !== 0 && (
+          <LineupAndPlayerRatings fixture={fixture} />
+        )}
 
         <div className="lineup-sidebar">
-          {fixture?.events && fixture.statistics && (
+          {fixture?.events.length !== 0 && fixture.statistics.length !== 0 && (
             <>
               <Statistics fixture={fixture} />
               <Events events={fixture?.events} />
