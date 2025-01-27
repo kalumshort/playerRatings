@@ -8,9 +8,9 @@ import LineupPredictor from "./LineupPredicter/LineupPredictor";
 
 export default function Lineup({ fixture }) {
   const unitedLineup =
-    fixture.lineups.find((team) => team.team.id === 33)?.startXI || [];
+    fixture?.lineups?.find((team) => team.team.id === 33)?.startXI || [];
   const unitedSubs =
-    fixture.lineups.find((team) => team.team.id === 33)?.substitutes || [];
+    fixture?.lineups?.find((team) => team.team.id === 33)?.substitutes || [];
 
   return (
     <div className="lineup-container">

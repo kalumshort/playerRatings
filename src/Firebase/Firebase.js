@@ -144,6 +144,17 @@ export const handlePredictTeamScore = async (data) => {
     },
   });
 };
+export const handlePredictPreMatchMotm = async (data) => {
+  await firebaseSetDoc({
+    path: `predictions`,
+    docId: data.matchId,
+    data: {
+      preMatchMotm: { [data.playerId]: increment(1) },
+      preMatchMotmVotes: increment(1),
+    },
+  });
+};
+
 export const handlePlayerRatingSubmit = async (data) => {
   await firebaseSetDoc({
     path: `playerRatings/${data.matchId}/players`,

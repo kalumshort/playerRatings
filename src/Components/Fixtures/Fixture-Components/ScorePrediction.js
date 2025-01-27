@@ -39,7 +39,7 @@ export default function ScorePrediction({ fixture }) {
     dispatch(fetchMatchPredictions(fixture.id));
   };
   return storedUsersPredictedScore ? (
-    <div style={{ margin: "20px 20px 00px " }}>
+    <div style={{ margin: "20px 20px 0px" }}>
       <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
     </div>
   ) : (

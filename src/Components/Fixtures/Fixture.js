@@ -26,8 +26,6 @@ export default function Fixture() {
 
   const fixture = useSelector(selectFixtureById(matchId));
 
-  console.log(fixture);
-
   // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchMatchPredictions(matchId));
@@ -44,8 +42,13 @@ export default function Fixture() {
     <>
       <FixtureHeader fixture={fixture} showDetails={true} />
 
-      {isPreMatch && <ScorePrediction fixture={fixture} />}
-      {isPreMatch && <PreMatchMOTM fixture={fixture} />}
+      {isPreMatch && (
+        <>
+          <ScorePrediction fixture={fixture} />
+
+          <PreMatchMOTM fixture={fixture} />
+        </>
+      )}
 
       <div
         style={{
@@ -53,14 +56,14 @@ export default function Fixture() {
           flexWrap: "wrap",
         }}
       >
-        {fixture.lineups.length === 0 && <LineupPredictor fixture={fixture} />}
-
-        {fixture.lineups.length !== 0 && (
+        {!fixture?.lineups || fixture.lineups.length === 0 ? (
+          <LineupPredictor fixture={fixture} />
+        ) : (
           <LineupAndPlayerRatings fixture={fixture} />
         )}
 
         <div className="lineup-sidebar">
-          {fixture?.events.length !== 0 && fixture.statistics.length !== 0 && (
+          {!isPreMatch && (
             <>
               <Statistics fixture={fixture} />
               <Events events={fixture?.events} />
