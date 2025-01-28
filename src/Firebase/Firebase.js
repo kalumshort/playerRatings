@@ -124,6 +124,7 @@ export const handlePredictTeamSubmit = async ({ players, matchId }) => {
   });
 
   for (const [key, player] of Object.entries(players)) {
+    console.log(key);
     await firebaseSetDoc({
       path: `predictions`,
       docId: matchId,

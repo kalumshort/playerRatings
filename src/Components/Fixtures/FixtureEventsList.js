@@ -18,9 +18,7 @@ export default function FixtureEventsList({
       {filteredEvents?.map((event, index) => {
         const time =
           event.time.elapsed + (event.time.extra ? `+${event.time.extra}` : "");
-        {
-          /* const type = event.type === "Goal" ? "Goal" : event.detail; */
-        }
+
         return goalAlign === "left" ? (
           <li key={index} className="fixure-events-list-item">
             ⚽ {time}'<br></br>
@@ -36,3 +34,5 @@ export default function FixtureEventsList({
     </ul>
   );
 }
+
+/* const type = event.type === "Goal" ? "Goal" : event.detail; */

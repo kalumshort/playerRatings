@@ -1,6 +1,6 @@
 import React from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import { useIsMobile, useLocalStorage } from "../../../Hooks/Helper_Functions";

@@ -89,7 +89,11 @@ export default function PreMatchMOTM({ fixture }) {
       </div>
 
       <div>
-        <img src={squadData[result[0]?.playerId]?.img} height={150} />
+        <img
+          src={squadData[result[0]?.playerId]?.img}
+          height={150}
+          alt={result[0]?.name}
+        />
       </div>
     </ContentContainer>
   ) : (
