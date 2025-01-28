@@ -25,9 +25,9 @@ export default function LineupPlayer({
   );
 
   // Filter: Assists for goals by the player
-  const assists = fixture?.events.filter(
-    (event) => event.type === "Goal" && event.assist?.id === player.id
-  );
+  // const assists = fixture?.events.filter(
+  //   (event) => event.type === "Goal" && event.assist?.id === player.id
+  // );
 
   // Filter: Cards received by the player
   const cards = fixture?.events.filter(
@@ -71,6 +71,7 @@ export default function LineupPlayer({
         <img
           src={player?.img || playerData?.img}
           className="lineup-player-img"
+          alt={playerData.name}
         />
       </div>
       <span className="lineup-player-name">{player.name}</span>
@@ -132,6 +133,7 @@ export default function LineupPlayer({
             <img
               src="https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/sub-w.svg"
               height={20}
+              alt={playerData.name}
             />
           </Tooltip>
         )}

@@ -259,6 +259,6 @@ const squadData = createSlice({
   reducers: {},
 });
 
-export const {} = squadData.actions;
+// export const {} = squadData.actions;
 
 export default squadData.reducer;

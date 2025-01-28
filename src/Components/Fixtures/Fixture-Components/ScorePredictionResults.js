@@ -1,15 +1,15 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
+
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import { useIsMobile, useLocalStorage } from "../../../Hooks/Helper_Functions";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+
 import Barchart from "../../Charts/Barchart";
 import Piechart from "../../Charts/Piechart";
 
 export default function ScorePredictionResults({ fixture }) {
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const isMobile = useIsMobile();
 
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
@@ -28,9 +28,9 @@ export default function ScorePredictionResults({ fixture }) {
 
   const barchartDataAwayGoals = getBarchartData(matchPredictions?.awayGoals);
   const barchartDataHomeGoals = getBarchartData(matchPredictions?.homeGoals);
-  const barchartDataScoreline = getBarchartData(
-    matchPredictions?.scorePrecitions
-  );
+  // const barchartDataScoreline = getBarchartData(
+  //   matchPredictions?.scorePrecitions
+  // );
 
   // Check if match predictions are loaded
   if (!matchPredictions) {

@@ -185,12 +185,12 @@ const EventItem = ({ event }) => {
   );
 };
 
-const EventsDisplay = ({ events }) => {
-  return (
-    <ContentContainer className="events-container">
-      {events.map((event, index) => (
-        <EventItem key={index} event={event} />
-      ))}
-    </ContentContainer>
-  );
-};
+// const EventsDisplay = ({ events }) => {
+//   return (
+//     <ContentContainer className="events-container">
+//       {events.map((event, index) => (
+//         <EventItem key={index} event={event} />
+//       ))}
+//     </ContentContainer>
+//   );
+// };

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectFixtureById } from "../../Selectors/fixturesSelectors";
 
 import FixtureHeader from "./FixtureHeader";
-import Lineup from "./Fixture-Components/Lineup";
+
 import Statistics from "./Fixture-Components/Statistics";
 import Events from "./Fixture-Components/Events";
 import ScorePrediction from "./Fixture-Components/ScorePrediction";
@@ -13,7 +13,7 @@ import {
   fetchMatchPredictions,
 } from "../../Hooks/Fixtures_Hooks";
 import { useEffect } from "react";
-import PlayerRatings from "./Fixture-Components/PlayerRatings/PlayerRatings";
+
 import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings";
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
@@ -36,7 +36,7 @@ export default function Fixture() {
     return <div>Loading...</div>;
   }
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
-  const isPostMatch = fixture?.fixture?.status?.short === "FT";
+  // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   return (
     <>

@@ -1,4 +1,3 @@
-import { useDispatch } from "react-redux";
 import {
   firebaseGetCollecion,
   firebaseGetDocument,
@@ -111,20 +110,20 @@ export const fetchMatchPredictions = (matchId) => async (dispatch) => {
   }
 };
 
-const findLatestFixture = (fixtures, now) => {
-  const recentPastThreshold = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+// const findLatestFixture = (fixtures, now) => {
+//   const recentPastThreshold = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
-  const sortedFixtures = fixtures.sort(
-    (a, b) => a.fixture.timestamp - b.fixture.timestamp
-  );
+//   const sortedFixtures = fixtures.sort(
+//     (a, b) => a.fixture.timestamp - b.fixture.timestamp
+//   );
 
-  const latest = sortedFixtures.find((fixture) => {
-    const timestamp = fixture.fixture.timestamp * 1000;
-    return (
-      timestamp > now ||
-      (timestamp <= now && now - timestamp <= recentPastThreshold)
-    );
-  });
+//   const latest = sortedFixtures.find((fixture) => {
+//     const timestamp = fixture.fixture.timestamp * 1000;
+//     return (
+//       timestamp > now ||
+//       (timestamp <= now && now - timestamp <= recentPastThreshold)
+//     );
+//   });
 
-  return latest || null;
-};
+//   return latest || null;
+// };

@@ -3,9 +3,7 @@ import {
   BarChart,
   Bar,
   XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
 } from "recharts";
@@ -22,8 +20,7 @@ const Barchart = ({
       <BarChart data={barchartData} className="barChart">
         {withGrid && <CartesianGrid strokeDasharray="3 3" />}
         <XAxis dataKey="name" />
-        {/* <YAxis /> */}
-        {/* <Tooltip /> */}
+
         {withLegend && <Legend />}
 
         <defs>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
-import { forEach } from "lodash";
+
 import {
   Accordion,
   AccordionDetails,
@@ -40,7 +40,7 @@ export default function PlayerRatings({ fixture }) {
   const unitedLineup =
     fixture.lineups.find((team) => team.team.id === 33)?.startXI || [];
 
-  const isPostMatch = fixture?.fixture?.status?.short === "FT";
+  // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   const substitutedPlayerIds = fixture?.events
     .filter((item) => item.type === "subst" && item.team?.id === 33)
@@ -127,9 +127,9 @@ const PlayerRatingItem = ({
   );
 
   // Filter: Assists for goals by the player
-  const assists = fixture?.events.filter(
-    (event) => event.type === "Goal" && event.assist?.id === player.id
-  );
+  // const assists = fixture?.events.filter(
+  //   (event) => event.type === "Goal" && event.assist?.id === player.id
+  // );
 
   // Filter: Cards received by the player
   const cards = fixture?.events.filter(
@@ -177,7 +177,11 @@ const PlayerRatingItem = ({
   };
   return (
     <div className={isMOTM ? "PlayerRatingItem motm" : "PlayerRatingItem"}>
-      <img src={playerData.img} className="PlayerRatingImg" />
+      <img
+        src={playerData.img}
+        className="PlayerRatingImg"
+        alt={playerData.name}
+      />
 
       <div className="PlayerRatingInner">
         <span className="PlayerRatingsNameContainer">
@@ -315,7 +319,11 @@ const SubmittedPlayerRatings = ({
   return (
     <>
       <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
-        <img src={motmPercentages[0].img} className="PlayerRatingImg" />
+        <img
+          src={motmPercentages[0].img}
+          className="PlayerRatingImg"
+          alt="PlayerRatingImg"
+        />
         <div
           style={{
             display: "flex",

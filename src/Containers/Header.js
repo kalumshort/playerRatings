@@ -1,16 +1,8 @@
 import React from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Button,
-  IconButton,
-} from "@mui/material";
+import { AppBar, Toolbar, Box, Button, IconButton } from "@mui/material";
 // import MenuIcon from "@mui/icons-material/Menu"; // Menu icon for smaller screens
 import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
-import { useNavigate } from "react-router-dom";
 
 const HeaderContainer = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,

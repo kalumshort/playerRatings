@@ -1,10 +1,8 @@
 import React from "react";
 
 import "./Lineup.css"; // Importing external CSS file
-import { ContentContainer } from "../../../Containers/GlobalContainer";
-import LineupPlayer from "./LineupPlayer";
 
-import LineupPredictor from "./LineupPredicter/LineupPredictor";
+import LineupPlayer from "./LineupPlayer";
 
 export default function Lineup({ fixture }) {
   const unitedLineup =

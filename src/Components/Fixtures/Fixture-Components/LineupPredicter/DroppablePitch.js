@@ -3,14 +3,8 @@ import LineupPlayer from "../LineupPlayer";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
-import {
-  firebaseAddDoc,
-  handlePredictTeamSubmit,
-} from "../../../../Firebase/Firebase";
-import {
-  setLocalStorageItem,
-  useLocalStorage,
-} from "../../../../Hooks/Helper_Functions";
+import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
+import { setLocalStorageItem } from "../../../../Hooks/Helper_Functions";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 
 export default function DroppablePitch({

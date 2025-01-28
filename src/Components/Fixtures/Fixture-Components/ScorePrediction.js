@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
-import { Button, useScrollTrigger } from "@mui/material";
+import { Button } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
@@ -47,7 +47,11 @@ export default function ScorePrediction({ fixture }) {
       <h1 className="smallHeading">Score Prediction</h1>
       <div className="scorePredictionTeams">
         <div className="scorePredictionTeam">
-          <img src={fixture.teams.home.logo} className="predict-team-logo" />
+          <img
+            src={fixture.teams.home.logo}
+            className="predict-team-logo"
+            alt={fixture.teams.home.name}
+          />
           <div className="scorePredictButtons">
             <IconButton
               onClick={() => setHomeTeamScore((prev) => prev + 1)}
@@ -84,7 +88,11 @@ export default function ScorePrediction({ fixture }) {
               <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
             </IconButton>
           </div>
-          <img src={fixture.teams.away.logo} className="predict-team-logo" />
+          <img
+            src={fixture.teams.away.logo}
+            className="predict-team-logo"
+            alt={fixture.teams.away.name}
+          />
         </div>
       </div>
       <Button
