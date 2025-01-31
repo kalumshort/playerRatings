@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
 import {
   CountdownTimer,
