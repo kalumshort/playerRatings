@@ -40,7 +40,7 @@ export default function Fixture() {
 
   return (
     <>
-      <FixtureHeader fixture={fixture} showDetails={true} />
+      <FixtureHeader fixture={fixture} showDetails={true} showScorers={true} />
 
       {isPreMatch && (
         <>

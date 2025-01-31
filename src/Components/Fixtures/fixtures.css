@@ -67,7 +67,25 @@
   font-size: 20px;
   font-weight: bold;
 }
+.match-small-details {
+  position: relative;
+}
+.toggle-container {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
+.match-small-details-text {
+  padding: 0px;
+  margin: 0px;
+}
 .team-logo-small {
   height: 40px;
   width: 40px;
@@ -87,11 +105,11 @@
 
 .fixture-time-header {
   position: absolute;
-  top: 10px;
-  font-size: 16px;
+  top: 1px;
+  font-size: 8px;
   text-align: center;
   font-weight: 500;
-  font-style: italic;
+  color: grey;
 }
 .prev-upcom-container {
   display: flex;
@@ -394,14 +412,14 @@
 }
 @media (max-width: 768px) {
   .team-logo {
-    height: 80px;
+    height: 50px;
   }
 
   .scoreboard {
     font-size: 40px;
   }
   .fixture-header {
-    min-height: 200px;
+    min-height: 120px;
   }
   .fixture-header > * {
     flex: 1 1 30%;

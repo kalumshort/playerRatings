@@ -13,6 +13,7 @@ export default function LineupPlayer({
   onDragStart,
   onDrop,
   percentage,
+  showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
@@ -67,14 +68,14 @@ export default function LineupPlayer({
       onDragStart={onDragStart}
       onDrop={onDrop}
     >
-      <div class="img-wrapper">
-        <img
-          src={player?.img || playerData?.img}
-          className="lineup-player-img"
-          alt={playerData.name}
-        />
-      </div>
-      <span className="lineup-player-name">{player.name}</span>
+      <img
+        src={player?.img || playerData?.img}
+        className="lineup-player-img"
+        alt={playerData.name}
+      />
+      {showPlayerName && (
+        <span className="lineup-player-name">{player.name}</span>
+      )}
       <span className="lineup-player-number gradient-text">
         {player.number}
       </span>

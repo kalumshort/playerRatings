@@ -21,13 +21,11 @@ export default function FixtureEventsList({
 
         return goalAlign === "left" ? (
           <li key={index} className="fixure-events-list-item">
-            ⚽ {time}'<br></br>
-            {event.player.name}
+            ⚽{event.player.name} {time}'
           </li>
         ) : (
           <li key={index} className="fixure-events-list-item">
-            {time}'⚽ <br></br>
-            {event.player.name}
+            {event.player.name} {time}' ⚽
           </li>
         );
       })}
