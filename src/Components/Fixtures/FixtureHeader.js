@@ -8,9 +8,6 @@ import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-
 export default function FixtureHeader({
   fixture,
   onClick,
@@ -19,7 +16,6 @@ export default function FixtureHeader({
   showScorers = false,
 }) {
   const footballClubsColors = footballClubsColours;
-  const [expandDetails, setExpandDetails] = useState(true);
 
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
