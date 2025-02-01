@@ -29,10 +29,10 @@ export default function DraggableSquad() {
         aria-label="Player Position Tabs"
         className="DraggableSquadTabs"
       >
-        <Tab label="GK" value="G" />
-        <Tab label="DEF" value="D" />
-        <Tab label="MID" value="M" />
-        <Tab label="FOR" value="F" />
+        <Tab label="GK" value="G" sx={{ minWidth: "auto", flexShrink: 1 }} />
+        <Tab label="DEF" value="D" sx={{ minWidth: "auto", flexShrink: 1 }} />
+        <Tab label="MID" value="M" sx={{ minWidth: "auto", flexShrink: 1 }} />
+        <Tab label="FOR" value="F" sx={{ minWidth: "auto", flexShrink: 1 }} />
       </Tabs>
 
       <div className="DraggableSquadContainer">
