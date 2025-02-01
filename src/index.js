@@ -4,6 +4,9 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
+import "@fontsource/inter"; // Defaults to 400 weight
+import "@fontsource/inter/700.css"; // Optional: import bold weight
+
 import { Provider } from "react-redux";
 
 import store from "./redux/store";

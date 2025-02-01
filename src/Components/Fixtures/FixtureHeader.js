@@ -61,80 +61,87 @@ export default function FixtureHeader({
     <>
       <ContentContainer className="fixture-header-outer">
         <div
-          className="fixture-header"
           style={{
             background: `linear-gradient(95deg, ${footballClubsColors[homeTeamId]} 40%, ${footballClubsColors[awayTeamId]} 60%)`,
+            padding: "5px",
           }}
           onClick={() => (onClick ? onClick(fixture.id) : null)}
         >
-          {showDate && <div className="fixture-time-header">{matchTime}</div>}
-
-          <div className="team-container">
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
-              <img
-                src={fixture.teams.home.logo}
-                alt={`${fixture.teams.home.name} logo`}
-                className="team-logo"
-              />
-              <span className="team-name">{fixture.teams.home.name}</span>
+          <ContentContainer className="fixture-header">
+            {showDate && <div className="fixture-time-header">{matchTime}</div>}
+            <div className="team-container">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <img
+                  src={fixture.teams.home.logo}
+                  alt={`${fixture.teams.home.name} logo`}
+                  className="team-logo"
+                />
+                <span className="team-name">{fixture.teams.home.name}</span>
+              </div>
             </div>
-          </div>
-
-          {fixture.fixture.status.short === "NS" ? (
-            <CountdownTimer targetTime={fixture.fixture.timestamp} />
-          ) : (
-            <>
-              <Paper className="fixture-status-container">
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-evenly",
-                    width: "100%",
-                  }}
-                >
-                  {fixture.fixture.status.short !== "NS" && (
+            {fixture.fixture.status.short === "NS" ? (
+              <CountdownTimer targetTime={fixture.fixture.timestamp} />
+            ) : (
+              <>
+                <Paper className="fixture-status-container">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-evenly",
+                      width: "100%",
+                    }}
+                  >
+                    {fixture.fixture.status.short !== "NS" && (
+                      <span className="fixture-status-short">
+                        {fixture.fixture.status.short}
+                      </span>
+                    )}
                     <span className="fixture-status-short">
-                      {fixture.fixture.status.short}
+                      {fixture.fixture.status.elapsed}'
+                    </span>
+                  </div>
+
+                  <span className="scoreboard">
+                    {fixture.goals.home} - {fixture.goals.away}
+                  </span>
+                  {fixture.score.penalty.home !== null && (
+                    <span className="halftime-scoreboard">
+                      Penalty: {fixture.score.penalty.home}-
+                      {fixture.score.penalty.away}
                     </span>
                   )}
-                  <span className="fixture-status-short">
-                    {fixture.fixture.status.elapsed}'
-                  </span>
-                </div>
-
-                <span className="scoreboard">
-                  {fixture.goals.home} - {fixture.goals.away}
-                </span>
-                {fixture.score.penalty.home !== null && (
-                  <span className="halftime-scoreboard">
-                    Penalty: {fixture.score.penalty.home}-
-                    {fixture.score.penalty.away}
-                  </span>
-                )}
-                {fixture.score.halftime.home !== null && (
-                  <span className="halftime-scoreboard">
-                    Halftime: {fixture.score.halftime.home}-
-                    {fixture.score.halftime.away}
-                  </span>
-                )}
-              </Paper>
-            </>
-          )}
-
-          <div className="team-container">
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
-              <img
-                src={fixture.teams.away.logo}
-                alt={`${fixture.teams.away.name} logo`}
-                className="team-logo"
-              />
-              <span className="team-name">{fixture.teams.away.name}</span>
+                  {fixture.score.halftime.home !== null && (
+                    <span className="halftime-scoreboard">
+                      Halftime: {fixture.score.halftime.home}-
+                      {fixture.score.halftime.away}
+                    </span>
+                  )}
+                </Paper>
+              </>
+            )}
+            <div className="team-container">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <img
+                  src={fixture.teams.away.logo}
+                  alt={`${fixture.teams.away.name} logo`}
+                  className="team-logo"
+                />
+                <span className="team-name">{fixture.teams.away.name}</span>
+              </div>
             </div>
-          </div>
+          </ContentContainer>
         </div>
         {showScorers && (
           <div className="scorers-Contianer">

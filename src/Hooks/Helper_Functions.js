@@ -31,19 +31,19 @@ export const CountdownTimer = ({ targetTime }) => {
   return (
     <div className="countdownContianer">
       <div className="countdownInterval">
-        <span className="gradient-text">{days}</span>
+        <span>{days}</span>
         <span className="countdownIntervalSmall">Days</span>
       </div>
       <div className="countdownInterval">
-        <span className="gradient-text">{hours}</span>
+        <span>{hours}</span>
         <span className="countdownIntervalSmall">Hrs</span>
       </div>
       <div className="countdownInterval">
-        <span className="gradient-text">{minutes}</span>
+        <span>{minutes}</span>
         <span className="countdownIntervalSmall">Mins</span>
       </div>
       <div className="countdownInterval">
-        <span className="gradient-text">{seconds}</span>
+        <span>{seconds}</span>
         <span className="countdownIntervalSmall">Secs</span>
       </div>
     </div>

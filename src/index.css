@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: "Inter";
+  font-family: "Inter, sans-serif";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease; /* Smooth background and text color transition */
