@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
 import { useSelector } from "react-redux";
+import { useDraggable } from "@dnd-kit/core";
 
 export default function DraggableSquad() {
   const squadData = useSelector(selectSquadData);
   const [selectedTab, setSelectedTab] = useState("G");
-  const [positions, setPositions] = useState({});
 
   // Filter players based on the selected tab
   const filteredPlayers = Object.fromEntries(
@@ -17,32 +17,6 @@ export default function DraggableSquad() {
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
-  };
-  const handleTouchStart = (e, id) => {
-    const touch = e.touches[0];
-    setPositions((prev) => ({
-      ...prev,
-      [id]: { x: touch.clientX, y: touch.clientY },
-    }));
-  };
-
-  const handleTouchMove = (e, id) => {
-    if (!positions[id]) return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - positions[id].x;
-    const deltaY = touch.clientY - positions[id].y;
-
-    setPositions((prev) => ({
-      ...prev,
-      [id]: { x: touch.clientX, y: touch.clientY, dx: deltaX, dy: deltaY },
-    }));
-  };
-
-  const handleTouchEnd = (id) => {
-    setPositions((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], dx: 0, dy: 0 },
-    }));
   };
 
   return (
@@ -63,35 +37,39 @@ export default function DraggableSquad() {
       </Tabs>
 
       <div className="DraggableSquadContainer">
-        {Object.entries(filteredPlayers).map(([id, player]) => {
-          const pos = positions[id] || { dx: 0, dy: 0 };
-          return (
-            <div
-              key={id}
-              className="player"
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", id);
-                e.dataTransfer.effectAllowed = "move";
-              }}
-              style={{
-                transform: `translate(${pos.dx}px, ${pos.dy}px)`,
-                touchAction: "none",
-              }}
-              onTouchStart={(e) => handleTouchStart(e, id)}
-              onTouchMove={(e) => handleTouchMove(e, id)}
-              onTouchEnd={() => handleTouchEnd(id)}
-            >
-              <img
-                src={player.img}
-                alt={player.name}
-                className="lineup-player-img"
-              />
-              <span className="lineup-player-name">{player.name}</span>
-            </div>
-          );
-        })}
+        {Object.entries(filteredPlayers).map(([id, player]) => (
+          <DraggablePlayer id={id} player={player} />
+        ))}
       </div>
     </Box>
+  );
+}
+
+function DraggablePlayer({ player, id }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: String(id), // Make sure the ID is unique and string-based
+    });
+
+  const style = {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : "none",
+    transition: isDragging ? "none" : "transform 200ms ease", // Smooth transition when not dragging
+    cursor: "move",
+    zIndex: isDragging ? 999 : "auto",
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="draggable-player player"
+      style={style}
+    >
+      <img src={player.img} alt={player.name} className="lineup-player-img" />
+      <span className="lineup-player-name">{player.name}</span>
+    </div>
   );
 }
