@@ -59,7 +59,7 @@ export default function LineupPlayer({
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
   }
 
-  return (
+  return playerData ? (
     <div
       key={player.id}
       className={`player ${className}`}
@@ -74,10 +74,10 @@ export default function LineupPlayer({
         alt={playerData.name}
       />
       {showPlayerName && (
-        <span className="lineup-player-name">{player.name}</span>
+        <span className="lineup-player-name">{playerData.name}</span>
       )}
       <span className="lineup-player-number gradient-text">
-        {player.number}
+        {playerData.number}
       </span>
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (
@@ -158,5 +158,7 @@ export default function LineupPlayer({
         </div>
       )}
     </div>
+  ) : (
+    <></>
   );
 }

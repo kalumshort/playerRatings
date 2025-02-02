@@ -1,5 +1,5 @@
 import React from "react";
-import LineupPlayer from "../LineupPlayer";
+
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
@@ -8,29 +8,29 @@ import { setLocalStorageItem } from "../../../../Hooks/Helper_Functions";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 
 import { useDroppable } from "@dnd-kit/core";
+import { DraggablePlayer } from "./DraggableSquad";
 
 export default function DroppablePitch({
   fixture,
   readOnly = false,
   readOnlyTeam,
   chosenTeam,
-  setTeam,
 }) {
   const dispatch = useDispatch();
 
   const squadData = useSelector(selectSquadData);
 
-  const handlePlayerDelete = (playerId) => {
-    if (readOnly) {
-      return;
-    }
-    setTeam((prevTeam) => {
-      const updatedTeam = Object.fromEntries(
-        Object.entries(prevTeam).filter(([_, id]) => id !== String(playerId))
-      );
-      return updatedTeam;
-    });
-  };
+  // const handlePlayerDelete = (playerId) => {
+  //   if (readOnly) {
+  //     return;
+  //   }
+  //   setTeam((prevTeam) => {
+  //     const updatedTeam = Object.fromEntries(
+  //       Object.entries(prevTeam).filter(([_, id]) => id !== String(playerId))
+  //     );
+  //     return updatedTeam;
+  //   });
+  // };
 
   const handleTeamSubmit = async () => {
     if (readOnly) {
@@ -70,27 +70,10 @@ export default function DroppablePitch({
         <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
           {row.map((id) =>
             chosenTeam[id] ? (
-              <LineupPlayer
-                key={id} // Ensure each component has a unique key
+              <DroppableLocation
+                key={id}
+                id={id} // Pass the 'id' prop to DroppableLocation
                 player={squadData[chosenTeam[id]]}
-                onDelete={!readOnly && handlePlayerDelete}
-                draggable={!readOnly}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(
-                    "text/plain",
-                    squadData[chosenTeam[id]].id
-                  );
-                  e.dataTransfer.effectAllowed = "move";
-                }}
-                // onDrop={(e) => {
-                //   e.preventDefault();
-                //   const droppedData = e.dataTransfer.getData("text/plain");
-                //   handlePlayerDrop({
-                //     droppedLocation: id,
-                //     droppedPlayerId: droppedData,
-                //   });
-                // }}
-                // className={"player-substitute"}
               />
             ) : readOnlyTeam ? (
               <></>
@@ -115,18 +98,21 @@ export default function DroppablePitch({
     </div>
   );
 }
-function DroppableLocation({ id }) {
+function DroppableLocation({ id, player }) {
   const { setNodeRef, isOver } = useDroppable({
     id: String(id),
   });
 
-  return (
+  return player ? (
+    <DraggablePlayer locationId={id} player={player} />
+  ) : (
     <div
       ref={setNodeRef}
-      className={`droppable-location player ${isOver ? "over" : ""}`} // Optional: Add styles when it's being hovered over
-      style={{ border: isOver ? "2px solid green" : "2px dashed gray" }} // Optional: Change border color when over
-    >
-      Drop here
-    </div>
+      className={`droppable-location player ${isOver ? "over" : ""}`}
+      style={{
+        boxShadow: isOver ? "0 0 10px 2px green" : "none",
+        position: "relative",
+      }}
+    ></div>
   );
 }

@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
-import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
-import { useSelector } from "react-redux";
-import { useDraggable } from "@dnd-kit/core";
 
-export default function DraggableSquad() {
-  const squadData = useSelector(selectSquadData);
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+
+export default function DraggableSquad({ availablePlayers }) {
   const [selectedTab, setSelectedTab] = useState("G");
 
   // Filter players based on the selected tab
   const filteredPlayers = Object.fromEntries(
-    Object.entries(squadData).filter(
+    Object.entries(availablePlayers).filter(
       ([, player]) => player.position === selectedTab
     )
   );
@@ -45,28 +43,32 @@ export default function DraggableSquad() {
   );
 }
 
-function DraggablePlayer({ player, id }) {
+export function DraggablePlayer({ player, locationId }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: String(id), // Make sure the ID is unique and string-based
-      activationConstraint: {
-        delay: 250, // 250ms press-and-hold before dragging
-        tolerance: 5, // Allows small movement before starting drag
-      },
+      id: String(player.id),
+      activationConstraint: { delay: 250, tolerance: 5 },
     });
+
+  const { setNodeRef: setDropRef } = useDroppable({
+    id: String(locationId),
+  });
 
   const style = {
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : "none",
-    transition: isDragging ? "none" : "transform 200ms ease", // Smooth transition when not dragging
+    transition: isDragging ? "none" : "transform 200ms ease",
     cursor: "move",
     zIndex: isDragging ? 999 : "auto",
   };
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        setDropRef(node);
+      }}
       {...listeners}
       {...attributes}
       className="draggable-player player"

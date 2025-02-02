@@ -11,16 +11,22 @@ import LineupPlayer from "../LineupPlayer";
 import { DndContext } from "@dnd-kit/core";
 
 export default function LineupPredictor({ fixture }) {
+  const squadData = useSelector(selectSquadData);
+
   const storedUsersPredictedTeam = JSON.parse(
     useLocalStorage(`userPredictedTeam-${fixture.id}`)
   );
 
   const [chosenTeam, setTeam] = useState({});
 
+  const availablePlayers = Object.keys(squadData).reduce((acc, playerId) => {
+    if (!Object.values(chosenTeam).includes(playerId)) {
+      acc[playerId] = squadData[playerId];
+    }
+    return acc;
+  }, {});
+
   const handlePlayerDrop = (droppedPlayerId, droppedLocation) => {
-    // if (readOnly) {
-    //   return;
-    // }
     setTeam((prevTeam) => {
       const updatedTeam = { ...prevTeam };
 
@@ -107,7 +113,7 @@ export default function LineupPredictor({ fixture }) {
           chosenTeam={chosenTeam}
           setTeam={setTeam}
         />
-        <DraggableSquad fixture={fixture} />
+        <DraggableSquad fixture={fixture} availablePlayers={availablePlayers} />
       </DndContext>
     </ContentContainer>
   );

@@ -235,6 +235,7 @@
 
   .DraggableSquadContainer {
     min-width: 90%;
+    padding: 10px 0px;
   }
 
   .Prediction-lineup-container {
