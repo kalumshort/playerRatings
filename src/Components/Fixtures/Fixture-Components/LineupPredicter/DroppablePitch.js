@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import LineupPlayer from "../LineupPlayer";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
