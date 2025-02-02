@@ -49,6 +49,10 @@ function DraggablePlayer({ player, id }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: String(id), // Make sure the ID is unique and string-based
+      activationConstraint: {
+        delay: 250, // 250ms press-and-hold before dragging
+        tolerance: 5, // Allows small movement before starting drag
+      },
     });
 
   const style = {
