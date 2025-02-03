@@ -187,6 +187,11 @@
   width: 50px;
   z-index: 9999;
 }
+
+.userPredictedTeamContainer {
+  padding: 30px 0px 15px 0px;
+}
+
 @media (min-width: 768px) {
   .lineup-sidebar {
     width: calc(40% - 40px);
@@ -253,6 +258,9 @@
 
   .lineupAndRatings-Container {
     width: 100%;
+  }
+  .percentage-text {
+    font-size: 12px !important;
   }
 }
 

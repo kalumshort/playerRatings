@@ -154,7 +154,7 @@ export default function LineupPlayer({
             className="percentage-bar"
             style={{ width: `${percentage}%` }}
           ></div>
-          <span className="percentage-text">{percentage.toFixed(2)}%</span>
+          <span className="percentage-text">{percentage.toFixed(0)}%</span>
         </div>
       )}
     </div>

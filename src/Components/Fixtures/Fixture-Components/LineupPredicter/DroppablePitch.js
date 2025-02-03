@@ -14,6 +14,7 @@ export default function DroppablePitch({
   fixture,
   readOnly = false,
   chosenTeam,
+  UsersPredictedTeam,
 }) {
   const dispatch = useDispatch();
 

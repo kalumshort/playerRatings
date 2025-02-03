@@ -88,11 +88,11 @@ export default function LineupPredictor({ fixture }) {
 
   return storedUsersPredictedTeam ? (
     <div className="chosen-lineup-container">
-      <ChosenLineup fixture={fixture} readOnlyTeam={storedUsersPredictedTeam} />
-      <CommunityTeamStats
-        fixture={fixture}
-        readOnlyTeam={storedUsersPredictedTeam}
+      <ChosenLineup
+        UsersPredictedTeam={storedUsersPredictedTeam}
+        squadData={squadData}
       />
+      <CommunityTeamStats fixture={fixture} />
     </div>
   ) : (
     <ContentContainer className="Prediction-lineup-container">
@@ -129,15 +129,33 @@ export default function LineupPredictor({ fixture }) {
   );
 }
 
-function ChosenLineup({ fixture, readOnlyTeam }) {
+function ChosenLineup({ squadData, UsersPredictedTeam }) {
   return (
     <ContentContainer className="chosen-lineup">
       <h1 className="smallHeading">Your Chosen Lineup </h1>
-      <DroppablePitch
-        fixture={fixture}
-        readOnlyTeam={readOnlyTeam}
-        readOnly={true}
-      />
+      <div className="userPredictedTeamContainer">
+        {[
+          [1],
+          [2, 3, 4, 5, 6],
+          [7, 8, 9, 10, 11],
+          [12, 13, 14, 15, 16],
+          [17, 18, 19, 20, 21],
+        ].map((row, rowIndex) => (
+          <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
+            {row.map((id) =>
+              squadData[UsersPredictedTeam[id]] ? (
+                <LineupPlayer
+                  key={id}
+                  id={id} // Pass the 'id' prop to DroppableLocation
+                  player={squadData[UsersPredictedTeam[id]]}
+                />
+              ) : (
+                <></>
+              )
+            )}
+          </div>
+        ))}
+      </div>
     </ContentContainer>
   );
 }
