@@ -13,7 +13,6 @@ import { DraggablePlayer } from "./DraggableSquad";
 export default function DroppablePitch({
   fixture,
   readOnly = false,
-  readOnlyTeam,
   chosenTeam,
 }) {
   const dispatch = useDispatch();
@@ -68,22 +67,13 @@ export default function DroppablePitch({
         [17, 18, 19, 20, 21],
       ].map((row, rowIndex) => (
         <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
-          {row.map((id) =>
-            chosenTeam[id] ? (
-              <DroppableLocation
-                key={id}
-                id={id} // Pass the 'id' prop to DroppableLocation
-                player={squadData[chosenTeam[id]]}
-              />
-            ) : readOnlyTeam ? (
-              <></>
-            ) : (
-              <DroppableLocation
-                key={id}
-                id={id} // Pass the 'id' prop to DroppableLocation
-              />
-            )
-          )}
+          {row.map((id) => (
+            <DroppableLocation
+              key={id}
+              id={id} // Pass the 'id' prop to DroppableLocation
+              player={squadData[chosenTeam[id]]}
+            />
+          ))}
         </div>
       ))}
       {Object.keys(chosenTeam).length === 11 && !readOnly && (
@@ -99,18 +89,19 @@ export default function DroppablePitch({
   );
 }
 function DroppableLocation({ id, player }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: String(id),
-  });
+  const { setNodeRef, isOver } = useDroppable({ id: id });
 
   return player ? (
-    <DraggablePlayer locationId={id} player={player} />
+    <DraggablePlayer locationId={id} player={player} useAnimation={true} />
   ) : (
     <div
       ref={setNodeRef}
+      key={`${id}-${player ? "filled" : "empty"}`} // Forces React to remount when empty
       className={`droppable-location player ${isOver ? "over" : ""}`}
       style={{
-        boxShadow: isOver ? "0 0 10px 2px green" : "none",
+        boxShadow: isOver
+          ? "0 0 10px 2px green"
+          : "0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4)",
         position: "relative",
       }}
     ></div>

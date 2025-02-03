@@ -49,6 +49,7 @@
   max-width: 100px;
   overflow: visible;
   height: 100px;
+  box-sizing: border-box;
 }
 .player-substitute {
   width: 75px;
@@ -64,7 +65,9 @@
   /* height: 100%; */
 }
 .lineup-player-img {
-  height: 100%;
+  width: 100%; /* Make sure it fills the container */
+  height: 100%; /* Take up full height of the container */
+  object-fit: cover; /* Ensures the image covers the container, cropping excess */
 }
 .lineup-player-name {
   position: absolute;
@@ -177,7 +180,13 @@
   top: 15px !important;
   right: 30px !important;
 }
-
+.lineupPredicClear {
+  position: absolute !important;
+  left: 10px;
+  top: 50px;
+  width: 50px;
+  z-index: 9999;
+}
 @media (min-width: 768px) {
   .lineup-sidebar {
     width: calc(40% - 40px);
@@ -218,7 +227,7 @@
   .player {
     height: 90px;
     width: 20%;
-    margin: 5px;
+    margin: 3px;
     font-size: 15px;
   }
   .lineup-player-name {

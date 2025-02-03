@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
@@ -36,19 +36,31 @@ export default function DraggableSquad({ availablePlayers }) {
 
       <div className="DraggableSquadContainer">
         {Object.entries(filteredPlayers).map(([id, player]) => (
-          <DraggablePlayer id={id} player={player} />
+          <DraggablePlayer id={id} player={player} useAnimation={false} />
         ))}
       </div>
     </Box>
   );
 }
 
-export function DraggablePlayer({ player, locationId }) {
+export function DraggablePlayer({ player, locationId, useAnimation }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: String(player.id),
       activationConstraint: { delay: 250, tolerance: 5 },
     });
+  const [animateClass, setAnimateClass] = useState(
+    "animate__animated animate__flipInX"
+  );
+
+  // Remove animation when dragging starts
+  useEffect(() => {
+    if (isDragging) {
+      setAnimateClass(""); // Remove animation class
+    } else {
+      setAnimateClass("animate__animated animate__flipInX"); // Reapply after drag
+    }
+  }, [isDragging]);
 
   const { setNodeRef: setDropRef } = useDroppable({
     id: String(locationId),
@@ -71,7 +83,7 @@ export function DraggablePlayer({ player, locationId }) {
       }}
       {...listeners}
       {...attributes}
-      className="draggable-player player"
+      className={`draggable-player player ${useAnimation ? animateClass : ""}`}
       style={style}
     >
       <img src={player.img} alt={player.name} className="lineup-player-img" />

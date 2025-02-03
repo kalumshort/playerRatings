@@ -9,6 +9,7 @@ import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
 import LineupPlayer from "../LineupPlayer";
 
 import { DndContext } from "@dnd-kit/core";
+import { Button } from "@mui/material";
 
 export default function LineupPredictor({ fixture }) {
   const squadData = useSelector(selectSquadData);
@@ -95,7 +96,16 @@ export default function LineupPredictor({ fixture }) {
     </div>
   ) : (
     <ContentContainer className="Prediction-lineup-container">
-      <h1 className="smallHeading">Preferred Lineup </h1>
+      <h1 className="smallHeading">
+        Preferred <br></br>Lineup
+      </h1>
+      <Button
+        className="lineupPredicClear"
+        variant="outlined"
+        onClick={() => setTeam({})}
+      >
+        Clear
+      </Button>
       <DndContext
         onDragEnd={(event) => {
           const { active, over } = event;
