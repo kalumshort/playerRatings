@@ -2,14 +2,12 @@
 
 body {
   margin: 0;
-  font-family: "Inter, sans-serif";
+  font-family: "Inter, sans-serif" !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease; /* Smooth background and text color transition */
 }
-/* h1 h2 h3 h4 h5 h6 {
-  font-family: "Oswald";
-} */
+
 .muiIconSmall {
   font-size: 20px !important;
 }
@@ -24,10 +22,7 @@ body {
   letter-spacing: 2px;
   color: grey;
 }
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
-}
+
 /* Global slim modern scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
