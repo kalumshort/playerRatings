@@ -1,7 +1,10 @@
 import { useParams } from "react-router-dom";
 
 import { useDispatch, useSelector } from "react-redux";
-import { selectFixtureById } from "../../Selectors/fixturesSelectors";
+import {
+  selectFixtureById,
+  selectLatestFixture,
+} from "../../Selectors/fixturesSelectors";
 
 import FixtureHeader from "./FixtureHeader";
 
@@ -18,6 +21,7 @@ import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings"
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
 import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
+import FirestoreDocumentListener from "../../Firebase/FirebaseListeners";
 
 export default function Fixture() {
   const dispatch = useDispatch();
@@ -25,6 +29,8 @@ export default function Fixture() {
   const { matchId } = useParams();
 
   const fixture = useSelector(selectFixtureById(matchId));
+
+  const latestFixture = useSelector(selectLatestFixture);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -40,6 +46,7 @@ export default function Fixture() {
 
   return (
     <>
+      <FirestoreDocumentListener docId={latestFixture.fixture.id} />
       <FixtureHeader fixture={fixture} showDetails={true} showScorers={true} />
 
       {isPreMatch && (
