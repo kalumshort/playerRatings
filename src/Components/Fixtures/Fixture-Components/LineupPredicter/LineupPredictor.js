@@ -87,7 +87,7 @@ export default function LineupPredictor({ fixture }) {
   };
 
   return storedUsersPredictedTeam ? (
-    <div className="chosen-lineup-container">
+    <div className="chosen-lineup-container containerMargin">
       <ChosenLineup
         UsersPredictedTeam={storedUsersPredictedTeam}
         squadData={squadData}
@@ -95,7 +95,7 @@ export default function LineupPredictor({ fixture }) {
       <CommunityTeamStats fixture={fixture} />
     </div>
   ) : (
-    <ContentContainer className="Prediction-lineup-container">
+    <ContentContainer className="Prediction-lineup-container containerMargin">
       <h1 className="smallHeading">
         Preferred <br></br>Lineup
       </h1>

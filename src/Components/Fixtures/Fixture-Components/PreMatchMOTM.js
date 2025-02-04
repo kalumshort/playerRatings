@@ -51,7 +51,7 @@ export default function PreMatchMOTM({ fixture }) {
 
   return storedUsersPlayerToWatch ? (
     <ContentContainer
-      className="scorePredictionContainer"
+      className="scorePredictionContainer containerMargin"
       style={{
         display: "flex",
         flexDirection: "row",
@@ -97,7 +97,7 @@ export default function PreMatchMOTM({ fixture }) {
       </div>
     </ContentContainer>
   ) : (
-    <ContentContainer className="scorePredictionContainer">
+    <ContentContainer className="scorePredictionContainer containerMargin">
       <div
         style={{
           display: "flex",

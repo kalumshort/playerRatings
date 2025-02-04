@@ -26,7 +26,7 @@ export default function FixturesList() {
   return (
     <div className="fixtures-container">
       <LatestFixtureItem />
-      <div className="prev-upcom-container">
+      <div className="prev-upcom-container containerMargin">
         <PreviousFixtures />
         <UpcomingFixtures />
       </div>

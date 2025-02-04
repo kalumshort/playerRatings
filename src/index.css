@@ -103,6 +103,11 @@ body {
 .marginBottom {
   margin-bottom: 30px !important;
 }
+
+.containerMargin {
+  margin: 20px 20px 0;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -125,5 +130,8 @@ body {
   }
   .smallHeading {
     font-size: 15px;
+  }
+  .containerMargin {
+    margin: 10px 10px 0;
   }
 }

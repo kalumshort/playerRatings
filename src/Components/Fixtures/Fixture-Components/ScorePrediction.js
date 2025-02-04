@@ -43,7 +43,7 @@ export default function ScorePrediction({ fixture }) {
       <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
     </div>
   ) : (
-    <ContentContainer className="scorePredictionContainer">
+    <ContentContainer className="scorePredictionContainer containerMargin">
       <h1 className="smallHeading">Score Prediction</h1>
       <div className="scorePredictionTeams">
         <div className="scorePredictionTeam">

@@ -4,7 +4,7 @@ import { ContentContainer } from "../../../Containers/GlobalContainer";
 export default function Events({ events }) {
   if (!events) {
     return (
-      <ContentContainer className="events-container">
+      <ContentContainer className="events-container containerMargin">
         <h2 className="heading2" style={{ textAlign: "center" }}>
           No Events
         </h2>
@@ -12,7 +12,7 @@ export default function Events({ events }) {
     );
   }
   return (
-    <ContentContainer className="events-container">
+    <ContentContainer className="events-container containerMargin">
       <h2 className="heading2" style={{ textAlign: "center" }}>
         Events
       </h2>

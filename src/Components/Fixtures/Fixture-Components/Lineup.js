@@ -11,7 +11,7 @@ export default function Lineup({ fixture }) {
     fixture?.lineups?.find((team) => team.team.id === 33)?.substitutes || [];
 
   return (
-    <div className="lineup-container">
+    <div className="lineup-container containerMargin">
       <div style={{ position: "relative" }}>
         <div className="pitch">
           {unitedLineup

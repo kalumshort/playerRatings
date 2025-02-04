@@ -59,7 +59,7 @@ export default function FixtureHeader({
 
   return (
     <>
-      <ContentContainer className="fixture-header-outer">
+      <ContentContainer className="fixture-header-outer containerMargin">
         <div
           style={{
             background: `linear-gradient(95deg, ${footballClubsColors[homeTeamId]} 40%, ${footballClubsColors[awayTeamId]} 60%)`,

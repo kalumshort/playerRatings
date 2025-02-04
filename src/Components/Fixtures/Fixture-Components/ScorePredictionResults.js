@@ -38,7 +38,7 @@ export default function ScorePredictionResults({ fixture }) {
   }
 
   return (
-    <ContentContainer className="scorePredictionResultsContainer">
+    <ContentContainer className="scorePredictionResultsContainer containerMargin">
       <div className="scorePredictionResultsInnerContainer">
         <h1 className="scorePredictionInnerHeading ">Your Predicted Score</h1>
         <span className="gradient-text usersScorePrediction">
