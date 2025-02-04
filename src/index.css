@@ -93,8 +93,13 @@ body {
 .pieChart {
   overflow: visible !important;
 }
+.recharts-wrapper {
+  overflow: visible !important;
+}
 .pieChartScorePredictions {
   font-size: 15px;
+  position: relative;
+  overflow: visible;
 }
 
 .barChart {
@@ -106,6 +111,10 @@ body {
 
 .containerMargin {
   margin: 20px 20px 0;
+}
+
+.recharts-text {
+  z-index: 9999999;
 }
 
 @keyframes spin {

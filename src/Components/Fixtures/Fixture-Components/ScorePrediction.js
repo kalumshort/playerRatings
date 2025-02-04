@@ -39,9 +39,7 @@ export default function ScorePrediction({ fixture }) {
     dispatch(fetchMatchPredictions(fixture.id));
   };
   return storedUsersPredictedScore ? (
-    <div style={{ margin: "20px 20px 0px" }}>
-      <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
-    </div>
+    <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
   ) : (
     <ContentContainer className="scorePredictionContainer containerMargin">
       <h1 className="smallHeading">Score Prediction</h1>
@@ -65,6 +63,7 @@ export default function ScorePrediction({ fixture }) {
               onClick={() => setHomeTeamScore((prev) => Math.max(0, prev - 1))}
               className="muiButton"
               disabled={homeTeamScore === 0}
+              variant="contained"
             >
               <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
             </IconButton>
@@ -96,9 +95,14 @@ export default function ScorePrediction({ fixture }) {
         </div>
       </div>
       <Button
+        onClick={() => handleTeamScoreSubmit()}
+        style={{
+          position: "absolute",
+          bottom: "0px",
+          right: "0px",
+        }}
+        // className="predictScoreSubmit"
         variant="contained"
-        className="predictScoreSubmit"
-        onClick={handleTeamScoreSubmit}
       >
         Submit
       </Button>

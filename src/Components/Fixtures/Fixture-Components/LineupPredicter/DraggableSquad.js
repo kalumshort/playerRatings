@@ -19,7 +19,6 @@ export default function DraggableSquad({ availablePlayers }) {
 
   return (
     <Box>
-      {/* Tabs for filtering */}
       <Tabs
         value={selectedTab}
         onChange={handleTabChange}

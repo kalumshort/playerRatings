@@ -110,10 +110,10 @@ export const setLocalStorageItem = (key, value) => {
 };
 
 export const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 450);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 450);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -142,4 +142,17 @@ export const footballClubsColours = {
   57: "#1C3473", // Ipswich
   46: "#0053A0", // Leicester
   41: "#D71920", // Southhampton
+};
+
+export const blendColors = (color1, color2, weight) => {
+  const c1 = parseInt(color1.slice(1), 16);
+  const c2 = parseInt(color2.slice(1), 16);
+
+  const r = Math.round((c1 >> 16) * (1 - weight) + (c2 >> 16) * weight);
+  const g = Math.round(
+    ((c1 >> 8) & 0xff) * (1 - weight) + ((c2 >> 8) & 0xff) * weight
+  );
+  const b = Math.round((c1 & 0xff) * (1 - weight) + (c2 & 0xff) * weight);
+
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 };

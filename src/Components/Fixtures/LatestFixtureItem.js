@@ -6,10 +6,22 @@ import "./fixtures.css";
 import { useNavigate } from "react-router-dom";
 
 import FixtureHeader from "./FixtureHeader";
+import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
+import { footballClubsColours } from "../../Hooks/Helper_Functions";
 
 export default function LatestFixtureItem() {
+  const footballClubsColors = footballClubsColours;
+
   const latestFixture = useSelector(selectLatestFixture);
   const navigate = useNavigate();
+
+  const homeTeamId = latestFixture.teams.home.id;
+  const awayTeamId = latestFixture.teams.away.id;
+
+  const homeTeamColour = footballClubsColors[homeTeamId];
+  const awayTeamColour = footballClubsColors[awayTeamId];
+
+  const fixtureGradient = `linear-gradient(95deg, ${homeTeamColour} 40%, ${awayTeamColour} 60%)`;
 
   const handleFixtureClick = (matchId) => {
     navigate(`/fixture/${matchId}`);
@@ -20,10 +32,18 @@ export default function LatestFixtureItem() {
   }
 
   return (
-    <FixtureHeader
-      fixture={latestFixture}
-      onClick={handleFixtureClick}
-      showDate={true}
-    />
+    <FixtureGradientProvider
+      value={{
+        fixtureGradient: fixtureGradient,
+        homeTeamColour: homeTeamColour,
+        awayTeamColour: awayTeamColour,
+      }}
+    >
+      <FixtureHeader
+        fixture={latestFixture}
+        onClick={handleFixtureClick}
+        showDate={true}
+      />
+    </FixtureGradientProvider>
   );
 }

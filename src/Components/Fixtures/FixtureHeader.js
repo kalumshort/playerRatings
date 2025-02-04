@@ -1,12 +1,10 @@
 import React from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
-import {
-  CountdownTimer,
-  footballClubsColours,
-} from "../../Hooks/Helper_Functions";
+import { CountdownTimer } from "../../Hooks/Helper_Functions";
 import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
+import { useFixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 
 export default function FixtureHeader({
   fixture,
@@ -15,10 +13,10 @@ export default function FixtureHeader({
   showDetails = false,
   showScorers = false,
 }) {
-  const footballClubsColors = footballClubsColours;
-
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
+
+  const { fixtureGradient } = useFixtureGradientProvider() || {};
 
   const homeEvents = fixture?.events?.filter(
     (event) => event.team.id === homeTeamId
@@ -59,10 +57,10 @@ export default function FixtureHeader({
 
   return (
     <>
-      <ContentContainer className="fixture-header-outer containerMargin">
+      <ContentContainer className="fixture-header-outer containerMargin animate__animated animate__flipInX">
         <div
           style={{
-            background: `linear-gradient(95deg, ${footballClubsColors[homeTeamId]} 40%, ${footballClubsColors[awayTeamId]} 60%)`,
+            background: fixtureGradient,
             padding: "5px",
           }}
           onClick={() => (onClick ? onClick(fixture.id) : null)}

@@ -131,7 +131,7 @@ export default function LineupPredictor({ fixture }) {
 
 function ChosenLineup({ squadData, UsersPredictedTeam }) {
   return (
-    <ContentContainer className="chosen-lineup">
+    <ContentContainer className="chosen-lineup animate__animated animate__flipInX">
       <h1 className="smallHeading">Your Chosen Lineup </h1>
       <div className="userPredictedTeamContainer">
         {[

@@ -51,7 +51,7 @@ export default function PreMatchMOTM({ fixture }) {
 
   return storedUsersPlayerToWatch ? (
     <ContentContainer
-      className="scorePredictionContainer containerMargin"
+      className="scorePredictionContainer containerMargin animate__animated animate__flipInX"
       style={{
         display: "flex",
         flexDirection: "row",
@@ -98,6 +98,7 @@ export default function PreMatchMOTM({ fixture }) {
     </ContentContainer>
   ) : (
     <ContentContainer className="scorePredictionContainer containerMargin">
+      <h1 className="smallHeading">Player to Watch</h1>
       <div
         style={{
           display: "flex",
@@ -110,6 +111,7 @@ export default function PreMatchMOTM({ fixture }) {
           value={selectedPlayer}
           onChange={handleChange}
           displayEmpty
+          variant="standard"
           renderValue={(selected) =>
             selected && squadData[selected] ? (
               <Box display="flex" alignItems="center" gap={1}>
@@ -117,8 +119,10 @@ export default function PreMatchMOTM({ fixture }) {
                   alt={squadData[selected].name}
                   src={squadData[selected].img}
                   style={{
-                    width: 50,
-                    height: 50,
+                    height: 80,
+                    width: 60,
+                    borderRadius: "8px",
+                    objectFit: "contain",
                   }}
                 />
                 <Typography>{squadData[selected].name}</Typography>
@@ -127,7 +131,7 @@ export default function PreMatchMOTM({ fixture }) {
               "Select a Player"
             )
           }
-          style={{ width: 300 }}
+          style={{ minWidth: 150 }}
         >
           {Object.values(squadData).map((player) => (
             <MenuItem key={player.id} value={player.id}>
@@ -135,7 +139,11 @@ export default function PreMatchMOTM({ fixture }) {
                 <Avatar
                   alt={player.name}
                   src={player.img}
-                  style={{ width: 24, height: 24 }}
+                  style={{
+                    height: 50,
+                    borderRadius: "8px",
+                    objectFit: "contain",
+                  }}
                 />
                 <Typography>{player.name}</Typography>
               </Box>
@@ -146,7 +154,11 @@ export default function PreMatchMOTM({ fixture }) {
       {selectedPlayer && (
         <Button
           onClick={() => handlePlayerToWatchSubmit()}
-          style={{ position: "absolute", bottom: "10px", right: "10px" }}
+          style={{
+            position: "absolute",
+            bottom: "0px",
+            right: "0px",
+          }}
           variant="contained"
         >
           Submit

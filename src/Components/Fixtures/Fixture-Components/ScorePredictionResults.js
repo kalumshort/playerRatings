@@ -38,7 +38,7 @@ export default function ScorePredictionResults({ fixture }) {
   }
 
   return (
-    <ContentContainer className="scorePredictionResultsContainer containerMargin">
+    <ContentContainer className="scorePredictionResultsContainer containerMargin animate__bounceIn">
       <div className="scorePredictionResultsInnerContainer">
         <h1 className="scorePredictionInnerHeading ">Your Predicted Score</h1>
         <span className="gradient-text usersScorePrediction">
@@ -49,9 +49,9 @@ export default function ScorePredictionResults({ fixture }) {
         <h1 className="scorePredictionInnerHeading">Predicted Scoreline</h1>
         <Piechart
           chartData={matchPredictions?.scorePrecitions || []}
-          width={(isMobile && 200) || 300}
-          height={(isMobile && 200) || 300}
-          outerRadius={(isMobile && 45) || 85}
+          width={isMobile ? 300 : 220}
+          height={220}
+          outerRadius={75}
         />
         {/* <Barchart
           barchartData={barchartDataScoreline}
@@ -63,7 +63,7 @@ export default function ScorePredictionResults({ fixture }) {
         <h1 className="scorePredictionInnerHeading">Predicted Home Goals</h1>
         <Barchart
           barchartData={barchartDataHomeGoals}
-          width={(isMobile && 200) || 300}
+          width={300}
           height={(isMobile && 150) || 220}
         />
       </div>
@@ -71,7 +71,7 @@ export default function ScorePredictionResults({ fixture }) {
         <h1 className="scorePredictionInnerHeading">Predicted Away Goals</h1>
         <Barchart
           barchartData={barchartDataAwayGoals}
-          width={(isMobile && 200) || 300}
+          width={300}
           height={(isMobile && 150) || 220}
         />
       </div>
