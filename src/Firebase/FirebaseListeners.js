@@ -19,7 +19,9 @@ const FirestoreDocumentListener = ({ docId }) => {
       fixtureRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          dispatch(latestFixtureReducer(snapshot.data())); // Dispatch to Redux
+          dispatch(
+            latestFixtureReducer({ ...snapshot.data(), id: snapshot.id })
+          ); // Dispatch to Redux
         }
       },
       (error) => {
