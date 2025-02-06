@@ -43,15 +43,17 @@ export default function ScorePredictionResults({ fixture }) {
   if (!matchPredictions) {
     return <div>Loading...</div>; // Or a spinner/loading component
   }
+  let highestScorePredictions;
+  if (matchPredictions?.scorePrecitions) {
+    const maxValue = Math.max(
+      ...Object.values(matchPredictions?.scorePrecitions)
+    );
 
-  const maxValue = Math.max(
-    ...Object.values(matchPredictions?.scorePrecitions)
-  );
-
-  // Filter keys that have the maximum value
-  const keysWithMaxValue = Object.keys(
-    matchPredictions?.scorePrecitions
-  ).filter((key) => matchPredictions?.scorePrecitions[key] === maxValue);
+    // Filter keys that have the maximum value
+    highestScorePredictions = Object.keys(
+      matchPredictions?.scorePrecitions
+    ).filter((key) => matchPredictions?.scorePrecitions[key] === maxValue);
+  }
 
   return (
     <ContentContainer className="scorePredictionResultsContainer containerMargin animate__bounceIn">
@@ -59,13 +61,13 @@ export default function ScorePredictionResults({ fixture }) {
         <div className="scorePredictionResultsInnerContainer">
           <h1 className="scorePredictionInnerHeading ">Your Score</h1>
           <span className="gradient-text usersScorePrediction">
-            {storedUsersPredictedScore || "No prediction yet"}
+            {storedUsersPredictedScore || "na"}
           </span>
         </div>
         <div className="scorePredictionResultsInnerContainer">
           <h1 className="scorePredictionInnerHeading ">Community Score</h1>
           <span className="gradient-text usersScorePrediction">
-            {keysWithMaxValue[0]}
+            {highestScorePredictions?.[0] || "na"}
           </span>
         </div>
       </div>
