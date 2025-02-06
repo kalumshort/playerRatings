@@ -12,7 +12,13 @@ import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatin
 
 export default function MobileFixtureContainer({ fixture }) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
-  const [selectedTab, setSelectedTab] = useState("");
+  const getFirstTabValue = () => {
+    if (isPreMatch) return "Predicts";
+    if (!fixture?.lineups || fixture.lineups.length === 0) return "Predict-XI";
+    return "Lineup";
+  };
+
+  const [selectedTab, setSelectedTab] = useState(getFirstTabValue());
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -38,7 +44,7 @@ export default function MobileFixtureContainer({ fixture }) {
           {!isPreMatch && <Tab label="Ratings" value="Ratings" />}
           {!isPreMatch && <Tab label="Stats" value="Stats" />}
           {!isPreMatch && <Tab label="Events" value="Events" />}
-          {!isPreMatch && <Tab label="Predicts" value="PostPredicts" />}
+          {!isPreMatch && <Tab label="Predictions" value="PostPredicts" />}
         </Tabs>
       </Paper>
       {selectedTab === "Predicts" && (

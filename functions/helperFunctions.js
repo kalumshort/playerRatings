@@ -119,7 +119,6 @@ const fetchLineupData = async (fixtureId) => {
 };
 
 const fetchAllMatchData = async (fixtureId) => {
-  console.log(fixtureId);
   try {
     const fixtureData = await fetchFixtureData(fixtureId);
 
