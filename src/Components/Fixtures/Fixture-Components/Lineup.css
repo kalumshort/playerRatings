@@ -265,8 +265,8 @@
 .chosen-lineup-container {
   display: flex;
   flex-wrap: wrap;
-  width: 100%; /* Ensure the container spans the full width */
-  gap: 20px; /* Add a 20px gap between items */
+  width: calc(100% - 20px);
+  gap: 20px;
 }
 
 .chosen-lineup {

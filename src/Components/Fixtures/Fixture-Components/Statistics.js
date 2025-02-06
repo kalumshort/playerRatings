@@ -27,7 +27,7 @@ export default function Statistics({ fixture }) {
     return;
   }
   return (
-    <ContentContainer className="statistics-container">
+    <ContentContainer className="statistics-container containerMargin">
       <div style={{ color: "#fff", fontFamily: "Arial, sans-serif" }}>
         <div
           style={{

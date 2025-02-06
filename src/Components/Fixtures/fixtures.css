@@ -406,6 +406,12 @@
 .motm {
   animation: boxShadowPulse 2s infinite alternate;
 }
+
+/* Mobile Fixture */
+.MobileFixtureTabs {
+  border-radius: 5px;
+  margin: 10px 10px -5px 10px;
+}
 @media (max-width: 768px) {
   .team-logo {
     height: 50px;

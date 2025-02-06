@@ -117,6 +117,11 @@ body {
   z-index: 9999999;
 }
 
+button {
+  text-transform: none !important;
+  font-weight: 400 !important;
+  letter-spacing: 1.2px !important;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);

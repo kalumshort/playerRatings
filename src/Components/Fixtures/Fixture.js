@@ -22,11 +22,17 @@ import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredicto
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
 import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
 import FirestoreDocumentListener from "../../Firebase/FirebaseListeners";
-import { footballClubsColours } from "../../Hooks/Helper_Functions";
+import {
+  footballClubsColours,
+  useIsMobile,
+} from "../../Hooks/Helper_Functions";
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
+import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
 
 export default function Fixture() {
   const footballClubsColors = footballClubsColours;
+
+  const isMobile = useIsMobile();
 
   const dispatch = useDispatch();
 
@@ -71,37 +77,42 @@ export default function Fixture() {
           showDetails={true}
           showScorers={true}
         />
-
-        {isPreMatch && (
+        {isMobile ? (
+          <MobileFixtureContainer fixture={fixture} />
+        ) : (
           <>
-            <ScorePrediction fixture={fixture} />
-
-            <PreMatchMOTM fixture={fixture} />
-          </>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-          }}
-        >
-          {!fixture?.lineups || fixture.lineups.length === 0 ? (
-            <LineupPredictor fixture={fixture} />
-          ) : (
-            <LineupAndPlayerRatings fixture={fixture} />
-          )}
-
-          <div className="lineup-sidebar">
-            {!isPreMatch && (
+            {isPreMatch && (
               <>
-                <Statistics fixture={fixture} />
-                <Events events={fixture?.events} />
+                <ScorePrediction fixture={fixture} />
+
+                <PreMatchMOTM fixture={fixture} />
               </>
             )}
-          </div>
-          {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
-        </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+              }}
+            >
+              {!fixture?.lineups || fixture.lineups.length === 0 ? (
+                <LineupPredictor fixture={fixture} />
+              ) : (
+                <LineupAndPlayerRatings fixture={fixture} />
+              )}
+
+              <div className="lineup-sidebar">
+                {!isPreMatch && (
+                  <>
+                    <Statistics fixture={fixture} />
+                    <Events events={fixture?.events} />
+                  </>
+                )}
+              </div>
+              {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
+            </div>
+          </>
+        )}
       </FixtureGradientProvider>
     </>
   );
