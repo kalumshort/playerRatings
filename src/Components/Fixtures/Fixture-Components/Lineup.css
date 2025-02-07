@@ -2,7 +2,7 @@
   width: 100%;
 }
 .Prediction-lineup-container {
-  width: 100%;
+  /* width: 100%; */
   display: flex;
   position: relative;
 }
@@ -223,6 +223,10 @@
 }
 
 @media (max-width: 450px) {
+  .DroppablePitchContainer {
+    padding: 0px;
+    max-width: 100vw !important;
+  }
   .lineup-container {
     margin: 0px;
   }
