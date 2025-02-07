@@ -1,5 +1,5 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
 import {
@@ -27,8 +27,10 @@ import {
 
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import StarIcon from "@mui/icons-material/Star";
+import { fetchMatchPlayerRatings } from "../../../../Hooks/Fixtures_Hooks";
 
 export default function PlayerRatings({ fixture }) {
+  const dispatch = useDispatch();
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
   );
@@ -85,6 +87,7 @@ export default function PlayerRatings({ fixture }) {
     });
 
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
+    dispatch(fetchMatchPlayerRatings(fixture.id));
   };
 
   return isMatchRatingsSubmitted ? (
@@ -185,7 +188,7 @@ const PlayerRatingItem = ({
 
       <div className="PlayerRatingInner">
         <span className="PlayerRatingsNameContainer">
-          <h2 className="PlayerRatingName gradient-text">{playerData.name}</h2>
+          <h2 className="PlayerRatingName">{playerData.name}</h2>
           {goals?.map((goal, index) => (
             <img
               key={index}
@@ -231,13 +234,13 @@ const PlayerRatingItem = ({
           <div className="PlayerRatingsResults">
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
-              <h2 className="PlayerRatingsCommunityScore gradient-text">
+              <h2 className="PlayerRatingsCommunityScore ">
                 {storedUsersPlayerRating}
               </h2>
             </div>
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
-              <h2 className="PlayerRatingsCommunityScore gradient-text">
+              <h2 className="PlayerRatingsCommunityScore ">
                 {playerRatingAverage}
               </h2>
             </div>
@@ -347,7 +350,7 @@ const SubmittedPlayerRatings = ({
             </h5>
             <h2>{motmPercentages[0].name}</h2>
             <h2
-              className="gradient-text"
+              // className="gradient-text"
               style={{ fontSize: "50px", margin: "0px" }}
             >
               {motmPercentages[0].percentage}%

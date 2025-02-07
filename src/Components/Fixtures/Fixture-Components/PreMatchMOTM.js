@@ -82,7 +82,7 @@ export default function PreMatchMOTM({ fixture }) {
         <br></br>
         <p
           style={{ margin: "0px", fontSize: "30px" }}
-          className="gradient-text"
+          // className="gradient-text"
         >
           {result[0]?.percentage}%
         </p>

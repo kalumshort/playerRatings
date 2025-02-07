@@ -76,9 +76,7 @@ export default function LineupPlayer({
       {showPlayerName && (
         <span className="lineup-player-name">{playerData.name}</span>
       )}
-      <span className="lineup-player-number gradient-text">
-        {playerData.number}
-      </span>
+      <span className="lineup-player-number ">{playerData.number}</span>
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (
           <Tooltip

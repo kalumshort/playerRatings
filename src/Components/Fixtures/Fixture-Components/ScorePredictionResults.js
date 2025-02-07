@@ -60,13 +60,13 @@ export default function ScorePredictionResults({ fixture }) {
       <div style={{ display: "flex" }}>
         <div className="scorePredictionResultsInnerContainer">
           <h1 className="scorePredictionInnerHeading ">Your Score</h1>
-          <span className="gradient-text usersScorePrediction">
+          <span className=" usersScorePrediction">
             {storedUsersPredictedScore || "-"}
           </span>
         </div>
         <div className="scorePredictionResultsInnerContainer">
           <h1 className="scorePredictionInnerHeading ">Community Score</h1>
-          <span className="gradient-text usersScorePrediction">
+          <span className=" usersScorePrediction">
             {highestScorePredictions?.[0] || "-"}
           </span>
         </div>
