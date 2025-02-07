@@ -194,10 +194,14 @@
   font-weight: 500;
   margin: 0px;
   padding: 0px;
+  width: 45%;
 }
 
 .fixure-events-list-item {
   margin-bottom: 5px;
+  border-bottom: 1px solid grey;
+  align-items: center;
+  display: flex;
 }
 .fixture-item-scoreboard {
   padding: 3px 10px;
