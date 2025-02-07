@@ -31,9 +31,8 @@ export default function MobileFixtureContainer({ fixture }) {
         <Tabs
           value={selectedTab}
           onChange={handleTabChange}
-          variant="fullWidth"
           aria-label="MobileFixtureNav"
-          scrollButtons={true}
+          variant="scrollable" // Use scrollable variant
           allowScrollButtonsMobile={true}
         >
           {isPreMatch && <Tab label="Predicts" value="Predicts" />}
