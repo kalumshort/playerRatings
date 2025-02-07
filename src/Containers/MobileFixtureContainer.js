@@ -9,6 +9,7 @@ import PostKickoffPredictions from "../Components/Fixtures/Fixture-Components/Po
 import { Paper, Tab, Tabs } from "@mui/material";
 import Lineup from "../Components/Fixtures/Fixture-Components/Lineup";
 import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatings/PlayerRatings";
+import WinnerPredict from "../Components/Fixtures/Fixture-Components/WinnerPredict";
 
 export default function MobileFixtureContainer({ fixture }) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
@@ -49,6 +50,7 @@ export default function MobileFixtureContainer({ fixture }) {
       </Paper>
       {selectedTab === "Predicts" && (
         <>
+          <WinnerPredict fixture={fixture} />
           <ScorePrediction fixture={fixture} />
 
           <PreMatchMOTM fixture={fixture} />

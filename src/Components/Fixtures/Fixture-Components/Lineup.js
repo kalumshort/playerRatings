@@ -16,7 +16,7 @@ export default function Lineup({ fixture }) {
         <div className="pitch">
           {unitedLineup
             .reduce((rows, { player }) => {
-              const [row, col] = player.grid.split(":").map(Number);
+              const [row] = player.grid.split(":").map(Number);
 
               if (!rows[row]) rows[row] = [];
 

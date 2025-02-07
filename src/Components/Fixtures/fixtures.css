@@ -406,7 +406,26 @@
 .motm {
   animation: boxShadowPulse 2s infinite alternate;
 }
-
+/* Winner Predict */
+.winnerPredictButtonGroup button {
+  padding: 10px 20px;
+  color: grey !important;
+  border: 1px dashed !important;
+}
+.WinnerPredictTeamContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 60%;
+  justify-content: space-evenly;
+  border: 1px solid grey;
+  border-radius: 8px;
+  width: 30%;
+}
+.WinningResult {
+  background-color: #05c957;
+  border: 1px solid #05c957;
+}
 /* Mobile Fixture */
 .MobileFixtureTabs {
   border-radius: 5px;

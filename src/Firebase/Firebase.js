@@ -144,6 +144,16 @@ export const handlePredictTeamScore = async (data) => {
     },
   });
 };
+export const handlePredictWinningTeam = async (data) => {
+  await firebaseSetDoc({
+    path: `predictions`,
+    docId: data.matchId,
+    data: {
+      result: { [data.choice]: increment(1), totalVotes: increment(1) },
+    },
+  });
+};
+
 export const handlePredictPreMatchMotm = async (data) => {
   await firebaseSetDoc({
     path: `predictions`,
