@@ -27,13 +27,38 @@ export default function MobileFixtureContainer({ fixture }) {
 
   return (
     <>
-      <Paper className="MobileFixtureTabs">
+      <Paper
+        className="MobileFixtureTabs"
+        sx={{ position: "relative", overflow: "hidden" }}
+      >
         <Tabs
           value={selectedTab}
           onChange={handleTabChange}
           aria-label="MobileFixtureNav"
-          variant="scrollable" // Use scrollable variant
+          variant="scrollable"
+          scrollButtons="off"
           allowScrollButtonsMobile={true}
+          sx={{
+            "&::before, &::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              width: "30px",
+              pointerEvents: "none",
+              zIndex: 1,
+            },
+            "&::before": {
+              left: 0,
+              background:
+                "linear-gradient(to right, rgba(0,0,0,0.2), transparent)",
+            },
+            "&::after": {
+              right: 0,
+              background:
+                "linear-gradient(to left, rgba(0,0,0,0.2), transparent)",
+            },
+          }}
         >
           {isPreMatch && <Tab label="Predicts" value="Predicts" />}
           {!fixture?.lineups || fixture.lineups.length === 0 ? (
