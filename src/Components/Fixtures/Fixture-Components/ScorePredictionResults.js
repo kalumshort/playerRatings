@@ -59,7 +59,7 @@ export default function ScorePredictionResults({ fixture }) {
     <ContentContainer className="scorePredictionResultsContainer containerMargin animate__bounceIn">
       <div style={{ display: "flex" }}>
         <div className="scorePredictionResultsInnerContainer">
-          <h1 className="scorePredictionInnerHeading ">Your Score</h1>
+          <h1 className="scorePredictionInnerHeading">Your Score</h1>
           <span className=" usersScorePrediction">
             {storedUsersPredictedScore || "-"}
           </span>

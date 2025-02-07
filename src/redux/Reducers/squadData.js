@@ -26,7 +26,7 @@ const squadData = createSlice({
     },
     2467: {
       id: 2467,
-      name: "Lisandro Martínez",
+      name: "L. Martínez",
       number: 6,
       position: "D",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p221820.png",
@@ -68,7 +68,7 @@ const squadData = createSlice({
     },
     1485: {
       id: 1485,
-      name: "Bruno Fernandes",
+      name: "B. Fernandes",
       number: 8,
       position: "M",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/p141746.png",
@@ -247,6 +247,20 @@ const squadData = createSlice({
       name: "D. Mee",
       number: 45,
       position: "G",
+      img: "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png",
+    },
+    382452: {
+      id: 382452,
+      name: "P. Dorgu",
+      number: 13,
+      position: "D",
+      img: "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png",
+    },
+    402329: {
+      id: 402329,
+      name: "A. Heaven",
+      number: 26,
+      position: "D",
       img: "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png",
     },
     696969: {
