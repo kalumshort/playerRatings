@@ -14,8 +14,11 @@ export const CountdownTimer = ({ targetTime }) => {
 
   if (!timeLeft) {
     return (
-      <div className="countdownContianer">
-        <Typography variant="subtitle1">Match has started!</Typography>
+      <div
+        className="countdownContianer"
+        style={{ textAlign: "center", fontSize: "12px" }}
+      >
+        Match has started!
       </div>
     );
   }

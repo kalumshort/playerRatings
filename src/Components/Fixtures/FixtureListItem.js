@@ -35,7 +35,8 @@ export default function FixtureListItem({
                 : "red",
           }}
         >
-          {fixture.score.fulltime.home} - {fixture.score.fulltime.away}
+          {fixture.score.fulltime.home || fixture.goals.home} -{" "}
+          {fixture.score.fulltime.away || fixture.goals.away}
         </span>
         {fixture.teams.away.logo && (
           <img
