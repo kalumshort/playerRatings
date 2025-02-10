@@ -5,6 +5,7 @@ export const GlobalContainer = styled("div")(({ theme }) => ({
   color: theme.palette.text.primary,
   transition: "background-color 0.3s ease, color 0.3s ease",
   minHeight: "100vh",
+  paddingTop: "5px",
 }));
 
 export const ContentContainer = styled("div")(({ theme }) => ({

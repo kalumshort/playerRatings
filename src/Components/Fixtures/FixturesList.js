@@ -24,7 +24,7 @@ export default function FixturesList() {
   if (loading) return <p>Loading fixtures...</p>;
   if (error) return <p>Error: {error}</p>;
   return (
-    <div className="fixtures-container" style={{ paddingTop: "1px" }}>
+    <div className="fixtures-container">
       <LatestFixtureItem />
       <div className="prev-upcom-container containerMargin">
         <PreviousFixtures />
