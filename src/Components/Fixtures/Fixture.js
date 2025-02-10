@@ -65,7 +65,7 @@ export default function Fixture() {
   // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   return (
-    <>
+    <div style={{ paddingTop: "1px" }}>
       <FixtureGradientProvider
         value={{
           fixtureGradient: fixtureGradient,
@@ -116,6 +116,6 @@ export default function Fixture() {
           </>
         )}
       </FixtureGradientProvider>
-    </>
+    </div>
   );
 }
