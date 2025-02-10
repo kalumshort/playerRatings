@@ -33,9 +33,12 @@ import { fetchFixtures } from "./Hooks/Fixtures_Hooks";
 import Spinner from "./Containers/Helpers";
 
 import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
+import { useIsMobile } from "./Hooks/Helper_Functions";
+import MobileHeader from "./Containers/MobileHeader";
 
 function App() {
   const dispatch = useDispatch();
+  const isMobile = useIsMobile();
 
   const { loaded, loading } = useSelector((state) => ({
     loaded: state.fixtures.loaded,
@@ -54,8 +57,9 @@ function App() {
 
   return (
     <GlobalContainer>
-      <Header />
       <Router>
+        {!isMobile && <Header />}
+        {isMobile && <MobileHeader />}
         <Routes>
           <Route path="/" element={<FixturesContainer />} />
           <Route path="/player-stats" element={<PlayerStatsContainer />} />
