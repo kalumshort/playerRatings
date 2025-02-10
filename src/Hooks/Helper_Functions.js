@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Typography } from "@mui/material";
 
 export const CountdownTimer = ({ targetTime }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
