@@ -1,0 +1,79 @@
+.PlayerStatsListItem {
+  position: relative;
+  cursor: pointer;
+}
+.PlayerStatsListItemMeta {
+  display: flex;
+  align-items: center;
+}
+.PlayerStatsListItemScore {
+  padding: 0px;
+  margin: 0px;
+  color: rgb(53, 53, 53);
+  text-align: center;
+}
+.PlayerStatsListItemScoreContainer {
+  margin-right: 20px;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: #ff6b6b;
+  position: relative;
+  width: 40px;
+}
+.PlayerStatsListItemScoreHeading {
+  padding: 0px;
+  margin: 0px;
+  font-size: 12px;
+  position: absolute;
+  top: -20px;
+  left: 0px;
+}
+.PlayerStatsListItemArrow {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  color: grey;
+}
+.PlayerStatsButtonContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 5px !important;
+}
+
+.PlayerStatsButtonContainer .MuiSelect-root,
+.PlayerStatsButtonContainer .MuiToggleButtonGroup-root {
+  height: 40px; /* Adjust to match */
+}
+
+.PlayerStatsButtonContainer .MuiToggleButton-root {
+  height: 100%; /* Ensures buttons fill the ToggleButtonGroup height */
+}
+
+@media (max-width: 450px) {
+  .PlayerStatsListItem {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px !important;
+    border-radius: 8px;
+    align-items: center;
+  }
+  .PlayerStatsListImg {
+    width: 65px;
+  }
+}
+
+.ratingPoor {
+  background-color: #ff6b6b;
+}
+.ratingAverage {
+  background-color: #ffb56b;
+}
+.ratingGood {
+  background-color: #6bff95;
+}
+.ratingGreat {
+  background-color: #6bbfff;
+}

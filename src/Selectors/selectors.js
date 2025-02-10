@@ -4,6 +4,12 @@ import { selectSquadPlayerById } from "./squadDataSelectors";
 export const allRatings = (state) => state.ratings;
 export const allMatchRatings = (state) => state.ratings.matches;
 export const allPlayerRatings = (state) => state.ratings.players;
+export const allPlayerStats = (state) => state.playerStats;
+
+export const selectPlayerStats = createSelector(
+  [allPlayerStats],
+  (playerStats) => playerStats // Returns the player stats from state
+);
 
 export const selectMatchRatingsById = (matchId) =>
   createSelector([allMatchRatings], (matches) => matches[matchId].players);

@@ -5,6 +5,7 @@ import fixturesReducer from "./Reducers/fixturesReducer";
 import squadDataReducer from "./Reducers/squadData";
 import predictionsReducer from "./Reducers/predictionsReducer";
 import ratingsSlice from "./Reducers/playerRatingsReducer";
+import playerStatsSlice from "./Reducers/playersReducer";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     squadData: squadDataReducer,
     predictions: predictionsReducer,
     ratings: ratingsSlice,
+    playerStats: playerStatsSlice,
   },
 });
 

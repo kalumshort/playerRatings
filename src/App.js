@@ -32,6 +32,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchFixtures } from "./Hooks/Fixtures_Hooks";
 import Spinner from "./Containers/Helpers";
 
+import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
+
 function App() {
   const dispatch = useDispatch();
 
@@ -56,6 +58,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<FixturesContainer />} />
+          <Route path="/player-stats" element={<PlayerStatsContainer />} />
           <Route path="/fixture/:matchId" element={<Fixture />} />
         </Routes>
       </Router>

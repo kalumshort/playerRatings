@@ -15,6 +15,7 @@ import {
   fetchMatchPlayerRatingsAction,
   matchMotmVotesAction,
 } from "../redux/Reducers/playerRatingsReducer";
+import { fetchPlayerStatsAction } from "../redux/Reducers/playersReducer";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -85,6 +86,15 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
       fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
     );
     dispatch(matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes }));
+  } catch (error) {
+    console.log(error);
+  }
+};
+export const fetchPlayerStats = () => async (dispatch) => {
+  try {
+    const playerRatings = await firebaseGetCollecion(`players`);
+
+    dispatch(fetchPlayerStatsAction({ players: playerRatings }));
   } catch (error) {
     console.log(error);
   }

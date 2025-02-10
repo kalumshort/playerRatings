@@ -14,6 +14,7 @@ import ScorePrediction from "./Fixture-Components/ScorePrediction";
 import {
   fetchMatchPlayerRatings,
   fetchMatchPredictions,
+  fetchPlayerStats,
 } from "../../Hooks/Fixtures_Hooks";
 import { useEffect } from "react";
 
@@ -54,6 +55,7 @@ export default function Fixture() {
   useEffect(() => {
     dispatch(fetchMatchPredictions(matchId));
     dispatch(fetchMatchPlayerRatings(matchId));
+    dispatch(fetchPlayerStats());
   }, [dispatch, matchId]);
 
   if (!fixture) {
