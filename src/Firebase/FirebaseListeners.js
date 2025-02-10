@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useDispatch } from "react-redux";
-import { latestFixtureReducer } from "../redux/Reducers/fixturesReducer";
+import { fixtureReducer } from "../redux/Reducers/fixturesReducer";
 
 import { doc, onSnapshot } from "firebase/firestore";
 
@@ -19,9 +19,7 @@ const FirestoreDocumentListener = ({ docId }) => {
       fixtureRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          dispatch(
-            latestFixtureReducer({ ...snapshot.data(), id: snapshot.id })
-          ); // Dispatch to Redux
+          dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
         }
       },
       (error) => {

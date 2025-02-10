@@ -4,11 +4,9 @@ import {
 } from "../Firebase/Firebase";
 import {
   fetchFixturesFailure,
-  latestFixtureReducer,
-  previousFixturesReducer,
-  upcomingFixturesReducer,
   fetchFixturesSuccess,
   fetchFixturesStart,
+  fixturesReducer,
 } from "../redux/Reducers/fixturesReducer";
 import { fetchMatchPrediction } from "../redux/Reducers/predictionsReducer";
 import {
@@ -33,37 +31,12 @@ export const fetchFixtures = () => async (dispatch) => {
     dispatch(fetchFixturesStart()); // Start loading
 
     const fixturesData = await firebaseGetCollecion("fixtures/2024/data");
-    const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
-    const fixtures = Object.values(fixturesData); // Convert object to array
-
-    fixtures.sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
-
-    const previousFixtures = fixtures
-      .filter((fixture) => fixture.fixture.timestamp < now)
+    const fixtures = Object.entries(fixturesData)
+      .map(([id, fixture]) => ({ id, ...fixture }))
       .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
-    const upcomingFixtures = fixtures
-      .filter((fixture) => fixture.fixture.timestamp > now)
-      .sort((a, b) => a.fixture.timestamp - b.fixture.timestamp);
-
-    let latestFixture = null;
-
-    if (previousFixtures.length > 0) {
-      const firstPreviousFixtureTime =
-        previousFixtures[0].fixture.timestamp * 1000;
-      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-      if (firstPreviousFixtureTime < twentyFourHoursAgo) {
-        latestFixture = upcomingFixtures[0];
-      } else {
-        latestFixture = previousFixtures[0];
-      }
-    }
-
-    dispatch(previousFixturesReducer(previousFixtures));
-    dispatch(upcomingFixturesReducer(upcomingFixtures));
-    dispatch(latestFixtureReducer(latestFixture));
+    dispatch(fixturesReducer(fixtures));
     dispatch(fetchFixturesSuccess());
   } catch (error) {
     console.error("Error getting fixtures:", error);

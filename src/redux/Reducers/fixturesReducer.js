@@ -3,9 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const fixturesSlice = createSlice({
   name: "fixtures",
   initialState: {
-    previousFixtures: [],
-    upcomingFixtures: [],
-    latestFixture: null,
+    fixtures: [],
     loading: false, // Added loading state
     error: null,
     loaded: false,
@@ -15,15 +13,21 @@ const fixturesSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    previousFixturesReducer(state, action) {
-      state.previousFixtures = action.payload;
+    fixturesReducer(state, action) {
+      state.fixtures = action.payload;
     },
-    upcomingFixturesReducer(state, action) {
-      state.upcomingFixtures = action.payload;
+    fixtureReducer(state, action) {
+      const index = state.fixtures.findIndex(
+        (fixture) => fixture.id === action.payload.id
+      );
+      if (index !== -1) {
+        state.fixtures[index] = {
+          ...state.fixtures[index],
+          ...action.payload.data,
+        };
+      }
     },
-    latestFixtureReducer(state, action) {
-      state.latestFixture = action.payload;
-    },
+
     fetchFixturesFailure(state, action) {
       state.error = action.payload;
       state.loading = false; // Set loading to false on failure
@@ -39,9 +43,8 @@ export const {
   fetchFixturesStart,
   fetchFixturesSuccess,
   fetchFixturesFailure,
-  previousFixturesReducer,
-  upcomingFixturesReducer,
-  latestFixtureReducer,
+  fixturesReducer,
+  fixtureReducer,
 } = fixturesSlice.actions;
 
 export default fixturesSlice.reducer;

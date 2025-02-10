@@ -6,20 +6,15 @@ import UpcomingFixtures from "./UpcomingFixtures";
 import PreviousFixtures from "./PreviousFixtures";
 
 export default function FixturesList() {
-  const { previousFixtures, upcomingFixtures, latestFixture, loading, error } =
-    useSelector((state) => state.fixtures);
+  const { fixtures, loading, error } = useSelector((state) => state.fixtures);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (
-      !previousFixtures.length &&
-      !upcomingFixtures.length &&
-      !latestFixture
-    ) {
+    if (!fixtures) {
       dispatch(fetchFixtures());
     }
-  }, [dispatch, previousFixtures, upcomingFixtures, latestFixture]);
+  }, [dispatch, fixtures]);
 
   if (loading) return <p>Loading fixtures...</p>;
   if (error) return <p>Error: {error}</p>;
