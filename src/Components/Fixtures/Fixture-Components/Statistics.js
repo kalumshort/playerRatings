@@ -66,9 +66,6 @@ export default function Statistics({ fixture }) {
 
             // Calculate percentage
             const team1Percentage = total > 0 ? (team1Value / total) * 100 : 50;
-            {
-              /* const team2Percentage = 100 - team1Percentage; */
-            }
 
             return (
               <li
