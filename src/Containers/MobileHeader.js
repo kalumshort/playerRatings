@@ -19,7 +19,10 @@ export default function MobileHeader() {
 
   return (
     <>
-      <AppBar position="fixed" sx={{ top: "auto", bottom: 0 }}>
+      <AppBar
+        position="fixed"
+        sx={{ top: "auto", bottom: 0, borderRadius: "15px 15px 0px 0px" }}
+      >
         <Toolbar
           sx={{ display: "flex", justifyContent: "space-between", gap: 4 }}
         >
