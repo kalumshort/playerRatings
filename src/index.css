@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
-
+* {
+  font-family: "Inter", sans-serif !important;
+}
 body {
   margin: 0;
   font-family: "Inter, sans-serif" !important;
@@ -7,7 +9,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease; /* Smooth background and text color transition */
 }
-
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
+}
 .muiIconSmall {
   font-size: 20px !important;
 }
