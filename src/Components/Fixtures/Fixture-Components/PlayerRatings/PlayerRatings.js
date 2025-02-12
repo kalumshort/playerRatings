@@ -323,7 +323,7 @@ const SubmittedPlayerRatings = ({
     <>
       <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
         <img
-          src={motmPercentages[0].img}
+          src={motmPercentages[0]?.img}
           className="PlayerRatingImg"
           alt="PlayerRatingImg"
         />
@@ -348,12 +348,12 @@ const SubmittedPlayerRatings = ({
             <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
               MOTM
             </h5>
-            <h2>{motmPercentages[0].name}</h2>
+            <h2>{motmPercentages[0]?.name}</h2>
             <h2
               // className="gradient-text"
               style={{ fontSize: "50px", margin: "0px" }}
             >
-              {motmPercentages[0].percentage}%
+              {motmPercentages[0]?.percentage}%
             </h2>
           </div>
         </div>
@@ -376,7 +376,7 @@ const SubmittedPlayerRatings = ({
               fontSize: "15px",
             }}
           >
-            {motmPercentages.map((player) => (
+            {motmPercentages?.map((player) => (
               <li>
                 {player.name} - {player.percentage}%
               </li>
