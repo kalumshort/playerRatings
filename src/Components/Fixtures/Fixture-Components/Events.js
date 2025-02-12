@@ -1,7 +1,19 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
+import { MenuItem, Select } from "@mui/material";
 
 export default function Events({ events }) {
+  const eventOptions = useMemo(() => {
+    return [...new Set(events?.map((item) => item.type))];
+  }, [events]);
+  const [selectedLeague, setSelectedLeague] = useState("");
+  const handleChange = (event) => {
+    setSelectedLeague(event.target.value);
+  };
+  const filteredFixures = selectedLeague
+    ? events.filter((item) => item.type === selectedLeague)
+    : events;
+
   if (!events) {
     return (
       <ContentContainer className="events-container containerMargin">
@@ -12,14 +24,32 @@ export default function Events({ events }) {
     );
   }
   return (
-    <ContentContainer className="events-container containerMargin">
-      <h2 className="heading2" style={{ textAlign: "center" }}>
-        Events
-      </h2>
-
-      {events.map((event, index) => (
-        <EventItem key={index} event={event} />
-      ))}
+    <ContentContainer className="containerMargin">
+      <div className="fixtures-list-header">
+        <h2 className="globalHeading">Events</h2>
+        <Select
+          value={selectedLeague}
+          onChange={handleChange}
+          size="small"
+          variant="standard"
+          displayEmpty
+          renderValue={(selected) => (selected ? selected : "All")}
+        >
+          <MenuItem key="" value="">
+            All
+          </MenuItem>
+          {eventOptions.map((league) => (
+            <MenuItem key={league} value={league}>
+              {league}
+            </MenuItem>
+          ))}
+        </Select>
+      </div>
+      <div className="events-container">
+        {filteredFixures.map((event, index) => (
+          <EventItem key={index} event={event} />
+        ))}
+      </div>
     </ContentContainer>
   );
 }

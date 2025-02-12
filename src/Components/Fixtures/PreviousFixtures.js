@@ -30,7 +30,7 @@ export default function PreviousFixtures() {
     : previousFixtures;
 
   return (
-    <ContentContainer className="fixtures-list previous-fixtures-list">
+    <ContentContainer>
       <div className="fixtures-list-header">
         <h2 className="globalHeading">Results</h2>
         <Select
@@ -51,24 +51,25 @@ export default function PreviousFixtures() {
           ))}
         </Select>
       </div>
-
-      {filteredFixures.map((fixture, index) => {
-        const matchTime = new Date(
-          fixture.fixture.timestamp * 1000
-        ).toLocaleDateString("en-GB", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        });
-        return (
-          <FixtureListItem
-            key={fixture.id || index}
-            fixture={fixture}
-            matchTime={matchTime}
-            handleFixtureClick={handleFixtureClick}
-          />
-        );
-      })}
+      <div className="previous-fixtures-list">
+        {filteredFixures.map((fixture, index) => {
+          const matchTime = new Date(
+            fixture.fixture.timestamp * 1000
+          ).toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          });
+          return (
+            <FixtureListItem
+              key={fixture.id || index}
+              fixture={fixture}
+              matchTime={matchTime}
+              handleFixtureClick={handleFixtureClick}
+            />
+          );
+        })}
+      </div>
     </ContentContainer>
   );
 }

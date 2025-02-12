@@ -30,7 +30,7 @@ export default function UpcomingFixtures() {
     : upcomingFixtures;
 
   return (
-    <ContentContainer className="fixtures-list upcoming-fixtures-list">
+    <ContentContainer>
       <div className="fixtures-list-header">
         <h2 className="globalHeading">Fixtures</h2>
         <Select
@@ -51,23 +51,25 @@ export default function UpcomingFixtures() {
           ))}
         </Select>
       </div>
-      {filteredFixures.map((fixture, index) => {
-        const matchTime = new Date(
-          fixture.fixture.timestamp * 1000
-        ).toLocaleDateString("en-GB", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        });
-        return (
-          <FixtureListItem
-            key={fixture.id || index}
-            fixture={fixture}
-            matchTime={matchTime}
-            handleFixtureClick={handleFixtureClick}
-          />
-        );
-      })}
+      <div className="upcoming-fixtures-list">
+        {filteredFixures.map((fixture, index) => {
+          const matchTime = new Date(
+            fixture.fixture.timestamp * 1000
+          ).toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          });
+          return (
+            <FixtureListItem
+              key={fixture.id || index}
+              fixture={fixture}
+              matchTime={matchTime}
+              handleFixtureClick={handleFixtureClick}
+            />
+          );
+        })}
+      </div>
     </ContentContainer>
   );
 }
