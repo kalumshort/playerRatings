@@ -28,7 +28,7 @@ export default function Statistics({ fixture }) {
   }
   return (
     <ContentContainer className="statistics-container containerMargin">
-      <div style={{ color: "#fff", fontFamily: "Arial, sans-serif" }}>
+      <div>
         <div
           style={{
             display: "flex",
@@ -59,6 +59,17 @@ export default function Statistics({ fixture }) {
             const team2Stat = team2.statistics.find(
               (s) => s.type === stat.type
             );
+
+            const team1Value = stat.value ?? 0;
+            const team2Value = team2Stat?.value ?? 0;
+            const total = team1Value + team2Value;
+
+            // Calculate percentage
+            const team1Percentage = total > 0 ? (team1Value / total) * 100 : 50;
+            {
+              /* const team2Percentage = 100 - team1Percentage; */
+            }
+
             return (
               <li
                 key={index}
@@ -68,15 +79,23 @@ export default function Statistics({ fixture }) {
                   alignItems: "center",
                   margin: "8px 0",
                   padding: "6px",
-                  borderBottom: "2px solid #282828",
+                  background: `linear-gradient(
+            to right,
+            rgba(65, 65, 65, 0.6) ${team1Percentage}%,
+            rgba(0, 0, 0, 0.22) ${team1Percentage}%
+          )`,
                 }}
               >
-                <div style={{ flex: 1, textAlign: "center" }}>
-                  {stat.value ?? "N/A"}
+                <div
+                  style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}
+                >
+                  {team1Value}
                 </div>
                 <div style={{ flex: 1, textAlign: "center" }}>{stat.type}</div>
-                <div style={{ flex: 1, textAlign: "center" }}>
-                  {team2Stat?.value ?? "N/A"}
+                <div
+                  style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}
+                >
+                  {team2Value}
                 </div>
               </li>
             );
