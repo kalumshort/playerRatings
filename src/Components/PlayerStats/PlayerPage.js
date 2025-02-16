@@ -40,7 +40,7 @@ export default function PlayerPage() {
         <img
           src={playerData?.img}
           className="PlayerPageImg"
-          alt={`${playerData.name} image`}
+          alt={`${playerData.name}`}
         />
         <h2 className="globalHeading">{playerData.name}</h2>
         <h3 className="PlayerPageNumber">{playerData.number}</h3>
