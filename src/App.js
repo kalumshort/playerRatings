@@ -35,6 +35,7 @@ import Spinner from "./Containers/Helpers";
 import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
 import { useIsMobile } from "./Hooks/Helper_Functions";
 import MobileHeader from "./Containers/MobileHeader";
+import PlayerPage from "./Components/PlayerStats/PlayerPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<FixturesContainer />} />
           <Route path="/player-stats" element={<PlayerStatsContainer />} />
           <Route path="/fixture/:matchId" element={<Fixture />} />
+          <Route path="/players/:playerId" element={<PlayerPage />} />
         </Routes>
       </Router>
       <div style={{ height: "50px" }}></div>

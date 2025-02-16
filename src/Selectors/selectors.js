@@ -11,6 +11,9 @@ export const selectPlayerStats = createSelector(
   (playerStats) => playerStats // Returns the player stats from state
 );
 
+export const selectPlayerStatsById = (playerId) =>
+  createSelector([allPlayerStats], (playerStats) => playerStats[playerId]);
+
 export const selectMatchRatingsById = (matchId) =>
   createSelector([allMatchRatings], (matches) => matches[matchId].players);
 

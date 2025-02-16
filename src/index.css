@@ -64,6 +64,12 @@ body {
   font-size: 20px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
+.subHeadingGlobal {
+  padding: 0px;
+  margin: 0px;
+  font-size: 18px;
+  color: grey;
+}
 .globalBoxShadow {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.418);
 }

@@ -13,7 +13,10 @@ import {
   fetchMatchPlayerRatingsAction,
   matchMotmVotesAction,
 } from "../redux/Reducers/playerRatingsReducer";
-import { fetchPlayerStatsAction } from "../redux/Reducers/playersReducer";
+import {
+  addPlayersMatchesStats,
+  fetchPlayerStatsAction,
+} from "../redux/Reducers/playersReducer";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -44,6 +47,27 @@ export const fetchFixtures = () => async (dispatch) => {
   }
 };
 
+export const fetchPlayerMatchesStats = (playerId) => async (dispatch) => {
+  try {
+    if (!playerId) {
+      return;
+    }
+    const fixturesData = await firebaseGetCollecion(
+      `players/${playerId}/matches`
+    );
+
+    const fixtures = Object.entries(fixturesData).map(([id, fixture]) => ({
+      id,
+      ...fixture,
+    }));
+    dispatch(
+      addPlayersMatchesStats({ playerId: playerId, matchesData: fixtures })
+    );
+  } catch (error) {
+    console.error("Error getting fixtures:", error);
+  }
+};
+
 export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
   if (!matchId) {
     return;
@@ -63,6 +87,7 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
     console.log(error);
   }
 };
+
 export const fetchPlayerStats = () => async (dispatch) => {
   try {
     const playerRatings = await firebaseGetCollecion(`players`);

@@ -13,9 +13,12 @@ import { selectSquadData } from "../../Selectors/squadDataSelectors";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { useNavigate } from "react-router-dom";
 
 export default function AllPlayerStats() {
   const playerStats = useSelector(selectPlayerStats);
+  const navigate = useNavigate();
+
   const squadData = useSelector(selectSquadData);
   const [sort, setSort] = useState("desc"); // Default to descending
   const [positionFilter, setPositionFilter] = useState("");
@@ -52,6 +55,10 @@ export default function AllPlayerStats() {
   const filteredPlayers = sortedPlayers.filter(({ playerId }) =>
     positionFilter ? squadData[playerId]?.position === positionFilter : true
   );
+
+  const handlePlayerNavigate = (playerId) => {
+    navigate(`/players/${playerId}`);
+  };
   return (
     <div>
       {/* <h2 className="globalHeading">Players Average Rating</h2> */}
@@ -86,7 +93,11 @@ export default function AllPlayerStats() {
       <div className="PlayerStatsList">
         {filteredPlayers.map(
           ({ playerId, playerName, playerImg, playerAverageRating }) => (
-            <Paper key={playerId} className="PlayerStatsListItem">
+            <Paper
+              key={playerId}
+              className="PlayerStatsListItem"
+              onClick={() => handlePlayerNavigate(playerId)}
+            >
               <div className="PlayerStatsListItemMeta">
                 <img
                   src={playerImg}
@@ -101,7 +112,7 @@ export default function AllPlayerStats() {
                 )}`}
               >
                 <h4 className="PlayerStatsListItemScore">
-                  {playerAverageRating.toFixed(2)}
+                  {playerAverageRating.toFixed(1)}
                 </h4>
               </div>
               <ArrowForwardIcon
