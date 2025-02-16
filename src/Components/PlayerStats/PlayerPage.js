@@ -25,7 +25,7 @@ export default function PlayerPage() {
       dispatch(fetchPlayerStats());
       dispatch(fetchPlayerMatchesStats(playerId));
     }
-  }, [dispatch]);
+  }, [dispatch, playerId, playerStats]);
 
   const getRatingClass = (rating) => {
     if (rating < 4) return "ratingPoor";
@@ -37,7 +37,11 @@ export default function PlayerPage() {
   return (
     <>
       <Paper className="PlayerPageHeader">
-        <img src={playerData?.img} className="PlayerPageImg" />
+        <img
+          src={playerData?.img}
+          className="PlayerPageImg"
+          alt={`${playerData.name} image`}
+        />
         <h2 className="globalHeading">{playerData.name}</h2>
         <h3 className="PlayerPageNumber">{playerData.number}</h3>
       </Paper>
@@ -102,7 +106,11 @@ const PlayerMatchitem = ({
       </div>
       <div className="PlayerItemData">
         <div className="PlayerItemOponentContainer">
-          <img src={oponent.logo} className="PlayerItemOponentLogo" />
+          <img
+            src={oponent.logo}
+            className="PlayerItemOponentLogo"
+            alt={`${oponent.name} logo`}
+          />
           <div className="PlayerItemTeamScore">
             <span>{oponent.name}</span>
             <span>
