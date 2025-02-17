@@ -11,7 +11,7 @@ export default function FixtureEventsList({
     (event) =>
       (eventTypes.includes(event.type) && event.detail === "Normal Goal") ||
       event.detail === "Own Goal" ||
-      (event.detail === "Penalty" && event.comment !== "Penalty Shootout")
+      (event.detail === "Penalty" && event.comments !== "Penalty Shootout")
   );
 
   return (
