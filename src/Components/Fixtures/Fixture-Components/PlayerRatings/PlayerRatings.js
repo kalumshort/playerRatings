@@ -13,6 +13,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
   getRatingClass,
+  missingPlayerImg,
   setLocalStorageItem,
   useIsMobile,
   useLocalStorage,
@@ -182,20 +183,20 @@ const PlayerRatingItem = ({
       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
     }
   };
-  if (!playerData) {
-    return <></>;
-  }
+
   return (
     <div className={isMOTM ? "PlayerRatingItem motm" : "PlayerRatingItem"}>
       <img
-        src={playerData.img}
+        src={playerData?.img || player.img || missingPlayerImg}
         className="PlayerRatingImg"
-        alt={playerData.name}
+        alt={player.name}
       />
 
       <div className="PlayerRatingInner">
         <span className="PlayerRatingsNameContainer">
-          <h2 className="PlayerRatingName">{playerData.name}</h2>
+          <h2 className="PlayerRatingName">
+            {playerData?.name || player.name}
+          </h2>
           {goals?.map((goal, index) => (
             <img
               key={index}

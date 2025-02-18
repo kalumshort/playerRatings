@@ -3,6 +3,7 @@ import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 import { useSelector } from "react-redux";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 
 export default function LineupPlayer({
   player,
@@ -16,7 +17,7 @@ export default function LineupPlayer({
   showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player.id));
-
+  console.log(player);
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
@@ -59,7 +60,7 @@ export default function LineupPlayer({
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
   }
 
-  return playerData ? (
+  return player ? (
     <div
       key={player.id}
       className={`player ${className}`}
@@ -69,14 +70,18 @@ export default function LineupPlayer({
       onDrop={onDrop}
     >
       <img
-        src={player?.img || playerData?.img}
+        src={player?.img || playerData?.img || missingPlayerImg}
         className="lineup-player-img"
-        alt={playerData.name}
+        alt={player.name}
       />
       {showPlayerName && (
-        <span className="lineup-player-name">{playerData.name}</span>
+        <span className="lineup-player-name">
+          {playerData?.name || player.name}
+        </span>
       )}
-      <span className="lineup-player-number ">{playerData.number}</span>
+      <span className="lineup-player-number ">
+        {playerData?.number || player.numbner}
+      </span>
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (
           <Tooltip
@@ -132,7 +137,7 @@ export default function LineupPlayer({
             <img
               src="https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/sub-w.svg"
               height={20}
-              alt={playerData.name}
+              alt={player.name}
             />
           </Tooltip>
         )}

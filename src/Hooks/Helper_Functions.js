@@ -165,3 +165,6 @@ export const getRatingClass = (rating) => {
   if (rating < 8) return "ratingGood";
   return "ratingGreat";
 };
+
+export const missingPlayerImg =
+  "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
