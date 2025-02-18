@@ -14,6 +14,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { useNavigate } from "react-router-dom";
+import { getRatingClass } from "../../Hooks/Helper_Functions";
 
 export default function AllPlayerStats() {
   const playerStats = useSelector(selectPlayerStats);
@@ -25,13 +26,6 @@ export default function AllPlayerStats() {
 
   const handlePositionChange = (event) => {
     setPositionFilter(event.target.value);
-  };
-
-  const getRatingClass = (rating) => {
-    if (rating < 4) return "ratingPoor";
-    if (rating < 6) return "ratingAverage";
-    if (rating < 8) return "ratingGood";
-    return "ratingGreat";
   };
 
   const handleSortChange = (event, newSort) => {

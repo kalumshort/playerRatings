@@ -158,3 +158,10 @@ export const blendColors = (color1, color2, weight) => {
 
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 };
+
+export const getRatingClass = (rating) => {
+  if (rating < 4) return "ratingPoor";
+  if (rating < 6) return "ratingAverage";
+  if (rating < 8) return "ratingGood";
+  return "ratingGreat";
+};

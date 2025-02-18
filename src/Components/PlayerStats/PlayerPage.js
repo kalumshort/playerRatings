@@ -9,6 +9,7 @@ import {
   fetchPlayerStats,
 } from "../../Hooks/Fixtures_Hooks";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
+import { getRatingClass } from "../../Hooks/Helper_Functions";
 
 export default function PlayerPage() {
   const { playerId } = useParams();
@@ -26,13 +27,6 @@ export default function PlayerPage() {
       dispatch(fetchPlayerMatchesStats(playerId));
     }
   }, [dispatch, playerId, playerStats]);
-
-  const getRatingClass = (rating) => {
-    if (rating < 4) return "ratingPoor";
-    if (rating < 6) return "ratingAverage";
-    if (rating < 8) return "ratingGood";
-    return "ratingGreat";
-  };
 
   return (
     <>

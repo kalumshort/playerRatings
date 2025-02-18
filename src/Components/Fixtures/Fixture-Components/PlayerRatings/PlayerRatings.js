@@ -12,6 +12,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
+  getRatingClass,
   setLocalStorageItem,
   useIsMobile,
   useLocalStorage,
@@ -156,9 +157,12 @@ const PlayerRatingItem = ({
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
   }
 
-  const playerRatingAverage = (
-    matchRatings[player.id]?.totalRating / matchRatings[player.id]?.totalSubmits
-  ).toFixed(1);
+  const playerRatingAverage = matchRatings[player.id]?.totalRating
+    ? (
+        matchRatings[player.id]?.totalRating /
+        matchRatings[player.id]?.totalSubmits
+      ).toFixed(1)
+    : storedUsersPlayerRating;
 
   const onRatingClick = async (score) => {
     setLocalStorageItem(`userPlayerRatings-${fixture.id}-${player.id}`, score);
@@ -178,6 +182,9 @@ const PlayerRatingItem = ({
       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
     }
   };
+  if (!playerData) {
+    return <></>;
+  }
   return (
     <div className={isMOTM ? "PlayerRatingItem motm" : "PlayerRatingItem"}>
       <img
@@ -234,15 +241,27 @@ const PlayerRatingItem = ({
           <div className="PlayerRatingsResults">
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
-              <h2 className="PlayerRatingsCommunityScore ">
-                {storedUsersPlayerRating}
-              </h2>
+              <div
+                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+                  storedUsersPlayerRating
+                )}`}
+              >
+                <h4 className="PlayerRatingsCommunityScore textShadow">
+                  {storedUsersPlayerRating}
+                </h4>
+              </div>
             </div>
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
-              <h2 className="PlayerRatingsCommunityScore ">
-                {playerRatingAverage}
-              </h2>
+              <div
+                className={`globalBoxShadow PlayerStatsListItemScoreContainer  ${getRatingClass(
+                  playerRatingAverage
+                )}`}
+              >
+                <h4 className="PlayerRatingsCommunityScore textShadow">
+                  {playerRatingAverage}
+                </h4>
+              </div>
             </div>
           </div>
         )}

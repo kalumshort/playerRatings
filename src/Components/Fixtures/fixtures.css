@@ -355,6 +355,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  padding-bottom: 5px;
 }
 .PlayerRatingsNameContainer {
   display: flex;
@@ -412,10 +413,10 @@
 }
 
 .PlayerRatingsCommunityContainer {
-  text-align: center;
   display: flex;
   flex-direction: column;
   position: relative;
+  justify-content: center;
   align-items: center;
 }
 .PlayerRatingsCommunityTitle {
@@ -424,16 +425,20 @@
   color: grey;
   margin: 0px;
   padding: 0px;
+  margin-bottom: 3px;
 }
 .PlayerRatingsCommunityScore {
-  font-size: 50px;
-  margin: 0px 20px;
+  font-size: 30px;
+  margin: 0px;
+  padding: 0px;
+  text-align: center;
 }
 .PlayerRatingsResults {
   display: flex;
   flex-direction: row;
   align-self: center;
-  gap: 10px;
+  justify-content: space-evenly;
+  width: 100%;
 }
 .PlayerRatingMotm {
   cursor: pointer;

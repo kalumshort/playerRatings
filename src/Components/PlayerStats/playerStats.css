@@ -13,12 +13,14 @@
   text-align: center;
 }
 .PlayerStatsListItemScoreContainer {
-  margin-right: 20px;
   border-radius: 8px;
-  padding: 20px;
+  padding: 7px 15px;
   box-shadow: #ff6b6b;
   position: relative;
   width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .PlayerStatsListItemScoreContainerSmall {
   margin-right: 5px;
