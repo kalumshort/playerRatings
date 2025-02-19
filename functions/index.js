@@ -43,7 +43,7 @@ initializeApp();
 exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
   try {
     // Fetch fixtures from API
-    const response = await axios.get(
+    const fixturesResponse = await axios.get(
       `https://v3.football.api-sports.io/fixtures`,
       {
         params: {
@@ -56,7 +56,7 @@ exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
         },
       }
     );
-    const fixtures = response.data.response;
+    const fixtures = fixturesResponse.data.response;
 
     for (const fixtureObj of fixtures) {
       const year = fixtureObj.league.season;
@@ -74,12 +74,28 @@ exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
       await getFirestore()
         .collection("fixtures")
         .doc(year.toString())
-        .collection("data")
+        .collection("33")
         .doc(fixtureId.toString())
         .set(fixtureData, { merge: true });
     }
 
     logger.info(`Successfully updated ${fixtures.length} fixtures.`);
+
+    const squadDataResponse = await axios.get(
+      `https://v3.football.api-sports.io/players/squads?team=33`,
+      {
+        headers: {
+          "x-rapidapi-host": "v3.football.api-sports.io",
+          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+        },
+      }
+    );
+    const squadPlayers = squadDataResponse.data.response[0].players;
+
+    await getFirestore()
+      .collection("teamSquads")
+      .doc("33")
+      .set({ activeSquad: squadPlayers }, { merge: true });
   } catch (error) {
     logger.error("Error updating fixtures:", error);
   }
@@ -282,6 +298,45 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
   }
 );
 
+// exports.conversionFunction = onRequest(async (req, res) => {
+//   try {
+//     const sourcePath = "players";
+//     const destinationPath = "groups/001/seasons/2024/players";
+
+//     if (!sourcePath || !destinationPath) {
+//       return res.status(400).send("Missing source or destination path.");
+//     }
+
+//     const db = getFirestore();
+//     await copyCollection(db, sourcePath, destinationPath);
+
+//     res
+//       .status(200)
+//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
+//   } catch (error) {
+//     console.error("Error copying Firestore data:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// async function copyCollection(db, sourcePath, destinationPath) {
+//   const sourceCollection = await db.collection(sourcePath).get();
+
+//   for (const doc of sourceCollection.docs) {
+//     const newDocRef = db.collection(destinationPath).doc(doc.id);
+//     await newDocRef.set(doc.data());
+
+//     // Recursively copy subcollections
+//     const subcollections = await doc.ref.listCollections();
+//     for (const subcollection of subcollections) {
+//       await copyCollection(
+//         db,
+//         `${sourcePath}/${doc.id}/${subcollection.id}`,
+//         `${destinationPath}/${doc.id}/${subcollection.id}`
+//       );
+//     }
+//   }
+// }
 // exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
 //   const now = Math.floor(Date.now() / 1000);
 

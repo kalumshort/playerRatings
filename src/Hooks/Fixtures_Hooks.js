@@ -53,7 +53,7 @@ export const fetchPlayerMatchesStats = (playerId) => async (dispatch) => {
       return;
     }
     const fixturesData = await firebaseGetCollecion(
-      `players/${playerId}/matches`
+      `groups/001/seasons/2024/players/${playerId}/matches`
     );
 
     const fixtures = Object.entries(fixturesData).map(([id, fixture]) => ({
@@ -74,10 +74,13 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
   }
   try {
     const playerRatings = await firebaseGetCollecion(
-      `playerRatings/${matchId}/players`
+      `groups/001/seasons/2024/playerRatings/${matchId}/players`
     );
 
-    const matchMotmVotes = await firebaseGetDocument(`playerRatings`, matchId);
+    const matchMotmVotes = await firebaseGetDocument(
+      `groups/001/seasons/2024/playerRatings`,
+      matchId
+    );
 
     dispatch(
       fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
@@ -90,7 +93,9 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
 
 export const fetchPlayerStats = () => async (dispatch) => {
   try {
-    const playerRatings = await firebaseGetCollecion(`players`);
+    const playerRatings = await firebaseGetCollecion(
+      `groups/001/seasons/2024/players`
+    );
 
     dispatch(fetchPlayerStatsAction({ players: playerRatings }));
   } catch (error) {
@@ -103,7 +108,10 @@ export const fetchMatchPredictions = (matchId) => async (dispatch) => {
     return;
   }
   try {
-    const matchPredictions = await firebaseGetDocument(`predictions`, matchId);
+    const matchPredictions = await firebaseGetDocument(
+      `groups/001/seasons/2024/predictions`,
+      matchId
+    );
     if (!matchPredictions) {
       return;
     }
