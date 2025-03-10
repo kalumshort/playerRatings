@@ -33,7 +33,7 @@ export const fetchFixtures = () => async (dispatch) => {
   try {
     dispatch(fetchFixturesStart()); // Start loading
 
-    const fixturesData = await firebaseGetCollecion("fixtures/2024/data");
+    const fixturesData = await firebaseGetCollecion("fixtures/2024/33");
 
     const fixtures = Object.entries(fixturesData)
       .map(([id, fixture]) => ({ id, ...fixture }))

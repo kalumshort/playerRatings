@@ -11,6 +11,9 @@ import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function PenaltyTimeline({ penaltyEvents }) {
+  if (!penaltyEvents) {
+    return <div className="spinner"></div>;
+  }
   return (
     <div
       style={{

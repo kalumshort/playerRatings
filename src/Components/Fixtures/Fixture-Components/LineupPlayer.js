@@ -17,7 +17,6 @@ export default function LineupPlayer({
   showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player.id));
-  console.log(player);
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
