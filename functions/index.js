@@ -227,7 +227,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
     try {
       // Query the next match
-      const matchesRef = getFirestore().collection(`fixtures/2024/data`);
+      const matchesRef = getFirestore().collection(`fixtures/2024/33`);
       const nextFixture = await matchesRef
         .where("matchDate", ">=", now)
         .orderBy("matchDate", "asc")

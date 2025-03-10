@@ -144,7 +144,7 @@ const fetchAllMatchData = async (fixtureId) => {
     await getFirestore()
       .collection("fixtures")
       .doc(year.toString())
-      .collection("data")
+      .collection("33")
       .doc(fixtureId.toString())
       .set(combinedFixtureData, { merge: true });
 

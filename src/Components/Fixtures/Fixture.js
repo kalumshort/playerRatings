@@ -63,6 +63,8 @@ export default function Fixture() {
   }
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
   // const isPostMatch = fixture?.fixture?.status?.short === "FT";
+
+  console.log(fixture, "fixture");
   return (
     <>
       <FixtureGradientProvider
