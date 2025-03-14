@@ -90,7 +90,9 @@ export default function WinnerPredict({ fixture }) {
               alt={`${fixture.teams.home.name} logo`}
               className="team-logo"
             />
-            <span>{percentages.home.toFixed(0)}%</span>
+            <span>
+              {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
+            </span>
           </div>
           <div
             className={`WinnerPredictTeamContainer ${
@@ -98,7 +100,9 @@ export default function WinnerPredict({ fixture }) {
             }`}
           >
             <span style={{ color: "grey" }}>Draw</span>
-            <span>{percentages.draw.toFixed(0)}%</span>
+            <span>
+              {isNaN(percentages?.draw) ? 0 : percentages.draw.toFixed(0)}%
+            </span>
           </div>
           <div
             className={`WinnerPredictTeamContainer ${
@@ -110,7 +114,9 @@ export default function WinnerPredict({ fixture }) {
               alt={`${fixture.teams.away.name} logo`}
               className="team-logo"
             />
-            <span>{percentages.away.toFixed(0)}%</span>
+            <span>
+              {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%
+            </span>
           </div>
         </div>
       )}

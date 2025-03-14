@@ -30,9 +30,12 @@ import {
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import StarIcon from "@mui/icons-material/Star";
 import { fetchMatchPlayerRatings } from "../../../../Hooks/Fixtures_Hooks";
+import { useAlert } from "../../../HelpfulComponents";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
+  const showAlert = useAlert();
+
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
   );
@@ -70,7 +73,9 @@ export default function PlayerRatings({ fixture }) {
     });
 
     if (!allPlayersRated) {
-      console.log("Missing Some Ratings");
+      // console.log("Missing Some Ratings");
+      showAlert("Missing Some Ratings", "error");
+
       return;
     }
     const storedUsersMatchMOTM = localStorage.getItem(
@@ -78,6 +83,8 @@ export default function PlayerRatings({ fixture }) {
     );
 
     if (!storedUsersMatchMOTM) {
+      showAlert("Missing your MOTM");
+
       console.log("Missing Your MOTM");
       return;
     }
@@ -299,7 +306,9 @@ const PlayerRatingsItems = ({
 }) => {
   const isMobile = useIsMobile();
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
+  if (!combinedPlayers) {
+    return <div className="spinner"></div>;
+  }
   return (
     <div className="PlayerRatingsItemsContainer">
       {combinedPlayers.map((player, rowIndex) => (

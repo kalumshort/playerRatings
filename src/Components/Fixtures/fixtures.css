@@ -234,7 +234,7 @@
 
 .fixure-events-list-item {
   margin-bottom: 5px;
-  border-bottom: 1px solid grey;
+  /* border-bottom: 1px solid grey; */
   align-items: center;
   display: flex;
 }
@@ -249,7 +249,7 @@
 /* ScorePrediction */
 
 .scorePredictionContainer {
-  height: 150px;
+  height: 100px;
   position: relative;
 }
 .scorePredictionResultsContainer {
@@ -307,7 +307,7 @@
   align-items: center;
 }
 .predictionScore {
-  font-size: 40px;
+  font-size: 20px;
 }
 .usersScorePrediction {
   font-size: 50px;
@@ -456,15 +456,13 @@
 .winnerPredictButtonGroup button {
   padding: 10px 20px;
   color: grey !important;
-  border: 1px dashed !important;
+  border: none !important;
 }
 .WinnerPredictTeamContainer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  height: 60%;
   justify-content: space-evenly;
-  border: 1px solid grey;
   border-radius: 8px;
   width: 30%;
 }

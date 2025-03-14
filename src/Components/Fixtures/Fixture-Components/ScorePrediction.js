@@ -102,7 +102,7 @@ export default function ScorePrediction({ fixture }) {
           right: "0px",
         }}
         // className="predictScoreSubmit"
-        variant="contained"
+        variant="text"
       >
         Submit
       </Button>
