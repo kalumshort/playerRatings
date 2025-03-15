@@ -56,12 +56,10 @@ export default function ScorePredictionResults({ fixture }) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: 400,
+    width: isMobile ? "80vw" : 400,
     bgcolor: "background.paper",
-    border: "2px solid #000",
     borderRadius: "8px",
     boxShadow: 24,
-    p: 4,
   };
   return (
     <ContentContainer className="scorePredictionResultsContainer">
@@ -84,8 +82,18 @@ export default function ScorePredictionResults({ fixture }) {
           </span>
         </div>
       </div>
-      <Button onClick={handleOpen} variant="text">
-        Prediction Details
+      <Button
+        onClick={handleOpen}
+        variant="text"
+        style={{
+          position: "absolute",
+          bottom: "2px",
+          right: "2px",
+          color: "grey",
+          textDecoration: "underline",
+        }}
+      >
+        Data
       </Button>
       <Modal
         open={open}

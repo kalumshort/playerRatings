@@ -2,7 +2,6 @@
   width: 100%;
 }
 .Prediction-lineup-container {
-  width: 100%;
   display: flex;
   position: relative;
   justify-content: space-evenly;
@@ -187,6 +186,9 @@
 @media (min-width: 768px) {
   .lineup-sidebar {
     width: calc(40% - 40px);
+  }
+  .Prediction-lineup-container {
+    width: 100%;
   }
 }
 
