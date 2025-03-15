@@ -18,7 +18,7 @@ export default function DraggableSquad({ availablePlayers }) {
   };
 
   return (
-    <Box>
+    <Box className="DraggableSquadTabsContainer">
       <Tabs
         value={selectedTab}
         onChange={handleTabChange}

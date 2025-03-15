@@ -2,9 +2,10 @@
   width: 100%;
 }
 .Prediction-lineup-container {
-  /* width: 100%; */
+  width: 100%;
   display: flex;
   position: relative;
+  justify-content: space-evenly;
 }
 
 .pitch {
@@ -31,14 +32,13 @@
   font-size: 18px;
   text-align: center;
   color: #ffffff;
-  width: 20%;
+  width: 30%;
   max-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
   align-items: center;
-  margin: 10px;
-  font-weight: 500;
+  margin: 1%;
   border-radius: 8px;
   padding: 5px;
   position: relative;
@@ -46,7 +46,7 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   max-width: 100px;
   overflow: visible;
-  height: 100px;
+  height: 120px;
   box-sizing: border-box;
 }
 .player-substitute {
@@ -136,14 +136,14 @@
   width: 100%;
   max-width: 100vw;
 }
+.DraggableSquadTabsContainer {
+  flex: 40%;
+}
 
 .DraggableSquadContainer {
   display: flex;
   flex-wrap: wrap;
-  flex: 40%;
-  padding: 10px;
   overflow-y: scroll;
-  max-width: 500px;
   justify-content: center;
   overflow: visible !important;
 }
@@ -159,6 +159,7 @@
   flex-direction: column;
   justify-content: space-evenly;
   position: relative;
+  max-width: 900px;
 }
 .DroppablePitchRow {
   display: flex;

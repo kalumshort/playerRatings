@@ -84,11 +84,11 @@ export default function Fixture() {
         ) : (
           <>
             {isPreMatch && (
-              <>
+              <div className="ScorePredictPTWContainer">
                 <ScorePrediction fixture={fixture} />
 
                 <PreMatchMOTM fixture={fixture} />
-              </>
+              </div>
             )}
 
             <div

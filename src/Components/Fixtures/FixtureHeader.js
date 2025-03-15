@@ -5,7 +5,7 @@ import FixtureEventsList from "./FixtureEventsList";
 import { Paper } from "@mui/material";
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 import { useFixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
-
+import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 export default function FixtureHeader({
   fixture,
   onClick,
@@ -62,10 +62,13 @@ export default function FixtureHeader({
           style={{
             background: fixtureGradient,
             padding: "5px",
+            cursor: onClick && "pointer",
           }}
           onClick={() => (onClick ? onClick(fixture.id) : null)}
         >
           <ContentContainer className="fixture-header">
+            {onClick && <ArrowForwardOutlinedIcon className="headerExpand" />}
+
             {showDate && <div className="fixture-time-header">{matchTime}</div>}
             <div className="team-container">
               <div

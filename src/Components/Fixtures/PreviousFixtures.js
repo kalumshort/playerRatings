@@ -10,7 +10,6 @@ export default function PreviousFixtures() {
   const previousFixtures = useSelector(selectPreviousFixtures);
   const navigate = useNavigate();
   const [selectedLeague, setSelectedLeague] = useState("");
-  console.log(previousFixtures.map((fix) => fix.id));
   const handleFixtureClick = (matchId) => {
     navigate(`/fixture/${matchId}`);
   };
@@ -30,7 +29,7 @@ export default function PreviousFixtures() {
     : previousFixtures;
 
   return (
-    <ContentContainer>
+    <ContentContainer className="fixturesListContainer">
       <div className="fixtures-list-header">
         <h2 className="globalHeading">Results</h2>
         <Select

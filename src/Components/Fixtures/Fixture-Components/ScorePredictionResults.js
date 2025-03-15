@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useSelector } from "react-redux";
 
@@ -7,15 +7,15 @@ import { useIsMobile, useLocalStorage } from "../../../Hooks/Helper_Functions";
 
 import Barchart from "../../Charts/Barchart";
 import Piechart from "../../Charts/Piechart";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Typography,
-} from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
+import { Modal, Box, Button, Typography } from "@mui/material";
+
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function ScorePredictionResults({ fixture }) {
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
   // const dispatch = useDispatch();
   const isMobile = useIsMobile();
 
@@ -54,7 +54,18 @@ export default function ScorePredictionResults({ fixture }) {
       matchPredictions?.scorePrecitions
     ).filter((key) => matchPredictions?.scorePrecitions[key] === maxValue);
   }
-
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    borderRadius: "8px",
+    boxShadow: 24,
+    p: 4,
+  };
   return (
     <ContentContainer className="scorePredictionResultsContainer containerMargin animate__bounceIn">
       <div style={{ display: "flex" }}>
@@ -71,23 +82,16 @@ export default function ScorePredictionResults({ fixture }) {
           </span>
         </div>
       </div>
-
-      <Accordion
-        style={{
-          borderRadius: "8px",
-        }}
+      <Button onClick={handleOpen} variant="outlined">
+        Prediction Details
+      </Button>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1-content"
-          id="panel1-header"
-          style={{
-            borderRadius: "8px",
-          }}
-        >
-          <Typography component="span">Prediction Details</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
+        <Box sx={style}>
           <>
             <div className="scorePredictionResultsInnerContainer">
               <h1 className="scorePredictionInnerHeading">
@@ -126,8 +130,8 @@ export default function ScorePredictionResults({ fixture }) {
               />
             </div>
           </>
-        </AccordionDetails>
-      </Accordion>
+        </Box>
+      </Modal>
     </ContentContainer>
   );
 }

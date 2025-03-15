@@ -30,7 +30,7 @@ export default function UpcomingFixtures() {
     : upcomingFixtures;
 
   return (
-    <ContentContainer>
+    <ContentContainer className="fixturesListContainer">
       <div className="fixtures-list-header">
         <h2 className="globalHeading">Fixtures</h2>
         <Select
