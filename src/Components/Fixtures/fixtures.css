@@ -581,6 +581,12 @@
 }
 
 @media (max-width: 450px) {
+  .headerExpand {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 15px !important;
+  }
   .fixture-list-item {
     padding: 15px 5px;
   }

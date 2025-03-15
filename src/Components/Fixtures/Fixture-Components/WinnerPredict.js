@@ -1,6 +1,6 @@
 import React from "react";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
-import { Button, ButtonGroup } from "@mui/material";
+import { Button } from "@mui/material";
 import { handlePredictWinningTeam } from "../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { useDispatch, useSelector } from "react-redux";

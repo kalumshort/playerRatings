@@ -161,7 +161,7 @@ export default function PreMatchMOTM({ fixture }) {
             right: "1px",
             padding: "0px",
           }}
-          variant="outlined"
+          variant="text"
           size="small"
         >
           Submit

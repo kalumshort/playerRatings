@@ -7,10 +7,7 @@ import { useIsMobile, useLocalStorage } from "../../../Hooks/Helper_Functions";
 
 import Barchart from "../../Charts/Barchart";
 import Piechart from "../../Charts/Piechart";
-import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
-import { Modal, Box, Button, Typography } from "@mui/material";
-
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Modal, Box, Button } from "@mui/material";
 
 export default function ScorePredictionResults({ fixture }) {
   const [open, setOpen] = useState(false);
