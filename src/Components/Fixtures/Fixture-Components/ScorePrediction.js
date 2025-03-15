@@ -41,13 +41,13 @@ export default function ScorePrediction({ fixture }) {
   return storedUsersPredictedScore ? (
     <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
   ) : (
-    <ContentContainer className="scorePredictionContainer containerMargin">
+    <ContentContainer className="scorePredictionContainer">
       <h1 className="smallHeading">Score Prediction</h1>
       <div className="scorePredictionTeams">
         <div className="scorePredictionTeam">
           <img
             src={fixture.teams.home.logo}
-            className="predict-team-logo"
+            className="team-logo-small"
             alt={fixture.teams.home.name}
           />
           <div className="scorePredictButtons">
@@ -89,7 +89,7 @@ export default function ScorePrediction({ fixture }) {
           </div>
           <img
             src={fixture.teams.away.logo}
-            className="predict-team-logo"
+            className="team-logo-small"
             alt={fixture.teams.away.name}
           />
         </div>
@@ -98,11 +98,11 @@ export default function ScorePrediction({ fixture }) {
         onClick={() => handleTeamScoreSubmit()}
         style={{
           position: "absolute",
-          bottom: "0px",
-          right: "0px",
+          top: "1px",
+          right: "1px",
+          padding: "0px",
         }}
-        // className="predictScoreSubmit"
-        variant="text"
+        variant="outlined"
       >
         Submit
       </Button>

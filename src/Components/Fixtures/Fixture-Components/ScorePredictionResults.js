@@ -67,8 +67,13 @@ export default function ScorePredictionResults({ fixture }) {
     p: 4,
   };
   return (
-    <ContentContainer className="scorePredictionResultsContainer containerMargin animate__bounceIn">
-      <div style={{ display: "flex" }}>
+    <ContentContainer className="scorePredictionResultsContainer">
+      <h1 className="smallHeading">Score Prediction</h1>
+      <div
+        style={{
+          display: "flex",
+        }}
+      >
         <div className="scorePredictionResultsInnerContainer">
           <h1 className="scorePredictionInnerHeading">Your Score</h1>
           <span className=" usersScorePrediction">
@@ -76,13 +81,13 @@ export default function ScorePredictionResults({ fixture }) {
           </span>
         </div>
         <div className="scorePredictionResultsInnerContainer">
-          <h1 className="scorePredictionInnerHeading ">Community Score</h1>
+          <h1 className="scorePredictionInnerHeading">Community Score</h1>
           <span className=" usersScorePrediction">
             {highestScorePredictions?.[0] || "-"}
           </span>
         </div>
       </div>
-      <Button onClick={handleOpen} variant="outlined">
+      <Button onClick={handleOpen} variant="text">
         Prediction Details
       </Button>
       <Modal

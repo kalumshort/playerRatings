@@ -51,12 +51,13 @@ export default function PreMatchMOTM({ fixture }) {
 
   return storedUsersPlayerToWatch ? (
     <ContentContainer
-      className="scorePredictionContainer containerMargin animate__animated animate__flipInX"
+      className="scorePredictionContainer"
       style={{
         display: "flex",
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        // backgroundImage: `url(${squadData[result[0]?.playerId]?.img})`,
       }}
     >
       <h1 className="smallHeading">Player to Watch</h1>
@@ -91,13 +92,13 @@ export default function PreMatchMOTM({ fixture }) {
       <div>
         <img
           src={squadData[result[0]?.playerId]?.img}
-          height={150}
+          height={100}
           alt={result[0]?.name}
         />
       </div>
     </ContentContainer>
   ) : (
-    <ContentContainer className="scorePredictionContainer containerMargin">
+    <ContentContainer className="scorePredictionContainer">
       <h1 className="smallHeading">Player to Watch</h1>
       <div
         style={{
@@ -156,10 +157,12 @@ export default function PreMatchMOTM({ fixture }) {
           onClick={() => handlePlayerToWatchSubmit()}
           style={{
             position: "absolute",
-            bottom: "0px",
-            right: "0px",
+            top: "1px",
+            right: "1px",
+            padding: "0px",
           }}
-          variant="contained"
+          variant="outlined"
+          size="small"
         >
           Submit
         </Button>

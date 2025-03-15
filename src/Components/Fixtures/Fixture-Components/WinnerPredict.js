@@ -40,44 +40,32 @@ export default function WinnerPredict({ fixture }) {
   );
 
   return (
-    <ContentContainer className="scorePredictionContainer containerMargin">
+    <ContentContainer className="scorePredictionContainer">
       <h4 className="smallHeading">Who will Win?</h4>
       {!storedUsersPredictedResult ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-          }}
-        >
-          <ButtonGroup variant="outlined" className="winnerPredictButtonGroup">
-            <Button onClick={() => handleWinningTeamPredict("home")} s>
-              <img
-                src={fixture.teams.home.logo}
-                alt={`${fixture.teams.home.name} logo`}
-                className="team-logo"
-              />
-            </Button>
-            <Button onClick={() => handleWinningTeamPredict("draw")}>
-              Draw
-            </Button>
-            <Button onClick={() => handleWinningTeamPredict("away")}>
-              <img
-                src={fixture.teams.away.logo}
-                alt={`${fixture.teams.away.name} logo`}
-                className="team-logo"
-              />
-            </Button>
-          </ButtonGroup>
+        <div className="winnerPredictButtonGroup">
+          <Button onClick={() => handleWinningTeamPredict("home")} s>
+            <img
+              src={fixture.teams.home.logo}
+              alt={`${fixture.teams.home.name} logo`}
+              className="team-logo-small"
+            />
+          </Button>
+          <Button onClick={() => handleWinningTeamPredict("draw")}>Draw</Button>
+          <Button onClick={() => handleWinningTeamPredict("away")}>
+            <img
+              src={fixture.teams.away.logo}
+              alt={`${fixture.teams.away.name} logo`}
+              className="team-logo-small"
+            />
+          </Button>
         </div>
       ) : (
         <div
           style={{
             display: "flex",
             justifyContent: "space-evenly",
-            alignItems: "center",
-            height: "100%",
+            width: "100%",
           }}
         >
           <div
@@ -88,7 +76,7 @@ export default function WinnerPredict({ fixture }) {
             <img
               src={fixture.teams.home.logo}
               alt={`${fixture.teams.home.name} logo`}
-              className="team-logo"
+              className="team-logo-small"
             />
             <span>
               {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
@@ -99,7 +87,7 @@ export default function WinnerPredict({ fixture }) {
               percentages.draw === maxPercentage ? "WinningResult" : ""
             }`}
           >
-            <span style={{ color: "grey" }}>Draw</span>
+            <span style={{ color: "grey" }}>X</span>
             <span>
               {isNaN(percentages?.draw) ? 0 : percentages.draw.toFixed(0)}%
             </span>
@@ -112,7 +100,7 @@ export default function WinnerPredict({ fixture }) {
             <img
               src={fixture.teams.away.logo}
               alt={`${fixture.teams.away.name} logo`}
-              className="team-logo"
+              className="team-logo-small"
             />
             <span>
               {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%

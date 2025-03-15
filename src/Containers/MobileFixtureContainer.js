@@ -73,12 +73,12 @@ export default function MobileFixtureContainer({ fixture }) {
         </Tabs>
       </Paper>
       {selectedTab === "Predicts" && (
-        <>
+        <div className="ScorePredictPTWContainer containerMargin">
           <WinnerPredict fixture={fixture} />
           <ScorePrediction fixture={fixture} />
 
           <PreMatchMOTM fixture={fixture} />
-        </>
+        </div>
       )}
       {selectedTab === "Predict-XI" && <LineupPredictor fixture={fixture} />}
 

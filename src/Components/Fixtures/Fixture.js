@@ -29,6 +29,7 @@ import {
 } from "../../Hooks/Helper_Functions";
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
+import WinnerPredict from "./Fixture-Components/WinnerPredict";
 
 export default function Fixture() {
   const footballClubsColors = footballClubsColours;
@@ -84,9 +85,9 @@ export default function Fixture() {
         ) : (
           <>
             {isPreMatch && (
-              <div className="ScorePredictPTWContainer">
+              <div className="ScorePredictPTWContainer containerMargin">
+                <WinnerPredict fixture={fixture} />
                 <ScorePrediction fixture={fixture} />
-
                 <PreMatchMOTM fixture={fixture} />
               </div>
             )}
