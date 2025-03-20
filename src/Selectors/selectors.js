@@ -15,10 +15,10 @@ export const selectPlayerStatsById = (playerId) =>
   createSelector([allPlayerStats], (playerStats) => playerStats[playerId]);
 
 export const selectMatchRatingsById = (matchId) =>
-  createSelector([allMatchRatings], (matches) => matches[matchId].players);
+  createSelector([allMatchRatings], (matches) => matches[matchId]?.players);
 
 export const selectMatchMotmById = (matchId) =>
-  createSelector([allMatchRatings], (matches) => matches[matchId].motm);
+  createSelector([allMatchRatings], (matches) => matches[matchId]?.motm);
 
 export const selectPlayerRatinsById = (playerId) =>
   createSelector([allPlayerRatings], (player) => player[playerId]);

@@ -39,7 +39,6 @@ export default function PlayerRatings({ fixture }) {
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
   );
-
   const isMatchRatingsSubmitted = useLocalStorage(
     `userMatchRatingSubmited-${fixture.id}`
   );
@@ -125,13 +124,12 @@ const PlayerRatingItem = ({
   readOnly,
 }) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
-
   const storedUsersPlayerRating = useLocalStorage(
     `userPlayerRatings-${fixture.id}-${player.id}`
   );
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
-  const isMOTM = storedUsersMatchMOTM === String(player.id);
+  const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
@@ -165,7 +163,7 @@ const PlayerRatingItem = ({
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
   }
 
-  const playerRatingAverage = matchRatings[player.id]?.totalRating
+  const playerRatingAverage = matchRatings?.[player.id]?.totalRating
     ? (
         matchRatings[player.id]?.totalRating /
         matchRatings[player.id]?.totalSubmits
