@@ -16,7 +16,7 @@ export default function LineupPlayer({
   percentage,
   showPlayerName = true,
 }) {
-  const playerData = useSelector(selectSquadPlayerById(player.id));
+  const playerData = useSelector(selectSquadPlayerById(player?.id));
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
@@ -69,7 +69,7 @@ export default function LineupPlayer({
       onDrop={onDrop}
     >
       <img
-        src={player?.img || playerData?.img || missingPlayerImg}
+        src={player?.photo || playerData?.photo || missingPlayerImg}
         className="lineup-player-img"
         alt={player.name}
       />

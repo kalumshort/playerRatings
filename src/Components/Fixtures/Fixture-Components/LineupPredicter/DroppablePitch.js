@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useDispatch, useSelector } from "react-redux";
-import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
+import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
 import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
 import { setLocalStorageItem } from "../../../../Hooks/Helper_Functions";
@@ -18,7 +18,7 @@ export default function DroppablePitch({
 }) {
   const dispatch = useDispatch();
 
-  const squadData = useSelector(selectSquadData);
+  const squadData = useSelector(selectSquadDataObject);
 
   // const handlePlayerDelete = (playerId) => {
   //   if (readOnly) {

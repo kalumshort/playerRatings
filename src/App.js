@@ -29,7 +29,7 @@ import FixturesContainer from "./Containers/FixturesContainer";
 import { GlobalContainer } from "./Containers/GlobalContainer";
 import Fixture from "./Components/Fixtures/Fixture";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFixtures } from "./Hooks/Fixtures_Hooks";
+import { fetchFixtures, fetchTeamSquad } from "./Hooks/Fixtures_Hooks";
 import Spinner from "./Containers/Helpers";
 
 import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
@@ -49,6 +49,7 @@ function App() {
   useEffect(() => {
     if (!loaded) {
       dispatch(fetchFixtures());
+      dispatch(fetchTeamSquad("33"));
     }
   }, [dispatch, loaded]);
 

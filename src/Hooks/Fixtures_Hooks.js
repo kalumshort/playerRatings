@@ -17,6 +17,7 @@ import {
   addPlayersMatchesStats,
   fetchPlayerStatsAction,
 } from "../redux/Reducers/playersReducer";
+import { fetchTeamSquadAction } from "../redux/Reducers/teamSquads";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -98,6 +99,16 @@ export const fetchPlayerStats = () => async (dispatch) => {
     );
 
     dispatch(fetchPlayerStatsAction({ players: playerRatings }));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const fetchTeamSquad = (squadId) => async (dispatch) => {
+  try {
+    const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
+    console.log(squadId, teamSquadData);
+    dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
   } catch (error) {
     console.log(error);
   }

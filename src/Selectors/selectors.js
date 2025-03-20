@@ -41,7 +41,7 @@ export const selectMotmPercentagesByMatchId = (matchId) =>
             votes,
             percentage: ((votes / motmTotalVotes) * 100).toFixed(0), // Calculate percentage
             name: playerData?.name || "Unknown", // Add player name or fallback
-            img: playerData?.img || "Unknown", // Add player position or fallback
+            img: playerData?.photo || "Unknown", // Add player position or fallback
           };
         })
         .sort((a, b) => b.percentage - a.percentage); // Sort by percentage in descending order

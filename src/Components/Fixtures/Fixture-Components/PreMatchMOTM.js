@@ -6,7 +6,7 @@ import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useDispatch, useSelector } from "react-redux";
-import { selectSquadData } from "../../../Selectors/squadDataSelectors";
+import { selectSquadDataObject } from "../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
 import {
   setLocalStorageItem,
@@ -17,7 +17,7 @@ import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 
 export default function PreMatchMOTM({ fixture }) {
-  const squadData = useSelector(selectSquadData);
+  const squadData = useSelector(selectSquadDataObject);
   const dispatch = useDispatch();
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const [selectedPlayer, setSelectedPlayer] = useState("");
@@ -57,7 +57,6 @@ export default function PreMatchMOTM({ fixture }) {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        // backgroundImage: `url(${squadData[result[0]?.playerId]?.img})`,
       }}
     >
       <h1 className="smallHeading">Player to Watch</h1>
@@ -91,7 +90,7 @@ export default function PreMatchMOTM({ fixture }) {
 
       <div>
         <img
-          src={squadData[result[0]?.playerId]?.img}
+          src={squadData[result[0]?.playerId]?.photo}
           height={100}
           alt={result[0]?.name}
         />
@@ -118,7 +117,7 @@ export default function PreMatchMOTM({ fixture }) {
               <Box display="flex" alignItems="center" gap={1}>
                 <Avatar
                   alt={squadData[selected].name}
-                  src={squadData[selected].img}
+                  src={squadData[selected].photo}
                   style={{
                     height: 80,
                     width: 60,
@@ -139,7 +138,7 @@ export default function PreMatchMOTM({ fixture }) {
               <Box display="flex" alignItems="center" gap={1}>
                 <Avatar
                   alt={player.name}
-                  src={player.img}
+                  src={player.photo}
                   style={{
                     height: 50,
                     borderRadius: "8px",

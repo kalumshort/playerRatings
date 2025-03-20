@@ -192,7 +192,7 @@ const PlayerRatingItem = ({
   return (
     <div className={isMOTM ? "PlayerRatingItem motm" : "PlayerRatingItem"}>
       <img
-        src={playerData?.img || player.img || missingPlayerImg}
+        src={playerData?.photo || player.photo || missingPlayerImg}
         className="PlayerRatingImg"
         alt={player.name}
       />
@@ -350,7 +350,7 @@ const SubmittedPlayerRatings = ({
     <>
       <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
         <img
-          src={motmPercentages[0]?.img}
+          src={motmPercentages[0]?.photo}
           className="PlayerRatingImg"
           alt="PlayerRatingImg"
         />

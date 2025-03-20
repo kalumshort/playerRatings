@@ -3,12 +3,12 @@ import { Tabs, Tab, Box } from "@mui/material";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
-export default function DraggableSquad({ availablePlayers }) {
-  const [selectedTab, setSelectedTab] = useState("G");
+export default function DraggableSquad({ squad }) {
+  const [selectedTab, setSelectedTab] = useState("Goalkeeper");
 
   // Filter players based on the selected tab
   const filteredPlayers = Object.fromEntries(
-    Object.entries(availablePlayers).filter(
+    Object.entries(squad).filter(
       ([, player]) => player.position === selectedTab
     )
   );
@@ -27,10 +27,26 @@ export default function DraggableSquad({ availablePlayers }) {
         aria-label="Player Position Tabs"
         className="DraggableSquadTabs"
       >
-        <Tab label="GK" value="G" sx={{ minWidth: "auto", flexShrink: 1 }} />
-        <Tab label="DEF" value="D" sx={{ minWidth: "auto", flexShrink: 1 }} />
-        <Tab label="MID" value="M" sx={{ minWidth: "auto", flexShrink: 1 }} />
-        <Tab label="FOR" value="F" sx={{ minWidth: "auto", flexShrink: 1 }} />
+        <Tab
+          label="GK"
+          value="Goalkeeper"
+          sx={{ minWidth: "auto", flexShrink: 1 }}
+        />
+        <Tab
+          label="DEF"
+          value="Defender"
+          sx={{ minWidth: "auto", flexShrink: 1 }}
+        />
+        <Tab
+          label="MID"
+          value="Midfielder"
+          sx={{ minWidth: "auto", flexShrink: 1 }}
+        />
+        <Tab
+          label="FOR"
+          value="Attacker"
+          sx={{ minWidth: "auto", flexShrink: 1 }}
+        />
       </Tabs>
 
       <div className="DraggableSquadContainer">
@@ -85,7 +101,7 @@ export function DraggablePlayer({ player, locationId, useAnimation }) {
       className={`draggable-player player ${useAnimation ? animateClass : ""}`}
       style={style}
     >
-      <img src={player.img} alt={player.name} className="lineup-player-img" />
+      <img src={player.photo} alt={player.name} className="lineup-player-img" />
       <span className="lineup-player-name">{player.name}</span>
     </div>
   );

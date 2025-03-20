@@ -5,14 +5,15 @@ import DraggableSquad from "./DraggableSquad";
 import { useLocalStorage } from "../../../../Hooks/Helper_Functions";
 import { useSelector } from "react-redux";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
-import { selectSquadData } from "../../../../Selectors/squadDataSelectors";
+import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import LineupPlayer from "../LineupPlayer";
 
 import { DndContext } from "@dnd-kit/core";
 import { Button } from "@mui/material";
 
 export default function LineupPredictor({ fixture, readOnly }) {
-  const squadData = useSelector(selectSquadData);
+  const squadData = useSelector(selectSquadDataObject);
+  console.log(squadData);
 
   const storedUsersPredictedTeam = JSON.parse(
     useLocalStorage(`userPredictedTeam-${fixture.id}`)
@@ -20,12 +21,12 @@ export default function LineupPredictor({ fixture, readOnly }) {
 
   const [chosenTeam, setTeam] = useState({});
 
-  const availablePlayers = Object.keys(squadData).reduce((acc, playerId) => {
-    if (!Object.values(chosenTeam).includes(playerId)) {
-      acc[playerId] = squadData[playerId];
-    }
-    return acc;
-  }, {});
+  // const availablePlayers = Object.keys(squadData).reduce((acc, playerId) => {
+  //   if (!Object.values(chosenTeam).includes(playerId)) {
+  //     acc[playerId] = squadData[playerId];
+  //   }
+  //   return acc;
+  // }, {});
 
   const handlePlayerDrop = (droppedPlayerId, droppedLocation) => {
     setTeam((prevTeam) => {
@@ -125,7 +126,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
           chosenTeam={chosenTeam}
           setTeam={setTeam}
         />
-        <DraggableSquad fixture={fixture} availablePlayers={availablePlayers} />
+        <DraggableSquad fixture={fixture} squad={squadData} />
       </DndContext>
     </ContentContainer>
   );
@@ -166,7 +167,7 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
 
 export function CommunityTeamStats({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
-  const squadData = useSelector(selectSquadData);
+  const squadData = useSelector(selectSquadDataObject);
 
   const percentagesArray = matchPredictions?.totalPlayersSubmits
     ? Object.entries(matchPredictions?.totalPlayersSubmits).map(

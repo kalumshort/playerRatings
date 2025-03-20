@@ -9,7 +9,7 @@ import {
 
 import { useSelector } from "react-redux";
 import { selectPlayerStats } from "../../Selectors/selectors";
-import { selectSquadData } from "../../Selectors/squadDataSelectors";
+import { selectSquadDataObject } from "../../Selectors/squadDataSelectors";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -20,7 +20,7 @@ export default function AllPlayerStats() {
   const playerStats = useSelector(selectPlayerStats);
   const navigate = useNavigate();
 
-  const squadData = useSelector(selectSquadData);
+  const squadData = useSelector(selectSquadDataObject);
   const [sort, setSort] = useState("desc"); // Default to descending
   const [positionFilter, setPositionFilter] = useState("");
 
@@ -38,7 +38,7 @@ export default function AllPlayerStats() {
       playerId,
       stats,
       playerName: squadData[playerId]?.name || "Unknown Player",
-      playerImg: squadData[playerId]?.img || "Unknown Player",
+      playerImg: squadData[playerId]?.photo || "Unknown Player",
       playerAverageRating: stats.totalRating / stats.totalSubmits,
     }))
     .sort((a, b) =>
@@ -64,10 +64,10 @@ export default function AllPlayerStats() {
           size="small"
         >
           <MenuItem value="">All Positions</MenuItem>
-          <MenuItem value="F">Forward</MenuItem>
-          <MenuItem value="M">Midfielder</MenuItem>
-          <MenuItem value="D">Defender</MenuItem>
-          <MenuItem value="G">Goalkeeper</MenuItem>
+          <MenuItem value="Attacker">Forward</MenuItem>
+          <MenuItem value="Midfielder">Midfielder</MenuItem>
+          <MenuItem value="Defender">Defender</MenuItem>
+          <MenuItem value="Goalkepper">Goalkeeper</MenuItem>
         </Select>
         <ToggleButtonGroup
           size="small"

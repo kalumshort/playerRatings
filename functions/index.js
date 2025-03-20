@@ -64,9 +64,7 @@ exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
       };
 
       await getFirestore()
-        .collection("fixtures")
-        .doc(year.toString())
-        .collection("33")
+        .collection("fixtures/2024/33")
         .doc(fixtureId.toString())
         .set(fixtureData, { merge: true });
     }
@@ -140,38 +138,38 @@ exports.updateFixturesRequest = onRequest(async (req, res) => {
   }
 });
 
-exports.prevIds = onRequest(async (req, res) => {
-  const prevIds = [1208210];
-  // events
-  // statistics
-  // lineups
-  for (const fixtureId of prevIds) {
-    try {
-      const response = await axios.get(
-        `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
-        {
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
+// exports.prevIds = onRequest(async (req, res) => {
+//   const prevIds = [1208210];
+//   // events
+//   // statistics
+//   // lineups
+//   for (const fixtureId of prevIds) {
+//     try {
+//       const response = await axios.get(
+//         `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
+//         {
+//           headers: {
+//             "x-rapidapi-host": "v3.football.api-sports.io",
+//             "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+//           },
+//         }
+//       );
 
-      const events = response.data.response;
+//       const events = response.data.response;
 
-      await getFirestore()
-        .collection("fixtures")
-        .doc("2024")
-        .collection("data")
-        .doc(fixtureId.toString())
-        .set({ events }, { merge: true });
-    } catch (error) {
-      console.error(`Error for fixture ${fixtureId}:`, error.message);
-    }
-  }
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc("2024")
+//         .collection("data")
+//         .doc(fixtureId.toString())
+//         .set({ events }, { merge: true });
+//     } catch (error) {
+//       console.error(`Error for fixture ${fixtureId}:`, error.message);
+//     }
+//   }
 
-  res.send("Lineups added to Firebase.");
-});
+//   res.send("Lineups added to Firebase.");
+// });
 
 exports.fetchSingleFixtureData = onRequest(async (req, res) => {
   const preIds = [];
@@ -332,71 +330,71 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //     }
 //   }
 // }
-exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
-  const now = Math.floor(Date.now() / 1000);
+// exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
+//   const now = Math.floor(Date.now() / 1000);
 
-  try {
-    // Query the next match
-    const matchesRef = getFirestore().collection(`fixtures/2024/33`);
-    const nextFixture = await matchesRef
-      .where("matchDate", ">=", now)
-      .orderBy("matchDate", "asc")
-      .limit(1)
-      .get();
+//   try {
+//     // Query the next match
+//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const nextFixture = await matchesRef
+//       .where("matchDate", ">=", now)
+//       .orderBy("matchDate", "asc")
+//       .limit(1)
+//       .get();
 
-    const lastFixture = await matchesRef
-      .where("matchDate", "<=", now)
-      .orderBy("matchDate", "desc")
-      .limit(1)
-      .get();
+//     const lastFixture = await matchesRef
+//       .where("matchDate", "<=", now)
+//       .orderBy("matchDate", "desc")
+//       .limit(1)
+//       .get();
 
-    if (nextFixture.empty || lastFixture.empty) {
-      console.log("Fixture was empty");
-      return null;
-    }
+//     if (nextFixture.empty || lastFixture.empty) {
+//       console.log("Fixture was empty");
+//       return null;
+//     }
 
-    const nextFixtureData = nextFixture.docs[0].data();
-    const lastFixtureData = lastFixture.docs[0].data();
+//     const nextFixtureData = nextFixture.docs[0].data();
+//     const lastFixtureData = lastFixture.docs[0].data();
 
-    let latestFixture = null;
+//     let latestFixture = null;
 
-    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
 
-    if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
-      latestFixture = nextFixtureData;
-    } else {
-      latestFixture = lastFixtureData;
-    }
+//     if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
+//       latestFixture = nextFixtureData;
+//     } else {
+//       latestFixture = lastFixtureData;
+//     }
 
-    const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
-    const latestFixtureId = latestFixture?.fixture?.id;
+//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+//     const latestFixtureId = latestFixture?.fixture?.id;
 
-    if (!latestFixtureId) {
-      return res.status(500).send(`Error: No latest Fixture Id`);
-    }
+//     if (!latestFixtureId) {
+//       return res.status(500).send(`Error: No latest Fixture Id`);
+//     }
 
-    // Calculate the difference in seconds
-    const timeDifference = Math.abs(now - matchStartingTimestamp);
+//     // Calculate the difference in seconds
+//     const timeDifference = Math.abs(now - matchStartingTimestamp);
 
-    // Check if the difference is within 1 hour (3600 seconds)
-    if (timeDifference <= 3600) {
-      console.log("The timestamp is within an hour of the starting time.");
-      await fetchAllMatchData(latestFixtureId);
-    } else if (
-      latestFixture.fixture.status.long !== "Match Finished" &&
-      latestFixture.fixture.status.long !== "Not Started"
-    ) {
-      console.log("Match Inplay.");
-      await fetchAllMatchData(latestFixtureId);
-    } else {
-      console.log("Match is not within 1 hour and is not in play");
-    }
+//     // Check if the difference is within 1 hour (3600 seconds)
+//     if (timeDifference <= 3600) {
+//       console.log("The timestamp is within an hour of the starting time.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else if (
+//       latestFixture.fixture.status.long !== "Match Finished" &&
+//       latestFixture.fixture.status.long !== "Not Started"
+//     ) {
+//       console.log("Match Inplay.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else {
+//       console.log("Match is not within 1 hour and is not in play");
+//     }
 
-    res.status(200).send(`Sucessful`);
-  } catch (error) {
-    console.error("Error fetching match data:", error);
-    return res
-      .status(500)
-      .send(`Error fetching fixture data: ${error.message}`);
-  }
-});
+//     res.status(200).send(`Sucessful`);
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     return res
+//       .status(500)
+//       .send(`Error fetching fixture data: ${error.message}`);
+//   }
+// });

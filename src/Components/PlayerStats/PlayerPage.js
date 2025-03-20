@@ -32,7 +32,7 @@ export default function PlayerPage() {
     <>
       <Paper className="PlayerPageHeader">
         <img
-          src={playerData?.img}
+          src={playerData?.photo}
           className="PlayerPageImg"
           alt={`${playerData.name}`}
         />
