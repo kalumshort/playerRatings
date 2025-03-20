@@ -90,40 +90,49 @@ export default function FixtureHeader({
               <CountdownTimer targetTime={fixture.fixture.timestamp} />
             ) : (
               <>
-                <Paper className="fixture-status-container">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-evenly",
-                      width: "100%",
-                    }}
-                  >
-                    {fixture.fixture.status.short !== "NS" && (
+                {fixture?.fixture?.status?.short === "TBD" ? (
+                  <Paper className="fixture-status-container">
+                    {" "}
+                    <span className="fixture-status-short">
+                      {fixture.fixture.status.short}
+                    </span>
+                  </Paper>
+                ) : (
+                  <Paper className="fixture-status-container">
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-evenly",
+                        width: "100%",
+                      }}
+                    >
+                      {fixture.fixture.status.short !== "NS" && (
+                        <span className="fixture-status-short">
+                          {fixture.fixture.status.short}
+                        </span>
+                      )}
                       <span className="fixture-status-short">
-                        {fixture.fixture.status.short}
+                        {fixture.fixture.status.elapsed}'
+                      </span>
+                    </div>
+
+                    <span className="scoreboard">
+                      {fixture.goals.home} - {fixture.goals.away}
+                    </span>
+                    {fixture.score.penalty.home !== null && (
+                      <span className="halftime-scoreboard">
+                        Penalty: {fixture.score.penalty.home}-
+                        {fixture.score.penalty.away}
                       </span>
                     )}
-                    <span className="fixture-status-short">
-                      {fixture.fixture.status.elapsed}'
-                    </span>
-                  </div>
-
-                  <span className="scoreboard">
-                    {fixture.goals.home} - {fixture.goals.away}
-                  </span>
-                  {fixture.score.penalty.home !== null && (
-                    <span className="halftime-scoreboard">
-                      Penalty: {fixture.score.penalty.home}-
-                      {fixture.score.penalty.away}
-                    </span>
-                  )}
-                  {fixture.score.halftime.home !== null && (
-                    <span className="halftime-scoreboard">
-                      Halftime: {fixture.score.halftime.home}-
-                      {fixture.score.halftime.away}
-                    </span>
-                  )}
-                </Paper>
+                    {fixture.score.halftime.home !== null && (
+                      <span className="halftime-scoreboard">
+                        Halftime: {fixture.score.halftime.home}-
+                        {fixture.score.halftime.away}
+                      </span>
+                    )}
+                  </Paper>
+                )}
               </>
             )}
             <div className="team-container">

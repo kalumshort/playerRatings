@@ -26,7 +26,8 @@ export default function FixtureListItem({
 
         <span
           className={`fixture-item-scoreboard textShadow ${
-            fixture.fixture.status.short === "NS"
+            fixture.fixture.status.short === "NS" ||
+            fixture.fixture.status.short === "TBD"
               ? ""
               : fixture.teams.home.id === 33 && fixture.teams.home.winner
               ? "green"

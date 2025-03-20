@@ -41,7 +41,7 @@ export default function Fixture() {
   const { matchId } = useParams();
 
   const fixture = useSelector(selectFixtureById(matchId));
-
+  console.log(fixture);
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
 
@@ -62,7 +62,9 @@ export default function Fixture() {
   if (!fixture) {
     return <div>Loading...</div>;
   }
-  const isPreMatch = fixture?.fixture?.status?.short === "NS";
+  const isPreMatch =
+    fixture?.fixture?.status?.short === "NS" ||
+    fixture?.fixture?.status?.short === "TBD";
   // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   return (
