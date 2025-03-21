@@ -36,25 +36,33 @@ import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
 import { useIsMobile } from "./Hooks/Helper_Functions";
 import MobileHeader from "./Containers/MobileHeader";
 import PlayerPage from "./Components/PlayerStats/PlayerPage";
+import { selectSquadLoad } from "./Selectors/squadDataSelectors";
+import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
 
 function App() {
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
-
-  const { loaded, loading } = useSelector((state) => ({
-    loaded: state.fixtures.loaded,
-    loading: state.fixtures.loading,
-  }));
+  const { squadLoaded, squadError } = useSelector(selectSquadLoad);
+  const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
 
   useEffect(() => {
-    if (!loaded) {
+    if (!fixturesLoaded) {
       dispatch(fetchFixtures());
+    }
+    if (!squadLoaded) {
       dispatch(fetchTeamSquad("33"));
     }
-  }, [dispatch, loaded]);
+  }, [dispatch, fixturesLoaded, squadLoaded]);
 
-  if (!loaded || loading) {
+  if (!fixturesLoaded || !squadLoaded) {
     return <Spinner />;
+  }
+  if (squadError || fixturesError) {
+    return (
+      <div>
+        Error: Please refresh, If error still exists please contact support.{" "}
+      </div>
+    );
   }
 
   return (

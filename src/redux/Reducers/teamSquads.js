@@ -2,15 +2,37 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const teamSquadsSlice = createSlice({
   name: "teamSquads",
-  initialState: {},
+  initialState: {
+    squads: {},
+    loading: false,
+    error: null,
+    loaded: false,
+  },
   reducers: {
+    fetchTeamSquadStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchTeamSquadFailure(state, action) {
+      state.error = action.payload;
+      state.loading = false;
+    },
+    fetchTeamSquadSuccess(state) {
+      state.loading = false;
+      state.loaded = true;
+    },
     fetchTeamSquadAction(state, action) {
       const { squadId, data } = action.payload;
-      state[squadId] = data;
+      state.squads[squadId] = data;
     },
   },
 });
 
-export const { fetchTeamSquadAction } = teamSquadsSlice.actions;
+export const {
+  fetchTeamSquadStart,
+  fetchTeamSquadFailure,
+  fetchTeamSquadSuccess,
+  fetchTeamSquadAction,
+} = teamSquadsSlice.actions;
 
 export default teamSquadsSlice.reducer;

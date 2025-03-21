@@ -13,6 +13,14 @@ const fixturesSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
+    fetchFixturesFailure(state, action) {
+      state.error = action.payload;
+      state.loading = false; // Set loading to false on failure
+    },
+    fetchFixturesSuccess(state) {
+      state.loading = false; // Set loading to false on success
+      state.loaded = true;
+    },
     fixturesReducer(state, action) {
       state.fixtures = action.payload;
     },
@@ -26,15 +34,6 @@ const fixturesSlice = createSlice({
           ...action.payload.data,
         };
       }
-    },
-
-    fetchFixturesFailure(state, action) {
-      state.error = action.payload;
-      state.loading = false; // Set loading to false on failure
-    },
-    fetchFixturesSuccess(state) {
-      state.loading = false; // Set loading to false on success
-      state.loaded = true;
     },
   },
 });

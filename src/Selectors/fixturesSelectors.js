@@ -14,6 +14,11 @@ export const selectFixturesState = createSelector(
   (state) => state.fixtures, // Input selector
   (fixturesState) => fixturesState // Output mapping
 );
+export const selectFixturesLoad = (state) => ({
+  fixturesLoaded: state.fixtures.loaded,
+  fixturesError: state.fixtures.error,
+  fixturesLoading: state.fixtures.loading,
+});
 
 // Selector for previousFixtures
 export const selectPreviousFixtures = createSelector(
