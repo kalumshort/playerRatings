@@ -2,8 +2,26 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const ratingsSlice = createSlice({
   name: "ratings",
-  initialState: { matches: {}, players: {} },
+  initialState: {
+    matches: {},
+    players: {},
+    loading: false,
+    error: null,
+    loaded: false,
+  },
   reducers: {
+    fetchRatingsStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchRatingsFailure(state, action) {
+      state.error = action.payload;
+      state.loading = false;
+    },
+    fetchRatingsSuccess(state) {
+      state.loading = false;
+      state.loaded = true;
+    },
     fetchMatchPlayerRatingsAction(state, action) {
       const { matchId, data } = action.payload;
 
@@ -29,7 +47,12 @@ const ratingsSlice = createSlice({
   },
 });
 
-export const { fetchMatchPlayerRatingsAction, matchMotmVotesAction } =
-  ratingsSlice.actions;
+export const {
+  fetchRatingsStart,
+  fetchRatingsFailure,
+  fetchRatingsSuccess,
+  fetchMatchPlayerRatingsAction,
+  matchMotmVotesAction,
+} = ratingsSlice.actions;
 
 export default ratingsSlice.reducer;

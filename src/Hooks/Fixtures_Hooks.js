@@ -8,14 +8,25 @@ import {
   fetchFixturesStart,
   fixturesReducer,
 } from "../redux/Reducers/fixturesReducer";
-import { fetchMatchPrediction } from "../redux/Reducers/predictionsReducer";
+import {
+  fetchMatchPrediction,
+  fetchPredictionsFailure,
+  fetchPredictionsStart,
+  fetchPredictionsSuccess,
+} from "../redux/Reducers/predictionsReducer";
 import {
   fetchMatchPlayerRatingsAction,
+  fetchRatingsFailure,
+  fetchRatingsStart,
+  fetchRatingsSuccess,
   matchMotmVotesAction,
 } from "../redux/Reducers/playerRatingsReducer";
 import {
   addPlayersMatchesStats,
   fetchPlayerStatsAction,
+  fetchPlayerStatsFailure,
+  fetchPlayerStatsStart,
+  fetchPlayerStatsSuccess,
 } from "../redux/Reducers/playersReducer";
 import {
   fetchTeamSquadAction,
@@ -58,6 +69,8 @@ export const fetchPlayerMatchesStats = (playerId) => async (dispatch) => {
     if (!playerId) {
       return;
     }
+    dispatch(fetchPlayerStatsStart());
+
     const fixturesData = await firebaseGetCollecion(
       `groups/001/seasons/2024/players/${playerId}/matches`
     );
@@ -69,7 +82,9 @@ export const fetchPlayerMatchesStats = (playerId) => async (dispatch) => {
     dispatch(
       addPlayersMatchesStats({ playerId: playerId, matchesData: fixtures })
     );
+    dispatch(fetchPlayerStatsSuccess());
   } catch (error) {
+    dispatch(fetchPlayerStatsFailure());
     console.error("Error getting fixtures:", error);
   }
 };
@@ -79,6 +94,8 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
     return;
   }
   try {
+    dispatch(fetchRatingsStart()); // Start loading
+
     const playerRatings = await firebaseGetCollecion(
       `groups/001/seasons/2024/playerRatings/${matchId}/players`
     );
@@ -92,7 +109,10 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
       fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
     );
     dispatch(matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes }));
+    dispatch(fetchRatingsSuccess()); // Start loading
   } catch (error) {
+    dispatch(fetchRatingsFailure()); // Start loading
+
     console.log(error);
   }
 };
@@ -110,11 +130,14 @@ export const fetchPlayerStats = () => async (dispatch) => {
 };
 
 export const fetchTeamSquad = (squadId) => async (dispatch) => {
+  if (!squadId) {
+    console.log("fetchTeamSquad with no squadId");
+    return;
+  }
   try {
     dispatch(fetchTeamSquadStart());
 
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
-    console.log(squadId, teamSquadData);
     dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
     dispatch(fetchTeamSquadSuccess());
   } catch (error) {
@@ -128,6 +151,8 @@ export const fetchMatchPredictions = (matchId) => async (dispatch) => {
     return;
   }
   try {
+    dispatch(fetchPredictionsStart());
+
     const matchPredictions = await firebaseGetDocument(
       `groups/001/seasons/2024/predictions`,
       matchId
@@ -141,7 +166,10 @@ export const fetchMatchPredictions = (matchId) => async (dispatch) => {
         data: matchPredictions,
       })
     );
+    dispatch(fetchPredictionsSuccess());
   } catch (error) {
+    dispatch(fetchPredictionsFailure());
+
     console.error("Error getting fixtures:", error);
   }
 };

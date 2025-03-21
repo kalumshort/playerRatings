@@ -4,15 +4,24 @@ import { selectSquadPlayerById } from "./squadDataSelectors";
 export const allRatings = (state) => state.ratings;
 export const allMatchRatings = (state) => state.ratings.matches;
 export const allPlayerRatings = (state) => state.ratings.players;
-export const allPlayerStats = (state) => state.playerStats;
+export const allPlayerStats = (state) => state.playerStats.players;
 
-export const selectPlayerStats = createSelector(
-  [allPlayerStats],
-  (playerStats) => playerStats // Returns the player stats from state
-);
+export const selectAllPlayersStats = (state) => state.playerStats.players;
+
+export const selectPlayerRatingsLoad = (state) => ({
+  ratingsLoaded: state.ratings.loaded,
+  ratingsError: state.ratings.error,
+  ratingsLoading: state.ratings.loading,
+});
+
+export const selectPlayerStatsLoad = (state) => ({
+  playerStatsLoaded: state.playerStats.loaded,
+  playerStatsError: state.playerStats.error,
+  playerStatsLoading: state.playerStats.loading,
+});
 
 export const selectPlayerStatsById = (playerId) =>
-  createSelector([allPlayerStats], (playerStats) => playerStats[playerId]);
+  createSelector([allPlayerStats], (players) => players[playerId]);
 
 export const selectMatchRatingsById = (matchId) =>
   createSelector([allMatchRatings], (matches) => matches[matchId]?.players);

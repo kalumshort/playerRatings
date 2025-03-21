@@ -30,23 +30,33 @@ import {
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
 import WinnerPredict from "./Fixture-Components/WinnerPredict";
+import { selectPredictionsLoad } from "../../Selectors/predictionsSelectors";
+import {
+  selectPlayerRatingsLoad,
+  selectPlayerStatsLoad,
+} from "../../Selectors/selectors";
 
 export default function Fixture() {
-  const footballClubsColors = footballClubsColours;
+  const { matchId } = useParams();
+
+  const fixture = useSelector(selectFixtureById(matchId));
+  const { predictionsLoaded, predictionsError } = useSelector(
+    selectPredictionsLoad
+  );
+  const { ratingsLoaded, ratingsError } = useSelector(selectPlayerRatingsLoad);
+  const { playerStatsLoaded, playerStatsError } = useSelector(
+    selectPlayerStatsLoad
+  );
 
   const isMobile = useIsMobile();
 
   const dispatch = useDispatch();
 
-  const { matchId } = useParams();
-
-  const fixture = useSelector(selectFixtureById(matchId));
-  console.log(fixture);
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
 
-  const homeTeamColour = footballClubsColors[homeTeamId];
-  const awayTeamColour = footballClubsColors[awayTeamId];
+  const homeTeamColour = footballClubsColours[homeTeamId];
+  const awayTeamColour = footballClubsColours[awayTeamId];
 
   const fixtureGradient = `linear-gradient(95deg, ${homeTeamColour} 40%, ${awayTeamColour} 60%)`;
 
@@ -54,18 +64,26 @@ export default function Fixture() {
 
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(fetchMatchPredictions(matchId));
-    dispatch(fetchMatchPlayerRatings(matchId));
-    dispatch(fetchPlayerStats());
+    if (!predictionsLoaded) {
+      dispatch(fetchMatchPredictions(matchId));
+    }
+    if (!ratingsLoaded) {
+      dispatch(fetchMatchPlayerRatings(matchId));
+    }
+    if (!playerStatsLoaded) {
+      dispatch(fetchPlayerStats());
+    }
   }, [dispatch, matchId]);
 
+  if (predictionsError || ratingsError || playerStatsError) {
+    console.log(predictionsError, ratingsError, playerStatsError);
+  }
   if (!fixture) {
     return <div>Loading...</div>;
   }
   const isPreMatch =
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";
-  // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   return (
     <>

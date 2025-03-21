@@ -2,15 +2,32 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const predictionsSlice = createSlice({
   name: "predictions",
-  initialState: {},
+  initialState: { matches: {}, loading: false, error: null, loaded: false },
   reducers: {
+    fetchPredictionsStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchPredictionsFailure(state, action) {
+      state.error = action.payload;
+      state.loading = false;
+    },
+    fetchPredictionsSuccess(state) {
+      state.loading = false;
+      state.loaded = true;
+    },
     fetchMatchPrediction(state, action) {
       const { matchId, data } = action.payload;
-      state[matchId] = data;
+      state.matches[matchId] = data;
     },
   },
 });
 
-export const { fetchMatchPrediction } = predictionsSlice.actions;
+export const {
+  fetchPredictionsStart,
+  fetchPredictionsFailure,
+  fetchPredictionsSuccess,
+  fetchMatchPrediction,
+} = predictionsSlice.actions;
 
 export default predictionsSlice.reducer;
