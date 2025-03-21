@@ -73,7 +73,7 @@ export default function Fixture() {
     if (!playerStatsLoaded) {
       dispatch(fetchPlayerStats());
     }
-  }, [dispatch, matchId]);
+  }, [dispatch, matchId, predictionsLoaded, ratingsLoaded, playerStatsLoaded]);
 
   if (predictionsError || ratingsError || playerStatsError) {
     console.log(predictionsError, ratingsError, playerStatsError);
