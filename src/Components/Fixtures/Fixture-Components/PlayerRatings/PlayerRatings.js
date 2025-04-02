@@ -72,7 +72,6 @@ export default function PlayerRatings({ fixture }) {
     });
 
     if (!allPlayersRated) {
-      // console.log("Missing Some Ratings");
       showAlert("Missing Some Ratings", "error");
 
       return;

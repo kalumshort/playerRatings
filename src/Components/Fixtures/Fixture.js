@@ -67,13 +67,19 @@ export default function Fixture() {
     if (!predictionsLoaded) {
       dispatch(fetchMatchPredictions(matchId));
     }
+  }, [dispatch, matchId, predictionsLoaded]);
+
+  useEffect(() => {
     if (!ratingsLoaded) {
       dispatch(fetchMatchPlayerRatings(matchId));
     }
+  }, [dispatch, matchId, ratingsLoaded]);
+
+  useEffect(() => {
     if (!playerStatsLoaded) {
       dispatch(fetchPlayerStats());
     }
-  }, [dispatch, matchId, predictionsLoaded, ratingsLoaded, playerStatsLoaded]);
+  }, [dispatch, playerStatsLoaded]);
 
   if (predictionsError || ratingsError || playerStatsError) {
     console.log(predictionsError, ratingsError, playerStatsError);
@@ -81,9 +87,12 @@ export default function Fixture() {
   if (!fixture) {
     return <div>Loading...</div>;
   }
+
   const isPreMatch =
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";
+  console.log(isPreMatch);
+  console.log(fixture);
 
   return (
     <>
@@ -94,7 +103,7 @@ export default function Fixture() {
           awayTeamColour: awayTeamColour,
         }}
       >
-        <FirestoreDocumentListener docId={latestFixture.fixture.id} />
+        {/* <FirestoreDocumentListener docId={latestFixture.fixture.id} /> */}
         <FixtureHeader
           fixture={fixture}
           showDetails={true}

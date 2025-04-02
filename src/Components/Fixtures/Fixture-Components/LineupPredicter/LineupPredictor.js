@@ -13,7 +13,6 @@ import { Button } from "@mui/material";
 
 export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
-  console.log(squadData);
 
   const storedUsersPredictedTeam = JSON.parse(
     useLocalStorage(`userPredictedTeam-${fixture.id}`)

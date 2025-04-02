@@ -46,13 +46,15 @@ function App() {
   const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
 
   useEffect(() => {
-    if (!fixturesLoaded) {
-      dispatch(fetchFixtures());
-    }
     if (!squadLoaded) {
       dispatch(fetchTeamSquad("33"));
     }
-  }, [dispatch, fixturesLoaded, squadLoaded]);
+  }, [dispatch, squadLoaded]);
+  useEffect(() => {
+    if (!fixturesLoaded) {
+      dispatch(fetchFixtures());
+    }
+  }, [dispatch, fixturesLoaded]);
 
   if (!fixturesLoaded || !squadLoaded) {
     return <Spinner />;
@@ -70,13 +72,16 @@ function App() {
       <Router>
         {!isMobile && <Header />}
         {isMobile && <MobileHeader />}
-        <Routes>
-          <Route path="/" element={<FixturesContainer />} />
-          <Route path="/player-stats" element={<PlayerStatsContainer />} />
-          <Route path="/fixture/:matchId" element={<Fixture />} />
-          <Route path="/players/:playerId" element={<PlayerPage />} />
-        </Routes>
+        <div style={{ maxWidth: "1400px", margin: "auto" }}>
+          <Routes>
+            <Route path="/" element={<FixturesContainer />} />
+            <Route path="/player-stats" element={<PlayerStatsContainer />} />
+            <Route path="/fixture/:matchId" element={<Fixture />} />
+            <Route path="/players/:playerId" element={<PlayerPage />} />
+          </Routes>
+        </div>
       </Router>
+
       <div style={{ height: "50px" }}></div>
     </GlobalContainer>
   );
