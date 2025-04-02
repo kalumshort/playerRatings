@@ -13,7 +13,7 @@ const FirestoreDocumentListener = ({ docId }) => {
   useEffect(() => {
     if (!docId) return;
 
-    const fixtureRef = doc(db, "fixtures/2024/data", String(docId));
+    const fixtureRef = doc(db, "fixtures/2024/33", String(docId));
 
     const unsubscribe = onSnapshot(
       fixtureRef,

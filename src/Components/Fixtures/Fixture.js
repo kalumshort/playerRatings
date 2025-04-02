@@ -103,7 +103,7 @@ export default function Fixture() {
           awayTeamColour: awayTeamColour,
         }}
       >
-        {/* <FirestoreDocumentListener docId={latestFixture.fixture.id} /> */}
+        <FirestoreDocumentListener docId={latestFixture.fixture.id} />
         <FixtureHeader
           fixture={fixture}
           showDetails={true}
