@@ -47,45 +47,84 @@ export const ThemeProvider = ({ children }) => {
                 background: {
                   default: "#ffffff",
                   paper: "#f7f7f7",
-                  gradient:
-                    "linear-gradient(150deg, #f7f7f7,rgb(218, 218, 218))",
+                  gradient: "linear-gradient(135deg, #ffffff, #eaeaea)",
                 },
                 text: {
-                  primary: "#000000",
+                  primary: "#111111",
                   secondary: "#555555",
-                  shadow: "0 1px 2px rgba(0, 0, 0, 0.4)", // Light mode text shadow
+                  disabled: "#9e9e9e",
+                  shadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
                 },
                 primary: {
                   main: "#DA291C",
+                  contrastText: "#ffffff",
+                },
+                secondary: {
+                  main: "#f5f5f5",
+                  contrastText: "#000000",
                 },
               }
             : {
                 background: {
                   default: "#121212",
                   paper: "#1e1e1e",
-                  gradient: "linear-gradient(150deg, #1E1E1E,rgb(61, 61, 61))",
+                  gradient: "linear-gradient(135deg, #1e1e1e, #3d3d3d)",
                 },
                 text: {
-                  primary: "#ffffff",
+                  primary: "#f5f5f5",
                   secondary: "#aaaaaa",
-                  shadow: "0 1px 2px rgba(0, 0, 0, 0.8)", // Dark mode text shadow
+                  disabled: "#666666",
+                  shadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
                 },
                 primary: {
                   main: "#DA291C",
+                  contrastText: "#ffffff",
+                },
+                secondary: {
+                  main: "#2c2c2c",
+                  contrastText: "#ffffff",
                 },
               }),
         },
 
+        shape: {
+          borderRadius: 16, // Modern rounded corners
+        },
+
+        shadows: Array(25).fill(
+          themeMode === "light"
+            ? "0px 4px 12px rgba(0, 0, 0, 0.08)"
+            : "0px 4px 12px rgba(0, 0, 0, 0.5)"
+        ),
+
+        typography: {
+          fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+          fontWeightRegular: 400,
+          fontWeightMedium: 500,
+          fontWeightBold: 700,
+          button: {
+            textTransform: "none",
+            fontWeight: 600,
+          },
+        },
+
         components: {
+          MuiPaper: {
+            styleOverrides: {
+              rounded: {
+                borderRadius: 16,
+              },
+            },
+          },
           MuiButton: {
             styleOverrides: {
               root: {
-                fontSize: "1rem",
-                padding: "8px 16px",
-                "@media (max-width:600px)": {
-                  fontSize: "0.75rem",
-                  padding: "4px 8px",
-                },
+                borderRadius: 12,
+                boxShadow:
+                  themeMode === "light"
+                    ? "0 2px 6px rgba(0, 0, 0, 0.15)"
+                    : "0 2px 6px rgba(0, 0, 0, 0.6)",
+                textTransform: "none",
               },
             },
           },

@@ -9,7 +9,7 @@ export const GlobalContainer = styled("div")(({ theme }) => ({
 }));
 
 export const ContentContainer = styled("div")(({ theme }) => ({
-  background: theme.palette.background.gradient,
+  background: theme.palette.background.paper,
   color: theme.palette.text.primary,
   borderRadius: "8px",
   boxShadow: theme.shadows[1],
