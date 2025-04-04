@@ -125,7 +125,11 @@ export default function LineupPredictor({ fixture, readOnly }) {
           chosenTeam={chosenTeam}
           setTeam={setTeam}
         />
-        <DraggableSquad fixture={fixture} squad={squadData} />
+        <DraggableSquad
+          fixture={fixture}
+          squad={squadData}
+          chosenTeam={chosenTeam}
+        />
       </DndContext>
     </ContentContainer>
   );

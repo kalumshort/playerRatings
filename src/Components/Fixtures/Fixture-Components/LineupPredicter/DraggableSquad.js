@@ -3,13 +3,15 @@ import { Tabs, Tab, Box } from "@mui/material";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
-export default function DraggableSquad({ squad }) {
+export default function DraggableSquad({ squad, chosenTeam }) {
   const [selectedTab, setSelectedTab] = useState("Goalkeeper");
 
   // Filter players based on the selected tab
   const filteredPlayers = Object.fromEntries(
     Object.entries(squad).filter(
-      ([, player]) => player.position === selectedTab
+      ([playerId, player]) =>
+        player.position === selectedTab &&
+        !Object.values(chosenTeam).includes(playerId)
     )
   );
 
