@@ -159,6 +159,7 @@
   justify-content: center;
   text-align: center;
   gap: 20px;
+  margin: auto;
 }
 .fixture-team {
   display: flex;
@@ -528,7 +529,7 @@
     flex-direction: column;
   }
   .fixturesListContainer {
-    max-height: 400px;
+    max-height: 230px;
   }
 
   .fixture-list-item {

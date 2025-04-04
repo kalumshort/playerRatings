@@ -138,6 +138,34 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     dispatch(fetchTeamSquadStart());
 
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
+
+    const activeSquadIds = teamSquadData.activeSquadIds;
+
+    const updatedActiveSquad = await Promise.all(
+      activeSquadIds.map(async (playerId) => {
+        try {
+          const playerDoc = await firebaseGetDocument(
+            "playerImages",
+            playerId.toString()
+          );
+
+          if (playerDoc) {
+            const playerIndex = teamSquadData.activeSquad.findIndex(
+              (player) => player.id === playerId
+            );
+            if (playerIndex !== -1) {
+              teamSquadData.activeSquad[playerIndex].photo = playerDoc.img;
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching player document for playerId ${playerId}:`,
+            error
+          );
+        }
+      })
+    );
+
     dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
     dispatch(fetchTeamSquadSuccess());
   } catch (error) {
