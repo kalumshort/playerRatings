@@ -111,10 +111,7 @@ const EventItem = ({ event }) => {
                 {event.assist?.name && (
                   <>
                     {" "}
-                    <small>assisted by</small>{" "}
-                    <span style={{ color: "#8FD8FF" }}>
-                      {event.assist.name}
-                    </span>
+                    <small>assisted by</small> <span>{event.assist.name}</span>
                   </>
                 )}
               </div>
@@ -141,12 +138,12 @@ const EventItem = ({ event }) => {
             <div>
               <strong>Substitution</strong>
               <div>
-                <span style={{ color: "#8EE69A" }}>{event.player.name}</span>
+                <span style={{ color: "#42A5F5" }}>{event.player.name}</span>
                 {event.assist?.name && (
                   <>
                     {" "}
                     <small>replaced by</small>{" "}
-                    <span style={{ color: "#FF9A9E" }}>
+                    <span style={{ color: "#FFB74D" }}>
                       {event.assist.name}
                     </span>
                   </>
