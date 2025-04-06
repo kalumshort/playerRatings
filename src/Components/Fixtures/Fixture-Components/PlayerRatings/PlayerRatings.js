@@ -97,21 +97,34 @@ export default function PlayerRatings({ fixture }) {
     dispatch(fetchMatchPlayerRatings(fixture.id));
   };
 
-  return isMatchRatingsSubmitted ? (
-    <SubmittedPlayerRatings
-      motmPercentages={motmPercentages}
-      combinedPlayers={combinedPlayers}
-      fixture={fixture}
-      isMatchRatingsSubmitted={isMatchRatingsSubmitted}
-      handleRatingsSubmit={handleRatingsSubmit}
-    />
+  return fixture?.fixture?.status?.elapsed > 80 ? (
+    isMatchRatingsSubmitted ? (
+      <SubmittedPlayerRatings
+        motmPercentages={motmPercentages}
+        combinedPlayers={combinedPlayers}
+        fixture={fixture}
+        isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+        handleRatingsSubmit={handleRatingsSubmit}
+      />
+    ) : (
+      <PlayerRatingsItems
+        combinedPlayers={combinedPlayers}
+        fixture={fixture}
+        isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+        handleRatingsSubmit={handleRatingsSubmit}
+      />
+    )
   ) : (
-    <PlayerRatingsItems
-      combinedPlayers={combinedPlayers}
-      fixture={fixture}
-      isMatchRatingsSubmitted={isMatchRatingsSubmitted}
-      handleRatingsSubmit={handleRatingsSubmit}
-    />
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "200px",
+      }}
+    >
+      Ratings will open at minute 80
+    </div>
   );
 }
 

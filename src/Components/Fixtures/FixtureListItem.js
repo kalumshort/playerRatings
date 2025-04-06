@@ -58,11 +58,11 @@ export default function FixtureListItem({
 
       <div className="fixture-list-item-league">
         <span>{fixture.league.name}</span>
-        <img
+        {/* <img
           src={fixture.league.logo}
           alt={`${fixture.league.name} logo`}
           className="league-logo"
-        />
+        /> */}
       </div>
       <span className="fixture-time">{matchTime}</span>
     </div>

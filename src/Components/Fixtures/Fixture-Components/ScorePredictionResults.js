@@ -62,7 +62,7 @@ export default function ScorePredictionResults({ fixture }) {
     boxShadow: 24,
   };
   return (
-    <ContentContainer className="scorePredictionResultsContainer">
+    <ContentContainer className="scorePredictionResultsContainer containerMargin">
       <h1 className="smallHeading">Score Prediction</h1>
       <div
         style={{

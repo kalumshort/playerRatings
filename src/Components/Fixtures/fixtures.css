@@ -490,6 +490,28 @@
   border-radius: 5px;
   margin: 10px 10px -5px 10px;
 }
+
+@media (min-width: 1024px) {
+  .pkopredictions-container {
+    display: flex;
+    gap: 0px;
+    align-items: flex-start;
+  }
+  .scorePredictionResultsContainer {
+    width: 33.33% !important;
+    height: 120px;
+  }
+
+  .chosen-lineup-container {
+    width: 66.66% !important;
+  }
+}
+@media (max-width: 1024px) {
+  .scorePredictionResultsContainer {
+    height: 90px;
+  }
+}
+
 @media (max-width: 768px) {
   .team-logo {
     height: 50px;
@@ -499,7 +521,7 @@
     font-size: 40px;
   }
   .fixture-header {
-    min-height: 120px;
+    min-height: 150px;
   }
   .fixture-header > * {
     flex: 1 1 30%;

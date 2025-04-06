@@ -91,8 +91,6 @@ export default function Fixture() {
   const isPreMatch =
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";
-  console.log(isPreMatch);
-  console.log(fixture);
 
   return (
     <>

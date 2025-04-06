@@ -26,6 +26,7 @@ export default function Statistics({ fixture }) {
   if (!team1 || !team2) {
     return;
   }
+
   return (
     <ContentContainer className="statistics-container containerMargin">
       <div>
@@ -33,7 +34,7 @@ export default function Statistics({ fixture }) {
           style={{
             display: "flex",
             alignItems: "center",
-            marginBottom: "20px",
+            margin: "20px 0px",
           }}
         >
           <div style={{ flex: 1, textAlign: "center" }}>

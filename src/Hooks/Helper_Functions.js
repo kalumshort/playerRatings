@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
 export const CountdownTimer = ({ targetTime }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
@@ -168,3 +168,17 @@ export const getRatingClass = (rating) => {
 
 export const missingPlayerImg =
   "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
+
+const DragContext = createContext();
+
+export const useDrag = () => useContext(DragContext);
+
+export const DragProvider = ({ children }) => {
+  const [isAnyItemDragging, setIsAnyItemDragging] = useState(false);
+
+  return (
+    <DragContext.Provider value={{ isAnyItemDragging, setIsAnyItemDragging }}>
+      {children}
+    </DragContext.Provider>
+  );
+};
