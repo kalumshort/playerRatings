@@ -1,16 +1,9 @@
 import { useState } from "react";
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Drawer,
-  Box,
-  Typography,
-} from "@mui/material";
+import { AppBar, Toolbar, IconButton, Drawer } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import GroupsIcon from "@mui/icons-material/Groups";
 import SettingsIcon from "@mui/icons-material/Settings";
-import ThemeToggle from "../Components/Theme/ThemeToggle";
+
 import { useNavigate } from "react-router-dom";
 import { DrawerContentComponent } from "./Header";
 
