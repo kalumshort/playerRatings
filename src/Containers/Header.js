@@ -100,7 +100,7 @@ const SettingRow = styled(Box)(({ theme }) => ({
   alignItems: "center", // Centers the content vertically in the row
 }));
 
-function DrawerContentComponent() {
+export function DrawerContentComponent() {
   const { user } = useAuth();
 
   return (

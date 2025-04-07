@@ -31,7 +31,12 @@ const Logout = () => {
   return (
     <div>
       {/* Log out text button */}
-      <Button ref={anchorRef} onClick={handleClick} variant="contained">
+      <Button
+        ref={anchorRef}
+        onClick={handleClick}
+        variant="outlined"
+        color="white"
+      >
         Log Out
       </Button>
 

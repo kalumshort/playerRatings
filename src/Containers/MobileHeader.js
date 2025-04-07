@@ -12,6 +12,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useNavigate } from "react-router-dom";
+import { DrawerContentComponent } from "./Header";
 
 export default function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -38,17 +39,12 @@ export default function MobileHeader() {
         </Toolbar>
       </AppBar>
 
-      {/* Settings Drawer */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <Box sx={{ width: 250, p: 2 }}>
-          <Typography variant="h6">Settings</Typography>
-          {/* Add settings options here */}
-          <ThemeToggle />
-        </Box>
+        <DrawerContentComponent />
       </Drawer>
     </>
   );
