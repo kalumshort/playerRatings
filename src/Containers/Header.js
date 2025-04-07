@@ -1,43 +1,114 @@
-import React from "react";
-import { AppBar, Toolbar, Box, Button, IconButton } from "@mui/material";
-// import MenuIcon from "@mui/icons-material/Menu"; // Menu icon for smaller screens
+import React, { useState } from "react";
+
+import { Drawer, IconButton, Toolbar, Box, Divider } from "@mui/material";
+
+import SettingsIcon from "@mui/icons-material/Settings";
+import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
+import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
+
 import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
+import { useTheme } from "../Components/Theme/ThemeContext";
 
-const HeaderContainer = styled(AppBar)(({ theme }) => ({
-  backgroundColor: theme.palette.background.default,
-  color: theme.palette.text.primary,
-  transition: "background-color 0.3s ease, color 0.3s ease", // Smooth transition for light/dark mode
+const HeaderContainer = styled("div")(({ theme }) => ({
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 1000,
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: "1px solid",
+  borderColor: theme.palette.background.accent,
 }));
 
-const Header = () => {
+export default function Header() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+
+  const toggleDrawer = (open) => {
+    setDrawerOpen(open);
+  };
+
   return (
-    <HeaderContainer position="static">
-      <Toolbar>
-        {/* Logo/Title */}
-        <Button
-          onClick={() => {
-            window.history.pushState({}, "", "/");
-            window.dispatchEvent(new PopStateEvent("popstate"));
+    <HeaderContainer>
+      <Toolbar style={{ height: 90 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            maxWidth: "1300px",
+            width: "100%",
+            margin: "auto",
           }}
         >
-          Home
-        </Button>
+          <img
+            src={theme.themeMode === "dark" ? whiteLogo : blackLogo}
+            alt="Logo"
+            style={{ height: "70px", width: "70px", cursor: "pointer" }}
+            onClick={() => {
+              window.history.pushState({}, "", "/");
+              window.dispatchEvent(new PopStateEvent("popstate"));
+            }}
+          />
 
-        {/* Navigation Links */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}></Box>
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
-        {/* Menu Icon for Mobile View */}
-        <Box sx={{ display: { xs: "block", md: "none" } }}>
-          <IconButton edge="end" color="inherit" aria-label="menu">
-            {/* <MenuIcon /> */}
+          <IconButton
+            color="inherit"
+            aria-label="settings"
+            onClick={() => toggleDrawer(true)}
+            size="large"
+          >
+            <SettingsIcon />
           </IconButton>
         </Box>
       </Toolbar>
+
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => toggleDrawer(false)}
+      >
+        <DrawerContentComponent />
+      </Drawer>
     </HeaderContainer>
   );
-};
+}
 
-export default Header;
+const DrawerContent = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  height: "100%", // Make the drawer take the full height
+  justifyContent: "space-between", // Pushes content to the top and bottom
+}));
+
+const SettingsContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(2),
+  padding: theme.spacing(2),
+  marginTop: "auto", // Ensures the content stays at the bottom of the drawer
+}));
+
+const SettingRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center", // Centers the content vertically in the row
+}));
+
+function DrawerContentComponent() {
+  return (
+    <DrawerContent sx={{ width: "300px", padding: 2 }}>
+      <Box> </Box>
+
+      <Divider />
+
+      {/* Settings Section at the bottom */}
+      <SettingsContainer>
+        <SettingRow>
+          <Box>Theme</Box>
+          <ThemeToggle />
+        </SettingRow>
+      </SettingsContainer>
+    </DrawerContent>
+  );
+}
