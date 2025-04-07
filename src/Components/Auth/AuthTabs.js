@@ -8,10 +8,7 @@ import {
   Tab,
   Container,
 } from "@mui/material";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
 import { handleCreateAccount } from "../../Firebase/Auth_Functions";
 

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Avatar, Button, Divider } from "@mui/material";
+import { Box, Typography, Avatar } from "@mui/material";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../Firebase/Firebase";
-import Logout from "./Logout";
 
 const ProfileSection = () => {
   const [userData, setUserData] = useState({
@@ -39,16 +38,6 @@ const ProfileSection = () => {
     };
     fetchUserData();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth); // Sign out the user from Firebase
-      alert("You have logged out successfully.");
-    } catch (err) {
-      console.error("Error signing out:", err);
-      setError("Error signing out: " + err.message);
-    }
-  };
 
   if (loading) {
     return <Typography>Loading...</Typography>;
