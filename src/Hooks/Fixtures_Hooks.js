@@ -34,6 +34,7 @@ import {
   fetchTeamSquadStart,
   fetchTeamSquadSuccess,
 } from "../redux/Reducers/teamSquads";
+import { getAuth } from "firebase/auth";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -69,6 +70,13 @@ export const fetchPlayerMatchesStats = (playerId) => async (dispatch) => {
     if (!playerId) {
       return;
     }
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      console.error("User is not authenticated");
+      return;
+    }
     dispatch(fetchPlayerStatsStart());
 
     const fixturesData = await firebaseGetCollecion(
@@ -93,6 +101,15 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
   if (!matchId) {
     return;
   }
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("User is not authenticated");
+    return;
+  }
+
   try {
     dispatch(fetchRatingsStart()); // Start loading
 
@@ -109,15 +126,22 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
       fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
     );
     dispatch(matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes }));
-    dispatch(fetchRatingsSuccess()); // Start loading
+    dispatch(fetchRatingsSuccess()); // End loading
   } catch (error) {
-    dispatch(fetchRatingsFailure()); // Start loading
+    dispatch(fetchRatingsFailure()); // End loading
 
     console.log(error);
   }
 };
-
 export const fetchPlayerStats = () => async (dispatch) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("User is not authenticated");
+    return;
+  }
+
   try {
     const playerRatings = await firebaseGetCollecion(
       `groups/001/seasons/2024/players`
@@ -178,16 +202,29 @@ export const fetchMatchPredictions = (matchId) => async (dispatch) => {
   if (!matchId) {
     return;
   }
+
+  // Check if the user is authenticated
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("User is not authenticated");
+    return;
+  }
+
   try {
     dispatch(fetchPredictionsStart());
 
+    // Proceed with the Firestore call since the user is authenticated
     const matchPredictions = await firebaseGetDocument(
       `groups/001/seasons/2024/predictions`,
       matchId
     );
+
     if (!matchPredictions) {
       return;
     }
+
     dispatch(
       fetchMatchPrediction({
         matchId: matchPredictions.id,

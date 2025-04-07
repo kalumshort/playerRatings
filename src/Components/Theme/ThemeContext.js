@@ -88,7 +88,7 @@ export const ThemeProvider = ({ children }) => {
         },
 
         shape: {
-          borderRadius: 16, // Modern rounded corners
+          borderRadius: 5, // Modern rounded corners
         },
 
         shadows: Array(25).fill(
@@ -119,12 +119,9 @@ export const ThemeProvider = ({ children }) => {
           MuiButton: {
             styleOverrides: {
               root: {
-                borderRadius: 12,
-                boxShadow:
-                  themeMode === "light"
-                    ? "0 2px 6px rgba(0, 0, 0, 0.15)"
-                    : "0 2px 6px rgba(0, 0, 0, 0.6)",
+                borderRadius: 8,
                 textTransform: "none",
+                padding: "3px 6px!important",
               },
             },
           },

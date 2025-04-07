@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 
 import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 
 // Load environment variables (Optional, but recommended)
 const firebaseConfig = {
@@ -37,6 +38,10 @@ const firebaseConfig = {
 
 // Initialize Firebase app and services
 const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+export { auth };
 export const db = getFirestore(app);
 export const analytics = getAnalytics(app);
 
@@ -202,6 +207,7 @@ export const handleMatchMotmVote = async (data) => {
     },
   });
 };
+
 // // 4. Firestore Collection Listener Component
 // export const CollectionListener = ({ path }) => {
 //   const dispatch = useDispatch();

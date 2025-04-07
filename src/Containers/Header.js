@@ -6,9 +6,14 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
 
-import { styled } from "@mui/system";
+import { padding, styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useTheme } from "../Components/Theme/ThemeContext";
+
+import { useAuth } from "../Providers/AuthContext";
+import AuthTabs from "../Components/Auth/AuthTabs";
+import ProfileSection from "../Components/Auth/ProfileSection";
+import Logout from "../Components/Auth/Logout";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -96,10 +101,12 @@ const SettingRow = styled(Box)(({ theme }) => ({
 }));
 
 function DrawerContentComponent() {
-  return (
-    <DrawerContent sx={{ width: "300px", padding: 2 }}>
-      <Box> </Box>
+  const { user } = useAuth();
 
+  return (
+    <DrawerContent sx={{ width: "300px" }}>
+      <Box>{!user && <AuthTabs />}</Box>
+      <Box>{user && <ProfileSection />}</Box>
       <Divider />
 
       {/* Settings Section at the bottom */}
@@ -107,6 +114,10 @@ function DrawerContentComponent() {
         <SettingRow>
           <Box>Theme</Box>
           <ThemeToggle />
+        </SettingRow>
+        <SettingRow>
+          <Box></Box>
+          <Logout />
         </SettingRow>
       </SettingsContainer>
     </DrawerContent>

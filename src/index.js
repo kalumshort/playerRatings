@@ -14,17 +14,20 @@ import { Provider } from "react-redux";
 import store from "./redux/store";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import { AlertProvider } from "./Components/HelpfulComponents";
+import { AuthProvider } from "./Providers/AuthContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   // <React.StrictMode>
-  <Provider store={store}>
-    <ThemeProvider>
-      <AlertProvider>
-        <App />
-      </AlertProvider>
-    </ThemeProvider>
-  </Provider>
+  <AuthProvider>
+    <Provider store={store}>
+      <ThemeProvider>
+        <AlertProvider>
+          <App />
+        </AlertProvider>
+      </ThemeProvider>
+    </Provider>
+  </AuthProvider>
   // </React.StrictMode>
 );
 
