@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
-import { signOut } from "firebase/auth";
+
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../Firebase/Firebase";
 
