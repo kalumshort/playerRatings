@@ -5,6 +5,11 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { auth, db } from "./Firebase";
+import {
+  fetchUserDataFailure,
+  fetchUserDataStart,
+  fetchUserDataSuccess,
+} from "../redux/Reducers/userDataReducer";
 
 export const handleCreateAccount = async ({ email, password }) => {
   try {
@@ -76,5 +81,32 @@ export const handleCreateAccountGoogle = async () => {
   } catch (err) {
     console.error("Error creating account:", err);
     alert("Error creating account: " + err.message); // Display error to user
+  }
+};
+
+export const fetchUserData = (userId) => async (dispatch) => {
+  dispatch(fetchUserDataStart());
+  try {
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      // Convert `Timestamp` fields to a serializable format (ISO string)
+      if (userData.createdAt instanceof Timestamp) {
+        userData.createdAt = userData.createdAt.toDate().toISOString(); // Convert to ISO string
+      }
+
+      if (userData.lastLogin instanceof Timestamp) {
+        userData.lastLogin = userData.lastLogin.toDate().toISOString(); // Convert to ISO string
+      }
+
+      dispatch(fetchUserDataSuccess(userData)); // Dispatch with the serialized user data
+    } else {
+      dispatch(fetchUserDataFailure("User not found"));
+    }
+  } catch (err) {
+    dispatch(fetchUserDataFailure(err.message)); // Dispatch failure action on error
   }
 };

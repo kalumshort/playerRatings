@@ -1,51 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../../Firebase/Firebase";
+import useUserData from "../../Hooks/useUserData";
 
 const ProfileSection = () => {
-  const [userData, setUserData] = useState({
-    email: "",
-    displayName: "",
-    profilePictureUrl: "",
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // Fetch user data from Firestore when the component mounts
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
-        try {
-          const userDocRef = doc(db, "users", auth.currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            setUserData({
-              email: userDoc.data().email,
-              displayName: userDoc.data().displayName || "No Name",
-              profilePictureUrl: userDoc.data().profilePictureUrl || "",
-            });
-          } else {
-            setError("No user data found");
-          }
-        } catch (err) {
-          setError("Error fetching user data: " + err.message);
-        }
-      }
-      setLoading(false);
-    };
-    fetchUserData();
-  }, []);
-
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
-
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
-  }
+  const { userData } = useUserData();
 
   return (
     <Box
@@ -60,7 +19,7 @@ const ProfileSection = () => {
     >
       <Avatar
         alt="Profile Picture"
-        src={userData.profilePictureUrl || "https://via.placeholder.com/150"} // Placeholder image if no profile picture
+        src={userData.photoURL || "https://via.placeholder.com/150"}
         sx={{ width: 50, height: 50, marginBottom: 2 }}
       />
       <Box>

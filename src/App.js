@@ -38,12 +38,35 @@ import MobileHeader from "./Containers/MobileHeader";
 import PlayerPage from "./Components/PlayerStats/PlayerPage";
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
 import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./Firebase/Firebase";
+import { fetchUserData } from "./Firebase/Auth_Functions";
+import { useAuth } from "./Providers/AuthContext";
+import { clearUserData } from "./redux/Reducers/userDataReducer";
 
 function App() {
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
   const { squadLoaded, squadError } = useSelector(selectSquadLoad);
   const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
+
+  const { error: userDataError, loaded: userDataLoaded } = useSelector(
+    (state) => state.userData
+  );
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && !userDataLoaded) {
+        dispatch(fetchUserData(user.uid));
+      } else {
+        dispatch(clearUserData());
+      }
+    });
+
+    return () => unsubscribe();
+  }, [dispatch]);
 
   useEffect(() => {
     if (!squadLoaded) {
@@ -59,7 +82,11 @@ function App() {
   if (!fixturesLoaded || !squadLoaded) {
     return <Spinner />;
   }
-  if (squadError || fixturesError) {
+  if (user && !userDataLoaded) {
+    return <Spinner />;
+  }
+
+  if (squadError || fixturesError || userDataError) {
     return (
       <div>
         Error: Please refresh, If error still exists please contact support.{" "}
