@@ -13,7 +13,7 @@ import UpdateButton from "../HelpfulComponents";
 import { updateUserField } from "../../Firebase/Auth_Functions";
 import useUserData from "../../Hooks/useUserData";
 
-export default function LoggedInProfile({}) {
+export default function LoggedInProfile() {
   const { userData } = useUserData();
 
   const [displayName, setDisplayName] = useState(userData.displayName);
