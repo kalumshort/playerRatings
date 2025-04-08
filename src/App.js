@@ -66,7 +66,7 @@ function App() {
     });
 
     return () => unsubscribe();
-  }, [dispatch]);
+  }, [dispatch, userDataLoaded]);
 
   useEffect(() => {
     if (!squadLoaded) {
