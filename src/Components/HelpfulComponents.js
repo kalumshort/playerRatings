@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 
+import { IconButton } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check"; // Material-UI Check Icon
+
 const AlertContext = createContext();
 
 export function useAlert() {
@@ -42,5 +45,13 @@ export function AlertProvider({ children }) {
         </MuiAlert>
       </Snackbar>
     </AlertContext.Provider>
+  );
+}
+
+export default function UpdateButton({ onClick }) {
+  return (
+    <IconButton onClick={onClick} color="primary">
+      <CheckIcon />
+    </IconButton>
   );
 }

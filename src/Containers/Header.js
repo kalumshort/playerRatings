@@ -11,10 +11,10 @@ import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useTheme } from "../Components/Theme/ThemeContext";
 
 import { useAuth } from "../Providers/AuthContext";
-import AuthTabs from "../Components/Auth/AuthTabs";
+
 import ProfileSection from "../Components/Auth/ProfileSection";
 import Logout from "../Components/Auth/Logout";
-import GoogleSignInButton from "../Components/Auth/SignInMethods/GoogleSignInButton";
+
 import Login from "../Components/Auth/Login";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
@@ -81,14 +81,14 @@ export default function Header() {
   );
 }
 
-const DrawerContent = styled(Box)(({ theme }) => ({
+export const DrawerContent = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   height: "100%", // Make the drawer take the full height
   justifyContent: "space-between", // Pushes content to the top and bottom
 }));
 
-const SettingsContainer = styled(Box)(({ theme }) => ({
+export const SettingsContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   gap: theme.spacing(2),
@@ -96,7 +96,7 @@ const SettingsContainer = styled(Box)(({ theme }) => ({
   marginTop: "auto", // Ensures the content stays at the bottom of the drawer
 }));
 
-const SettingRow = styled(Box)(({ theme }) => ({
+export const SettingRow = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center", // Centers the content vertically in the row

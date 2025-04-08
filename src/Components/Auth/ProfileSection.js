@@ -1,5 +1,7 @@
 import React from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import { Typography, Avatar, Card, CardContent } from "@mui/material";
+import { Link } from "react-router-dom";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
 import useUserData from "../../Hooks/useUserData";
 
@@ -7,35 +9,40 @@ const ProfileSection = () => {
   const { userData } = useUserData();
 
   return (
-    <Box
-      sx={{
-        padding: "30px 10px",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-evenly",
-        position: "relative",
-      }}
-    >
-      <Avatar
-        alt="Profile Picture"
-        src={userData.photoURL || "https://via.placeholder.com/150"}
-        sx={{ width: 50, height: 50, marginBottom: 2 }}
-      />
-      <Box>
-        <Typography variant="h6" align="left">
-          {userData.displayName}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="left"
-          sx={{ marginBottom: 2 }}
+    <>
+      <Link to="/profile" style={{ textDecoration: "none" }}>
+        <Card
+          className="containerMargin"
+          variant="outlined"
+          sx={{ textAlign: "center" }}
+          style={{ position: "relative" }}
         >
-          {userData.email}
-        </Typography>
-      </Box>
-    </Box>
+          <CardContent>
+            <Avatar
+              src={userData.photoURL || "https://via.placeholder.com/150"}
+              alt="Profile"
+              sx={{
+                width: 75,
+                height: 75,
+                margin: "0 auto 20px",
+                border: "4px solid rgb(78, 84, 255)",
+              }}
+            />
+            <Typography variant="h5" sx={{ marginBottom: 2 }}>
+              {userData.displayName}
+            </Typography>
+            <Typography variant="body1" sx={{ marginBottom: 2 }}>
+              <strong>{userData.email}</strong>
+            </Typography>
+          </CardContent>
+
+          <ArrowForwardRoundedIcon
+            style={{ position: "absolute", bottom: "5px", right: "5px" }}
+            fontSize="small"
+          />
+        </Card>
+      </Link>
+    </>
   );
 };
 

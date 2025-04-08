@@ -110,3 +110,20 @@ export const fetchUserData = (userId) => async (dispatch) => {
     dispatch(fetchUserDataFailure(err.message)); // Dispatch failure action on error
   }
 };
+
+export const updateUserField = async (userId, field, newValue) => {
+  console.log("1");
+  if (!userId || !field || !newValue) {
+    return;
+  }
+  console.log("2");
+  try {
+    const userRef = doc(db, "users", userId); // Reference to the user's Firestore document
+    await updateDoc(userRef, {
+      [field]: newValue, // Dynamically update the specified field
+    });
+    console.log(`Successfully updated ${field} to ${newValue}`);
+  } catch (err) {
+    console.error("Error updating user field:", err.message);
+  }
+};
