@@ -1,51 +1,22 @@
-import React, { useState } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase-config"; // Import Firebase auth instance
+import React from "react";
+import { Box } from "@mui/material";
+
+import AuthTabs from "./AuthTabs";
+import GoogleSignInButton from "./SignInMethods/GoogleSignInButton";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Logged in successfully!");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   return (
-    <Box sx={{ maxWidth: 400, margin: "auto", padding: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Login
-      </Typography>
-      <form onSubmit={handleLogin}>
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        {error && <Typography color="error">{error}</Typography>}
-        <Button variant="contained" color="primary" type="submit" fullWidth>
-          Log In
-        </Button>
-      </form>
-    </Box>
+    <>
+      <Box>
+        <AuthTabs />
+      </Box>
+      <h3 style={{ padding: "0", margin: "0", fontSize: "12px" }}>
+        Other Sign-in options
+      </h3>
+      <Box>
+        <GoogleSignInButton />
+      </Box>
+    </>
   );
 };
 

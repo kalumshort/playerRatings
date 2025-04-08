@@ -15,6 +15,7 @@ import AuthTabs from "../Components/Auth/AuthTabs";
 import ProfileSection from "../Components/Auth/ProfileSection";
 import Logout from "../Components/Auth/Logout";
 import GoogleSignInButton from "../Components/Auth/SignInMethods/GoogleSignInButton";
+import Login from "../Components/Auth/Login";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -129,15 +130,7 @@ export function DrawerContentComponent() {
 function DrawerSignIn() {
   return (
     <Container maxWidth="xs">
-      <Box>
-        <AuthTabs />
-      </Box>
-      <h3 style={{ padding: "0", margin: "0", fontSize: "12px" }}>
-        Other Sign-in options
-      </h3>
-      <Box>
-        <GoogleSignInButton />
-      </Box>
+      <Login />
     </Container>
   );
 }
