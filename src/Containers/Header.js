@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Drawer, IconButton, Toolbar, Box, Divider } from "@mui/material";
+import { Drawer, IconButton, Toolbar, Box, Container } from "@mui/material";
 
 import SettingsIcon from "@mui/icons-material/Settings";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
@@ -14,6 +14,7 @@ import { useAuth } from "../Providers/AuthContext";
 import AuthTabs from "../Components/Auth/AuthTabs";
 import ProfileSection from "../Components/Auth/ProfileSection";
 import Logout from "../Components/Auth/Logout";
+import GoogleSignInButton from "../Components/Auth/SignInMethods/GoogleSignInButton";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -104,10 +105,9 @@ export function DrawerContentComponent() {
   const { user } = useAuth();
 
   return (
-    <DrawerContent sx={{ width: "300px" }}>
-      <Box>{!user && <AuthTabs />}</Box>
+    <DrawerContent sx={{ width: "300px", backgroundColor: "background.paper" }}>
+      {!user && <DrawerSignIn />}
       <Box>{user && <ProfileSection />}</Box>
-      <Divider />
 
       {/* Settings Section at the bottom */}
       <SettingsContainer>
@@ -115,11 +115,29 @@ export function DrawerContentComponent() {
           <Box>Theme</Box>
           <ThemeToggle />
         </SettingRow>
-        <SettingRow>
-          <Box></Box>
-          <Logout />
-        </SettingRow>
+        {user && (
+          <SettingRow>
+            <Box></Box>
+            <Logout />
+          </SettingRow>
+        )}
       </SettingsContainer>
     </DrawerContent>
+  );
+}
+
+function DrawerSignIn() {
+  return (
+    <Container maxWidth="xs">
+      <Box>
+        <AuthTabs />
+      </Box>
+      <h3 style={{ padding: "0", margin: "0", fontSize: "12px" }}>
+        Other Sign-in options
+      </h3>
+      <Box>
+        <GoogleSignInButton />
+      </Box>
+    </Container>
   );
 }

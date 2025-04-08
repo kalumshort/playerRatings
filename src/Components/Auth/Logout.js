@@ -16,7 +16,7 @@ const Logout = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      alert("Logged out successfully!");
+
       setOpen(false); // Close the popper after logout
     } catch (err) {
       console.error("Error logging out:", err);
