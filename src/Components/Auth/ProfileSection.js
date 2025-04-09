@@ -1,6 +1,6 @@
 import React from "react";
 import { Typography, Avatar, Card, CardContent } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
 import useUserData from "../../Hooks/useUserData";
