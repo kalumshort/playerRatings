@@ -75,7 +75,7 @@ export default function Header() {
         open={drawerOpen}
         onClose={() => toggleDrawer(false)}
       >
-        <DrawerContentComponent />
+        <DrawerContentComponent setDrawerOpen={setDrawerOpen} />
       </Drawer>
     </HeaderContainer>
   );
@@ -102,13 +102,13 @@ export const SettingRow = styled(Box)(({ theme }) => ({
   alignItems: "center", // Centers the content vertically in the row
 }));
 
-export function DrawerContentComponent() {
+export function DrawerContentComponent({ setDrawerOpen }) {
   const { user } = useAuth();
 
   return (
     <DrawerContent sx={{ width: "300px", backgroundColor: "background.paper" }}>
       {!user && <DrawerSignIn />}
-      <Box>{user && <ProfileSection />}</Box>
+      <Box>{user && <ProfileSection setDrawerOpen={setDrawerOpen} />}</Box>
 
       {/* Settings Section at the bottom */}
       <SettingsContainer>

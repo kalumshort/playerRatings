@@ -37,7 +37,7 @@ export default function MobileHeader() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <DrawerContentComponent />
+        <DrawerContentComponent setDrawerOpen={setDrawerOpen} />
       </Drawer>
     </>
   );
