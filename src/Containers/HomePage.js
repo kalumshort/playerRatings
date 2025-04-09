@@ -5,14 +5,12 @@ import { Link } from "react-router-dom";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 
 const HeroSection = styled(Box)(({ theme }) => ({
-  minHeight: "90vh",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   textAlign: "center",
   padding: theme.spacing(4),
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.background.paper} 100%)`,
 }));
 
 const Logo = styled("img")({
