@@ -44,6 +44,7 @@ import { fetchUserData } from "./Firebase/Auth_Functions";
 import { useAuth } from "./Providers/AuthContext";
 import { clearUserData } from "./redux/Reducers/userDataReducer";
 import ProfileContainer from "./Containers/ProfileContainer";
+import HomePage from "./Containers/HomePage";
 
 function App() {
   const dispatch = useDispatch();
@@ -108,7 +109,10 @@ function App() {
         {isMobile && <MobileHeader />}
         <div style={{ maxWidth: "1400px", margin: "auto" }}>
           <Routes>
-            <Route path="/" element={<FixturesContainer />} />
+            <Route
+              path="/"
+              element={user ? <FixturesContainer /> : <HomePage />}
+            />
             <Route path="/profile" element={<ProfileContainer />} />
             <Route path="/player-stats" element={<PlayerStatsContainer />} />
             <Route path="/fixture/:matchId" element={<Fixture />} />
