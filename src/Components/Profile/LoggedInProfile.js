@@ -12,6 +12,8 @@ import {
 import { SettingRow } from "../../Containers/Header";
 import { updateUserField } from "../../Firebase/Auth_Functions";
 import useUserData from "../../Hooks/useUserData";
+import AvatarWithUpload from "./AvatarWithUpload";
+import UploadAvatar from "./AvatarWithUpload";
 
 export default function LoggedInProfile() {
   const { userData } = useUserData();
@@ -77,7 +79,9 @@ export default function LoggedInProfile() {
         sx={{ textAlign: "center" }}
       >
         <CardContent>
-          <Avatar
+          <UploadAvatar userData={userData} />
+
+          {/* <Avatar
             src={userData.photoURL}
             alt="Profile"
             sx={{
@@ -86,7 +90,7 @@ export default function LoggedInProfile() {
               margin: "0 auto 20px",
               border: "4px solid rgb(78, 84, 255)",
             }}
-          />
+          /> */}
           <Typography variant="h4" sx={{ marginBottom: 2 }}>
             {userData.displayName}
           </Typography>
@@ -110,7 +114,7 @@ export default function LoggedInProfile() {
         {/* Add more fields as needed here in the future */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
           <Button
-            variant="contained"
+            variant="text"
             color="primary"
             onClick={handleUpdate}
             disabled={Object.values(changedFields).every((field) => !field)} // Disable button if no field changed

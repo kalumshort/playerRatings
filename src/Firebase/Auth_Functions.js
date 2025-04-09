@@ -91,7 +91,7 @@ export const fetchUserData = (userId) => async (dispatch) => {
     const userDoc = await getDoc(userRef);
 
     if (userDoc.exists()) {
-      const userData = userDoc.data();
+      const userData = { ...userDoc.data(), uid: userId };
 
       // Convert `Timestamp` fields to a serializable format (ISO string)
       if (userData.createdAt instanceof Timestamp) {

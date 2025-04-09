@@ -13,6 +13,7 @@ import {
 
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 // Load environment variables (Optional, but recommended)
 const firebaseConfig = {
@@ -44,6 +45,7 @@ const auth = getAuth(app);
 export { auth };
 export const db = getFirestore(app);
 export const analytics = getAnalytics(app);
+export const storage = getStorage(app);
 
 // Generates a unique key for new documents
 export const newDocKey = Date.now();
