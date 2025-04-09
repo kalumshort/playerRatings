@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Avatar,
   Box,
   Paper,
   TextField,
@@ -12,7 +11,7 @@ import {
 import { SettingRow } from "../../Containers/Header";
 import { updateUserField } from "../../Firebase/Auth_Functions";
 import useUserData from "../../Hooks/useUserData";
-import AvatarWithUpload from "./AvatarWithUpload";
+
 import UploadAvatar from "./AvatarWithUpload";
 
 export default function LoggedInProfile() {
