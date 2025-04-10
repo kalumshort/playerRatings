@@ -10,6 +10,11 @@ import {
   fetchUserDataStart,
   fetchUserDataSuccess,
 } from "../redux/Reducers/userDataReducer";
+import {
+  groupDataFailure,
+  groupDataStart,
+  groupDataSuccess,
+} from "../redux/Reducers/groupReducer";
 
 export const handleCreateAccount = async ({ email, password }) => {
   try {
@@ -103,6 +108,28 @@ export const fetchUserData = (userId) => async (dispatch) => {
       }
 
       dispatch(fetchUserDataSuccess(userData)); // Dispatch with the serialized user data
+      try {
+        if (userData.groups) {
+          dispatch(groupDataStart());
+          const groupObj = {};
+
+          for (let i = 0; i < userData.groups.length; i++) {
+            const groupId = userData.groups[i];
+            const groupRef = doc(db, "groups", groupId);
+            const groupDoc = await getDoc(groupRef);
+
+            if (groupDoc.exists()) {
+              groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
+            }
+
+            console.log(groupDoc.data());
+          }
+
+          dispatch(groupDataSuccess(groupObj));
+        }
+      } catch (err) {
+        dispatch(groupDataFailure(err.message));
+      }
     } else {
       dispatch(fetchUserDataFailure("User not found"));
     }

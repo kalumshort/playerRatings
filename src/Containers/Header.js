@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 
-import { Drawer, IconButton, Toolbar, Box, Container } from "@mui/material";
+import {
+  Drawer,
+  IconButton,
+  Toolbar,
+  Box,
+  Container,
+  Paper,
+} from "@mui/material";
 
 import SettingsIcon from "@mui/icons-material/Settings";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
@@ -10,12 +17,14 @@ import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useTheme } from "../Components/Theme/ThemeContext";
 
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+
 import { useAuth } from "../Providers/AuthContext";
 
 import ProfileSection from "../Components/Auth/ProfileSection";
-import Logout from "../Components/Auth/Logout";
 
 import Login from "../Components/Auth/Login";
+import { useNavigate } from "react-router-dom";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -86,13 +95,12 @@ export const DrawerContent = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   height: "100%", // Make the drawer take the full height
   justifyContent: "space-between", // Pushes content to the top and bottom
+  padding: theme.spacing(2),
 }));
 
 export const SettingsContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
-  gap: theme.spacing(2),
-  padding: theme.spacing(2),
   marginTop: "auto", // Ensures the content stays at the bottom of the drawer
 }));
 
@@ -100,37 +108,58 @@ export const SettingRow = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center", // Centers the content vertically in the row
+  backgroundColor: "background.paper",
 }));
 
 export function DrawerContentComponent({ setDrawerOpen }) {
   const { user } = useAuth();
 
   return (
-    <DrawerContent sx={{ width: "300px", backgroundColor: "background.paper" }}>
-      {!user && <DrawerSignIn />}
-      <Box>{user && <ProfileSection setDrawerOpen={setDrawerOpen} />}</Box>
+    <DrawerContent
+      sx={{ width: "300px", backgroundColor: "background.default" }}
+    >
+      {!user && (
+        <Container maxWidth="xs">
+          <Login />
+        </Container>
+      )}
+      {user && (
+        <>
+          <ProfileSection setDrawerOpen={setDrawerOpen} />
 
-      {/* Settings Section at the bottom */}
+          <DrawerGroupContainer setDrawerOpen={setDrawerOpen} />
+        </>
+      )}
+
       <SettingsContainer>
         <SettingRow>
           <Box>Theme</Box>
           <ThemeToggle />
         </SettingRow>
-        {user && (
+        {/* {user && (
           <SettingRow>
             <Box></Box>
             <Logout />
           </SettingRow>
-        )}
+        )} */}
       </SettingsContainer>
     </DrawerContent>
   );
 }
 
-function DrawerSignIn() {
+function DrawerGroupContainer({ setDrawerOpen }) {
+  const navigate = useNavigate();
+
+  const handleSeasonStatsClick = () => {
+    setDrawerOpen(false);
+    navigate("/season-stats");
+  };
   return (
-    <Container maxWidth="xs">
-      <Login />
-    </Container>
+    <Paper style={{ marginTop: "30px", padding: "10px" }}>
+      <SettingRow onClick={handleSeasonStatsClick}>
+        <Box>Season Stats</Box>
+        <ArrowForwardIosIcon fontSize="small" />
+      </SettingRow>
+    </Paper>
   );
 }

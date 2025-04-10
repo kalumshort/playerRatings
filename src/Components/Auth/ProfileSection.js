@@ -17,7 +17,6 @@ const ProfileSection = ({ setDrawerOpen }) => {
     <>
       <Card
         onClick={() => handleClick()}
-        className="containerMargin"
         variant="outlined"
         sx={{ textAlign: "center" }}
         style={{ position: "relative", cursor: "pointer" }}

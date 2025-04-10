@@ -8,6 +8,7 @@ import ratingsSlice from "./Reducers/playerRatingsReducer";
 import playerStatsSlice from "./Reducers/playersReducer";
 import teamSquadsSlice from "./Reducers/teamSquads";
 import userDataSlice from "./Reducers/userDataReducer";
+import groupSlice from "./Reducers/groupReducer";
 
 const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
     playerStats: playerStatsSlice,
     teamSquads: teamSquadsSlice,
     userData: userDataSlice,
+    groupData: groupSlice,
   },
 });
 

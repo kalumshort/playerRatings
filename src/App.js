@@ -114,7 +114,7 @@ function App() {
               element={user ? <FixturesContainer /> : <HomePage />}
             />
             <Route path="/profile" element={<ProfileContainer />} />
-            <Route path="/player-stats" element={<PlayerStatsContainer />} />
+            <Route path="/season-stats" element={<PlayerStatsContainer />} />
             <Route path="/fixture/:matchId" element={<Fixture />} />
             <Route path="/players/:playerId" element={<PlayerPage />} />
           </Routes>
