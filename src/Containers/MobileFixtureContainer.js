@@ -13,8 +13,9 @@ import WinnerPredict from "../Components/Fixtures/Fixture-Components/WinnerPredi
 
 export default function MobileFixtureContainer({ fixture }) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
+
   const getFirstTabValue = () => {
-    if (fixture?.lineups || fixture.lineups.length !== 0) return "Lineup";
+    if (fixture?.lineups?.length > 0) return "Lineup";
     if (isPreMatch) return "Predict-XI";
   };
 
