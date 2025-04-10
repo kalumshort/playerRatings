@@ -114,9 +114,18 @@ function App() {
               element={user ? <FixturesContainer /> : <HomePage />}
             />
             <Route path="/profile" element={<ProfileContainer />} />
-            <Route path="/season-stats" element={<PlayerStatsContainer />} />
-            <Route path="/fixture/:matchId" element={<Fixture />} />
-            <Route path="/players/:playerId" element={<PlayerPage />} />
+            <Route
+              path="/season-stats"
+              element={user ? <PlayerStatsContainer /> : <ProfileContainer />}
+            />
+            <Route
+              path="/fixture/:matchId"
+              element={user ? <Fixture /> : <ProfileContainer />}
+            />
+            <Route
+              path="/players/:playerId"
+              element={user ? <PlayerPage /> : <ProfileContainer />}
+            />
           </Routes>
         </div>
       </Router>
