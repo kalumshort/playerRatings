@@ -55,6 +55,8 @@ export default function FixtureHeader({
     minute: "2-digit",
   });
 
+  const inPlay = ["1H", "2H", "ET", "P"].includes(fixture.fixture.status.short);
+
   return (
     <>
       <ContentContainer className="fixture-header-outer containerMargin animate__animated animate__flipInX">
@@ -68,8 +70,26 @@ export default function FixtureHeader({
         >
           <ContentContainer className="fixture-header">
             {onClick && <ArrowForwardOutlinedIcon className="headerExpand" />}
-
-            {showDate && <div className="fixture-time-header">{matchTime}</div>}
+            {inPlay && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "2%", // 10px from the top of the container
+                  left: "50%", // Align to the horizontal center
+                  transform: "translateX(-50%)", // Adjust for exact center
+                  color: "#4EFF4E",
+                  padding: "2px 4px",
+                  borderRadius: "12px",
+                  fontSize: "8px",
+                  fontWeight: "bold",
+                }}
+              >
+                Live
+              </div>
+            )}
+            {showDate && !inPlay && (
+              <div className="fixture-time-header">{matchTime}</div>
+            )}
             <div className="team-container">
               <div
                 style={{
