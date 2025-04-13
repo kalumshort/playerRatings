@@ -47,11 +47,11 @@ import { getAuth } from "firebase/auth";
 //     dispatch(fetchFixturesFailure(error.message));
 //   }
 // };
-export const fetchFixtures = () => async (dispatch) => {
+export const fetchFixtures = (clubId) => async (dispatch) => {
   try {
     dispatch(fetchFixturesStart()); // Start loading
 
-    const fixturesData = await firebaseGetCollecion("fixtures/2024/33");
+    const fixturesData = await firebaseGetCollecion(`fixtures/2024/${clubId}`);
 
     const fixtures = Object.entries(fixturesData)
       .map(([id, fixture]) => ({ id, ...fixture }))

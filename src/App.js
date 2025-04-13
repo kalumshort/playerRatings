@@ -45,6 +45,7 @@ import { useAuth } from "./Providers/AuthContext";
 import { clearUserData } from "./redux/Reducers/userDataReducer";
 import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
+import useGroupData from "./Hooks/useGroupsData";
 
 function App() {
   const dispatch = useDispatch();
@@ -53,6 +54,8 @@ function App() {
 
   const { squadLoaded, squadError } = useSelector(selectSquadLoad);
   const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
+
+  const { activeGroup, groupDataLoaded } = useGroupData();
 
   const { error: userDataError, loaded: userDataLoaded } = useSelector(
     (state) => state.userData
@@ -77,15 +80,15 @@ function App() {
   }, [dispatch, userDataLoaded]); // Add userDataLoaded as a dependency
 
   useEffect(() => {
-    if (!squadLoaded) {
-      dispatch(fetchTeamSquad("33"));
+    if (!squadLoaded && groupDataLoaded) {
+      dispatch(fetchTeamSquad(activeGroup.groupClubId));
     }
-  }, [dispatch, squadLoaded]);
+  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup]);
   useEffect(() => {
-    if (!fixturesLoaded) {
-      dispatch(fetchFixtures());
+    if (!fixturesLoaded && groupDataLoaded) {
+      dispatch(fetchFixtures(activeGroup.groupClubId));
     }
-  }, [dispatch, fixturesLoaded]);
+  }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup]);
 
   if (!fixturesLoaded || !squadLoaded) {
     return <Spinner />;
