@@ -8,14 +8,24 @@ import {
   TextField,
   Button,
 } from "@mui/material";
+
 import { SettingRow } from "../../Containers/Header";
 import { updateUserField } from "../../Firebase/Auth_Functions";
 import useUserData from "../../Hooks/useUserData";
+import useGroupData from "../../Hooks/useGroupsData";
 
 import UploadAvatar from "./AvatarWithUpload";
+import CustomSelect from "../Inputs/CustomSelect";
 
 export default function LoggedInProfile() {
   const { userData } = useUserData();
+  const { groupData, activeGroup } = useGroupData();
+
+  const options = convertToSelectOptions(groupData);
+
+  const handleSelectChange = (event) => {
+    console.log(event);
+  };
 
   // Initialize state for all fields
   const [formData, setFormData] = useState({
@@ -30,6 +40,8 @@ export default function LoggedInProfile() {
 
     // Add other fields here in the future
   });
+
+  const [groupCodeInput, setGroupCodeInput] = useState();
 
   useEffect(() => {
     // Update changed fields dynamically based on form data changes
@@ -60,6 +72,10 @@ export default function LoggedInProfile() {
     if (updatedFields.length > 0) {
       console.log("Updated fields:", updatedFields);
     }
+  };
+
+  const handleGroupJoin = () => {
+    console.log(groupCodeInput);
   };
 
   if (!userData) {
@@ -99,6 +115,12 @@ export default function LoggedInProfile() {
         </CardContent>
       </Card>
       <Paper className="containerMargin" style={{ padding: "15px" }}>
+        <h5
+          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
+          className=""
+        >
+          Profile Settings
+        </h5>
         <SettingRow>
           <Box>Display Name</Box>
           <TextField
@@ -122,6 +144,50 @@ export default function LoggedInProfile() {
           </Button>
         </Box>
       </Paper>
+      <Paper className="containerMargin" style={{ padding: "15px" }}>
+        <h5
+          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
+          className=""
+        >
+          Group Settings
+        </h5>
+        <SettingRow>
+          <Box>Change Group</Box>
+          <CustomSelect
+            options={options}
+            label="Choose an Option"
+            value={activeGroup.groupId}
+            onChange={handleSelectChange}
+          />
+        </SettingRow>
+        <SettingRow>
+          <Box>Group Code </Box>
+
+          <TextField
+            value={groupCodeInput}
+            onChange={(e) => setGroupCodeInput(e)}
+            variant="outlined"
+            size="small"
+            sx={{ marginLeft: "10px", width: "100px" }}
+          />
+          <Button
+            variant="text"
+            color="primary"
+            onClick={handleGroupJoin}
+            disabled={!groupCodeInput}
+          >
+            Join
+          </Button>
+        </SettingRow>
+      </Paper>
     </div>
   );
+}
+
+function convertToSelectOptions(data) {
+  return Object.keys(data).map((key) => ({
+    label: data[key].name, // the label will be the 'name' field
+    value: data[key].groupId, // the value will be the 'groupId' field
+    imageURL: data[key].imageURL, // you can also include the imageURL if needed
+  }));
 }

@@ -125,6 +125,43 @@ export const ThemeProvider = ({ children }) => {
               },
             },
           },
+          // Customize the InputBase component globally
+          MuiInputBase: {
+            styleOverrides: {
+              input: {
+                padding: "2px", // Adjust padding here (smaller than default)
+              },
+            },
+          },
+          // Customize the OutlinedInput component (for inputs with borders)
+          MuiOutlinedInput: {
+            styleOverrides: {
+              root: {
+                padding: "2px", // Less padding on the outer container
+              },
+              input: {
+                padding: "2px", // Adjust padding inside the input
+              },
+            },
+          },
+          // Customize the TextField component if you're using it as well
+          MuiTextField: {
+            styleOverrides: {
+              root: {
+                "& .MuiInputBase-root": {
+                  padding: "2px", // Less padding in the TextField's input
+                },
+              },
+            },
+          },
+          // Customize the Select component
+          MuiSelect: {
+            styleOverrides: {
+              root: {
+                padding: "2px", // Adjust padding inside the Select input
+              },
+            },
+          },
         },
       }),
     [themeMode] // Recreate the theme when themeMode changes

@@ -13,7 +13,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
 
-import { styled } from "@mui/system";
+import { fontSize, fontStyle, styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useTheme } from "../Components/Theme/ThemeContext";
 
@@ -25,6 +25,7 @@ import ProfileSection from "../Components/Auth/ProfileSection";
 
 import Login from "../Components/Auth/Login";
 import { useNavigate } from "react-router-dom";
+import useGroupData from "../Hooks/useGroupsData";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -109,6 +110,7 @@ export const SettingRow = styled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   alignItems: "center", // Centers the content vertically in the row
   backgroundColor: "background.paper",
+  margin: "10px 0px 5px 0px",
 }));
 
 export function DrawerContentComponent({ setDrawerOpen }) {
@@ -149,6 +151,7 @@ export function DrawerContentComponent({ setDrawerOpen }) {
 
 function DrawerGroupContainer({ setDrawerOpen }) {
   const navigate = useNavigate();
+  const { groupData, activeGroup } = useGroupData();
 
   const handleSeasonStatsClick = () => {
     setDrawerOpen(false);
@@ -156,6 +159,17 @@ function DrawerGroupContainer({ setDrawerOpen }) {
   };
   return (
     <Paper style={{ marginTop: "30px", padding: "10px" }}>
+      <SettingRow
+        style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
+      >
+        <h5
+          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
+          className=""
+        >
+          Active Group
+        </h5>
+        <Box style={{ fontSize: "15px" }}>{activeGroup?.name}</Box>
+      </SettingRow>
       <SettingRow onClick={handleSeasonStatsClick}>
         <Box>Season Stats</Box>
         <ArrowForwardIosIcon fontSize="small" />
