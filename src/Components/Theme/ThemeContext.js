@@ -162,6 +162,18 @@ export const ThemeProvider = ({ children }) => {
               },
             },
           },
+          MuiInputLabel: {
+            styleOverrides: {
+              root: {
+                fontSize: "0.75rem", // Adjust the font size of the label
+                marginTop: "-8px", // Adjust the margin to prevent the label from being pushed down
+                "&.Mui-focused": {
+                  // Optional: Adjust the label position when the input is focused
+                  marginTop: "0px",
+                },
+              },
+            },
+          },
         },
       }),
     [themeMode] // Recreate the theme when themeMode changes
