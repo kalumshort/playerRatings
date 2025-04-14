@@ -139,11 +139,10 @@ export const fetchUserData = (userId) => async (dispatch) => {
 };
 
 export const updateUserField = async (userId, field, newValue) => {
-  console.log("1");
   if (!userId || !field || !newValue) {
     return;
   }
-  console.log("2");
+
   try {
     const userRef = doc(db, "users", userId); // Reference to the user's Firestore document
     await updateDoc(userRef, {

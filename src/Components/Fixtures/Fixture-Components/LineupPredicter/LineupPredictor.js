@@ -189,6 +189,7 @@ export function CommunityTeamStats({ fixture }) {
       <h1 className="smallHeading">Players Chosen </h1>
       {percentagesArray?.map(({ id, percentage }) => (
         <LineupPlayer
+          key={id} // Add a unique key prop here
           player={squadData[id]}
           onDelete={false}
           draggable={false}

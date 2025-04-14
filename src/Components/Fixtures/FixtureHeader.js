@@ -74,9 +74,9 @@ export default function FixtureHeader({
               <div
                 style={{
                   position: "absolute",
-                  top: "2%", // 10px from the top of the container
-                  left: "50%", // Align to the horizontal center
-                  transform: "translateX(-50%)", // Adjust for exact center
+                  top: "2%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
                   color: "#4EFF4E",
                   padding: "2px 4px",
                   borderRadius: "12px",

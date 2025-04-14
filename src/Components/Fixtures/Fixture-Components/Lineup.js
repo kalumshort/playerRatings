@@ -27,7 +27,11 @@ export default function Lineup({ fixture }) {
             .map((rowPlayers, rowIndex) => (
               <div key={rowIndex} className="row">
                 {rowPlayers.map((player) => (
-                  <LineupPlayer player={player} fixture={fixture} />
+                  <LineupPlayer
+                    key={player.id} // Add unique key based on player ID
+                    player={player}
+                    fixture={fixture}
+                  />
                 ))}
               </div>
             ))}
@@ -41,6 +45,7 @@ export default function Lineup({ fixture }) {
         <div className="subs-container">
           {unitedSubs.map((substitute) => (
             <LineupPlayer
+              key={substitute.player.id} // Add unique key based on player ID
               player={substitute.player}
               fixture={fixture}
               // className="player-substitute"
