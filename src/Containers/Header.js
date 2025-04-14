@@ -13,7 +13,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
 
-import { fontSize, fontStyle, styled } from "@mui/system";
+import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import { useTheme } from "../Components/Theme/ThemeContext";
 
