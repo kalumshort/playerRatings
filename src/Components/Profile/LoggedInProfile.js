@@ -16,6 +16,7 @@ import useGroupData from "../../Hooks/useGroupsData";
 
 import UploadAvatar from "./AvatarWithUpload";
 import CustomSelect from "../Inputs/CustomSelect";
+import Logout from "../Auth/Logout";
 
 export default function LoggedInProfile() {
   const { userData } = useUserData();
@@ -180,6 +181,12 @@ export default function LoggedInProfile() {
           </Button>
         </SettingRow>
       </Paper>
+      <div className="containerMargin" style={{ padding: "15px" }}>
+        <SettingRow>
+          <Box></Box>
+          <Logout />
+        </SettingRow>
+      </div>
     </div>
   );
 }
