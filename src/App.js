@@ -80,21 +80,28 @@ function App() {
   }, [dispatch, userDataLoaded]); // Add userDataLoaded as a dependency
 
   useEffect(() => {
-    if (!squadLoaded && groupDataLoaded) {
-      dispatch(fetchTeamSquad(activeGroup.groupClubId));
+    if (user) {
+      if (!squadLoaded && groupDataLoaded) {
+        dispatch(fetchTeamSquad(activeGroup.groupClubId));
+      }
     }
-  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup]);
-  useEffect(() => {
-    if (!fixturesLoaded && groupDataLoaded) {
-      dispatch(fetchFixtures(activeGroup.groupClubId));
-    }
-  }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup]);
+  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup, user]);
 
-  if (!fixturesLoaded || !squadLoaded) {
-    return <Spinner />;
-  }
-  if (user && !userDataLoaded) {
-    return <Spinner />;
+  useEffect(() => {
+    if (user) {
+      if (!fixturesLoaded && groupDataLoaded) {
+        dispatch(fetchFixtures(activeGroup.groupClubId));
+      }
+    }
+  }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
+
+  if (user) {
+    if (!userDataLoaded) {
+      return <Spinner />;
+    }
+    if (!fixturesLoaded || !squadLoaded) {
+      return <Spinner />;
+    }
   }
 
   if (squadError || fixturesError || userDataError) {
