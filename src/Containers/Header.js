@@ -151,7 +151,7 @@ export function DrawerContentComponent({ setDrawerOpen }) {
 
 function DrawerGroupContainer({ setDrawerOpen }) {
   const navigate = useNavigate();
-  const { groupData, activeGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const handleSeasonStatsClick = () => {
     setDrawerOpen(false);
