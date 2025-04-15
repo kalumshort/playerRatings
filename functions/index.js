@@ -141,52 +141,52 @@ exports.updateFixtures = onSchedule(
   }
 );
 
-exports.updateFixturesRequest = onRequest(async (req, res) => {
-  try {
-    const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures`,
-      {
-        params: {
-          team: 33, // Example: Manchester United team ID
-          season: 2024, // Example: 2024 season
-        },
-        headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key here
-        },
-      }
-    );
-    const fixtures = response.data.response;
+// exports.updateFixturesRequest = onRequest(async (req, res) => {
+//   try {
+//     const response = await axios.get(
+//       `https://v3.football.api-sports.io/fixtures`,
+//       {
+//         params: {
+//           team: 33, // Example: Manchester United team ID
+//           season: 2024, // Example: 2024 season
+//         },
+//         headers: {
+//           "x-rapidapi-host": "v3.football.api-sports.io",
+//           "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key here
+//         },
+//       }
+//     );
+//     const fixtures = response.data.response;
 
-    for (const fixtureObj of fixtures) {
-      const year = fixtureObj.league.season;
-      const fixtureId = fixtureObj.fixture.id;
+//     for (const fixtureObj of fixtures) {
+//       const year = fixtureObj.league.season;
+//       const fixtureId = fixtureObj.fixture.id;
 
-      const fixtureData = {
-        fixture: fixtureObj.fixture,
-        league: fixtureObj.league,
-        teams: fixtureObj.teams,
-        goals: fixtureObj.goals,
-        score: fixtureObj.score,
-        matchDate: fixtureObj.fixture.timestamp,
-      };
+//       const fixtureData = {
+//         fixture: fixtureObj.fixture,
+//         league: fixtureObj.league,
+//         teams: fixtureObj.teams,
+//         goals: fixtureObj.goals,
+//         score: fixtureObj.score,
+//         matchDate: fixtureObj.fixture.timestamp,
+//       };
 
-      await getFirestore()
-        .collection("fixtures")
-        .doc(year.toString())
-        .collection("data")
-        .doc(fixtureId.toString())
-        .set(fixtureData, { merge: true });
-    }
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc(year.toString())
+//         .collection("data")
+//         .doc(fixtureId.toString())
+//         .set(fixtureData, { merge: true });
+//     }
 
-    logger.info(`Successfully updated ${fixtures.length} fixtures.`);
+//     logger.info(`Successfully updated ${fixtures.length} fixtures.`);
 
-    res.status(200).send(`Successfully updated ${fixtures.length} fixtures.`);
-  } catch (error) {
-    logger.error("Error updating fixtures:", error);
-    res.status(500).send("Failed to update fixtures");
-  }
-});
+//     res.status(200).send(`Successfully updated ${fixtures.length} fixtures.`);
+//   } catch (error) {
+//     logger.error("Error updating fixtures:", error);
+//     res.status(500).send("Failed to update fixtures");
+//   }
+// });
 
 // exports.prevIds = onRequest(async (req, res) => {
 //   const prevIds = [1208210];
@@ -221,55 +221,55 @@ exports.updateFixturesRequest = onRequest(async (req, res) => {
 //   res.send("Lineups added to Firebase.");
 // });
 
-exports.fetchSingleFixtureData = onRequest(async (req, res) => {
-  const preIds = [];
-  for (const fixtureId of preIds) {
-    if (!fixtureId) {
-      return res.status(400).send("Fixture ID is required");
-    }
+// exports.fetchSingleFixtureData = onRequest(async (req, res) => {
+//   const preIds = [];
+//   for (const fixtureId of preIds) {
+//     if (!fixtureId) {
+//       return res.status(400).send("Fixture ID is required");
+//     }
 
-    try {
-      const fixtureData = await fetchFixtureData(fixtureId);
+//     try {
+//       const fixtureData = await fetchFixtureData(fixtureId);
 
-      const fixtureStatsData = await fetchStatisticsData(fixtureId);
+//       const fixtureStatsData = await fetchStatisticsData(fixtureId);
 
-      const fixtureLineupData = await fetchLineupData(fixtureId);
+//       const fixtureLineupData = await fetchLineupData(fixtureId);
 
-      const fixtureEventsData = await fetchEventsData(fixtureId);
+//       const fixtureEventsData = await fetchEventsData(fixtureId);
 
-      const combinedFixtureData = {
-        ...fixtureData,
-        statistics: fixtureStatsData,
-        lineups: fixtureLineupData,
-        events: fixtureEventsData,
-      };
+//       const combinedFixtureData = {
+//         ...fixtureData,
+//         statistics: fixtureStatsData,
+//         lineups: fixtureLineupData,
+//         events: fixtureEventsData,
+//       };
 
-      const year = combinedFixtureData?.league?.season;
+//       const year = combinedFixtureData?.league?.season;
 
-      if (!year) {
-        throw new Error("League season not found in the fixture data.");
-      }
+//       if (!year) {
+//         throw new Error("League season not found in the fixture data.");
+//       }
 
-      await getFirestore()
-        .collection("fixtures")
-        .doc(year.toString())
-        .collection("33")
-        .doc(fixtureId.toString())
-        .set(combinedFixtureData, { merge: true });
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc(year.toString())
+//         .collection("33")
+//         .doc(fixtureId.toString())
+//         .set(combinedFixtureData, { merge: true });
 
-      console.log(`Finished ${fixtureId} `);
-    } catch (error) {
-      console.error(
-        `Error fetching or saving data for fixture ${fixtureId}:`,
-        error.stack
-      );
-      return res
-        .status(500)
-        .send(`Error fetching fixture data: ${error.message}`);
-    }
-  }
-  res.status(200).send(`Successfull`);
-});
+//       console.log(`Finished ${fixtureId} `);
+//     } catch (error) {
+//       console.error(
+//         `Error fetching or saving data for fixture ${fixtureId}:`,
+//         error.stack
+//       );
+//       return res
+//         .status(500)
+//         .send(`Error fetching fixture data: ${error.message}`);
+//     }
+//   }
+//   res.status(200).send(`Successfull`);
+// });
 
 exports.scheduledLatestTeamDataFetch = onSchedule(
   "every 5 minutes",

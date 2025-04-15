@@ -3,18 +3,24 @@ import React from "react";
 import "./Lineup.css"; // Importing external CSS file
 
 import LineupPlayer from "./LineupPlayer";
+import useGroupData from "../../../Hooks/useGroupsData";
 
 export default function Lineup({ fixture }) {
-  const unitedLineup =
-    fixture?.lineups?.find((team) => team.team.id === 33)?.startXI || [];
-  const unitedSubs =
-    fixture?.lineups?.find((team) => team.team.id === 33)?.substitutes || [];
+  const { activeGroup } = useGroupData();
+
+  const groupClubId = Number(activeGroup.groupClubId);
+  const lineup =
+    fixture?.lineups?.find((team) => team.team.id === groupClubId)?.startXI ||
+    [];
+  const subs =
+    fixture?.lineups?.find((team) => team.team.id === groupClubId)
+      ?.substitutes || [];
 
   return (
     <div className="lineup-container containerMargin">
       <div style={{ position: "relative" }}>
         <div className="pitch">
-          {unitedLineup
+          {lineup
             .reduce((rows, { player }) => {
               const [row] = player.grid.split(":").map(Number);
 
@@ -43,7 +49,7 @@ export default function Lineup({ fixture }) {
           Substitutes
         </h2>
         <div className="subs-container">
-          {unitedSubs.map((substitute) => (
+          {subs.map((substitute) => (
             <LineupPlayer
               key={substitute.player.id} // Add unique key based on player ID
               player={substitute.player}

@@ -36,6 +36,9 @@ import useGroupData from "../../../../Hooks/useGroupsData";
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
+  const { activeGroup } = useGroupData();
+
+  const groupClubId = Number(activeGroup.groupClubId);
 
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
@@ -44,16 +47,16 @@ export default function PlayerRatings({ fixture }) {
     `userMatchRatingSubmited-${fixture.id}`
   );
 
-  const unitedLineup =
-    fixture.lineups.find((team) => team.team.id === 33)?.startXI || [];
+  const lineup =
+    fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
 
   // const isPostMatch = fixture?.fixture?.status?.short === "FT";
 
   const substitutedPlayerIds = fixture?.events
-    .filter((item) => item.type === "subst" && item.team?.id === 33)
+    .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
     .map((item) => item.player);
 
-  const players = unitedLineup.map(({ player }) => ({
+  const players = lineup.map(({ player }) => ({
     id: player.id,
     name: player.name,
   }));

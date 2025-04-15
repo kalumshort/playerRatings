@@ -1,10 +1,14 @@
 import React from "react";
+import useGroupData from "../../Hooks/useGroupsData";
 
 export default function FixtureListItem({
   fixture,
   matchTime,
   handleFixtureClick,
 }) {
+  const { activeGroup } = useGroupData();
+
+  const groupClubId = Number(activeGroup.groupClubId);
   return (
     <div
       className="fixture-list-item"
@@ -29,9 +33,11 @@ export default function FixtureListItem({
             fixture.fixture.status.short === "NS" ||
             fixture.fixture.status.short === "TBD"
               ? ""
-              : fixture.teams.home.id === 33 && fixture.teams.home.winner
+              : fixture.teams.home.id === groupClubId &&
+                fixture.teams.home.winner
               ? "green"
-              : fixture.teams.away.id === 33 && fixture.teams.away.winner
+              : fixture.teams.away.id === groupClubId &&
+                fixture.teams.away.winner
               ? "green"
               : !fixture.teams.away.winner && !fixture.teams.home.winner
               ? "grey"

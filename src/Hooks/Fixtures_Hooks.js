@@ -162,7 +162,6 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     dispatch(fetchTeamSquadStart());
 
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
-
     const activeSquadIds = teamSquadData.playerIds;
 
     await Promise.all(

@@ -10,6 +10,7 @@ import {
 } from "../../Hooks/Fixtures_Hooks";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
+import useGroupData from "../../Hooks/useGroupsData";
 
 export default function PlayerPage() {
   const { playerId } = useParams();
@@ -90,7 +91,12 @@ const PlayerMatchitem = ({
   getRatingClass,
   matchPlayerStats,
 }) => {
-  const oponent = Object.values(fixture?.teams).find((team) => team.id !== 33);
+  const { activeGroup } = useGroupData();
+
+  const groupClubId = Number(activeGroup.groupClubId);
+  const oponent = Object.values(fixture?.teams).find(
+    (team) => team.id !== groupClubId
+  );
 
   return (
     <div className="PlayerMatchItem">
