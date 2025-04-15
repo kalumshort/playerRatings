@@ -46,6 +46,7 @@ import { clearUserData } from "./redux/Reducers/userDataReducer";
 import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
+import { UserDataListener } from "./Firebase/FirebaseListeners";
 
 function App() {
   const dispatch = useDispatch();
@@ -115,6 +116,7 @@ function App() {
   return (
     <GlobalContainer>
       <Router>
+        {user && <UserDataListener userId={user.uid} />}
         {!isMobile && <Header />}
         {isMobile && <MobileHeader />}
         <div style={{ maxWidth: "1400px", margin: "auto" }}>

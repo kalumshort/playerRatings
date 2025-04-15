@@ -22,7 +22,7 @@ import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings"
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
 import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
-import FirestoreDocumentListener from "../../Firebase/FirebaseListeners";
+import { FixturesListener } from "../../Firebase/FirebaseListeners";
 import {
   footballClubsColours,
   useIsMobile,
@@ -35,9 +35,11 @@ import {
   selectPlayerRatingsLoad,
   selectPlayerStatsLoad,
 } from "../../Selectors/selectors";
+import useGroupData from "../../Hooks/useGroupsData";
 
 export default function Fixture() {
   const { matchId } = useParams();
+  const { groupData } = useGroupData();
 
   const fixture = useSelector(selectFixtureById(matchId));
   const { predictionsLoaded, predictionsError } = useSelector(
@@ -101,7 +103,10 @@ export default function Fixture() {
           awayTeamColour: awayTeamColour,
         }}
       >
-        <FirestoreDocumentListener docId={latestFixture.fixture.id} />
+        <FixturesListener
+          teamId={groupData.groupClubId}
+          fixtureId={latestFixture.fixture.id}
+        />
         <FixtureHeader
           fixture={fixture}
           showDetails={true}
