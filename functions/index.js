@@ -32,40 +32,23 @@ initializeApp();
 // };
 
 // Fetch and Save Fixtures
-exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
-  try {
-    const SEASON = 2024;
-    const LEAGUE_ID = 39; // Premier League
+exports.updateFixtures = onSchedule(
+  {
+    schedule: "every day 00:00",
+    timeoutSeconds: 240, // ⏱️ 4 minutes
+    memory: "512MiB", // Optional: increase memory if needed
+  },
+  async (event) => {
+    try {
+      const SEASON = 2024;
+      const LEAGUE_ID = 39; // Premier League
 
-    // Step 1: Get all teams in the Premier League
-    const teamsResponse = await axios.get(
-      `https://v3.football.api-sports.io/teams`,
-      {
-        params: {
-          league: LEAGUE_ID,
-          season: SEASON,
-        },
-        headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-        },
-      }
-    );
-
-    const teams = teamsResponse.data.response;
-
-    for (const teamObj of teams) {
-      const teamId = teamObj.team.id;
-      const teamName = teamObj.team.name;
-
-      logger.info(`Processing team: ${teamName} (${teamId})`);
-
-      // Step 2: Fetch fixtures
-      const fixturesResponse = await axios.get(
-        `https://v3.football.api-sports.io/fixtures`,
+      // Step 1: Get all teams in the Premier League
+      const teamsResponse = await axios.get(
+        `https://v3.football.api-sports.io/teams`,
         {
           params: {
-            team: teamId,
+            league: LEAGUE_ID,
             season: SEASON,
           },
           headers: {
@@ -75,76 +58,88 @@ exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
         }
       );
 
-      const fixtures = fixturesResponse.data.response;
+      const teams = teamsResponse.data.response;
 
-      for (const fixtureObj of fixtures) {
-        const fixtureId = fixtureObj.fixture.id;
+      for (const teamObj of teams) {
+        const teamId = teamObj.team.id;
+        const teamName = teamObj.team.name;
 
-        const fixtureData = {
-          fixture: fixtureObj.fixture,
-          league: fixtureObj.league,
-          teams: fixtureObj.teams,
-          goals: fixtureObj.goals,
-          score: fixtureObj.score,
-          matchDate: fixtureObj.fixture.timestamp,
-        };
+        logger.info(`Processing team: ${teamName} (${teamId})`);
 
-        await getFirestore()
-          .collection(`fixtures/${SEASON}/${teamId}`)
-          .doc(fixtureId.toString())
-          .set(fixtureData, { merge: true });
-      }
-
-      logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
-
-      // Step 3: Fetch squad
-      const squadResponse = await axios.get(
-        `https://v3.football.api-sports.io/players/squads`,
-        {
-          params: { team: teamId },
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
-
-      const squadPlayers = squadResponse.data.response[0]?.players || [];
-
-      // Step 4: Fetch manager
-      const managerResponse = await axios.get(
-        `https://v3.football.api-sports.io/coachs`,
-        {
-          params: { team: teamId },
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
-
-      const manager = managerResponse.data.response[0] || null;
-
-      // Save both squad and manager into teamSquads
-      await getFirestore()
-        .collection("teamSquads")
-        .doc(teamId.toString())
-        .set(
+        // Step 2: Fetch fixtures
+        const fixturesResponse = await axios.get(
+          `https://v3.football.api-sports.io/fixtures`,
           {
-            activeSquad: squadPlayers,
-            manager: manager || null,
-          },
-          { merge: true }
+            params: {
+              team: teamId,
+              season: SEASON,
+            },
+            headers: {
+              "x-rapidapi-host": "v3.football.api-sports.io",
+              "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+            },
+          }
         );
 
-      logger.info(`Saved squad and manager for ${teamName}`);
-    }
+        const fixtures = fixturesResponse.data.response;
 
-    logger.info(`Finished processing all Premier League teams`);
-  } catch (error) {
-    logger.error("Error updating data:", error.message, error);
+        for (const fixtureObj of fixtures) {
+          const fixtureId = fixtureObj.fixture.id;
+
+          const fixtureData = {
+            fixture: fixtureObj.fixture,
+            league: fixtureObj.league,
+            teams: fixtureObj.teams,
+            goals: fixtureObj.goals,
+            score: fixtureObj.score,
+            matchDate: fixtureObj.fixture.timestamp,
+          };
+
+          await getFirestore()
+            .collection(`fixtures/${SEASON}/${teamId}`)
+            .doc(fixtureId.toString())
+            .set(fixtureData, { merge: true });
+        }
+
+        logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
+
+        // Step 3: Fetch squad
+        const squadResponse = await axios.get(
+          `https://v3.football.api-sports.io/players/squads`,
+          {
+            params: { team: teamId },
+            headers: {
+              "x-rapidapi-host": "v3.football.api-sports.io",
+              "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+            },
+          }
+        );
+
+        const squadPlayers = squadResponse.data.response[0]?.players || [];
+
+        const playerIds = squadPlayers.map((player) => player.id);
+
+        // Save both squad and manager into teamSquads
+        await getFirestore()
+          .collection("teamSquads")
+          .doc(teamId.toString())
+          .set(
+            {
+              activeSquad: squadPlayers,
+              playerIds: playerIds,
+            },
+            { merge: true }
+          );
+
+        logger.info(`Saved squad and manager for ${teamName}`);
+      }
+
+      logger.info(`Finished processing all Premier League teams`);
+    } catch (error) {
+      logger.error("Error updating data:", error.message, error);
+    }
   }
-});
+);
 
 exports.updateFixturesRequest = onRequest(async (req, res) => {
   try {
@@ -345,126 +340,6 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
     }
   }
 );
-
-exports.function = onRequest(async (req, res) => {
-  try {
-    const SEASON = 2024;
-    const LEAGUE_ID = 39; // Premier League
-
-    // Step 1: Get all teams in the Premier League
-    const teamsResponse = await axios.get(
-      `https://v3.football.api-sports.io/teams`,
-      {
-        params: {
-          league: LEAGUE_ID,
-          season: SEASON,
-        },
-        headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-        },
-      }
-    );
-
-    const teams = teamsResponse.data.response;
-
-    for (const teamObj of teams) {
-      const teamId = teamObj.team.id;
-      const teamName = teamObj.team.name;
-
-      logger.info(`Processing team: ${teamName} (${teamId})`);
-
-      // Step 2: Fetch fixtures
-      const fixturesResponse = await axios.get(
-        `https://v3.football.api-sports.io/fixtures`,
-        {
-          params: {
-            team: teamId,
-            season: SEASON,
-          },
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
-
-      const fixtures = fixturesResponse.data.response;
-
-      for (const fixtureObj of fixtures) {
-        const fixtureId = fixtureObj.fixture.id;
-
-        const fixtureData = {
-          fixture: fixtureObj.fixture,
-          league: fixtureObj.league,
-          teams: fixtureObj.teams,
-          goals: fixtureObj.goals,
-          score: fixtureObj.score,
-          matchDate: fixtureObj.fixture.timestamp,
-        };
-
-        await getFirestore()
-          .collection(`fixtures/${SEASON}/${teamId}`)
-          .doc(fixtureId.toString())
-          .set(fixtureData, { merge: true });
-      }
-
-      logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
-
-      // Step 3: Fetch squad
-      const squadResponse = await axios.get(
-        `https://v3.football.api-sports.io/players/squads`,
-        {
-          params: { team: teamId },
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
-
-      const squadPlayers = squadResponse.data.response[0]?.players || [];
-
-      // Step 4: Fetch manager
-      const teamDetailsResponse = await axios.get(
-        `https://v3.football.api-sports.io/teams`,
-        {
-          params: {
-            league: LEAGUE_ID,
-            season: SEASON,
-            team: teamId,
-          },
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
-        }
-      );
-
-      const teamData = teamDetailsResponse.data.response[0];
-      const manager = teamData?.coach || null;
-
-      // Save both squad and manager into teamSquads
-      await getFirestore()
-        .collection("teamSquads")
-        .doc(teamId.toString())
-        .set(
-          {
-            activeSquad: squadPlayers,
-            manager: manager || null,
-          },
-          { merge: true }
-        );
-
-      logger.info(`Saved squad and manager for ${teamName}`);
-    }
-
-    logger.info(`Finished processing all Premier League teams`);
-  } catch (error) {
-    logger.error("Error updating data:", error.message, error);
-  }
-  res.status(200).send(`Successfull`);
-});
 
 // exports.conversionFunction = onRequest(async (req, res) => {
 //   try {
