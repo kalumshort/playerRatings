@@ -358,9 +358,8 @@
   width: calc(100% - 20px) !important;
 }
 .PlayerRatingImg {
-  width: 125px;
   object-fit: cover;
-  background: linear-gradient(to bottom right, #4e73df, #9b59b6);
+  /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */
 }
 .PlayerRatingInner {
   display: flex;

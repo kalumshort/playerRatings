@@ -31,6 +31,7 @@ import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import StarIcon from "@mui/icons-material/Star";
 import { fetchMatchPlayerRatings } from "../../../../Hooks/Fixtures_Hooks";
 import { useAlert } from "../../../HelpfulComponents";
+import useGroupData from "../../../../Hooks/useGroupsData";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
@@ -202,7 +203,7 @@ const PlayerRatingItem = ({
   };
 
   return (
-    <div className={isMOTM ? "PlayerRatingItem motm" : "PlayerRatingItem"}>
+    <div className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}>
       <img
         src={playerData?.photo || player.photo || missingPlayerImg}
         className="PlayerRatingImg"
@@ -214,6 +215,7 @@ const PlayerRatingItem = ({
           <h2 className="PlayerRatingName">
             {playerData?.name || player.name}
           </h2>
+
           {goals?.map((goal, index) => (
             <img
               key={index}
@@ -222,14 +224,17 @@ const PlayerRatingItem = ({
               className="PlayerRatingsIcon"
             />
           ))}
+
           {cardIcon && (
             <img src={cardIcon} alt="Card Icon" className="PlayerRatingsIcon" />
           )}
         </span>
-        {!storedUsersPlayerRating && (
+
+        {!storedUsersPlayerRating ? (
           <div className="PlayerRatingsChoices">
             {Array.from({ length: 10 }, (_, i) => (
               <ButtonGroup
+                key={i}
                 className="PlayerRatingsButtonGroup"
                 aria-label="PlayerRatingsButtonGroup"
                 orientation={isMobile ? "vertical" : "horizontal"}
@@ -242,6 +247,7 @@ const PlayerRatingItem = ({
                 >
                   {i + 1}
                 </Button>
+
                 {i !== 9 && (
                   <Button
                     variant="outlined"
@@ -254,8 +260,7 @@ const PlayerRatingItem = ({
               </ButtonGroup>
             ))}
           </div>
-        )}
-        {storedUsersPlayerRating && (
+        ) : (
           <div className="PlayerRatingsResults">
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
@@ -269,10 +274,11 @@ const PlayerRatingItem = ({
                 </h4>
               </div>
             </div>
+
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
               <div
-                className={`globalBoxShadow PlayerStatsListItemScoreContainer  ${getRatingClass(
+                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
                   playerRatingAverage
                 )}`}
               >
@@ -284,6 +290,7 @@ const PlayerRatingItem = ({
           </div>
         )}
       </div>
+
       <div
         className="PlayerRatingMotm"
         style={{
@@ -294,14 +301,12 @@ const PlayerRatingItem = ({
         {isMOTM ? (
           <StarIcon
             fontSize="large"
-            onClick={() => handleMotmClick()}
+            onClick={handleMotmClick}
             color="primary"
           />
-        ) : readOnly ? (
-          <></>
-        ) : (
-          <StarOutlineIcon fontSize="small" onClick={() => handleMotmClick()} />
-        )}
+        ) : !readOnly ? (
+          <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
+        ) : null}
       </div>
     </div>
   );
@@ -315,10 +320,18 @@ const PlayerRatingsItems = ({
   readOnly,
 }) => {
   const isMobile = useIsMobile();
+  const { activeGroup } = useGroupData();
+  console.log(activeGroup.groupClubId);
+
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
   if (!combinedPlayers) {
     return <div className="spinner"></div>;
   }
+  const coach = fixture.lineups.find(
+    (team) => team.team.id === Number(activeGroup.groupClubId)
+  )?.coach; // Convert activeGroup.groupClubId to number
+
+  console.log(coach); // Log the coach object or undefined if not found
   return (
     <div className="PlayerRatingsItemsContainer">
       {combinedPlayers.map((player, rowIndex) => (
@@ -331,7 +344,7 @@ const PlayerRatingsItems = ({
         />
       ))}
       <PlayerRatingItem
-        player={{ id: 696969 }}
+        player={coach}
         fixture={fixture}
         isMobile={isMobile}
         matchRatings={matchRatings}
