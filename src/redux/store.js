@@ -15,7 +15,7 @@ const store = configureStore({
     fixtures: fixturesReducer,
     squadData: squadDataReducer,
     predictions: predictionsReducer,
-    ratings: ratingsSlice,
+    playerRatings: ratingsSlice,
     playerStats: playerStatsSlice,
     teamSquads: teamSquadsSlice,
     userData: userDataSlice,

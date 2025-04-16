@@ -8,6 +8,7 @@ import {
   AccordionSummary,
   Button,
   ButtonGroup,
+  Paper,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -32,6 +33,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { fetchMatchPlayerRatings } from "../../../../Hooks/Fixtures_Hooks";
 import { useAlert } from "../../../HelpfulComponents";
 import useGroupData from "../../../../Hooks/useGroupsData";
+import RatingLineup from "./RatingLineup";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
@@ -59,6 +61,7 @@ export default function PlayerRatings({ fixture }) {
   const players = lineup.map(({ player }) => ({
     id: player.id,
     name: player.name,
+    grid: player.grid,
   }));
 
   // Combine the two arrays
@@ -324,9 +327,9 @@ const PlayerRatingsItems = ({
 }) => {
   const isMobile = useIsMobile();
   const { activeGroup } = useGroupData();
-  console.log(activeGroup.groupClubId);
 
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
+
   if (!combinedPlayers) {
     return <div className="spinner"></div>;
   }
@@ -334,7 +337,6 @@ const PlayerRatingsItems = ({
     (team) => team.team.id === Number(activeGroup.groupClubId)
   )?.coach; // Convert activeGroup.groupClubId to number
 
-  console.log(coach); // Log the coach object or undefined if not found
   return (
     <div className="PlayerRatingsItemsContainer">
       {combinedPlayers.map((player, rowIndex) => (
@@ -376,9 +378,9 @@ const SubmittedPlayerRatings = ({
 }) => {
   return (
     <>
-      <div className="PlayerRatingMotmContainer PlayerRatingItem motm">
+      <Paper className="PlayerRatingItem motm">
         <img
-          src={motmPercentages[0]?.photo}
+          src={motmPercentages[0]?.img}
           className="PlayerRatingImg"
           alt="PlayerRatingImg"
         />
@@ -403,16 +405,17 @@ const SubmittedPlayerRatings = ({
             <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
               MOTM
             </h5>
-            <h2>{motmPercentages[0]?.name}</h2>
+            <h2 style={{ margin: "5px" }}>{motmPercentages[0]?.name}</h2>
             <h2
               // className="gradient-text"
-              style={{ fontSize: "50px", margin: "0px" }}
+              style={{ fontSize: "30px", margin: "0px" }}
             >
               {motmPercentages[0]?.percentage}%
             </h2>
           </div>
         </div>
-      </div>
+      </Paper>
+      <RatingLineup />
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}

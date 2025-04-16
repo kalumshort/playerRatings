@@ -342,7 +342,7 @@
 }
 .PlayerRatingItem {
   position: relative;
-  width: 100%;
+
   background-color: #282828;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   margin: 10px;
@@ -354,9 +354,7 @@
   max-width: 850px;
   /* align-items: flex-start; */
 }
-.PlayerRatingMotmContainer {
-  width: calc(100% - 20px) !important;
-}
+
 .PlayerRatingImg {
   object-fit: cover;
   /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */

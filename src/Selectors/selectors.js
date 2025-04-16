@@ -1,17 +1,17 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { selectSquadPlayerById } from "./squadDataSelectors";
 
-export const allRatings = (state) => state.ratings;
-export const allMatchRatings = (state) => state.ratings.matches;
-export const allPlayerRatings = (state) => state.ratings.players;
+export const allRatings = (state) => state.playerRatings;
+export const allMatchRatings = (state) => state.playerRatings.matches;
+export const allPlayerRatings = (state) => state.playerRatings.players;
 export const allPlayerStats = (state) => state.playerStats.players;
 
 export const selectAllPlayersStats = (state) => state.playerStats.players;
 
 export const selectPlayerRatingsLoad = (state) => ({
-  ratingsLoaded: state.ratings.loaded,
-  ratingsError: state.ratings.error,
-  ratingsLoading: state.ratings.loading,
+  ratingsLoaded: state.playerRatings.loaded,
+  ratingsError: state.playerRatings.error,
+  ratingsLoading: state.playerRatings.loading,
 });
 
 export const selectPlayerStatsLoad = (state) => ({

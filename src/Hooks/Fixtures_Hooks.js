@@ -101,7 +101,7 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
   if (!matchId) {
     return;
   }
-
+  console.log("test");
   const auth = getAuth();
   const user = auth.currentUser;
 
