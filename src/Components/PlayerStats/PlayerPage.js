@@ -3,10 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { selectSquadPlayerById } from "../../Selectors/squadDataSelectors";
 import { Paper } from "@mui/material";
-import { selectPlayerStatsById } from "../../Selectors/selectors";
 import {
-  fetchPlayerMatchesStats,
-  fetchPlayerStats,
+  selectPlayerRatingsLoad,
+  selectPlayerStatsById,
+  selectPlayerStatsLoad,
+} from "../../Selectors/selectors";
+import {
+  fetchPlayerRatingsAllMatches,
+  fetchAllPlayersSeasonOverallRating,
 } from "../../Hooks/Fixtures_Hooks";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
@@ -18,16 +22,23 @@ export default function PlayerPage() {
   const playerStats = useSelector(selectPlayerStatsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
 
+  const { playerStatsLoaded } = useSelector(selectPlayerStatsLoad);
+
+  const { ratingsLoaded } = useSelector(selectPlayerRatingsLoad);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (playerStats) {
-      dispatch(fetchPlayerMatchesStats(playerId));
-    } else {
-      dispatch(fetchPlayerStats());
-      dispatch(fetchPlayerMatchesStats(playerId));
+    if (!ratingsLoaded) {
+      dispatch(fetchPlayerRatingsAllMatches(playerId));
     }
-  }, [dispatch, playerId, playerStats]);
+  }, [dispatch, playerId, ratingsLoaded]);
+
+  useEffect(() => {
+    if (!playerStatsLoaded) {
+      dispatch(fetchAllPlayersSeasonOverallRating());
+    }
+  }, [dispatch, playerStatsLoaded]);
 
   return (
     <>

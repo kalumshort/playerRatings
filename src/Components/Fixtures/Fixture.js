@@ -14,7 +14,7 @@ import ScorePrediction from "./Fixture-Components/ScorePrediction";
 import {
   fetchMatchPlayerRatings,
   fetchMatchPredictions,
-  fetchPlayerStats,
+  fetchAllPlayersSeasonOverallRating,
 } from "../../Hooks/Fixtures_Hooks";
 import { useEffect } from "react";
 
@@ -79,7 +79,7 @@ export default function Fixture() {
 
   useEffect(() => {
     if (!playerStatsLoaded) {
-      dispatch(fetchPlayerStats());
+      dispatch(fetchAllPlayersSeasonOverallRating());
     }
   }, [dispatch, playerStatsLoaded]);
 
