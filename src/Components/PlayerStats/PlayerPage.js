@@ -27,10 +27,8 @@ export default function PlayerPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!playerAllMatchesRatingLoaded) {
-      dispatch(fetchPlayerRatingsAllMatches(playerId));
-    }
-  }, [dispatch, playerId, playerAllMatchesRatingLoaded]);
+    dispatch(fetchPlayerRatingsAllMatches(playerId));
+  }, [dispatch, playerId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
@@ -45,6 +43,7 @@ export default function PlayerPage() {
   const seasonAverageRating =
     allPlayerRatings?.seasonOverall?.totalRating /
     allPlayerRatings?.seasonOverall?.totalSubmits;
+
   return (
     <>
       <Paper className="PlayerPageHeader">
