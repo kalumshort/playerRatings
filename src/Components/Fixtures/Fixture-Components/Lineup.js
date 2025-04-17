@@ -4,8 +4,6 @@ import "./Lineup.css"; // Importing external CSS file
 
 import LineupPlayer from "./LineupPlayer";
 import useGroupData from "../../../Hooks/useGroupsData";
-import { useSelector } from "react-redux";
-import { selectMatchRatingsById } from "../../../Selectors/selectors";
 
 export default function Lineup({ fixture, showRating }) {
   const { activeGroup } = useGroupData();
