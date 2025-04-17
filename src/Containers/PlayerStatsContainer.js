@@ -1,17 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchAllPlayersSeasonOverallRating } from "../Hooks/Fixtures_Hooks";
 import AllPlayerStats from "../Components/PlayerStats/AllPlayerStats";
 import "../Components/PlayerStats/playerStats.css";
+import { selectPlayerRatingsLoad } from "../Selectors/selectors";
+import Spinner from "./Helpers";
+
 export default function PlayerStatsContainer() {
   const dispatch = useDispatch();
-  const [loaded, setLoaded] = useState(false);
+
+  const { playerSeasonOverallRatingsLoaded } = useSelector(
+    selectPlayerRatingsLoad
+  );
 
   useEffect(() => {
-    setLoaded(false);
-    dispatch(fetchAllPlayersSeasonOverallRating());
-    setLoaded(true);
-  }, [dispatch]);
+    if (!playerSeasonOverallRatingsLoaded) {
+      dispatch(fetchAllPlayersSeasonOverallRating());
+    }
+  }, [dispatch, playerSeasonOverallRatingsLoaded]);
 
-  return loaded ? <AllPlayerStats /> : <div>PlayerStatsContainer</div>;
+  return playerSeasonOverallRatingsLoaded ? <AllPlayerStats /> : <Spinner />;
 }

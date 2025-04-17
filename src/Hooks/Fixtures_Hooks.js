@@ -15,19 +15,17 @@ import {
   fetchPredictionsSuccess,
 } from "../redux/Reducers/predictionsReducer";
 import {
+  fetchAllMatchRatingsForPlayerAction,
+  fetchAllPlayersSeasonOverallRatingAction,
   fetchMatchPlayerRatingsAction,
+  fetchPlayerAllMatchesRatingLoading,
+  fetchPlayerOverallSeasonRatingsStart,
   fetchRatingsFailure,
   fetchRatingsStart,
   fetchRatingsSuccess,
   matchMotmVotesAction,
 } from "../redux/Reducers/playerRatingsReducer";
-import {
-  addPlayersMatchesStats,
-  fetchPlayerStatsAction,
-  fetchPlayerStatsFailure,
-  fetchPlayerStatsStart,
-  fetchPlayerStatsSuccess,
-} from "../redux/Reducers/playersReducer";
+
 import {
   fetchTeamSquadAction,
   fetchTeamSquadFailure,
@@ -67,6 +65,7 @@ export const fetchFixtures = (clubId) => async (dispatch) => {
 
 export const fetchPlayerRatingsAllMatches = (playerId) => async (dispatch) => {
   try {
+    dispatch(fetchPlayerAllMatchesRatingLoading());
     if (!playerId) {
       return;
     }
@@ -77,7 +76,6 @@ export const fetchPlayerRatingsAllMatches = (playerId) => async (dispatch) => {
       console.error("User is not authenticated");
       return;
     }
-    dispatch(fetchPlayerStatsStart());
 
     const fixturesData = await firebaseGetCollecion(
       `groups/001/seasons/2024/players/${playerId}/matches`
@@ -88,15 +86,17 @@ export const fetchPlayerRatingsAllMatches = (playerId) => async (dispatch) => {
       ...fixture,
     }));
     dispatch(
-      addPlayersMatchesStats({ playerId: playerId, matchesData: fixtures })
+      fetchAllMatchRatingsForPlayerAction({
+        playerId: playerId,
+        matchesData: fixtures,
+      })
     );
-    dispatch(fetchPlayerStatsSuccess());
   } catch (error) {
-    dispatch(fetchPlayerStatsFailure());
     console.error("Error getting fixtures:", error);
   }
 };
 export const fetchAllPlayersSeasonOverallRating = () => async (dispatch) => {
+  dispatch(fetchPlayerOverallSeasonRatingsStart());
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -110,9 +110,12 @@ export const fetchAllPlayersSeasonOverallRating = () => async (dispatch) => {
       `groups/001/seasons/2024/players`
     );
 
-    dispatch(fetchPlayerStatsAction({ players: playerRatings }));
+    dispatch(
+      fetchAllPlayersSeasonOverallRatingAction({ players: playerRatings })
+    );
   } catch (error) {
     console.log(error);
+    dispatch(fetchRatingsFailure());
   }
 };
 

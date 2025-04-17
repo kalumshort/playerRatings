@@ -4,9 +4,8 @@ import { useParams } from "react-router-dom";
 import { selectSquadPlayerById } from "../../Selectors/squadDataSelectors";
 import { Paper } from "@mui/material";
 import {
+  selectPlayerRatingsById,
   selectPlayerRatingsLoad,
-  selectPlayerStatsById,
-  selectPlayerStatsLoad,
 } from "../../Selectors/selectors";
 import {
   fetchPlayerRatingsAllMatches,
@@ -19,27 +18,33 @@ import useGroupData from "../../Hooks/useGroupsData";
 export default function PlayerPage() {
   const { playerId } = useParams();
   const playerData = useSelector(selectSquadPlayerById(playerId));
-  const playerStats = useSelector(selectPlayerStatsById(playerId));
+  const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
 
-  const { playerStatsLoaded } = useSelector(selectPlayerStatsLoad);
-
-  const { ratingsLoaded } = useSelector(selectPlayerRatingsLoad);
+  const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
+    useSelector(selectPlayerRatingsLoad);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!ratingsLoaded) {
+    if (!playerAllMatchesRatingLoaded) {
       dispatch(fetchPlayerRatingsAllMatches(playerId));
     }
-  }, [dispatch, playerId, ratingsLoaded]);
+  }, [dispatch, playerId, playerAllMatchesRatingLoaded]);
 
   useEffect(() => {
-    if (!playerStatsLoaded) {
+    if (!playerSeasonOverallRatingsLoaded) {
       dispatch(fetchAllPlayersSeasonOverallRating());
     }
-  }, [dispatch, playerStatsLoaded]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded]);
 
+  if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded) {
+    return <></>;
+  }
+
+  const seasonAverageRating =
+    allPlayerRatings?.seasonOverall?.totalRating /
+    allPlayerRatings?.seasonOverall?.totalSubmits;
   return (
     <>
       <Paper className="PlayerPageHeader">
@@ -51,20 +56,18 @@ export default function PlayerPage() {
         <h2 className="globalHeading">{playerData.name}</h2>
         <h3 className="PlayerPageNumber">{playerData.number}</h3>
       </Paper>
-      {!playerStats?.matches && <div className="spinner"></div>}
-      {playerStats?.matches && previousFixtures && (
+      {!allPlayerRatings?.matches && <div className="spinner"></div>}
+      {allPlayerRatings?.matches && previousFixtures && (
         <>
           <Paper className="containerMargin SeasonRatingContainer">
             <h4 className="subHeadingGlobal">Season Rating</h4>
             <div
               className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                playerStats.totalRating / playerStats.totalSubmits
+                seasonAverageRating
               )}`}
             >
               <h4 className="PlayerStatsListItemScore">
-                {(playerStats.totalRating / playerStats.totalSubmits).toFixed(
-                  1
-                )}
+                {seasonAverageRating.toFixed(1)}
               </h4>
             </div>
           </Paper>
@@ -83,9 +86,9 @@ export default function PlayerPage() {
                   getRatingClass={getRatingClass}
                   fixture={fixture}
                   matchTime={matchTime}
-                  matchPlayerStats={Object.values(playerStats?.matches).find(
-                    (match) => match.id === fixture.id
-                  )}
+                  matchPlayerStats={Object.values(
+                    allPlayerRatings?.matches
+                  ).find((match) => match.id === fixture.id)}
                 />
               );
             })}

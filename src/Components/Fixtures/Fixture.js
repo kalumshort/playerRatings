@@ -31,10 +31,7 @@ import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
 import WinnerPredict from "./Fixture-Components/WinnerPredict";
 import { selectPredictionsLoad } from "../../Selectors/predictionsSelectors";
-import {
-  selectPlayerRatingsLoad,
-  selectPlayerStatsLoad,
-} from "../../Selectors/selectors";
+import { selectPlayerRatingsLoad } from "../../Selectors/selectors";
 import useGroupData from "../../Hooks/useGroupsData";
 
 export default function Fixture() {
@@ -45,10 +42,8 @@ export default function Fixture() {
   const { predictionsLoaded, predictionsError } = useSelector(
     selectPredictionsLoad
   );
-  const { ratingsLoaded, ratingsError } = useSelector(selectPlayerRatingsLoad);
-  const { playerStatsLoaded, playerStatsError } = useSelector(
-    selectPlayerStatsLoad
-  );
+  const { ratingsLoaded, ratingsError, playerSeasonOverallRatingsLoaded } =
+    useSelector(selectPlayerRatingsLoad);
 
   const isMobile = useIsMobile();
 
@@ -78,13 +73,13 @@ export default function Fixture() {
   }, [dispatch, matchId, ratingsLoaded]);
 
   useEffect(() => {
-    if (!playerStatsLoaded) {
+    if (!playerSeasonOverallRatingsLoaded) {
       dispatch(fetchAllPlayersSeasonOverallRating());
     }
-  }, [dispatch, playerStatsLoaded]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded]);
 
-  if (predictionsError || ratingsError || playerStatsError) {
-    console.log(predictionsError, ratingsError, playerStatsError);
+  if (predictionsError || ratingsError) {
+    console.log(predictionsError, ratingsError);
   }
   if (!fixture) {
     return <div>Loading...</div>;

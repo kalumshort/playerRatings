@@ -5,7 +5,6 @@ import fixturesReducer from "./Reducers/fixturesReducer";
 import squadDataReducer from "./Reducers/squadData";
 import predictionsReducer from "./Reducers/predictionsReducer";
 import ratingsSlice from "./Reducers/playerRatingsReducer";
-import playerStatsSlice from "./Reducers/playersReducer";
 import teamSquadsSlice from "./Reducers/teamSquads";
 import userDataSlice from "./Reducers/userDataReducer";
 import groupSlice from "./Reducers/groupReducer";
@@ -16,7 +15,6 @@ const store = configureStore({
     squadData: squadDataReducer,
     predictions: predictionsReducer,
     playerRatings: ratingsSlice,
-    playerStats: playerStatsSlice,
     teamSquads: teamSquadsSlice,
     userData: userDataSlice,
     groupData: groupSlice,

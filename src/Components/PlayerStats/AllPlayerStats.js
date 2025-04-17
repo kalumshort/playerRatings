@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 
 import { useSelector } from "react-redux";
-import { selectAllPlayersStats } from "../../Selectors/selectors";
+import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
 import { selectSquadDataObject } from "../../Selectors/squadDataSelectors";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
 
 export default function AllPlayerStats() {
-  const playerStats = useSelector(selectAllPlayersStats);
+  const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const navigate = useNavigate();
 
   const squadData = useSelector(selectSquadDataObject);

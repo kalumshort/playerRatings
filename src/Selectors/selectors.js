@@ -4,24 +4,45 @@ import { selectSquadPlayerById } from "./squadDataSelectors";
 export const allRatings = (state) => state.playerRatings;
 export const allMatchRatings = (state) => state.playerRatings.matches;
 export const allPlayerRatings = (state) => state.playerRatings.players;
-export const allPlayerStats = (state) => state.playerStats.players;
 
-export const selectAllPlayersStats = (state) => state.playerStats.players;
+export const selectAllPlayersSeasonOverallRating = (state) => {
+  const players = state.playerRatings.players;
+
+  const playerSeasonOverallRatings = {};
+
+  Object.entries(players).forEach(([playerId, playerData]) => {
+    playerSeasonOverallRatings[playerId] = playerData.seasonOverall || {};
+  });
+
+  return playerSeasonOverallRatings;
+};
 
 export const selectPlayerRatingsLoad = (state) => ({
   ratingsLoaded: state.playerRatings.loaded,
   ratingsError: state.playerRatings.error,
   ratingsLoading: state.playerRatings.loading,
+
+  playerSeasonOverallRatingsLoading:
+    state.playerRatings.playerSeasonOverallRatingsLoading,
+
+  playerSeasonOverallRatingsLoaded:
+    state.playerRatings.playerSeasonOverallRatingsLoaded,
+
+  playerAllMatchesRatingLoading:
+    state.playerRatings.playerAllMatchesRatingLoading,
+
+  playerAllMatchesRatingLoaded:
+    state.playerRatings.playerAllMatchesRatingLoaded,
 });
 
-export const selectPlayerStatsLoad = (state) => ({
-  playerStatsLoaded: state.playerStats.loaded,
-  playerStatsError: state.playerStats.error,
-  playerStatsLoading: state.playerStats.loading,
-});
+export const selectPlayerRatingsById = (playerId) =>
+  createSelector([allPlayerRatings], (players) => players[playerId]);
 
-export const selectPlayerStatsById = (playerId) =>
-  createSelector([allPlayerStats], (players) => players[playerId]);
+export const selectPlayerOverallRatingById = (playerId) =>
+  createSelector(
+    [allPlayerRatings],
+    (players) => players[playerId]?.seasonOverall || {}
+  );
 
 export const selectMatchRatingsById = (matchId) =>
   createSelector([allMatchRatings], (matches) => matches[matchId]?.players);
