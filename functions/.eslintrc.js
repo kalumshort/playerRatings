@@ -17,6 +17,7 @@ module.exports = {
     "max-len": "off", // No restriction on line length
     "linebreak-style": "off",
     "comma-dangle": "off",
+    "operator-linebreak": "off",
   },
   overrides: [
     {

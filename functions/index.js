@@ -2,7 +2,6 @@
 const { logger } = require("firebase-functions");
 // const admin = require("firebase-admin");
 
-const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 const axios = require("axios");
@@ -12,13 +11,7 @@ const axios = require("axios");
 // The Firebase Admin SDK to access Firestore.
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
-const {
-  fetchFixtureData,
-  fetchStatisticsData,
-  fetchLineupData,
-  fetchEventsData,
-  fetchAllMatchData,
-} = require("./helperFunctions");
+const { fetchAllMatchData } = require("./helperFunctions");
 
 initializeApp();
 
@@ -119,6 +112,28 @@ exports.updateFixtures = onSchedule(
 
         const playerIds = squadPlayers.map((player) => player.id);
 
+        // Fetch the existing teamSquads document from Firestore
+        const teamSquadsDoc = await getFirestore()
+          .collection("teamSquads")
+          .doc(teamId.toString())
+          .get();
+
+        // Get the existing seasonSquad if it exists, or initialize an empty array
+        const existingSeasonSquad = teamSquadsDoc.exists
+          ? teamSquadsDoc.data().seasonSquad || []
+          : [];
+
+        // Merge the new players with the existing seasonSquad (prevent duplicates)
+        const updatedSeasonSquad = [
+          ...existingSeasonSquad,
+          ...squadPlayers.filter(
+            (newPlayer) =>
+              !existingSeasonSquad.some(
+                (existingPlayer) => existingPlayer.id === newPlayer.id
+              )
+          ),
+        ];
+
         // Save both squad and manager into teamSquads
         await getFirestore()
           .collection("teamSquads")
@@ -127,6 +142,7 @@ exports.updateFixtures = onSchedule(
             {
               activeSquad: squadPlayers,
               playerIds: playerIds,
+              seasonSquad: updatedSeasonSquad,
             },
             { merge: true }
           );
