@@ -10,7 +10,7 @@ import { selectMatchRatingsById } from "../../../Selectors/selectors";
 export default function Lineup({ fixture, showRating }) {
   const { activeGroup } = useGroupData();
 
-  const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
+  // const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
 
   const groupClubId = Number(activeGroup.groupClubId);
   const lineup =
