@@ -63,7 +63,7 @@ export default function ScorePredictionResults({ fixture }) {
   };
   return (
     <ContentContainer className="scorePredictionResultsContainer containerMargin">
-      <h1 className="smallHeading">Score Prediction</h1>
+      <h1 className="smallHeading">Match Score</h1>
       <div
         style={{
           display: "flex",

@@ -42,70 +42,66 @@ export default function ScorePrediction({ fixture }) {
     <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
   ) : (
     <ContentContainer className="scorePredictionContainer">
-      <h1 className="smallHeading">Score Prediction</h1>
+      <h1 className="smallHeading">Match Score</h1>
+
       <div className="scorePredictionTeams">
-        <div className="scorePredictionTeam">
-          <img
-            src={fixture.teams.home.logo}
-            className="team-logo-small"
-            alt={fixture.teams.home.name}
-          />
-          <div className="scorePredictButtons">
-            <IconButton
-              onClick={() => setHomeTeamScore((prev) => prev + 1)}
-              className="muiButton"
-              variant="outlined"
-            >
-              <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
-            </IconButton>
-            <span className="predictionScore">{homeTeamScore}</span>
-            <IconButton
-              onClick={() => setHomeTeamScore((prev) => Math.max(0, prev - 1))}
-              className="muiButton"
-              disabled={homeTeamScore === 0}
-              variant="contained"
-            >
-              <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
-            </IconButton>
-          </div>
+        <img
+          src={fixture.teams.home.logo}
+          className="team-logo-small"
+          alt={fixture.teams.home.name}
+        />
+        <div className="scorePredictButtons">
+          <IconButton
+            onClick={() => setHomeTeamScore((prev) => prev + 1)}
+            className="muiButton"
+            variant="outlined"
+          >
+            <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
+          </IconButton>
+          <span className="predictionScore">{homeTeamScore}</span>
+          <IconButton
+            onClick={() => setHomeTeamScore((prev) => Math.max(0, prev - 1))}
+            className="muiButton"
+            disabled={homeTeamScore === 0}
+            variant="contained"
+          >
+            <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
+          </IconButton>
         </div>
-        <span>-</span>
-        <div className="scorePredictionTeam">
-          <div className="scorePredictButtons">
-            <IconButton
-              onClick={() => setAwayTeamScore((prev) => prev + 1)}
-              className="muiButton"
-            >
-              <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
-            </IconButton>
-            <span className="predictionScore">{homeAwayScore}</span>
-            <IconButton
-              onClick={() => setAwayTeamScore((prev) => Math.max(0, prev - 1))}
-              className="muiButton"
-              disabled={homeAwayScore === 0}
-            >
-              <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
-            </IconButton>
-          </div>
-          <img
-            src={fixture.teams.away.logo}
-            className="team-logo-small"
-            alt={fixture.teams.away.name}
-          />
+
+        <Button
+          onClick={() => handleTeamScoreSubmit()}
+          style={{
+            padding: "0px",
+            margin: "0px",
+          }}
+          variant="text"
+        >
+          Submit
+        </Button>
+
+        <div className="scorePredictButtons">
+          <IconButton
+            onClick={() => setAwayTeamScore((prev) => prev + 1)}
+            className="muiButton"
+          >
+            <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
+          </IconButton>
+          <span className="predictionScore">{homeAwayScore}</span>
+          <IconButton
+            onClick={() => setAwayTeamScore((prev) => Math.max(0, prev - 1))}
+            className="muiButton"
+            disabled={homeAwayScore === 0}
+          >
+            <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
+          </IconButton>
         </div>
+        <img
+          src={fixture.teams.away.logo}
+          className="team-logo-small"
+          alt={fixture.teams.away.name}
+        />
       </div>
-      <Button
-        onClick={() => handleTeamScoreSubmit()}
-        style={{
-          position: "absolute",
-          top: "1px",
-          right: "1px",
-          padding: "0px",
-        }}
-        variant="outlined"
-      >
-        Submit
-      </Button>
     </ContentContainer>
   );
 }

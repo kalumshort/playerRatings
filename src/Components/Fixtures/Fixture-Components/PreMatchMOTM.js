@@ -128,10 +128,10 @@ export default function PreMatchMOTM({ fixture }) {
                 <Typography>{squadData[selected].name}</Typography>
               </Box>
             ) : (
-              "Select a Player"
+              "Choose A Player"
             )
           }
-          style={{ minWidth: 150 }}
+          style={{ minWidth: 220 }}
         >
           {Object.values(squadData).map((player) => (
             <MenuItem key={player.id} value={player.id}>

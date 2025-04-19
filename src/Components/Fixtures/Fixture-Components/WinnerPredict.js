@@ -41,7 +41,7 @@ export default function WinnerPredict({ fixture }) {
 
   return (
     <ContentContainer className="scorePredictionContainer">
-      <h4 className="smallHeading">Result</h4>
+      <h1 className="smallHeading">Who will win?</h1>
       {!storedUsersPredictedResult ? (
         <div className="winnerPredictButtonGroup">
           <Button onClick={() => handleWinningTeamPredict("home")} s>

@@ -464,6 +464,7 @@
 .winnerPredictButtonGroup {
   display: flex;
   justify-content: space-evenly;
+  gap: 20px;
 }
 .winnerPredictButtonGroup button {
   /* padding: 10px 20px !important; */
@@ -612,8 +613,8 @@
   }
   .team-logo-small {
     margin: 0px !important;
-    height: 30px;
-    width: 30px;
+    height: 44px;
+    width: 44px;
   }
   .team-name {
     font-size: 12px;
