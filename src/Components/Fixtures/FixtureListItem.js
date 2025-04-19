@@ -9,6 +9,7 @@ export default function FixtureListItem({
   const { activeGroup } = useGroupData();
 
   const groupClubId = Number(activeGroup.groupClubId);
+
   return (
     <div
       className="fixture-list-item"
@@ -44,8 +45,7 @@ export default function FixtureListItem({
               : "red"
           }`}
         >
-          {fixture.score.fulltime.home || fixture.goals.home} -{" "}
-          {fixture.score.fulltime.away || fixture.goals.away}
+          {fixture.goals.home} - {fixture.goals.away}
         </span>
 
         <span className="fixture-team fixture-team-away">
