@@ -60,7 +60,7 @@ button {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* Optional overlay */
+  background-color: rgb(0, 0, 0); /* Optional overlay */
 }
 .globalHeading {
   margin: 0px;

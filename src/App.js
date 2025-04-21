@@ -51,7 +51,7 @@ import { UserDataListener } from "./Firebase/FirebaseListeners";
 function App() {
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { user, userLoading } = useAuth();
 
   const { squadLoaded, squadError } = useSelector(selectSquadLoad);
   const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
@@ -95,6 +95,10 @@ function App() {
       }
     }
   }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
+
+  if (userLoading) {
+    return <Spinner />; // Replace with your loading component
+  }
 
   if (user) {
     if (!userDataLoaded) {
