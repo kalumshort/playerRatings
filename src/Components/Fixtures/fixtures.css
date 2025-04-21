@@ -562,7 +562,7 @@
   }
 
   .fixture-item-scoreboard {
-    min-width: 80px;
+    min-width: 50px;
     padding: 5px;
     text-align: center;
     font-weight: bold;
@@ -613,14 +613,14 @@
   }
   .team-logo-small {
     margin: 0px !important;
-    height: 44px;
-    width: 44px;
+    height: 40px;
+    width: 40px;
   }
   .team-name {
     font-size: 12px;
   }
   .fixture-teams {
-    gap: 5px;
+    gap: 20px;
   }
   .fixture-team {
     min-width: 50px;
