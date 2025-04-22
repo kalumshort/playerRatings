@@ -165,6 +165,12 @@ export const getRatingClass = (rating) => {
   if (rating < 8) return "ratingGood";
   return "ratingGreat";
 };
+export const getRatingLineupClass = (rating) => {
+  if (rating < 4) return "ratingLineupPoor";
+  if (rating < 6) return "ratingLineupAverage";
+  if (rating < 8) return "ratingLineupGood";
+  return "ratingLineupGreat";
+};
 
 export const missingPlayerImg =
   "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";

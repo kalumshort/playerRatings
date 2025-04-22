@@ -8,8 +8,6 @@ import useGroupData from "../../../Hooks/useGroupsData";
 export default function Lineup({ fixture, showRating }) {
   const { activeGroup } = useGroupData();
 
-  // const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
   const groupClubId = Number(activeGroup.groupClubId);
   const lineup =
     fixture?.lineups?.find((team) => team.team.id === groupClubId)?.startXI ||

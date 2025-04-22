@@ -35,6 +35,8 @@ import { useAlert } from "../../../HelpfulComponents";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import RatingLineup from "./RatingLineup";
 
+import MOTMPopover from "./MotmPlayerPopper";
+
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
@@ -379,6 +381,7 @@ const SubmittedPlayerRatings = ({
   return (
     <>
       <Paper className="PlayerRatingItem motm">
+        <MOTMPopover motmPercentages={motmPercentages} />
         <img
           src={motmPercentages[0]?.img}
           className="PlayerRatingImg"
@@ -415,33 +418,8 @@ const SubmittedPlayerRatings = ({
           </div>
         </div>
       </Paper>
-      <RatingLineup />
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
-          MOTM Votes
-        </AccordionSummary>
-        <AccordionDetails>
-          <ul
-            style={{
-              margin: "10px",
-              color: "grey",
-              display: "flex",
-              flexDirection: "column",
-              fontSize: "15px",
-            }}
-          >
-            {motmPercentages?.map((player) => (
-              <li>
-                {player.name} - {player.percentage}%
-              </li>
-            ))}
-          </ul>
-        </AccordionDetails>
-      </Accordion>
+      <RatingLineup fixture={fixture} />
+
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
