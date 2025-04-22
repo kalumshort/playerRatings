@@ -13,7 +13,7 @@ import { ContentContainer } from "../../../../Containers/GlobalContainer";
 export default function RatingLineup({ fixture }) {
   const { activeGroup } = useGroupData();
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-  console.log(matchRatings);
+
   const groupClubId = Number(activeGroup.groupClubId);
 
   const lineup = fixture?.lineups?.find(
