@@ -39,11 +39,10 @@ export default function Fixture() {
   const { groupData } = useGroupData();
 
   const fixture = useSelector(selectFixtureById(matchId));
-  const { predictionsLoaded, predictionsError } = useSelector(
-    selectPredictionsLoad
+  const { predictionsError } = useSelector(selectPredictionsLoad);
+  const { ratingsError, playerSeasonOverallRatingsLoaded } = useSelector(
+    selectPlayerRatingsLoad
   );
-  const { ratingsLoaded, ratingsError, playerSeasonOverallRatingsLoaded } =
-    useSelector(selectPlayerRatingsLoad);
 
   const isMobile = useIsMobile();
 
