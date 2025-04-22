@@ -28,13 +28,16 @@ import useGroupData from "../../../../Hooks/useGroupsData";
 import RatingLineup from "./RatingLineup";
 
 import MOTMPopover from "./MotmPlayerPopper";
+import { useAuth } from "../../../../Providers/AuthContext";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
   const { activeGroup } = useGroupData();
+  const { user } = useAuth();
 
   const groupClubId = Number(activeGroup.groupClubId);
+  const groupId = activeGroup.groupId;
 
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
@@ -92,6 +95,8 @@ export default function PlayerRatings({ fixture }) {
       matchId: fixture.id,
       playerId: String(storedUsersMatchMOTM),
       value: 1,
+      groupId: groupId,
+      userId: user.uid,
     });
 
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
@@ -113,6 +118,8 @@ export default function PlayerRatings({ fixture }) {
         fixture={fixture}
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
+        groupId={groupId}
+        userId={user.uid}
       />
     )
   ) : (
@@ -135,8 +142,11 @@ const PlayerRatingItem = ({
   isMobile,
   matchRatings,
   readOnly,
+  groupId,
+  userId,
 }) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
+
   const storedUsersPlayerRating = useLocalStorage(
     `userPlayerRatings-${fixture.id}-${player.id}`
   );
@@ -189,6 +199,8 @@ const PlayerRatingItem = ({
       matchId: fixture.id,
       playerId: String(player.id),
       rating: score,
+      userId: userId,
+      groupId: groupId,
     });
   };
   const handleMotmClick = async () => {
@@ -318,6 +330,8 @@ const PlayerRatingsItems = ({
   isMatchRatingsSubmitted,
   handleRatingsSubmit,
   readOnly,
+  groupId,
+  userId,
 }) => {
   const isMobile = useIsMobile();
   const { activeGroup } = useGroupData();
@@ -340,6 +354,8 @@ const PlayerRatingsItems = ({
           isMobile={isMobile}
           matchRatings={matchRatings}
           readOnly={readOnly}
+          groupId={groupId}
+          userId={userId}
         />
       ))}
       <PlayerRatingItem
@@ -348,6 +364,8 @@ const PlayerRatingsItems = ({
         isMobile={isMobile}
         matchRatings={matchRatings}
         readOnly={readOnly}
+        groupId={groupId}
+        userId={userId}
       />
       {!isMatchRatingsSubmitted && (
         <Button

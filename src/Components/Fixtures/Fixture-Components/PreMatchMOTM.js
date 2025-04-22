@@ -15,12 +15,14 @@ import {
 import { handlePredictPreMatchMotm } from "../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
+import useGroupData from "../../../Hooks/useGroupsData";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);
   const dispatch = useDispatch();
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const [selectedPlayer, setSelectedPlayer] = useState("");
+  const { activeGroup } = useGroupData();
 
   const storedUsersPlayerToWatch = useLocalStorage(
     `userPredictedPlayerToWatch-${fixture.id}`
@@ -39,6 +41,7 @@ export default function PreMatchMOTM({ fixture }) {
     await handlePredictPreMatchMotm({
       matchId: fixture.id,
       playerId: selectedPlayer,
+      groupId: activeGroup.groupId,
     });
 
     dispatch(fetchMatchPredictions(fixture.id));

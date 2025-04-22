@@ -10,9 +10,11 @@ import {
   useLocalStorage,
 } from "../../../Hooks/Helper_Functions";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
+import useGroupData from "../../../Hooks/useGroupsData";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();
+  const { activeGroup } = useGroupData();
 
   const storedUsersPredictedResult = useLocalStorage(
     `userPredictedResult-${fixture.id}`
@@ -21,7 +23,11 @@ export default function WinnerPredict({ fixture }) {
 
   const handleWinningTeamPredict = async (choice) => {
     setLocalStorageItem(`userPredictedResult-${fixture.id}`, choice);
-    await handlePredictWinningTeam({ matchId: fixture.id, choice: choice });
+    await handlePredictWinningTeam({
+      matchId: fixture.id,
+      choice: choice,
+      groupId: activeGroup.groupId,
+    });
     dispatch(fetchMatchPredictions(fixture.id));
   };
 

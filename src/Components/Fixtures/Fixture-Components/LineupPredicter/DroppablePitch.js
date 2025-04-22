@@ -9,6 +9,7 @@ import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 
 import { useDroppable } from "@dnd-kit/core";
 import { DraggablePlayer } from "./DraggableSquad";
+import useGroupData from "../../../../Hooks/useGroupsData";
 
 export default function DroppablePitch({
   fixture,
@@ -19,6 +20,7 @@ export default function DroppablePitch({
   const dispatch = useDispatch();
 
   const squadData = useSelector(selectSquadDataObject);
+  const { activeGroup } = useGroupData();
 
   // const handlePlayerDelete = (playerId) => {
   //   if (readOnly) {
@@ -51,6 +53,7 @@ export default function DroppablePitch({
     await handlePredictTeamSubmit({
       players: filteredPlayers,
       matchId: fixture.id,
+      groupId: activeGroup.groupId,
     });
     dispatch(fetchMatchPredictions(fixture.id));
   };

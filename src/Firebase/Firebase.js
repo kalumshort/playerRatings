@@ -9,6 +9,7 @@ import {
   doc,
   setDoc,
   increment,
+  updateDoc,
 } from "firebase/firestore";
 
 import { getAnalytics } from "firebase/analytics";
@@ -117,10 +118,70 @@ export const firebaseSetDoc = async ({
     console.error("Error setting document: ", e);
   }
 };
+export const firebaseUpdateDoc = async ({ path, docId, data = {} }) => {
+  try {
+    // Validate inputs
+    if (!path || typeof path !== "string") {
+      throw new Error("Invalid path provided.");
+    }
+    if (!docId || typeof docId !== "string") {
+      throw new Error("Invalid docId provided.");
+    }
 
-export const handlePredictTeamSubmit = async ({ players, matchId }) => {
+    // Firestore reference to the document
+    const docRef = doc(db, path, docId);
+
+    // Update the document (merge new player data)
+    await updateDoc(docRef, data);
+    console.log("Document successfully updated!");
+  } catch (e) {
+    console.error("Error updating document: ", e);
+  }
+};
+
+export const firebaseUpdateOrSetDoc = async ({
+  path,
+  docId,
+  data = {},
+  timestamp = Date.now(),
+}) => {
+  try {
+    // Validate inputs
+    if (!path || typeof path !== "string") {
+      throw new Error("Invalid path provided.");
+    }
+    if (!docId || typeof docId !== "string") {
+      throw new Error("Invalid docId provided.");
+    }
+
+    // Firestore reference to the document
+    const docRef = doc(db, path, docId);
+
+    // Check if the document exists
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      // Document exists, update it
+      await updateDoc(docRef, data);
+    } else {
+      // Document doesn't exist, create it with timestamp
+      await setDoc(docRef, { timestamp });
+
+      // Then update the document with the data
+      await updateDoc(docRef, data);
+    }
+  } catch (e) {
+    console.error("Error updating or creating document: ", e);
+  }
+};
+
+export const handlePredictTeamSubmit = async ({
+  players,
+  matchId,
+  groupId,
+}) => {
   await firebaseAddDoc({
-    path: `groups/001/seasons/2024/predictions/${matchId}/teamSubmissions`,
+    path: `groups/${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
     data: players,
   });
   await firebaseSetDoc({
@@ -130,9 +191,8 @@ export const handlePredictTeamSubmit = async ({ players, matchId }) => {
   });
 
   for (const [key, player] of Object.entries(players)) {
-    console.log(key);
     await firebaseSetDoc({
-      path: `groups/001/seasons/2024/predictions`,
+      path: `groups/${groupId}/seasons/2024/predictions`,
       docId: matchId,
       data: { totalPlayersSubmits: { [player.id]: increment(1) } },
     });
@@ -141,7 +201,7 @@ export const handlePredictTeamSubmit = async ({ players, matchId }) => {
 
 export const handlePredictTeamScore = async (data) => {
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/predictions`,
+    path: `groups/${data.groupId}/seasons/2024/predictions`,
     docId: data.matchId,
     data: {
       scorePrecitions: { [data.score]: increment(1) },
@@ -152,7 +212,7 @@ export const handlePredictTeamScore = async (data) => {
 };
 export const handlePredictWinningTeam = async (data) => {
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/predictions`,
+    path: `groups/${data.groupId}/seasons/2024/predictions`,
     docId: data.matchId,
     data: {
       result: { [data.choice]: increment(1), totalVotes: increment(1) },
@@ -162,7 +222,7 @@ export const handlePredictWinningTeam = async (data) => {
 
 export const handlePredictPreMatchMotm = async (data) => {
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/predictions`,
+    path: `groups/${data.groupId}/seasons/2024/predictions`,
     docId: data.matchId,
     data: {
       preMatchMotm: { [data.playerId]: increment(1) },
@@ -173,23 +233,31 @@ export const handlePredictPreMatchMotm = async (data) => {
 
 export const handlePlayerRatingSubmit = async (data) => {
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/playerRatings/${data.matchId}/players`,
+    path: `groups/${data.groupId}/seasons/2024/playerRatings/${data.matchId}/players`,
     docId: data.playerId,
     data: {
       totalSubmits: increment(1),
       totalRating: increment(data.rating),
     },
   });
+
+  await firebaseUpdateOrSetDoc({
+    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/playerRatings`,
+    docId: data.matchId,
+    data: { [`players.${data.playerId}`]: data.rating },
+  });
+
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/players/${data.playerId}/matches`,
+    path: `groups/${data.groupId}/seasons/2024/players/${data.playerId}/matches`,
     docId: data.matchId,
     data: {
       totalSubmits: increment(1),
       totalRating: increment(data.rating),
     },
   });
+
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/players`,
+    path: `groups/${data.groupId}/seasons/2024/players`,
     docId: data.playerId,
     data: {
       totalSubmits: increment(1),
@@ -197,9 +265,10 @@ export const handlePlayerRatingSubmit = async (data) => {
     },
   });
 };
+
 export const handleMatchMotmVote = async (data) => {
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/playerRatings`,
+    path: `groups/${data.groupId}/seasons/2024/playerRatings`,
     docId: data.matchId,
     data: {
       motmTotalVotes: increment(data.value),
@@ -207,6 +276,12 @@ export const handleMatchMotmVote = async (data) => {
         [data.playerId]: increment(1),
       },
     },
+  });
+
+  await firebaseUpdateOrSetDoc({
+    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/playerRatings`,
+    docId: data.matchId,
+    data: { motm: data.playerId },
   });
 };
 

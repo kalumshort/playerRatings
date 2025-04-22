@@ -12,9 +12,11 @@ import {
 import ScorePredictionResults from "./ScorePredictionResults";
 import { useDispatch } from "react-redux";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
+import useGroupData from "../../../Hooks/useGroupsData";
 
 export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();
+  const { activeGroup } = useGroupData();
 
   const [homeTeamScore, setHomeTeamScore] = useState(0);
   const [homeAwayScore, setAwayTeamScore] = useState(0);
@@ -34,6 +36,7 @@ export default function ScorePrediction({ fixture }) {
       score: `${homeTeamScore}-${homeAwayScore}`,
       homeGoals: homeTeamScore,
       awayGoals: homeAwayScore,
+      groupId: activeGroup.groupId,
     });
 
     dispatch(fetchMatchPredictions(fixture.id));
