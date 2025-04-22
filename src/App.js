@@ -47,6 +47,7 @@ import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
 import { UserDataListener } from "./Firebase/FirebaseListeners";
+import ScheduleContainer from "./Containers/ScheduleContainer";
 
 function App() {
   const dispatch = useDispatch();
@@ -133,6 +134,10 @@ function App() {
             <Route
               path="/season-stats"
               element={user ? <PlayerStatsContainer /> : <ProfileContainer />}
+            />
+            <Route
+              path="/schedule"
+              element={user ? <ScheduleContainer /> : <ProfileContainer />}
             />
             <Route
               path="/fixture/:matchId"

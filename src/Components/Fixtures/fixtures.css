@@ -549,7 +549,8 @@
     flex-direction: column;
   }
   .fixturesListContainer {
-    max-height: 230px;
+    max-height: 250px;
+    overflow-y: hidden;
   }
 
   .fixture-list-item {
