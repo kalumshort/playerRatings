@@ -12,69 +12,64 @@ import { ContentContainer } from "../../../../Containers/GlobalContainer";
 
 export default function RatingLineup({ fixture }) {
   const { activeGroup } = useGroupData();
-
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
-  // const [ratingSrc, setRatingSrc] = useState("Global");
-
+  console.log(matchRatings);
   const groupClubId = Number(activeGroup.groupClubId);
 
-  const lineup =
-    fixture?.lineups?.find((team) => team.team.id === groupClubId)?.startXI ||
-    [];
+  const lineup = fixture?.lineups?.find(
+    (team) => team.team.id === groupClubId
+  )?.startXI;
 
   const substitutedPlayerIds = fixture?.events
     .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
     .map((item) => item.player);
 
-  // const handleChange = (event) => {
-  //   setRatingSrc(event.target.value);
-  // };
+  // Ensure both lineup and substitutedPlayerIds are defined and not empty
+  if (
+    (!lineup || lineup.length === 0) &&
+    (!substitutedPlayerIds || substitutedPlayerIds.length === 0)
+  ) {
+    return <></>;
+  }
+
   return (
     <div className="containerMargin">
       <ContentContainer
         className="lineup-container"
         style={{ padding: "15px 5px", position: "relative" }}
       >
-        {/* <div style={{ position: "absolute", top: "5px", right: "5px" }}>
-          <Select
-            value={ratingSrc}
-            onChange={handleChange}
-            size="small"
-            variant="standard"
-          >
-            <MenuItem key="" value="Global">
-              Global
-            </MenuItem>
-            <MenuItem key="" value="Personal">
-              Personal
-            </MenuItem>
-          </Select>
-        </div> */}
         <div style={{ position: "relative" }}>
           <div className="pitch">
-            {lineup
-              .reduce((rows, { player }) => {
-                const [row] = player.grid.split(":").map(Number);
+            {lineup &&
+              lineup.length > 0 &&
+              lineup
+                .reduce((rows, { player }) => {
+                  const [row] = player.grid.split(":").map(Number);
 
-                if (!rows[row]) rows[row] = [];
+                  if (!rows[row]) rows[row] = [];
+                  rows[row].push(player);
 
-                rows[row].push(player);
-
-                return rows;
-              }, [])
-              .map((rowPlayers, rowIndex) => (
-                <div key={rowIndex} className="row">
-                  {rowPlayers.map((player) => (
-                    <RatingLineupPlayer
-                      key={player.id} // Add unique key based on player ID
-                      player={player}
-                      fixture={fixture}
-                      playerRating={matchRatings[player.id]}
-                    />
-                  ))}
-                </div>
-              ))}
+                  return rows;
+                }, [])
+                .map((rowPlayers, rowIndex) => (
+                  <div key={rowIndex} className="row">
+                    {rowPlayers.map((player) => {
+                      // Ensure the player has a valid rating or fallback to an empty object
+                      const playerRating =
+                        matchRatings && matchRatings[player.id]
+                          ? matchRatings[player.id]
+                          : {};
+                      return (
+                        <RatingLineupPlayer
+                          key={player.id}
+                          player={player}
+                          fixture={fixture}
+                          playerRating={playerRating}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
           </div>
           <div>
             <h2
@@ -83,15 +78,23 @@ export default function RatingLineup({ fixture }) {
             >
               Substitutes
             </h2>
-            <div style={{ display: "flex" }}>
-              {substitutedPlayerIds.map((player) => (
-                <RatingLineupPlayer
-                  key={player.id} // Add unique key based on player ID
-                  player={player}
-                  fixture={fixture}
-                  playerRating={matchRatings[player.id]}
-                />
-              ))}
+            <div style={{ display: "flex", justifyContent: "space-evenly" }}>
+              {substitutedPlayerIds &&
+                substitutedPlayerIds.length > 0 &&
+                substitutedPlayerIds.map((player) => {
+                  const playerRating =
+                    matchRatings && matchRatings[player.id]
+                      ? matchRatings[player.id]
+                      : {};
+                  return (
+                    <RatingLineupPlayer
+                      key={player.id}
+                      player={player}
+                      fixture={fixture}
+                      playerRating={playerRating}
+                    />
+                  );
+                })}
             </div>
           </div>
         </div>
@@ -102,10 +105,12 @@ export default function RatingLineup({ fixture }) {
 
 const RatingLineupPlayer = ({ player, className, playerRating }) => {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
-  // Filter: Goals scored by the player
-  const ratingScore = playerRating
-    ? playerRating.totalRating / playerRating.totalSubmits
-    : "na";
+
+  // Calculate ratingScore based on available playerRating
+  const ratingScore =
+    playerRating && playerRating.totalRating && playerRating.totalSubmits
+      ? playerRating.totalRating / playerRating.totalSubmits
+      : "na";
 
   return player ? (
     <div
@@ -142,25 +147,10 @@ const RatingLineupPlayer = ({ player, className, playerRating }) => {
               textShadow: "2px 2px 5px rgba(0, 0, 0, 0.7)", // Strong text shadow
             }}
           >
-            {ratingScore.toFixed(2)}
-            {/* <br></br>
-            <span style={{ fontSize: "12px" }}>{player.name}</span> */}
+            {ratingScore !== "na" ? ratingScore.toFixed(2) : "N/A"}
           </span>
         </div>
       )}
-      {/* {showPlayerName && (
-        <span
-          className="lineup-player-name"
-          style={{
-            position: "absolute",
-            bottom: 5,
-            left: "50%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          {playerData?.name || player.name}
-        </span>
-      )} */}
     </div>
   ) : (
     <></>

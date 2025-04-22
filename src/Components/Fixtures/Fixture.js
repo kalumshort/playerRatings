@@ -61,16 +61,12 @@ export default function Fixture() {
 
   // Fetch data on component mount
   useEffect(() => {
-    if (!predictionsLoaded) {
-      dispatch(fetchMatchPredictions(matchId));
-    }
-  }, [dispatch, matchId, predictionsLoaded]);
+    dispatch(fetchMatchPredictions(matchId));
+  }, [dispatch, matchId]);
 
   useEffect(() => {
-    if (!ratingsLoaded) {
-      dispatch(fetchMatchPlayerRatings(matchId));
-    }
-  }, [dispatch, matchId, ratingsLoaded]);
+    dispatch(fetchMatchPlayerRatings(matchId));
+  }, [dispatch, matchId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
