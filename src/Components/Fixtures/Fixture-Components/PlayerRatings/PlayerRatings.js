@@ -420,7 +420,7 @@ const SubmittedPlayerRatings = ({
       </Paper>
       <RatingLineup fixture={fixture} />
 
-      <Accordion>
+      {/* <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
@@ -437,7 +437,7 @@ const SubmittedPlayerRatings = ({
             readOnly={true}
           />
         </AccordionDetails>
-      </Accordion>
+      </Accordion> */}
     </>
   );
 };
