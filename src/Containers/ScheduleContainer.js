@@ -32,7 +32,6 @@ export default function ScheduleContainer() {
     ? allFixtures.filter((item) => item.league.name === selectedLeague)
     : allFixtures;
 
-  // Use useEffect to scroll to the latest fixture
   useEffect(() => {
     if (latestFixture) {
       const index = [...filteredFixures]
@@ -41,11 +40,11 @@ export default function ScheduleContainer() {
 
       if (index !== -1 && fixtureRefs.current[index]) {
         fixtureRefs.current[index].scrollIntoView({
-          block: "center", // Align it at the top of the container
+          block: "center",
         });
       }
     }
-  }, [latestFixture, filteredFixures]); // Re-run when the fixtures change
+  }, [latestFixture, filteredFixures]);
   const handleFixtureClick = (matchId) => {
     navigate(`/fixture/${matchId}`);
   };
