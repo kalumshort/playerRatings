@@ -2,15 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Button,
-  ButtonGroup,
-  Paper,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Button, ButtonGroup, Paper } from "@mui/material";
 
 import {
   getRatingClass,

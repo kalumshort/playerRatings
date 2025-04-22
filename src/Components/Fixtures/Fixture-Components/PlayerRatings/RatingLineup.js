@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { selectMatchRatingsById } from "../../../../Selectors/selectors";
 import { useSelector } from "react-redux";

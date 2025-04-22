@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Popover, IconButton, Typography } from "@mui/material";
+import { Popover, IconButton } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 
 export default function MOTMPopover({ motmPercentages }) {
