@@ -40,7 +40,7 @@ export default function ScheduleContainer() {
         <h2 className="globalHeading">Schedule</h2>
       </div>
       <ContentContainer className="containerMargin">
-        <div style={{ maxHeight: "80vh", overflowY: "scroll" }}>
+        <div style={{ maxHeight: "70vh", overflowY: "scroll" }}>
           {[...upcomingFixtures].reverse().map((fixture, index) => {
             const matchTime = new Date(
               fixture.fixture.timestamp * 1000
