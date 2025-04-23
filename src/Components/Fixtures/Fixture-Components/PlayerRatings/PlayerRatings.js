@@ -55,6 +55,8 @@ export default function PlayerRatings({ fixture }) {
   const isMatchRatingsSubmitted =
     isMatchRatingsSubmittedLocal || isMatchRatingsSubmittedDatabase;
 
+  console.log("isMatchRatingsSubmitted", isMatchRatingsSubmitted);
+
   const lineup =
     fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
 
@@ -120,7 +122,7 @@ export default function PlayerRatings({ fixture }) {
         fixture={fixture}
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
-        usersMatchPlayerRatings={usersMatchData.players}
+        usersMatchPlayerRatings={usersMatchData?.players}
       />
     ) : (
       <PlayerRatingsItems
@@ -130,7 +132,7 @@ export default function PlayerRatings({ fixture }) {
         handleRatingsSubmit={handleRatingsSubmit}
         groupId={groupId}
         userId={user.uid}
-        usersMatchPlayerRatings={usersMatchData.players}
+        usersMatchPlayerRatings={usersMatchData?.players}
       />
     )
   ) : (
@@ -351,6 +353,8 @@ const PlayerRatingsItems = ({
   const isMobile = useIsMobile();
   const { activeGroup } = useGroupData();
 
+  console.log("test");
+
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
 
   if (!combinedPlayers) {
@@ -401,6 +405,7 @@ const SubmittedPlayerRatings = ({
   fixture,
   usersMatchPlayerRatings,
 }) => {
+  console.log("testttttt");
   return (
     <>
       <Paper className="PlayerRatingItem motm">
