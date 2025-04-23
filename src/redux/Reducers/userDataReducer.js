@@ -6,7 +6,7 @@ const userDataSlice = createSlice({
     loading: false,
     error: null,
     loaded: false,
-    data: {},
+    accountData: {},
   },
   reducers: {
     fetchUserDataStart(state) {
@@ -20,13 +20,13 @@ const userDataSlice = createSlice({
     fetchUserDataSuccess(state, action) {
       state.loading = false;
       state.loaded = true;
-      state.data = action.payload;
+      state.accountData = action.payload;
     },
     clearUserData(state) {
       state.loading = false;
       state.error = null;
       state.loaded = false;
-      state.data = {}; // Clear user data
+      state.accountData = {};
     },
   },
 });

@@ -2,13 +2,14 @@ import { createSelector } from "@reduxjs/toolkit";
 
 // Helper to get current teamId
 const getActiveTeamId = (state) => {
-  const activeGroup = state.userData?.data?.activeGroup;
+  const activeGroup = state.userData?.accountData?.activeGroup;
   return state.groupData?.data?.[activeGroup]?.groupClubId;
 };
 
 // Selector for full squad array
 export const selectSquadData = (state) => {
   const teamId = getActiveTeamId(state);
+
   return state.teamSquads?.squads?.[teamId]?.activeSquad || [];
 };
 

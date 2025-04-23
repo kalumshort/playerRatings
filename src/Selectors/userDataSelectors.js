@@ -5,5 +5,5 @@ export const selectUserData = (state) => state.userData;
 
 export const selectUserDataData = createSelector(
   [selectUserData],
-  (userData) => userData.data // Return the actual user data
+  (userData) => userData.accountData // Return the actual user data
 );

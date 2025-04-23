@@ -215,7 +215,10 @@ const PlayerRatingItem = ({
   };
 
   return (
-    <div className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}>
+    <div
+      className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
+      style={{ width: "100%" }}
+    >
       <img
         src={playerData?.photo || player.photo || missingPlayerImg}
         className="PlayerRatingImg"
