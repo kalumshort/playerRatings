@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
-import { Button, ButtonGroup, Paper } from "@mui/material";
+import { Button, IconButton, Paper, Slider } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
 
 import {
   getRatingClass,
@@ -149,6 +150,66 @@ export default function PlayerRatings({ fixture }) {
   );
 }
 
+const PlayerRatingsItems = ({
+  combinedPlayers,
+  fixture,
+  isMatchRatingsSubmitted,
+  handleRatingsSubmit,
+  readOnly,
+  groupId,
+  userId,
+  usersMatchPlayerRatings,
+}) => {
+  const isMobile = useIsMobile();
+  const { activeGroup } = useGroupData();
+
+  const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
+
+  if (!combinedPlayers) {
+    return <div className="spinner"></div>;
+  }
+  const coach = fixture.lineups.find(
+    (team) => team.team.id === Number(activeGroup.groupClubId)
+  )?.coach; // Convert activeGroup.groupClubId to number
+
+  return (
+    <div className="PlayerRatingsItemsContainer">
+      {combinedPlayers.map((player, rowIndex) => (
+        <PlayerRatingItem
+          player={player}
+          fixture={fixture}
+          isMobile={isMobile}
+          matchRatings={matchRatings}
+          readOnly={readOnly}
+          groupId={groupId}
+          userId={userId}
+          usersMatchPlayerRatings={usersMatchPlayerRatings}
+        />
+      ))}
+      <PlayerRatingItem
+        player={coach}
+        fixture={fixture}
+        isMobile={isMobile}
+        matchRatings={matchRatings}
+        readOnly={readOnly}
+        groupId={groupId}
+        userId={userId}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+      />
+      {!isMatchRatingsSubmitted && (
+        <Button
+          onClick={() => handleRatingsSubmit()}
+          variant="contained"
+          fontSize="large"
+          className="PlayerRatingSubmit"
+        >
+          Submit
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const PlayerRatingItem = ({
   player,
   fixture,
@@ -164,6 +225,12 @@ const PlayerRatingItem = ({
     `userPlayerRatings-${fixture.id}-${player.id}`
   );
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
+
+  const [sliderValue, setSliderValue] = useState(6);
+
+  const handleSliderChange = (event, newValue) => {
+    setSliderValue(newValue);
+  };
 
   const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
@@ -206,12 +273,15 @@ const PlayerRatingItem = ({
       ).toFixed(1)
     : storedUsersPlayerRating;
 
-  const onRatingClick = async (score) => {
-    setLocalStorageItem(`userPlayerRatings-${fixture.id}-${player.id}`, score);
+  const onRatingClick = async () => {
+    setLocalStorageItem(
+      `userPlayerRatings-${fixture.id}-${player.id}`,
+      sliderValue
+    );
     await handlePlayerRatingSubmit({
       matchId: fixture.id,
       playerId: String(player.id),
-      rating: score,
+      rating: sliderValue,
       userId: userId,
       groupId: groupId,
     });
@@ -232,19 +302,45 @@ const PlayerRatingItem = ({
       className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
       style={{ width: "100%" }}
     >
-      <img
-        src={playerData?.photo || player.photo || missingPlayerImg}
-        className="PlayerRatingImg"
-        alt={player.name}
-      />
-
       <div className="PlayerRatingInner">
         <span className="PlayerRatingsNameContainer">
-          <h2 className="PlayerRatingName">
-            {playerData?.name || player.name}
-          </h2>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <h2 className="PlayerRatingName">
+              {playerData?.name || player.name}
+            </h2>
+            <div
+              className="PlayerRatingMotm"
+              style={{
+                cursor: readOnly ? "default" : "pointer",
+                pointerEvents: readOnly ? "none" : "auto",
+              }}
+            >
+              {isMOTM ? (
+                <StarIcon
+                  fontSize="medium"
+                  onClick={handleMotmClick}
+                  color="primary"
+                />
+              ) : !readOnly ? (
+                <StarOutlineIcon fontSize="medium" onClick={handleMotmClick} />
+              ) : null}
+            </div>
+          </div>
 
-          {goals?.map((goal, index) => (
+          {!storedUsersPlayerRating && (
+            <div
+              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+                sliderValue
+              )}`}
+              style={{ justifySelf: "end" }}
+            >
+              <h4 className="PlayerRatingsCommunityScore textShadow">
+                {sliderValue}
+              </h4>
+            </div>
+          )}
+
+          {/* {goals?.map((goal, index) => (
             <img
               key={index}
               src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
@@ -255,17 +351,52 @@ const PlayerRatingItem = ({
 
           {cardIcon && (
             <img src={cardIcon} alt="Card Icon" className="PlayerRatingsIcon" />
-          )}
+          )} */}
+          <div
+            className="PlayerRatingImg"
+            style={{
+              backgroundImage: `url(${
+                playerData?.photo || player.photo || missingPlayerImg
+              })`,
+            }}
+          ></div>
         </span>
 
         {!storedUsersPlayerRating ? (
-          <div className="PlayerRatingsChoices">
+          <div
+            style={{
+              margin: "auto",
+              display: "flex",
+              alignItems: "center",
+              width: "95%",
+              gap: "25px",
+            }}
+          >
+            <Slider
+              className="slider-marks-top"
+              value={sliderValue}
+              onChange={handleSliderChange}
+              step={0.5}
+              min={1}
+              max={10}
+            />
+            <IconButton
+              aria-label="confirm"
+              size="large"
+              variant="outlined"
+              onClick={() => onRatingClick()}
+            >
+              <CheckIcon />
+            </IconButton>
+          </div>
+        ) : (
+          /* <div className="PlayerRatingsChoices">
             {Array.from({ length: 10 }, (_, i) => (
               <ButtonGroup
                 key={i}
                 className="PlayerRatingsButtonGroup"
                 aria-label="PlayerRatingsButtonGroup"
-                orientation={isMobile ? "vertical" : "horizontal"}
+                orientation={isMobile ? "horizontal" : "horizontal"}
                 size="large"
               >
                 <Button
@@ -287,8 +418,7 @@ const PlayerRatingItem = ({
                 )}
               </ButtonGroup>
             ))}
-          </div>
-        ) : (
+          </div> */
           <div className="PlayerRatingsResults">
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
@@ -318,84 +448,6 @@ const PlayerRatingItem = ({
           </div>
         )}
       </div>
-
-      <div
-        className="PlayerRatingMotm"
-        style={{
-          cursor: readOnly ? "default" : "pointer",
-          pointerEvents: readOnly ? "none" : "auto",
-        }}
-      >
-        {isMOTM ? (
-          <StarIcon
-            fontSize="large"
-            onClick={handleMotmClick}
-            color="primary"
-          />
-        ) : !readOnly ? (
-          <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
-        ) : null}
-      </div>
-    </div>
-  );
-};
-
-const PlayerRatingsItems = ({
-  combinedPlayers,
-  fixture,
-  isMatchRatingsSubmitted,
-  handleRatingsSubmit,
-  readOnly,
-  groupId,
-  userId,
-  usersMatchPlayerRatings,
-}) => {
-  const isMobile = useIsMobile();
-  const { activeGroup } = useGroupData();
-
-  console.log("test");
-
-  const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
-  if (!combinedPlayers) {
-    return <div className="spinner"></div>;
-  }
-  const coach = fixture.lineups.find(
-    (team) => team.team.id === Number(activeGroup.groupClubId)
-  )?.coach; // Convert activeGroup.groupClubId to number
-
-  return (
-    <div className="PlayerRatingsItemsContainer">
-      {combinedPlayers.map((player, rowIndex) => (
-        <PlayerRatingItem
-          player={player}
-          fixture={fixture}
-          isMobile={isMobile}
-          matchRatings={matchRatings}
-          readOnly={readOnly}
-          groupId={groupId}
-          userId={userId}
-        />
-      ))}
-      <PlayerRatingItem
-        player={coach}
-        fixture={fixture}
-        isMobile={isMobile}
-        matchRatings={matchRatings}
-        readOnly={readOnly}
-        groupId={groupId}
-        userId={userId}
-      />
-      {!isMatchRatingsSubmitted && (
-        <Button
-          onClick={() => handleRatingsSubmit()}
-          variant="contained"
-          fontSize="large"
-          className="PlayerRatingSubmit"
-        >
-          Submit
-        </Button>
-      )}
     </div>
   );
 };

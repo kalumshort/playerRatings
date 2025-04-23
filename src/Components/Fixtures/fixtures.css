@@ -352,12 +352,30 @@
   flex-direction: row;
   overflow: hidden;
   max-width: 850px;
+  min-height: 120px;
+  padding: 10px 0px;
   /* align-items: flex-start; */
 }
+.slider-marks-top .MuiSlider-markLabel {
+  top: -10px; /* move labels up */
+  /* transform: translateX(-50%); */
+}
 
+.slider-marks-top .MuiSlider-mark {
+  top: 50%;
+}
 .PlayerRatingImg {
   object-fit: cover;
   /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */
+  position: absolute; /* Or relative if needed */
+  top: 0px;
+  left: -30px;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3; /* Make it look like an overlay */
+  z-index: 0; /* Sit behind content */
 }
 .PlayerRatingInner {
   display: flex;
@@ -369,11 +387,12 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-evenly;
 }
 .PlayerRatingName {
   letter-spacing: 1.4px;
   font-weight: 500;
-  margin-left: 30px;
+  margin: 10px;
 }
 .PlayerRatingsIcon {
   /* width: 25px; */
@@ -385,13 +404,8 @@
   /* display: flex;
   justify-content: center; 
   align-items: center; */
-
-  flex: 1 1 calc(20% - 10px);
   display: flex;
-
-  /* display: flex;
-  flex-direction: column;
-  width: 100%; */
+  flex: 1 1 calc(20%);
 }
 .PlayerRatingsChoices {
   /* display: grid;
@@ -403,18 +417,21 @@
 
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 5px;
   justify-content: space-between;
-  padding: 10px;
+  /* padding: 5px; */
 }
 
 .PlayerRatingsButton {
   flex: 5 !important;
+  padding: 2px !important;
 
   /* padding: 0px !important; */
 }
 .PlayerRatingsButton2 {
   flex: 1 !important;
+  padding: 0px !important;
+  margin: 0px !important;
 
   /* font-size: 15px !important;
   padding: 0px !important; */
@@ -451,11 +468,9 @@
 .PlayerRatingMotm {
   cursor: pointer;
   background-color: #1f1f1f;
-  padding: 5px;
-  position: absolute;
-  bottom: 0px;
-  left: 0px;
-  border-radius: 0px 10px 0px 0px;
+  padding: 2px;
+  border-radius: 5px;
+  margin-left: 10px;
 }
 .motm {
   animation: boxShadowPulse 2s infinite alternate;
@@ -591,11 +606,12 @@
   }
 
   .PlayerRatingsButton {
-    font-size: 20px !important;
+    font-size: 14px !important;
+    padding: 3px !important;
   }
   .PlayerRatingsButton2 {
     padding: 0px !important;
-    font-size: 15px !important;
+    font-size: 10px !important;
   }
   .PlayerRatingName {
     font-size: 22px;
