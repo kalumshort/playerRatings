@@ -68,7 +68,9 @@ export const firebaseGetCollecion = async (path) => {
 export const firebaseGetDocument = async (path, docId) => {
   try {
     const docRef = doc(db, path, docId);
+
     const docSnapshot = await getDoc(docRef);
+
     if (docSnapshot.exists()) {
       return { id: docSnapshot.id, ...docSnapshot.data() };
     } else {
@@ -243,7 +245,7 @@ export const handlePlayerRatingSubmit = async (data) => {
   });
 
   await firebaseUpdateOrSetDoc({
-    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/playerRatings`,
+    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/matches`,
     docId: data.matchId,
     data: { [`players.${data.playerId}`]: data.rating },
   });
@@ -280,9 +282,9 @@ export const handleMatchMotmVote = async (data) => {
   });
 
   await firebaseUpdateOrSetDoc({
-    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/playerRatings`,
+    path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/matches`,
     docId: data.matchId,
-    data: { motm: data.playerId },
+    data: { motm: data.playerId, ratingsSubmitted: true },
   });
 };
 

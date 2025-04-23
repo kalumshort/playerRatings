@@ -29,6 +29,7 @@ import RatingLineup from "./RatingLineup";
 
 import MOTMPopover from "./MotmPlayerPopper";
 import { useAuth } from "../../../../Providers/AuthContext";
+import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
@@ -42,9 +43,17 @@ export default function PlayerRatings({ fixture }) {
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)
   );
-  const isMatchRatingsSubmitted = useLocalStorage(
+
+  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
+
+  const isMatchRatingsSubmittedLocal = useLocalStorage(
     `userMatchRatingSubmited-${fixture.id}`
   );
+
+  const isMatchRatingsSubmittedDatabase = usersMatchData?.ratingsSubmitted;
+
+  const isMatchRatingsSubmitted =
+    isMatchRatingsSubmittedLocal || isMatchRatingsSubmittedDatabase;
 
   const lineup =
     fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
@@ -111,6 +120,7 @@ export default function PlayerRatings({ fixture }) {
         fixture={fixture}
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
+        usersMatchPlayerRatings={usersMatchData.players}
       />
     ) : (
       <PlayerRatingsItems
@@ -120,6 +130,7 @@ export default function PlayerRatings({ fixture }) {
         handleRatingsSubmit={handleRatingsSubmit}
         groupId={groupId}
         userId={user.uid}
+        usersMatchPlayerRatings={usersMatchData.players}
       />
     )
   ) : (
@@ -335,6 +346,7 @@ const PlayerRatingsItems = ({
   readOnly,
   groupId,
   userId,
+  usersMatchPlayerRatings,
 }) => {
   const isMobile = useIsMobile();
   const { activeGroup } = useGroupData();
@@ -386,10 +398,8 @@ const PlayerRatingsItems = ({
 
 const SubmittedPlayerRatings = ({
   motmPercentages,
-  combinedPlayers,
   fixture,
-  isMatchRatingsSubmitted,
-  handleRatingsSubmit,
+  usersMatchPlayerRatings,
 }) => {
   return (
     <>
@@ -431,7 +441,10 @@ const SubmittedPlayerRatings = ({
           </div>
         </div>
       </Paper>
-      <RatingLineup fixture={fixture} />
+      <RatingLineup
+        fixture={fixture}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+      />
 
       {/* <Accordion>
         <AccordionSummary

@@ -33,6 +33,7 @@ import {
   fetchTeamSquadSuccess,
 } from "../redux/Reducers/teamSquads";
 import { getAuth } from "firebase/auth";
+import { fetchUserMatchData } from "../redux/Reducers/userDataReducer";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -153,6 +154,21 @@ export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
     dispatch(fetchRatingsFailure()); // End loading
 
     console.log(error);
+  }
+};
+
+export const fetchUsersMatchData = (matchId) => async (dispatch) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  try {
+    const matchData = await firebaseGetDocument(
+      `users/${user.uid}/groups/001/seasons/2024/matches`,
+      matchId
+    );
+    dispatch(fetchUserMatchData({ matchId: matchId, data: matchData }));
+  } catch (err) {
+    console.log(err);
   }
 };
 

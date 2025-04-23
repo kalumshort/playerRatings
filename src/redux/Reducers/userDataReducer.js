@@ -7,6 +7,7 @@ const userDataSlice = createSlice({
     error: null,
     loaded: false,
     accountData: {},
+    matches: {},
   },
   reducers: {
     fetchUserDataStart(state) {
@@ -28,6 +29,10 @@ const userDataSlice = createSlice({
       state.loaded = false;
       state.accountData = {};
     },
+    fetchUserMatchData(state, action) {
+      const { matchId, data } = action.payload;
+      state.matches[matchId] = data;
+    },
   },
 });
 
@@ -36,6 +41,7 @@ export const {
   fetchUserDataFailure,
   fetchUserDataSuccess,
   clearUserData,
+  fetchUserMatchData,
 } = userDataSlice.actions;
 
 export default userDataSlice.reducer;

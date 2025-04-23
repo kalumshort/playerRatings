@@ -15,6 +15,7 @@ import {
   fetchMatchPlayerRatings,
   fetchMatchPredictions,
   fetchAllPlayersSeasonOverallRating,
+  fetchUsersMatchData,
 } from "../../Hooks/Fixtures_Hooks";
 import { useEffect } from "react";
 
@@ -58,13 +59,16 @@ export default function Fixture() {
 
   const latestFixture = useSelector(selectLatestFixture);
 
-  // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchMatchPredictions(matchId));
   }, [dispatch, matchId]);
 
   useEffect(() => {
     dispatch(fetchMatchPlayerRatings(matchId));
+  }, [dispatch, matchId]);
+
+  useEffect(() => {
+    dispatch(fetchUsersMatchData(matchId));
   }, [dispatch, matchId]);
 
   useEffect(() => {
