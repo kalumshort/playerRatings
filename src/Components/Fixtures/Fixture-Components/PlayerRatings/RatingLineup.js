@@ -90,7 +90,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
                           key={player.id}
                           player={player}
                           fixture={fixture}
-                          playerRating={playerRating.toFixed(2)}
+                          playerRating={playerRating?.toFixed(2) || "na"}
                         />
                       );
                     })}
