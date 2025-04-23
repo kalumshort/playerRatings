@@ -235,9 +235,9 @@ const PlayerRatingItem = ({
   const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
   // Filter: Goals scored by the player
-  const goals = fixture?.events.filter(
-    (event) => event.type === "Goal" && event.player?.id === player.id
-  );
+  // const goals = fixture?.events.filter(
+  //   (event) => event.type === "Goal" && event.player?.id === player.id
+  // );
 
   // Filter: Assists for goals by the player
   // const assists = fixture?.events.filter(
@@ -245,26 +245,26 @@ const PlayerRatingItem = ({
   // );
 
   // Filter: Cards received by the player
-  const cards = fixture?.events.filter(
-    (event) => event.type === "Card" && event.player?.id === player.id
-  );
+  // const cards = fixture?.events.filter(
+  //   (event) => event.type === "Card" && event.player?.id === player.id
+  // );
 
-  const yellowCards = cards?.filter(
-    (card) => card.detail === "Yellow Card"
-  ).length;
-  const redCards = cards?.filter((card) => card.detail === "Red Card").length;
+  // const yellowCards = cards?.filter(
+  //   (card) => card.detail === "Yellow Card"
+  // ).length;
+  // const redCards = cards?.filter((card) => card.detail === "Red Card").length;
 
-  let cardIcon = null;
-  if (yellowCards === 2 && redCards === 1) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
-  } else if (yellowCards === 1 && redCards === 0) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
-  } else if (redCards === 1) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
-  }
+  // let cardIcon = null;
+  // if (yellowCards === 2 && redCards === 1) {
+  //   cardIcon =
+  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
+  // } else if (yellowCards === 1 && redCards === 0) {
+  //   cardIcon =
+  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
+  // } else if (redCards === 1) {
+  //   cardIcon =
+  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
+  // }
 
   const playerRatingAverage = matchRatings?.[player.id]?.totalRating
     ? (
