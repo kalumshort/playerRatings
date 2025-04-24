@@ -68,7 +68,7 @@ export default function PreMatchMOTM({ fixture }) {
     squadData
   );
 
-  return !storedUsersPlayerToWatch ? (
+  return storedUsersPlayerToWatch ? (
     <ContentContainer
       className="scorePredictionContainer"
       style={{
