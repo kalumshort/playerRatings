@@ -23,7 +23,10 @@ import {
 
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import StarIcon from "@mui/icons-material/Star";
-import { fetchMatchPlayerRatings } from "../../../../Hooks/Fixtures_Hooks";
+import {
+  fetchMatchPlayerRatings,
+  fetchUsersMatchData,
+} from "../../../../Hooks/Fixtures_Hooks";
 import { useAlert } from "../../../HelpfulComponents";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import RatingLineup from "./RatingLineup";
@@ -55,8 +58,6 @@ export default function PlayerRatings({ fixture }) {
 
   const isMatchRatingsSubmitted =
     isMatchRatingsSubmittedLocal || isMatchRatingsSubmittedDatabase;
-
-  console.log("isMatchRatingsSubmitted", isMatchRatingsSubmitted);
 
   const lineup =
     fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
@@ -113,6 +114,7 @@ export default function PlayerRatings({ fixture }) {
 
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
     dispatch(fetchMatchPlayerRatings(fixture.id));
+    dispatch(fetchUsersMatchData(fixture.id));
   };
 
   return fixture?.fixture?.status?.elapsed > 80 ? (
@@ -457,7 +459,6 @@ const SubmittedPlayerRatings = ({
   fixture,
   usersMatchPlayerRatings,
 }) => {
-  console.log("testttttt");
   return (
     <>
       <Paper className="PlayerRatingItem motm">
