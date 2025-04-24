@@ -11,10 +11,12 @@ import {
 } from "../../../Hooks/Helper_Functions";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../Hooks/useGroupsData";
+import { useAuth } from "../../../Providers/AuthContext";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
+  const { user } = useAuth();
 
   const storedUsersPredictedResult = useLocalStorage(
     `userPredictedResult-${fixture.id}`
@@ -27,6 +29,7 @@ export default function WinnerPredict({ fixture }) {
       matchId: fixture.id,
       choice: choice,
       groupId: activeGroup.groupId,
+      userId: user.uid,
     });
     dispatch(fetchMatchPredictions(fixture.id));
   };
@@ -39,11 +42,11 @@ export default function WinnerPredict({ fixture }) {
     away: (away / totalVotes) * 100,
   };
 
-  const maxPercentage = Math.max(
-    percentages.home,
-    percentages.draw,
-    percentages.away
-  );
+  // const maxPercentage = Math.max(
+  //   percentages.home,
+  //   percentages.draw,
+  //   percentages.away
+  // );
 
   return (
     <ContentContainer className="scorePredictionContainer">
@@ -74,11 +77,7 @@ export default function WinnerPredict({ fixture }) {
             width: "100%",
           }}
         >
-          <div
-            className={`WinnerPredictTeamContainer ${
-              percentages.home === maxPercentage ? "WinningResult" : ""
-            }`}
-          >
+          <div className={`WinnerPredictTeamContainer`}>
             <img
               src={fixture.teams.home.logo}
               alt={`${fixture.teams.home.name} logo`}
@@ -88,21 +87,13 @@ export default function WinnerPredict({ fixture }) {
               {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
             </span>
           </div>
-          <div
-            className={`WinnerPredictTeamContainer ${
-              percentages.draw === maxPercentage ? "WinningResult" : ""
-            }`}
-          >
+          <div className={`WinnerPredictTeamContainer `}>
             <span style={{ color: "grey" }}>X</span>
             <span>
               {isNaN(percentages?.draw) ? 0 : percentages.draw.toFixed(0)}%
             </span>
           </div>
-          <div
-            className={`WinnerPredictTeamContainer ${
-              percentages.away === maxPercentage ? "WinningResult" : ""
-            }`}
-          >
+          <div className={`WinnerPredictTeamContainer`}>
             <img
               src={fixture.teams.away.logo}
               alt={`${fixture.teams.away.name} logo`}

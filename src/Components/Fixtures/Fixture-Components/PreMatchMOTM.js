@@ -7,7 +7,9 @@ import Box from "@mui/material/Box";
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadDataObject } from "../../../Selectors/squadDataSelectors";
-import { Button } from "@mui/material";
+import { Button, IconButton, Popover } from "@mui/material";
+import InfoIcon from "@mui/icons-material/Info";
+
 import {
   setLocalStorageItem,
   useLocalStorage,
@@ -16,6 +18,7 @@ import { handlePredictPreMatchMotm } from "../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../Hooks/useGroupsData";
+import { useAuth } from "../../../Providers/AuthContext";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -23,11 +26,23 @@ export default function PreMatchMOTM({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const [selectedPlayer, setSelectedPlayer] = useState("");
   const { activeGroup } = useGroupData();
+  const { user } = useAuth();
 
   const storedUsersPlayerToWatch = useLocalStorage(
     `userPredictedPlayerToWatch-${fixture.id}`
   );
+  const [anchorEl, setAnchorEl] = useState(null);
 
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget); // Set the popover anchor
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null); // Close the popover
+  };
+
+  const open = Boolean(anchorEl); // Boolean for whether the popover is open
+  const id = open ? "simple-popover" : undefined;
   const handleChange = (event) => {
     setSelectedPlayer(event.target.value);
   };
@@ -42,6 +57,7 @@ export default function PreMatchMOTM({ fixture }) {
       matchId: fixture.id,
       playerId: selectedPlayer,
       groupId: activeGroup.groupId,
+      userId: user.uid,
     });
 
     dispatch(fetchMatchPredictions(fixture.id));
@@ -52,24 +68,44 @@ export default function PreMatchMOTM({ fixture }) {
     squadData
   );
 
-  return storedUsersPlayerToWatch ? (
+  return !storedUsersPlayerToWatch ? (
     <ContentContainer
       className="scorePredictionContainer"
       style={{
         display: "flex",
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "space-evenly",
         alignItems: "center",
       }}
     >
       <h1 className="smallHeading">Player to Watch</h1>
-      <div>
+
+      <IconButton
+        onClick={handleClick}
+        style={{ position: "absolute", right: "5px", top: "5px" }}
+      >
+        <InfoIcon />
+      </IconButton>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "bottom", // Popover appears below the button
+          horizontal: "center",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+      >
         <ul
           style={{
             color: "grey",
             fontSize: "10px",
             listStyle: "none",
-            padding: "0px 0px 0px 5px",
+            padding: "10px",
             margin: "0px",
           }}
         >
@@ -79,14 +115,19 @@ export default function PreMatchMOTM({ fixture }) {
             </li>
           ))}
         </ul>
-      </div>
-      <div style={{ textAlign: "center" }}>
-        <p style={{ margin: "0px" }}>{result[0]?.name}</p>
-        <br></br>
-        <p
-          style={{ margin: "0px", fontSize: "30px" }}
-          // className="gradient-text"
-        >
+      </Popover>
+
+      <div
+        style={{
+          textAlign: "center",
+          gap: "5px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <p style={{ margin: "0px", color: "grey" }}>{result[0]?.name}</p>
+
+        <p style={{ margin: "0px", fontSize: "30px" }}>
           {result[0]?.percentage}%
         </p>
       </div>

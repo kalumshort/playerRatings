@@ -256,6 +256,7 @@
   justify-content: center;
   align-items: center;
   display: flex;
+  padding: 10px;
 }
 .ScorePredictPTWContainer {
   display: flex;
@@ -290,7 +291,6 @@
   font-size: 15px;
   text-align: center;
   margin: 0px;
-  margin-top: 10px;
   /* position: absolute; */
   font-weight: 300;
   color: grey;

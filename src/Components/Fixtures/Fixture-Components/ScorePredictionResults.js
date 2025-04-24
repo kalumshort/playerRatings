@@ -62,7 +62,7 @@ export default function ScorePredictionResults({ fixture }) {
     boxShadow: 24,
   };
   return (
-    <ContentContainer className="scorePredictionResultsContainer containerMargin">
+    <ContentContainer className="scorePredictionResultsContainer ">
       <h1 className="smallHeading">Match Score</h1>
       <div
         style={{
@@ -76,7 +76,7 @@ export default function ScorePredictionResults({ fixture }) {
           </span>
         </div>
         <div className="scorePredictionResultsInnerContainer">
-          <h1 className="scorePredictionInnerHeading">Community Score</h1>
+          <h1 className="scorePredictionInnerHeading">Group Score</h1>
           <span className=" usersScorePrediction">
             {highestScorePredictions?.[0] || "-"}
           </span>
