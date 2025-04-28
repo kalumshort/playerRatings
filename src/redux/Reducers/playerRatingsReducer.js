@@ -89,6 +89,17 @@ const ratingsSlice = createSlice({
       state.playerAllMatchesRatingLoading = false;
       state.playerAllMatchesRatingLoaded = true;
     },
+    clearRatings(state) {
+      state.matches = {}; // Clear matches data
+      state.players = {}; // Clear players data
+      state.loading = false; // Reset loading state
+      state.error = null; // Reset error state
+      state.loaded = false; // Reset loaded state
+      state.playerSeasonOverallRatingsLoading = false; // Reset loading for player season ratings
+      state.playerSeasonOverallRatingsLoaded = false; // Reset loaded flag for player season ratings
+      state.playerAllMatchesRatingLoading = false; // Reset loading for player match ratings
+      state.playerAllMatchesRatingLoaded = false; // Reset loaded flag for player match ratings
+    },
   },
 });
 
@@ -102,6 +113,7 @@ export const {
   fetchAllMatchRatingsForPlayerAction,
   fetchPlayerOverallSeasonRatingsStart,
   fetchPlayerAllMatchesRatingLoading,
+  clearRatings,
 } = ratingsSlice.actions;
 
 export default ratingsSlice.reducer;

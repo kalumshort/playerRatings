@@ -25,6 +25,12 @@ const teamSquadsSlice = createSlice({
       const { squadId, data } = action.payload;
       state.squads[squadId] = data;
     },
+    clearTeamSquads(state) {
+      state.squads = {}; // Clear all squads data
+      state.loading = false; // Reset loading state
+      state.error = null; // Reset error state
+      state.loaded = false; // Reset loaded flag
+    },
   },
 });
 
@@ -33,6 +39,7 @@ export const {
   fetchTeamSquadFailure,
   fetchTeamSquadSuccess,
   fetchTeamSquadAction,
+  clearTeamSquads, // Export the clearTeamSquads action
 } = teamSquadsSlice.actions;
 
 export default teamSquadsSlice.reducer;

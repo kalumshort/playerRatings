@@ -2,8 +2,17 @@ import React, { useState, useRef } from "react";
 import { Button, Popper, Paper, Typography, Box } from "@mui/material";
 import { signOut } from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
+import { clearUserData } from "../../redux/Reducers/userDataReducer";
+import { useDispatch } from "react-redux";
+import { clearGroupIdData } from "../../redux/Reducers/groupReducer";
+import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
+import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
+import { clearPredictions } from "../../redux/Reducers/predictionsReducer";
+import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
 
 const Logout = () => {
+  const dispatch = useDispatch();
+
   const [open, setOpen] = useState(false); // Controls the visibility of the Popper
   const anchorRef = useRef(null); // Reference for the anchor element (the text button)
 
@@ -16,6 +25,13 @@ const Logout = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+
+      dispatch(clearUserData());
+      dispatch(clearGroupIdData());
+      dispatch(clearFixtures());
+      dispatch(clearRatings());
+      dispatch(clearPredictions());
+      dispatch(clearTeamSquads());
 
       setOpen(false); // Close the popper after logout
     } catch (err) {

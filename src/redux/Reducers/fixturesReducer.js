@@ -24,6 +24,12 @@ const fixturesSlice = createSlice({
     fixturesReducer(state, action) {
       state.fixtures = action.payload;
     },
+    clearFixtures(state) {
+      state.fixtures = []; // Clear the fixtures array
+      state.loading = false; // Reset loading state
+      state.error = null; // Reset error state
+      state.loaded = false; // Reset loaded state
+    },
     fixtureReducer(state, action) {
       const index = state.fixtures.findIndex(
         (fixture) => fixture.id === action.payload.id
@@ -44,6 +50,7 @@ export const {
   fetchFixturesFailure,
   fixturesReducer,
   fixtureReducer,
+  clearFixtures,
 } = fixturesSlice.actions;
 
 export default fixturesSlice.reducer;

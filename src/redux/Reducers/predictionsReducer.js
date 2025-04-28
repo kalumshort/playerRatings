@@ -20,6 +20,12 @@ const predictionsSlice = createSlice({
       const { matchId, data } = action.payload;
       state.matches[matchId] = data;
     },
+    clearPredictions(state) {
+      state.matches = {}; // Clear all match predictions
+      state.loading = false; // Reset loading state
+      state.error = null; // Reset error state
+      state.loaded = false; // Reset loaded flag
+    },
   },
 });
 
@@ -28,6 +34,7 @@ export const {
   fetchPredictionsFailure,
   fetchPredictionsSuccess,
   fetchMatchPrediction,
+  clearPredictions, // Export the clearPredictions action
 } = predictionsSlice.actions;
 
 export default predictionsSlice.reducer;

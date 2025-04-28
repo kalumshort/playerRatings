@@ -63,23 +63,19 @@ function App() {
     (state) => state.userData
   );
 
-  // Listen for changes in authentication state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && !userDataLoaded) {
-        // Only fetch user data if not already loaded
+        // Fetch user data if the user is signed in and data is not loaded yet
         console.log("User signed in, fetching user data.");
         dispatch(fetchUserData(user.uid));
-      } else if (!user) {
-        // If no user is signed in, clear user data
-        console.log("User signed out, clearing user data.");
-        dispatch(clearUserData());
       }
+      // No need to clear user data here when user is signed out
     });
 
     // Cleanup the listener when the component unmounts or the effect dependencies change
     return () => unsubscribe();
-  }, [dispatch, userDataLoaded]); // Add userDataLoaded as a dependency
+  }, [dispatch, userDataLoaded]); // Dependencies: dispatch and userDataLoaded
 
   useEffect(() => {
     if (user) {
