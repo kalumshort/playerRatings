@@ -35,13 +35,13 @@ export default function PlayerPage() {
         groupId: activeGroup.groupId,
       })
     );
-  }, [dispatch, playerId]);
+  }, [dispatch, playerId, activeGroup.groupId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 
   if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded) {
     return <></>;

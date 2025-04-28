@@ -19,7 +19,7 @@ export default function PlayerStatsContainer() {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 
   return playerSeasonOverallRatingsLoaded ? <AllPlayerStats /> : <Spinner />;
 }

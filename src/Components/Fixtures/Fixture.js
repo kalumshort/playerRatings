@@ -63,7 +63,7 @@ export default function Fixture() {
     dispatch(
       fetchMatchPredictions({ matchId: matchId, groupId: activeGroup.groupId })
     );
-  }, [dispatch, matchId]);
+  }, [dispatch, matchId, activeGroup.groupId]);
 
   useEffect(() => {
     dispatch(
@@ -72,19 +72,19 @@ export default function Fixture() {
         groupId: activeGroup.groupId,
       })
     );
-  }, [dispatch, matchId]);
+  }, [dispatch, matchId, activeGroup.groupId]);
 
   useEffect(() => {
     dispatch(
       fetchUsersMatchData({ matchId: matchId, groupId: activeGroup.groupId })
     );
-  }, [dispatch, matchId]);
+  }, [dispatch, matchId, activeGroup.groupId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 
   if (predictionsError || ratingsError) {
     console.log(predictionsError, ratingsError);

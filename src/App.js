@@ -42,7 +42,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./Firebase/Firebase";
 import { fetchUserData } from "./Firebase/Auth_Functions";
 import { useAuth } from "./Providers/AuthContext";
-import { clearUserData } from "./redux/Reducers/userDataReducer";
+
 import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
