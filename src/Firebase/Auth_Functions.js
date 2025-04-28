@@ -27,7 +27,6 @@ export const handleCreateAccount = async ({ email, password }) => {
 
     // Get the user ID (UID)
     const userId = userCredential.user.uid;
-    console.log("User created with ID:", userId);
 
     // Store important user information in Firestore
     await setDoc(doc(db, "users", userId), {
@@ -36,12 +35,11 @@ export const handleCreateAccount = async ({ email, password }) => {
       isActive: true, // Mark the user as active by default
       lastLogin: Timestamp.fromDate(new Date()), // Timestamp for the first login (could be updated later)
       role: "user", // Default role (you can change to 'admin' or other roles if needed)
+      groups: ["002"], //UnitedBetaGroup
+      activeGroup: "002",
     });
-
-    alert("Account created successfully! User ID: " + userId);
   } catch (err) {
     console.error("Error creating account:", err);
-    alert("Error creating account: " + err.message); // Display error to user
   }
 };
 
@@ -81,11 +79,12 @@ export const handleCreateAccountGoogle = async () => {
         isActive: true, // Mark the user as active by default
         lastLogin: Timestamp.fromDate(new Date()), // Timestamp for the first login (could be updated later)
         role: "user", // Default role (you can change to 'admin' or other roles if needed)
+        groups: ["002"], //UnitedBetaGroup
+        activeGroup: "002",
       });
     }
   } catch (err) {
     console.error("Error creating account:", err);
-    alert("Error creating account: " + err.message); // Display error to user
   }
 };
 

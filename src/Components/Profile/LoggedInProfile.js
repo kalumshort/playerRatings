@@ -42,7 +42,7 @@ export default function LoggedInProfile() {
     // Add other fields here in the future
   });
 
-  const [groupCodeInput, setGroupCodeInput] = useState();
+  const [groupCodeInput, setGroupCodeInput] = useState("");
 
   useEffect(() => {
     // Update changed fields dynamically based on form data changes
@@ -170,12 +170,14 @@ export default function LoggedInProfile() {
             variant="outlined"
             size="small"
             sx={{ marginLeft: "10px", width: "100px" }}
+            disabled
           />
           <Button
             variant="text"
             color="primary"
             onClick={handleGroupJoin}
-            disabled={!groupCodeInput}
+            // disabled={!groupCodeInput}
+            disabled
           >
             Join
           </Button>
