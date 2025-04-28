@@ -120,8 +120,6 @@ export const fetchUserData = (userId) => async (dispatch) => {
             if (groupDoc.exists()) {
               groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
             }
-
-            console.log(groupDoc.data());
           }
 
           dispatch(groupDataSuccess(groupObj));
@@ -147,7 +145,6 @@ export const updateUserField = async (userId, field, newValue) => {
     await updateDoc(userRef, {
       [field]: newValue, // Dynamically update the specified field
     });
-    console.log(`Successfully updated ${field} to ${newValue}`);
   } catch (err) {
     console.error("Error updating user field:", err.message);
   }

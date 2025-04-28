@@ -37,7 +37,7 @@ import useGroupData from "../../Hooks/useGroupsData";
 
 export default function Fixture() {
   const { matchId } = useParams();
-  const { groupData } = useGroupData();
+  const { groupData, activeGroup } = useGroupData();
 
   const fixture = useSelector(selectFixtureById(matchId));
   const { predictionsError } = useSelector(selectPredictionsLoad);
@@ -60,20 +60,29 @@ export default function Fixture() {
   const latestFixture = useSelector(selectLatestFixture);
 
   useEffect(() => {
-    dispatch(fetchMatchPredictions(matchId));
+    dispatch(
+      fetchMatchPredictions({ matchId: matchId, groupId: activeGroup.groupId })
+    );
   }, [dispatch, matchId]);
 
   useEffect(() => {
-    dispatch(fetchMatchPlayerRatings(matchId));
+    dispatch(
+      fetchMatchPlayerRatings({
+        matchId: matchId,
+        groupId: activeGroup.groupId,
+      })
+    );
   }, [dispatch, matchId]);
 
   useEffect(() => {
-    dispatch(fetchUsersMatchData(matchId));
+    dispatch(
+      fetchUsersMatchData({ matchId: matchId, groupId: activeGroup.groupId })
+    );
   }, [dispatch, matchId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
-      dispatch(fetchAllPlayersSeasonOverallRating());
+      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded]);
 

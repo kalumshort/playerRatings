@@ -17,6 +17,8 @@ import useGroupData from "../../Hooks/useGroupsData";
 
 export default function PlayerPage() {
   const { playerId } = useParams();
+  const { activeGroup } = useGroupData();
+
   const playerData = useSelector(selectSquadPlayerById(playerId));
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
@@ -27,12 +29,17 @@ export default function PlayerPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchPlayerRatingsAllMatches(playerId));
+    dispatch(
+      fetchPlayerRatingsAllMatches({
+        playerId: playerId,
+        groupId: activeGroup.groupId,
+      })
+    );
   }, [dispatch, playerId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
-      dispatch(fetchAllPlayersSeasonOverallRating());
+      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded]);
 

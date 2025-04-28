@@ -31,7 +31,12 @@ export default function WinnerPredict({ fixture }) {
       groupId: activeGroup.groupId,
       userId: user.uid,
     });
-    dispatch(fetchMatchPredictions(fixture.id));
+    dispatch(
+      fetchMatchPredictions({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+      })
+    );
   };
 
   const { totalVotes, draw, away, home } = matchPredictions.result || {};

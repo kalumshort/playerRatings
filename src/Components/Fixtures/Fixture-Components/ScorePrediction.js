@@ -42,7 +42,12 @@ export default function ScorePrediction({ fixture }) {
       userId: user.uid,
     });
 
-    dispatch(fetchMatchPredictions(fixture.id));
+    dispatch(
+      fetchMatchPredictions({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+      })
+    );
   };
   return storedUsersPredictedScore ? (
     <ScorePredictionResults fixture={fixture}></ScorePredictionResults>

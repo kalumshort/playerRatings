@@ -64,12 +64,73 @@ export const fetchFixtures = (clubId) => async (dispatch) => {
   }
 };
 
-export const fetchPlayerRatingsAllMatches = (playerId) => async (dispatch) => {
-  try {
-    dispatch(fetchPlayerAllMatchesRatingLoading());
-    if (!playerId) {
+export const fetchPlayerRatingsAllMatches =
+  ({ playerId, groupId }) =>
+  async (dispatch) => {
+    try {
+      dispatch(fetchPlayerAllMatchesRatingLoading());
+      if (!playerId) {
+        return;
+      }
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        console.error("User is not authenticated");
+        return;
+      }
+
+      const fixturesData = await firebaseGetCollecion(
+        `groups/${groupId}/seasons/2024/players/${playerId}/matches`
+      );
+
+      const fixtures = Object.entries(fixturesData).map(([id, fixture]) => ({
+        id,
+        ...fixture,
+      }));
+      dispatch(
+        fetchAllMatchRatingsForPlayerAction({
+          playerId: playerId,
+          matchesData: fixtures,
+        })
+      );
+    } catch (error) {
+      console.error("Error getting fixtures:", error);
+    }
+  };
+
+export const fetchAllPlayersSeasonOverallRating =
+  (groupId) => async (dispatch) => {
+    dispatch(fetchPlayerOverallSeasonRatingsStart());
+    const auth = getAuth();
+
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("User is not authenticated");
       return;
     }
+
+    try {
+      const playerRatings = await firebaseGetCollecion(
+        `groups/${groupId}/seasons/2024/players`
+      );
+
+      dispatch(
+        fetchAllPlayersSeasonOverallRatingAction({ players: playerRatings })
+      );
+    } catch (error) {
+      console.log(error);
+      dispatch(fetchRatingsFailure());
+    }
+  };
+
+export const fetchMatchPlayerRatings =
+  ({ matchId, groupId }) =>
+  async (dispatch) => {
+    if (!matchId) {
+      return;
+    }
+
     const auth = getAuth();
     const user = auth.currentUser;
 
@@ -78,99 +139,48 @@ export const fetchPlayerRatingsAllMatches = (playerId) => async (dispatch) => {
       return;
     }
 
-    const fixturesData = await firebaseGetCollecion(
-      `groups/001/seasons/2024/players/${playerId}/matches`
-    );
+    try {
+      dispatch(fetchRatingsStart()); // Start loading
 
-    const fixtures = Object.entries(fixturesData).map(([id, fixture]) => ({
-      id,
-      ...fixture,
-    }));
-    dispatch(
-      fetchAllMatchRatingsForPlayerAction({
-        playerId: playerId,
-        matchesData: fixtures,
-      })
-    );
-  } catch (error) {
-    console.error("Error getting fixtures:", error);
-  }
-};
-export const fetchAllPlayersSeasonOverallRating = () => async (dispatch) => {
-  dispatch(fetchPlayerOverallSeasonRatingsStart());
-  const auth = getAuth();
-  const user = auth.currentUser;
+      const playerRatings = await firebaseGetCollecion(
+        `groups/${groupId}/seasons/2024/playerRatings/${matchId}/players`
+      );
 
-  if (!user) {
-    console.error("User is not authenticated");
-    return;
-  }
+      const matchMotmVotes = await firebaseGetDocument(
+        `groups/${groupId}/seasons/2024/playerRatings`,
+        matchId
+      );
 
-  try {
-    const playerRatings = await firebaseGetCollecion(
-      `groups/001/seasons/2024/players`
-    );
+      dispatch(
+        fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
+      );
+      dispatch(
+        matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes })
+      );
+      dispatch(fetchRatingsSuccess()); // End loading
+    } catch (error) {
+      dispatch(fetchRatingsFailure()); // End loading
 
-    dispatch(
-      fetchAllPlayersSeasonOverallRatingAction({ players: playerRatings })
-    );
-  } catch (error) {
-    console.log(error);
-    dispatch(fetchRatingsFailure());
-  }
-};
+      console.log(error);
+    }
+  };
 
-export const fetchMatchPlayerRatings = (matchId) => async (dispatch) => {
-  if (!matchId) {
-    return;
-  }
+export const fetchUsersMatchData =
+  ({ matchId, groupId }) =>
+  async (dispatch) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    console.error("User is not authenticated");
-    return;
-  }
-
-  try {
-    dispatch(fetchRatingsStart()); // Start loading
-
-    const playerRatings = await firebaseGetCollecion(
-      `groups/001/seasons/2024/playerRatings/${matchId}/players`
-    );
-
-    const matchMotmVotes = await firebaseGetDocument(
-      `groups/001/seasons/2024/playerRatings`,
-      matchId
-    );
-
-    dispatch(
-      fetchMatchPlayerRatingsAction({ matchId: matchId, data: playerRatings })
-    );
-    dispatch(matchMotmVotesAction({ matchId: matchId, data: matchMotmVotes }));
-    dispatch(fetchRatingsSuccess()); // End loading
-  } catch (error) {
-    dispatch(fetchRatingsFailure()); // End loading
-
-    console.log(error);
-  }
-};
-
-export const fetchUsersMatchData = (matchId) => async (dispatch) => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  try {
-    const matchData = await firebaseGetDocument(
-      `users/${user.uid}/groups/001/seasons/2024/matches`,
-      matchId
-    );
-    dispatch(fetchUserMatchData({ matchId: matchId, data: matchData }));
-  } catch (err) {
-    console.log(err);
-  }
-};
+    try {
+      const matchData = await firebaseGetDocument(
+        `users/${user.uid}/groups/${groupId}/seasons/2024/matches`,
+        matchId
+      );
+      dispatch(fetchUserMatchData({ matchId: matchId, data: matchData }));
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
 export const fetchTeamSquad = (squadId) => async (dispatch) => {
   if (!squadId) {
@@ -216,46 +226,48 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
   }
 };
 
-export const fetchMatchPredictions = (matchId) => async (dispatch) => {
-  if (!matchId) {
-    return;
-  }
-
-  // Check if the user is authenticated
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    console.error("User is not authenticated");
-    return;
-  }
-
-  try {
-    dispatch(fetchPredictionsStart());
-
-    // Proceed with the Firestore call since the user is authenticated
-    const matchPredictions = await firebaseGetDocument(
-      `groups/001/seasons/2024/predictions`,
-      matchId
-    );
-
-    if (!matchPredictions) {
+export const fetchMatchPredictions =
+  ({ matchId, groupId }) =>
+  async (dispatch) => {
+    if (!matchId) {
       return;
     }
 
-    dispatch(
-      fetchMatchPrediction({
-        matchId: matchPredictions.id,
-        data: matchPredictions,
-      })
-    );
-    dispatch(fetchPredictionsSuccess());
-  } catch (error) {
-    dispatch(fetchPredictionsFailure());
+    // Check if the user is authenticated
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-    console.error("Error getting fixtures:", error);
-  }
-};
+    if (!user) {
+      console.error("User is not authenticated");
+      return;
+    }
+
+    try {
+      dispatch(fetchPredictionsStart());
+
+      // Proceed with the Firestore call since the user is authenticated
+      const matchPredictions = await firebaseGetDocument(
+        `groups/${groupId}/seasons/2024/predictions`,
+        matchId
+      );
+
+      if (!matchPredictions) {
+        return;
+      }
+
+      dispatch(
+        fetchMatchPrediction({
+          matchId: matchPredictions.id,
+          data: matchPredictions,
+        })
+      );
+      dispatch(fetchPredictionsSuccess());
+    } catch (error) {
+      dispatch(fetchPredictionsFailure());
+
+      console.error("Error getting fixtures:", error);
+    }
+  };
 
 // const findLatestFixture = (fixtures, now) => {
 //   const recentPastThreshold = 12 * 60 * 60 * 1000; // 12 hours in milliseconds

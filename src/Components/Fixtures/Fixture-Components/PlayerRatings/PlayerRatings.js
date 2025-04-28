@@ -113,8 +113,15 @@ export default function PlayerRatings({ fixture }) {
     });
 
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
-    dispatch(fetchMatchPlayerRatings(fixture.id));
-    dispatch(fetchUsersMatchData(fixture.id));
+    dispatch(
+      fetchMatchPlayerRatings({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+      })
+    );
+    dispatch(
+      fetchUsersMatchData({ matchId: fixture.id, groupId: activeGroup.groupId })
+    );
   };
 
   return fixture?.fixture?.status?.elapsed > 80 ? (

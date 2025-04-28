@@ -60,7 +60,12 @@ export default function PreMatchMOTM({ fixture }) {
       userId: user.uid,
     });
 
-    dispatch(fetchMatchPredictions(fixture.id));
+    dispatch(
+      fetchMatchPredictions({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+      })
+    );
   };
   const result = calculatePercentages(
     matchPredictions.preMatchMotm,

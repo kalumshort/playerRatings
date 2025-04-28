@@ -59,7 +59,12 @@ export default function DroppablePitch({
       groupId: activeGroup.groupId,
       userId: user.uid,
     });
-    dispatch(fetchMatchPredictions(fixture.id));
+    dispatch(
+      fetchMatchPredictions({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+      })
+    );
   };
 
   return (
