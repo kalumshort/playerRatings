@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
 * {
-  font-family: "Inter", sans-serif !important;
+  font-family: "Quicksand", sans-serif;
 }
 body {
   margin: 0;
-  font-family: "Inter, sans-serif" !important;
+  font-family: "Quicksand", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease; /* Smooth background and text color transition */
