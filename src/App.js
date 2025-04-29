@@ -94,57 +94,52 @@ function App() {
   }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
 
   if (userLoading) {
-    return <Spinner />; // Replace with your loading component
+    return <Spinner />;
   }
-
-  if (user) {
-    if (!userDataLoaded) {
-      return <Spinner />;
-    }
-    if (!fixturesLoaded || !squadLoaded) {
-      return <Spinner />;
-    }
-  }
-
-  if (squadError || fixturesError || userDataError) {
-    return (
-      <div>
-        Error: Please refresh, If error still exists please contact support.{" "}
-      </div>
-    );
-  }
-
   return (
     <GlobalContainer>
       <Router>
         {user && <UserDataListener userId={user.uid} />}
-        {!isMobile && <Header />}
-        {isMobile && <MobileHeader />}
-        <div style={{ maxWidth: "1400px", margin: "auto" }}>
-          <Routes>
-            <Route
-              path="/"
-              element={user ? <FixturesContainer /> : <HomePage />}
-            />
-            <Route path="/profile" element={<ProfileContainer />} />
-            <Route
-              path="/season-stats"
-              element={user ? <PlayerStatsContainer /> : <ProfileContainer />}
-            />
-            <Route
-              path="/schedule"
-              element={user ? <ScheduleContainer /> : <ProfileContainer />}
-            />
-            <Route
-              path="/fixture/:matchId"
-              element={user ? <Fixture /> : <ProfileContainer />}
-            />
-            <Route
-              path="/players/:playerId"
-              element={user ? <PlayerPage /> : <ProfileContainer />}
-            />
-          </Routes>
-        </div>
+
+        {(user && !userDataLoaded) ||
+        (user && !fixturesLoaded) ||
+        (user && !squadLoaded) ? (
+          <div style={{ textAlign: "center" }}>
+            <Spinner text={"Loading Data..."} />
+          </div>
+        ) : (
+          <>
+            {!isMobile && <Header />}
+            {isMobile && <MobileHeader />}
+            <div style={{ maxWidth: "1400px", margin: "auto" }}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={user ? <FixturesContainer /> : <HomePage />}
+                />
+                <Route path="/profile" element={<ProfileContainer />} />
+                <Route
+                  path="/season-stats"
+                  element={
+                    user ? <PlayerStatsContainer /> : <ProfileContainer />
+                  }
+                />
+                <Route
+                  path="/schedule"
+                  element={user ? <ScheduleContainer /> : <ProfileContainer />}
+                />
+                <Route
+                  path="/fixture/:matchId"
+                  element={user ? <Fixture /> : <ProfileContainer />}
+                />
+                <Route
+                  path="/players/:playerId"
+                  element={user ? <PlayerPage /> : <ProfileContainer />}
+                />
+              </Routes>
+            </div>
+          </>
+        )}
       </Router>
 
       <div style={{ height: "50px" }}></div>

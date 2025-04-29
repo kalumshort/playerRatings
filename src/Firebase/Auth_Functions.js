@@ -4,6 +4,8 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+
 import { auth, db } from "./Firebase";
 import {
   fetchUserDataFailure,
@@ -18,6 +20,8 @@ import {
 
 export const handleCreateAccount = async ({ email, password }) => {
   try {
+    // Call the Cloud Function to add the user to the group
+    const functions = getFunctions();
     // Create a new user with email and password
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -28,15 +32,18 @@ export const handleCreateAccount = async ({ email, password }) => {
     // Get the user ID (UID)
     const userId = userCredential.user.uid;
 
-    // Store important user information in Firestore
-    await setDoc(doc(db, "users", userId), {
-      email: email, // Store the user's email
-      createdAt: Timestamp.fromDate(new Date()), // Timestamp when the account was created
-      isActive: true, // Mark the user as active by default
-      lastLogin: Timestamp.fromDate(new Date()), // Timestamp for the first login (could be updated later)
-      role: "user", // Default role (you can change to 'admin' or other roles if needed)
-      groups: ["002"], //UnitedBetaGroup
-      activeGroup: "002",
+    const addUserToGroup = httpsCallable(functions, "addUserToGroup"); // Call your addUserToGroup function
+    const createUserDoc = httpsCallable(functions, "createUserDoc");
+
+    await createUserDoc({ userId, email });
+
+    await addUserToGroup({
+      groupId: "002", // The group to add the user to
+      userId: userId, // The user's UID
+      userData: {
+        email: email,
+        role: "user", // Optionally, you could pass more data like role, username, etc.
+      },
     });
   } catch (err) {
     console.error("Error creating account:", err);
@@ -70,17 +77,26 @@ export const handleCreateAccountGoogle = async () => {
 
       return; // You can handle the login logic here if needed
     } else {
-      await setDoc(userRef, {
-        email: email, // Store the user's email
-        displayName: displayName, // Store the user's display name
-        photoURL: photoURL, // Store the user's profile picture URL
-        providerId: providerId, // Store the provider id (Google)
-        createdAt: Timestamp.fromDate(new Date()), // Timestamp when the account was created
-        isActive: true, // Mark the user as active by default
-        lastLogin: Timestamp.fromDate(new Date()), // Timestamp for the first login (could be updated later)
-        role: "user", // Default role (you can change to 'admin' or other roles if needed)
-        groups: ["002"], //UnitedBetaGroup
-        activeGroup: "002",
+      // Call the Cloud Function to add the user to the group
+      const functions = getFunctions();
+      const addUserToGroup = httpsCallable(functions, "addUserToGroup"); // Call your addUserToGroup function
+      const createUserDoc = httpsCallable(functions, "createUserDoc");
+
+      await createUserDoc({
+        userId,
+        email,
+        displayName: displayName,
+        photoURL: photoURL,
+        providerId: providerId,
+      });
+
+      await addUserToGroup({
+        groupId: "002", // The group to add the user to
+        userId: userId, // The user's UID
+        userData: {
+          email: email,
+          role: "user", // Optionally, you could pass more data like role, username, etc.
+        },
       });
     }
   } catch (err) {

@@ -15,6 +15,7 @@ import {
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 
 // Load environment variables (Optional, but recommended)
 const firebaseConfig = {
@@ -47,7 +48,13 @@ export { auth };
 export const db = getFirestore(app);
 export const analytics = getAnalytics(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app); // Get Firebase Functions
 
+// Check if you're running locally (in development mode)
+if (window.location.hostname === "localhost") {
+  // Use the emulator for local development
+  connectFunctionsEmulator(functions, "localhost", 5001); // Adjust port if necessary
+}
 // Generates a unique key for new documents
 export const newDocKey = Date.now();
 
@@ -225,6 +232,7 @@ export const handlePredictTeamScore = async (data) => {
   });
 };
 export const handlePredictWinningTeam = async (data) => {
+  console.log(data);
   await firebaseSetDoc({
     path: `groups/${data.groupId}/seasons/2024/predictions`,
     docId: data.matchId,

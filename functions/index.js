@@ -10,21 +10,107 @@ const axios = require("axios");
 
 // The Firebase Admin SDK to access Firestore.
 const { initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const {
+  getFirestore,
+  FieldValue,
+  Timestamp,
+} = require("firebase-admin/firestore");
 const { fetchAllMatchData } = require("./helperFunctions");
+const { onCall, HttpsError } = require("firebase-functions/https");
 
 initializeApp();
 
-// Your Football API Key
-// const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
-// const BASE_URL = "https://v3.football.api-sports.io";
+exports.createUserDoc = onCall(async (request, context) => {
+  const { data } = request;
+  const { userId, email, displayName, photoURL, providerId } = data;
 
-// const headers = {
-//   "x-rapidapi-host": "v3.football.api-sports.io",
-//   "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-// };
+  if (!userId || !email) {
+    throw new HttpsError("invalid-argument", "Missing userId or email");
+  }
 
-// Fetch and Save Fixtures
+  try {
+    const db = getFirestore();
+    const userRef = db.collection("users").doc(userId);
+
+    await userRef.set({
+      email: email,
+      createdAt: Timestamp.now(),
+      isActive: true,
+      lastLogin: Timestamp.now(),
+      role: "user",
+      displayName: displayName || null, // Optional field
+      photoURL: photoURL || null, // Optional field
+      providerId: providerId || null, // Optional field
+    });
+
+    return {
+      success: true,
+      message: `User document for ${userId} created successfully.`,
+    };
+  } catch (error) {
+    console.error("Error creating user document:", error);
+    throw new HttpsError("internal", "Unable to create user document");
+  }
+});
+exports.addUserToGroup = onCall(async (request, context) => {
+  const { data } = request; // Now we can access the `data` object correctly
+
+  const { groupId, userId, userData } = data; // Destructure the data correctly
+
+  try {
+    const db = getFirestore(); // Use getFirestore to access Firestore
+    const groupRef = db
+      .collection("groupUsers")
+      .doc(groupId)
+      .collection("members")
+      .doc(userId);
+
+    // Add user data (could include username, email, etc.)
+    await groupRef.set(userData);
+    // Reference for the user data document
+    const userDocRef = db.collection("users").doc(userId);
+
+    // Update the user document to include the groupId in the groups array
+    await userDocRef.update({
+      groups: FieldValue.arrayUnion(groupId), // Add groupId to the array
+      activeGroup: groupId, // Set the activeGroup field
+    });
+
+    return {
+      success: true,
+      message: `User ${userId} added to group ${groupId} and updated user data`,
+    };
+  } catch (error) {
+    console.error("Error adding user to group: ", error);
+    throw new HttpsError("internal", "Unable to add user to group");
+  }
+});
+exports.removeUserFromGroup = onCall(async (request, context) => {
+  const { data } = request; // Accessing the data from the request
+
+  const { groupId, userId } = data; // Destructure groupId and userId from the data
+
+  try {
+    const db = getFirestore(); // Use getFirestore to access Firestore
+    const groupRef = db
+      .collection("groupUsers")
+      .doc(groupId)
+      .collection("members")
+      .doc(userId);
+
+    // Remove the user from the group by deleting their document
+    await groupRef.delete();
+
+    return {
+      success: true,
+      message: `User ${userId} removed from group ${groupId}`,
+    };
+  } catch (error) {
+    console.error("Error removing user from group: ", error);
+    throw new HttpsError("internal", "Unable to remove user from group");
+  }
+});
+
 exports.updateFixtures = onSchedule(
   {
     schedule: "every day 00:00",
@@ -157,6 +243,193 @@ exports.updateFixtures = onSchedule(
   }
 );
 
+exports.scheduledLatestTeamDataFetch = onSchedule(
+  "every 5 minutes",
+  async (event) => {
+    const now = Math.floor(Date.now() / 1000);
+
+    try {
+      // Query the next match
+      const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+      const nextFixture = await matchesRef
+        .where("matchDate", ">=", now)
+        .orderBy("matchDate", "asc")
+        .limit(1)
+        .get();
+
+      const lastFixture = await matchesRef
+        .where("matchDate", "<=", now)
+        .orderBy("matchDate", "desc")
+        .limit(1)
+        .get();
+
+      if (nextFixture.empty || lastFixture.empty) {
+        console.log("Fixture was empty");
+        return;
+      }
+
+      const nextFixtureData = nextFixture.docs[0].data();
+      const lastFixtureData = lastFixture.docs[0].data();
+
+      let latestFixture = null;
+
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+      if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
+        latestFixture = nextFixtureData;
+      } else {
+        latestFixture = lastFixtureData;
+      }
+
+      const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+      const latestFixtureId = latestFixture?.fixture?.id;
+
+      if (!latestFixtureId) {
+        console.error("Error: No latest Fixture Id");
+        return;
+      }
+
+      // Calculate the difference in seconds
+      const timeDifference = Math.abs(now - matchStartingTimestamp);
+
+      // Check if the difference is within 1 hour (3600 seconds)
+      if (timeDifference <= 3600) {
+        console.log("The timestamp is within an hour of the starting time.");
+        await fetchAllMatchData(latestFixtureId);
+      } else if (
+        latestFixture.fixture.status.long !== "Match Finished" &&
+        latestFixture.fixture.status.long !== "Not Started"
+      ) {
+        console.log("Match Inplay.");
+        await fetchAllMatchData(latestFixtureId);
+      } else {
+        console.log("Match is not within 1 hour and is not in play");
+      }
+
+      console.log("Successful");
+    } catch (error) {
+      console.error("Error fetching match data:", error);
+    }
+  }
+);
+
+// Your Football API Key
+// const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
+// const BASE_URL = "https://v3.football.api-sports.io";
+// exports.conversionFunction = onRequest(async (req, res) => {
+//   try {
+//     const sourcePath = "fixtures/2024/data";
+//     const destinationPath = "fixtures/2024/33";
+
+//     if (!sourcePath || !destinationPath) {
+//       return res.status(400).send("Missing source or destination path.");
+//     }
+
+//     const db = getFirestore();
+//     await copyCollection(db, sourcePath, destinationPath);
+
+//     res
+//       .status(200)
+//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
+//   } catch (error) {
+//     console.error("Error copying Firestore data:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// async function copyCollection(db, sourcePath, destinationPath) {
+//   const sourceCollection = await db.collection(sourcePath).get();
+
+//   for (const doc of sourceCollection.docs) {
+//     const newDocRef = db.collection(destinationPath).doc(doc.id);
+//     await newDocRef.set(doc.data());
+
+//     // Recursively copy subcollections
+//     const subcollections = await doc.ref.listCollections();
+//     for (const subcollection of subcollections) {
+//       await copyCollection(
+//         db,
+//         `${sourcePath}/${doc.id}/${subcollection.id}`,
+//         `${destinationPath}/${doc.id}/${subcollection.id}`
+//       );
+//     }
+//   }
+// }
+
+// exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
+//   const now = Math.floor(Date.now() / 1000);
+
+//   try {
+//     // Query the next match
+//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const nextFixture = await matchesRef
+//       .where("matchDate", ">=", now)
+//       .orderBy("matchDate", "asc")
+//       .limit(1)
+//       .get();
+
+//     const lastFixture = await matchesRef
+//       .where("matchDate", "<=", now)
+//       .orderBy("matchDate", "desc")
+//       .limit(1)
+//       .get();
+
+//     if (nextFixture.empty || lastFixture.empty) {
+//       console.log("Fixture was empty");
+//       return null;
+//     }
+
+//     const nextFixtureData = nextFixture.docs[0].data();
+//     const lastFixtureData = lastFixture.docs[0].data();
+
+//     let latestFixture = null;
+
+//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+//     if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
+//       latestFixture = nextFixtureData;
+//     } else {
+//       latestFixture = lastFixtureData;
+//     }
+
+//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+//     const latestFixtureId = latestFixture?.fixture?.id;
+
+//     if (!latestFixtureId) {
+//       return res.status(500).send(`Error: No latest Fixture Id`);
+//     }
+
+//     // Calculate the difference in seconds
+//     const timeDifference = Math.abs(now - matchStartingTimestamp);
+
+//     // Check if the difference is within 1 hour (3600 seconds)
+//     if (timeDifference <= 3600) {
+//       console.log("The timestamp is within an hour of the starting time.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else if (
+//       latestFixture.fixture.status.long !== "Match Finished" &&
+//       latestFixture.fixture.status.long !== "Not Started"
+//     ) {
+//       console.log("Match Inplay.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else {
+//       console.log("Match is not within 1 hour and is not in play");
+//     }
+
+//     res.status(200).send(`Sucessful`);
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     return res
+//       .status(500)
+//       .send(`Error fetching fixture data: ${error.message}`);
+//   }
+// });
+// const headers = {
+//   "x-rapidapi-host": "v3.football.api-sports.io",
+//   "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+// };
+
+// Fetch and Save Fixtures
 // exports.updateFixturesRequest = onRequest(async (req, res) => {
 //   try {
 //     const response = await axios.get(
@@ -285,183 +558,4 @@ exports.updateFixtures = onSchedule(
 //     }
 //   }
 //   res.status(200).send(`Successfull`);
-// });
-
-exports.scheduledLatestTeamDataFetch = onSchedule(
-  "every 5 minutes",
-  async (event) => {
-    const now = Math.floor(Date.now() / 1000);
-
-    try {
-      // Query the next match
-      const matchesRef = getFirestore().collection(`fixtures/2024/33`);
-      const nextFixture = await matchesRef
-        .where("matchDate", ">=", now)
-        .orderBy("matchDate", "asc")
-        .limit(1)
-        .get();
-
-      const lastFixture = await matchesRef
-        .where("matchDate", "<=", now)
-        .orderBy("matchDate", "desc")
-        .limit(1)
-        .get();
-
-      if (nextFixture.empty || lastFixture.empty) {
-        console.log("Fixture was empty");
-        return;
-      }
-
-      const nextFixtureData = nextFixture.docs[0].data();
-      const lastFixtureData = lastFixture.docs[0].data();
-
-      let latestFixture = null;
-
-      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-      if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
-        latestFixture = nextFixtureData;
-      } else {
-        latestFixture = lastFixtureData;
-      }
-
-      const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
-      const latestFixtureId = latestFixture?.fixture?.id;
-
-      if (!latestFixtureId) {
-        console.error("Error: No latest Fixture Id");
-        return;
-      }
-
-      // Calculate the difference in seconds
-      const timeDifference = Math.abs(now - matchStartingTimestamp);
-
-      // Check if the difference is within 1 hour (3600 seconds)
-      if (timeDifference <= 3600) {
-        console.log("The timestamp is within an hour of the starting time.");
-        await fetchAllMatchData(latestFixtureId);
-      } else if (
-        latestFixture.fixture.status.long !== "Match Finished" &&
-        latestFixture.fixture.status.long !== "Not Started"
-      ) {
-        console.log("Match Inplay.");
-        await fetchAllMatchData(latestFixtureId);
-      } else {
-        console.log("Match is not within 1 hour and is not in play");
-      }
-
-      console.log("Successful");
-    } catch (error) {
-      console.error("Error fetching match data:", error);
-    }
-  }
-);
-
-// exports.conversionFunction = onRequest(async (req, res) => {
-//   try {
-//     const sourcePath = "fixtures/2024/data";
-//     const destinationPath = "fixtures/2024/33";
-
-//     if (!sourcePath || !destinationPath) {
-//       return res.status(400).send("Missing source or destination path.");
-//     }
-
-//     const db = getFirestore();
-//     await copyCollection(db, sourcePath, destinationPath);
-
-//     res
-//       .status(200)
-//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
-//   } catch (error) {
-//     console.error("Error copying Firestore data:", error);
-//     res.status(500).send("Internal Server Error");
-//   }
-// });
-
-// async function copyCollection(db, sourcePath, destinationPath) {
-//   const sourceCollection = await db.collection(sourcePath).get();
-
-//   for (const doc of sourceCollection.docs) {
-//     const newDocRef = db.collection(destinationPath).doc(doc.id);
-//     await newDocRef.set(doc.data());
-
-//     // Recursively copy subcollections
-//     const subcollections = await doc.ref.listCollections();
-//     for (const subcollection of subcollections) {
-//       await copyCollection(
-//         db,
-//         `${sourcePath}/${doc.id}/${subcollection.id}`,
-//         `${destinationPath}/${doc.id}/${subcollection.id}`
-//       );
-//     }
-//   }
-// }
-
-// exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
-//   const now = Math.floor(Date.now() / 1000);
-
-//   try {
-//     // Query the next match
-//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
-//     const nextFixture = await matchesRef
-//       .where("matchDate", ">=", now)
-//       .orderBy("matchDate", "asc")
-//       .limit(1)
-//       .get();
-
-//     const lastFixture = await matchesRef
-//       .where("matchDate", "<=", now)
-//       .orderBy("matchDate", "desc")
-//       .limit(1)
-//       .get();
-
-//     if (nextFixture.empty || lastFixture.empty) {
-//       console.log("Fixture was empty");
-//       return null;
-//     }
-
-//     const nextFixtureData = nextFixture.docs[0].data();
-//     const lastFixtureData = lastFixture.docs[0].data();
-
-//     let latestFixture = null;
-
-//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-//     if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
-//       latestFixture = nextFixtureData;
-//     } else {
-//       latestFixture = lastFixtureData;
-//     }
-
-//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
-//     const latestFixtureId = latestFixture?.fixture?.id;
-
-//     if (!latestFixtureId) {
-//       return res.status(500).send(`Error: No latest Fixture Id`);
-//     }
-
-//     // Calculate the difference in seconds
-//     const timeDifference = Math.abs(now - matchStartingTimestamp);
-
-//     // Check if the difference is within 1 hour (3600 seconds)
-//     if (timeDifference <= 3600) {
-//       console.log("The timestamp is within an hour of the starting time.");
-//       await fetchAllMatchData(latestFixtureId);
-//     } else if (
-//       latestFixture.fixture.status.long !== "Match Finished" &&
-//       latestFixture.fixture.status.long !== "Not Started"
-//     ) {
-//       console.log("Match Inplay.");
-//       await fetchAllMatchData(latestFixtureId);
-//     } else {
-//       console.log("Match is not within 1 hour and is not in play");
-//     }
-
-//     res.status(200).send(`Sucessful`);
-//   } catch (error) {
-//     console.error("Error fetching match data:", error);
-//     return res
-//       .status(500)
-//       .send(`Error fetching fixture data: ${error.message}`);
-//   }
 // });

@@ -21,7 +21,7 @@ export default function Spinner({ text }) {
         alt="11Votes Logo"
         style={{ height: "50px", position: "absolute", bottom: "15px" }}
       />
-      {text && <p>{text}</p>}
+      {text && <p style={{ color: "white" }}>{text}</p>}
     </div>
   );
 }
