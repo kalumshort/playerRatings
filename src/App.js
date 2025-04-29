@@ -54,14 +54,12 @@ function App() {
   const isMobile = useIsMobile();
   const { user, userLoading } = useAuth();
 
-  const { squadLoaded, squadError } = useSelector(selectSquadLoad);
-  const { fixturesLoaded, fixturesError } = useSelector(selectFixturesLoad);
+  const { squadLoaded } = useSelector(selectSquadLoad);
+  const { fixturesLoaded } = useSelector(selectFixturesLoad);
 
   const { activeGroup, groupDataLoaded } = useGroupData();
 
-  const { error: userDataError, loaded: userDataLoaded } = useSelector(
-    (state) => state.userData
-  );
+  const { loaded: userDataLoaded } = useSelector((state) => state.userData);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
