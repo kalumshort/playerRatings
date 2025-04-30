@@ -6,7 +6,7 @@ import GoogleSignInButton from "./SignInMethods/GoogleSignInButton";
 
 const Login = () => {
   return (
-    <>
+    <div style={{ maxWidth: "550px", margin: "auto" }}>
       <Box>
         <AuthTabs />
       </Box>
@@ -18,7 +18,7 @@ const Login = () => {
       <Box>
         <GoogleSignInButton />
       </Box>
-    </>
+    </div>
   );
 };
 
