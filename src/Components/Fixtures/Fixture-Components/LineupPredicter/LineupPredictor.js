@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import DroppablePitch from "./DroppablePitch";
 import DraggableSquad from "./DraggableSquad";
@@ -7,6 +7,8 @@ import { useSelector } from "react-redux";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import LineupPlayer from "../LineupPlayer";
+import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
+// import html2canvas from "html2canvas";
 
 import { DndContext } from "@dnd-kit/core";
 import { Button } from "@mui/material";
@@ -136,9 +138,61 @@ export default function LineupPredictor({ fixture, readOnly }) {
 }
 
 function ChosenLineup({ squadData, UsersPredictedTeam }) {
+  const lineupRef = useRef(); // Create a reference to the content container
+
+  // const handleSaveImage = () => {
+  //   // Capture the content of the component using html2canvas
+  //   html2canvas(lineupRef.current, {
+  //     useCORS: true, // Ensure images from external sources are included
+  //     allowTaint: true, // Allow images with tainting (e.g., CORS issues)
+  //     logging: false, // Disable logging for a cleaner output
+  //     onclone: (document) => {
+  //       // Ensure images are loaded before capturing
+  //       const images = document.querySelectorAll("img");
+  //       images.forEach((img) => {
+  //         if (img.complete) {
+  //           return;
+  //         }
+  //         img.onload = img.onerror = () => {
+  //           // Ensure all images are loaded
+  //           html2canvas(lineupRef.current).then((canvas) => {
+  //             const imgData = canvas.toDataURL("image/png");
+  //             const link = document.createElement("a");
+  //             link.href = imgData;
+  //             link.download = "chosen-lineup.png"; // Set the file name
+  //             link.click(); // Programmatically trigger the download
+  //           });
+  //         };
+  //       });
+  //     },
+  //   }).then((canvas) => {
+  //     // Convert the canvas to an image (PNG format)
+  //     const imgData = canvas.toDataURL("image/png");
+
+  //     // Create a link element to trigger the download
+  //     const link = document.createElement("a");
+  //     link.href = imgData;
+  //     link.download = "chosen-lineup.png"; // Set the file name
+  //     link.click(); // Programmatically trigger the download
+  //   });
+  // };
   return (
-    <ContentContainer className="chosen-lineup animate__animated animate__flipInX">
-      <h1 className="smallHeading">Your Chosen Lineup </h1>
+    <ContentContainer
+      className="chosen-lineup animate__animated animate__flipInX"
+      ref={lineupRef}
+    >
+      <img
+        src={whiteLogo}
+        alt="11Votes Logo"
+        style={{
+          height: "100px",
+          position: "absolute",
+          top: "15px",
+          right: "15px",
+          opacity: "0.1",
+        }}
+      />
+      <h1 className="smallHeading">Your Chosen Lineup</h1>
       {UsersPredictedTeam && (
         <div className="userPredictedTeamContainer">
           {[
@@ -164,6 +218,8 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
           ))}
         </div>
       )}
+      {/* <button onClick={handleSaveImage}>Save as Image</button>{" "} */}
+      {/* Button to save as image */}
     </ContentContainer>
   );
 }
