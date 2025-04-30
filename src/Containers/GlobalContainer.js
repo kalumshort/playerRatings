@@ -7,7 +7,7 @@ export const GlobalContainer = styled("div")(({ theme }) => ({
   minHeight: "100vh",
   [theme.breakpoints.up("md")]: {
     // Apply marginTop only on large screens
-    marginTop: "90px",
+    paddingTop: "90px",
   },
 }));
 

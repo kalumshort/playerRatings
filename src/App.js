@@ -139,7 +139,6 @@ function App() {
           </>
         )}
       </Router>
-
       <div style={{ height: "50px" }}></div>
     </GlobalContainer>
   );

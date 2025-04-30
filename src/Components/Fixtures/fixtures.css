@@ -121,6 +121,9 @@
   flex-direction: row;
   gap: 20px;
 }
+.prev-upcom-container > * {
+  flex: 1; /* Distribute available space equally between the children */
+}
 .fixturesListContainer {
   flex: 1 1 50%;
   justify-content: center;
@@ -364,19 +367,7 @@
 .slider-marks-top .MuiSlider-mark {
   top: 50%;
 }
-.PlayerRatingImg {
-  object-fit: cover;
-  /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */
-  position: absolute; /* Or relative if needed */
-  top: 0px;
-  left: -30px;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  opacity: 0.3; /* Make it look like an overlay */
-  z-index: 0; /* Sit behind content */
-}
+
 .PlayerRatingInner {
   display: flex;
   flex-direction: column;
@@ -503,20 +494,33 @@
   border-radius: 5px;
   margin: 10px 10px -5px 10px;
 }
+.pkopredictions-container > * {
+  margin: 10px;
+}
 
 @media (min-width: 1024px) {
+  .PlayerRatingImg {
+    object-fit: contain;
+    /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */
+    position: absolute; /* Or relative if needed */
+    top: 0px;
+    left: 0px;
+    width: 15%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3; /* Make it look like an overlay */
+    z-index: 0; /* Sit behind content */
+  }
   .pkopredictions-container {
     display: flex;
     gap: 0px;
     align-items: flex-start;
+    width: 100%;
   }
   .scorePredictionResultsContainer {
     width: 33.33% !important;
     height: 120px;
-  }
-
-  .chosen-lineup-container {
-    width: 66.66% !important;
   }
 }
 @media (max-width: 1024px) {
@@ -615,6 +619,18 @@
   }
   .PlayerRatingName {
     font-size: 22px;
+  }
+  .PlayerRatingImg {
+    object-fit: cover;
+    /* background: linear-gradient(to bottom right, #4e73df, #9b59b6); */
+    position: absolute; /* Or relative if needed */
+    top: 0px;
+    left: -20px;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3; /* Make it look like an overlay */
+    z-index: 0; /* Sit behind content */
   }
 }
 
