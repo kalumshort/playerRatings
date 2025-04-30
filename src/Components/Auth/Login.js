@@ -10,7 +10,9 @@ const Login = () => {
       <Box>
         <AuthTabs />
       </Box>
-      <h3 style={{ padding: "0", margin: "0", fontSize: "12px" }}>
+      <h3
+        style={{ padding: "0", margin: "20px 0px 0px 0px", fontSize: "12px" }}
+      >
         Other Sign-in options
       </h3>
       <Box>

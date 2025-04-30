@@ -26,7 +26,7 @@ const GoogleSignInButton = () => {
           backgroundColor: "#4285F4",
           color: "white",
           borderRadius: "8px",
-          padding: "10px 20px",
+          padding: "20px 30px",
           textTransform: "none",
         }}
         fullWidth
