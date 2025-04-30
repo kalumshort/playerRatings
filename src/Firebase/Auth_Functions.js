@@ -135,12 +135,19 @@ export const fetchUserData = (userId) => async (dispatch) => {
 
             if (groupDoc.exists()) {
               groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
+            } else {
+              // This will log if the group doesn't exist
+              console.error(
+                `Group ${groupId} does not exist or the user does not have permission to access it.`
+              );
             }
           }
 
           dispatch(groupDataSuccess(groupObj));
         }
       } catch (err) {
+        // This will show the exact error message
+        console.error("Error fetching group data:", err.message);
         dispatch(groupDataFailure(err.message));
       }
     } else {

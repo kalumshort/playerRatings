@@ -51,10 +51,10 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app); // Get Firebase Functions
 
 // Check if you're running locally (in development mode)
-if (window.location.hostname === "localhost") {
-  // Use the emulator for local development
-  connectFunctionsEmulator(functions, "localhost", 5001); // Adjust port if necessary
-}
+// if (window.location.hostname === "localhost") {
+//   // Use the emulator for local development
+//   connectFunctionsEmulator(functions, "localhost", 5001); // Adjust port if necessary
+// }
 // Generates a unique key for new documents
 export const newDocKey = Date.now();
 
@@ -195,7 +195,7 @@ export const handlePredictTeamSubmit = async ({
     data: players,
   });
   await firebaseSetDoc({
-    path: `groups/001/seasons/2024/predictions`,
+    path: `groups//${groupId}/seasons/2024/predictions`,
     docId: matchId,
     data: { totalTeamSubmits: increment(1) },
   });
