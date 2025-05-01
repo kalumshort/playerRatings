@@ -41,6 +41,7 @@ export default function AllPlayerStats() {
       playerImg: squadData[playerId]?.photo || "Unknown Player",
       playerAverageRating: stats.totalRating / stats.totalSubmits,
     }))
+    .filter((player) => player.playerId !== "4720") // exclude player with ID 4720
     .sort((a, b) =>
       sort === "asc"
         ? a.playerAverageRating - b.playerAverageRating
