@@ -20,9 +20,8 @@ export default function LineupPlayer({
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
-      event.type === "Goal" &&
-      event.player?.id === player.id &&
-      event.detail !== "Penalty"
+      (event.type === "Goal" || event.detail === "Penalty") &&
+      event.player?.id === player.id
   );
 
   // Filter: Assists for goals by the player
@@ -46,23 +45,27 @@ export default function LineupPlayer({
     (card) => card.detail === "Yellow Card"
   ).length;
   const redCards = cards?.filter((card) => card.detail === "Red Card").length;
-
   let cardIcon = null;
+  let cardClassName = "";
+
   if (yellowCards === 2 && redCards === 1) {
     cardIcon =
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
+    cardClassName = "yellow-red-card"; // Example class name
   } else if (yellowCards === 1 && redCards === 0) {
     cardIcon =
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
+    cardClassName = "yellow-card"; // Example class name
   } else if (redCards === 1) {
     cardIcon =
       "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
+    cardClassName = "red-card"; // Example class name
   }
 
   return player ? (
     <div
       key={player.id}
-      className={`player ${className}`}
+      className={`player ${className} ${cardClassName}`}
       style={{ order: player?.grid?.split(":")[1] }}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -98,14 +101,14 @@ export default function LineupPlayer({
                   : "https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
               }
               alt="Goal Icon"
-              width={25}
-              height={25}
+              width={18}
+              height={18}
               style={{ margin: "0px -1px" }}
             />
           </Tooltip>
         ))}
       </span>
-      <span className="lineup-player-cards">
+      {/* <span className="lineup-player-cards">
         {cards?.length > 0 && (
           <Tooltip
             title={cards
@@ -126,7 +129,7 @@ export default function LineupPlayer({
             />
           </Tooltip>
         )}
-      </span>
+      </span> */}
       <span className="lineup-player-substitution">
         {substitution && (
           <Tooltip
@@ -137,6 +140,7 @@ export default function LineupPlayer({
               src="https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/sub-w.svg"
               height={20}
               alt={player.name}
+              style={{ cursor: "pointer" }} // Optional, to indicate it's interactive
             />
           </Tooltip>
         )}

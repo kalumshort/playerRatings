@@ -45,6 +45,7 @@
   overflow: visible;
   height: 120px;
   box-sizing: border-box;
+  border: 1px #282828 solid;
 }
 .player-substitute {
   width: 75px;
@@ -63,16 +64,18 @@
   width: 100%; /* Make sure it fills the container */
   height: 100%; /* Take up full height of the container */
   object-fit: cover; /* Ensures the image covers the container, cropping excess */
+  z-index: 2;
 }
 .lineup-player-name {
   position: absolute;
   bottom: 0px !important;
   background-color: #282828;
   font-size: 15px;
-  width: 100%;
+  width: 90%;
   padding: 5px 0px;
   opacity: 0.9;
   border-radius: 8px;
+  z-index: 3;
 }
 .lineup-player-number {
   position: absolute;
@@ -80,7 +83,20 @@
   top: 10px;
   font-size: 20px;
   font-weight: 300;
-  color: grey;
+  color: rgb(150, 150, 150);
+  opacity: 0.6;
+}
+
+.yellow-card {
+  border: 1px solid #ffcc00a5; /* Yellow border */
+}
+
+.red-card {
+  border: 1px solid #ff000085; /* Red border */
+}
+
+.yellow-red-card {
+  border: 1px solid #ff000085; /* Red border */
 }
 .subs-container {
   display: flex;
@@ -89,9 +105,13 @@
 }
 .lineup-player-goals {
   position: absolute;
-  top: -15px;
-  right: 0px;
-  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  top: 5px;
+  left: 5px;
+  opacity: 0.5;
+  z-index: 1;
+  font-size: 15px;
 }
 .lineup-player-cards {
   position: absolute;
@@ -103,6 +123,7 @@
   position: absolute;
   top: 40%;
   right: -5px;
+  opacity: 0.5;
 }
 .player-lineup-delete {
   position: absolute;
