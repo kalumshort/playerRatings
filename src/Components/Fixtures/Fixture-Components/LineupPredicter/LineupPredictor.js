@@ -223,6 +223,7 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
 
 export function CommunityTeamStats({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
+
   const squadData = useSelector(selectSquadDataObject);
 
   const percentagesArray = matchPredictions?.totalPlayersSubmits

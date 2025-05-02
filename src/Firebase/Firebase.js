@@ -190,28 +190,34 @@ export const handlePredictTeamSubmit = async ({
   groupId,
   userId,
 }) => {
-  await firebaseAddDoc({
-    path: `groups/${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
-    data: players,
-  });
-  await firebaseSetDoc({
-    path: `groups//${groupId}/seasons/2024/predictions`,
-    docId: matchId,
-    data: { totalTeamSubmits: increment(1) },
-  });
+  // await firebaseAddDoc({
+  //   path: `groups/${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
+  //   data: players,
+  // });
+  // await firebaseSetDoc({
+  //   path: `groups//${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
+  //   docId: matchId,
+  //   data: { totalTeamSubmits: increment(1) },
+  // });
 
   for (const [key, player] of Object.entries(players)) {
-    console.log(key);
     await firebaseSetDoc({
       path: `groups/${groupId}/seasons/2024/predictions`,
       docId: matchId,
       data: { totalPlayersSubmits: { [player.id]: increment(1) } },
     });
   }
+
+  await firebaseSetDoc({
+    path: `groups/${groupId}/seasons/2024/predictions`,
+    docId: matchId,
+    data: { totalTeamSubmits: increment(1) },
+  });
+
   await firebaseUpdateOrSetDoc({
     path: `users/${userId}/groups/${groupId}/seasons/2024/matches`,
     docId: matchId,
-    data: { teamPrecition: players },
+    data: { teamPrediction: players },
   });
 };
 
