@@ -177,10 +177,7 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
   //   });
   // };
   return (
-    <ContentContainer
-      className="chosen-lineup animate__animated animate__flipInX"
-      ref={lineupRef}
-    >
+    <ContentContainer className="chosen-lineup " ref={lineupRef}>
       <img
         src={whiteLogo}
         alt="11Votes Logo"

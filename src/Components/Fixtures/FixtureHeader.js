@@ -59,7 +59,7 @@ export default function FixtureHeader({
 
   return (
     <>
-      <ContentContainer className="fixture-header-outer containerMargin animate__animated animate__flipInX">
+      <ContentContainer className="fixture-header-outer containerMargin">
         <div
           style={{
             background: fixtureGradient,
