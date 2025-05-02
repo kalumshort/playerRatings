@@ -45,20 +45,20 @@ export default function LineupPlayer({
     (card) => card.detail === "Yellow Card"
   ).length;
   const redCards = cards?.filter((card) => card.detail === "Red Card").length;
-  let cardIcon = null;
+  // let cardIcon = null;
   let cardClassName = "";
 
   if (yellowCards === 2 && redCards === 1) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
+    // cardIcon =
+    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
     cardClassName = "yellow-red-card"; // Example class name
   } else if (yellowCards === 1 && redCards === 0) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
+    // cardIcon =
+    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
     cardClassName = "yellow-card"; // Example class name
   } else if (redCards === 1) {
-    cardIcon =
-      "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
+    // cardIcon =
+    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
     cardClassName = "red-card"; // Example class name
   }
 
