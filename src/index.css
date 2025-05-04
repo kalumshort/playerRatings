@@ -208,29 +208,7 @@ button {
 }
 
 .result-scoreboard-pending {
-  background: radial-gradient(
-    circle,
-    #ffb56b 20%,
-    transparent 60%
-  ); /* Orange gradient around edges */
   font-weight: bold;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.result-scoreboard-other {
-  background: radial-gradient(
-    circle,
-    #6bbfff 20%,
-    transparent 60%
-  ); /* Blue gradient around edges */
-  font-weight: bold;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .textShadow {
