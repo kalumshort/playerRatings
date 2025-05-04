@@ -52,7 +52,7 @@ export default function PlayerPage() {
     allPlayerRatings?.seasonOverall?.totalSubmits;
 
   return (
-    <>
+    <div className="PlayerPageContainer">
       <Paper className="PlayerPageHeader">
         <img
           src={playerData?.photo}
@@ -101,7 +101,7 @@ export default function PlayerPage() {
           </Paper>
         </>
       )}
-    </>
+    </div>
   );
 }
 

@@ -1,3 +1,8 @@
+.PlayerPageContainer {
+  max-width: 600px;
+  margin: auto;
+}
+
 .PlayerStatsContainer {
   max-width: 400px;
   margin: auto;
