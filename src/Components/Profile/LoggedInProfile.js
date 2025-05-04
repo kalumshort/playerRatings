@@ -182,6 +182,13 @@ export default function LoggedInProfile() {
             Join
           </Button>
         </SettingRow>
+        <SettingRow>
+          <Box>Create Group </Box>
+
+          <Button variant="text" color="primary" disabled>
+            Coming Soon
+          </Button>
+        </SettingRow>
       </Paper>
       <div className="containerMargin" style={{ padding: "15px" }}>
         <SettingRow>
