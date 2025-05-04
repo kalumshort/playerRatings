@@ -55,7 +55,7 @@ export default function AllPlayerStats() {
     navigate(`/players/${playerId}`);
   };
   return (
-    <div>
+    <div className="PlayerStatsContainer">
       {/* <h2 className="globalHeading">Players Average Rating</h2> */}
       <div className="PlayerStatsButtonContainer">
         <Select
@@ -100,6 +100,10 @@ export default function AllPlayerStats() {
                   alt={playerName}
                 />
                 <h2 className="globalHeading">{playerName}</h2>
+                <ArrowForwardIcon
+                  className="PlayerStatsListItemArrow"
+                  fontSize="small"
+                />
               </div>
               <div
                 className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
@@ -110,10 +114,6 @@ export default function AllPlayerStats() {
                   {playerAverageRating.toFixed(1)}
                 </h4>
               </div>
-              <ArrowForwardIcon
-                className="PlayerStatsListItemArrow"
-                fontSize="small"
-              />
             </Paper>
           )
         )}

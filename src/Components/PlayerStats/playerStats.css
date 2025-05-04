@@ -1,10 +1,29 @@
+.PlayerStatsContainer {
+  max-width: 400px;
+  margin: auto;
+  margin-top: 20px;
+}
+
 .PlayerStatsListItem {
   position: relative;
   cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  margin: 5px !important;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.PlayerStatsListImg {
+  width: 30px;
+  margin-right: 20px;
 }
 .PlayerStatsListItemMeta {
   display: flex;
   align-items: center;
+  position: relative;
 }
 .PlayerStatsListItemScore {
   padding: 0px;
@@ -38,9 +57,9 @@
 }
 .PlayerStatsListItemArrow {
   position: absolute;
-  bottom: 5px;
+
   right: 5px;
-  color: grey;
+  color: rgba(128, 128, 128, 0);
 }
 .PlayerStatsButtonContainer {
   display: flex;
@@ -130,17 +149,8 @@
   font-size: 12px;
 }
 @media (max-width: 450px) {
-  .PlayerStatsListItem {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 10px;
-    margin: 5px !important;
-    border-radius: 8px;
-    align-items: center;
-  }
   .PlayerStatsListImg {
-    width: 65px;
+    width: 30px;
   }
 }
 
