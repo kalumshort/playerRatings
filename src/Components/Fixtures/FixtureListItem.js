@@ -30,19 +30,19 @@ export default function FixtureListItem({
         </span>
 
         <span
-          className={`fixture-item-scoreboard textShadow ${
+          className={`fixture-item-scoreboard ${
             fixture.fixture.status.short === "NS" ||
             fixture.fixture.status.short === "TBD"
-              ? ""
+              ? "result-scoreboard-pending"
               : fixture.teams.home.id === groupClubId &&
                 fixture.teams.home.winner
-              ? "green"
+              ? "result-scoreboard-win"
               : fixture.teams.away.id === groupClubId &&
                 fixture.teams.away.winner
-              ? "green"
+              ? "result-scoreboard-win"
               : !fixture.teams.away.winner && !fixture.teams.home.winner
-              ? "grey"
-              : "red"
+              ? "result-scoreboard-draw"
+              : "result-scoreboard-loss"
           }`}
         >
           {fixture.goals.home} - {fixture.goals.away}

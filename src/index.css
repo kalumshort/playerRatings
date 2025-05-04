@@ -177,20 +177,60 @@ button {
   }
 }
 
-.red {
-  background-color: #ff6b6b;
+.result-scoreboard-win {
+  background: radial-gradient(
+    circle,
+    transparent 60%,
+    #6bff95 100%
+  ); /* Red gradient around edges */
+  font-weight: bold;
+  border: 1px solid #6bff95;
 }
-.orange {
-  background-color: #ffb56b;
+
+.result-scoreboard-loss {
+  background: radial-gradient(
+    circle,
+    transparent 60%,
+    #ff0101 100%
+  ); /* Red gradient around edges */
+  font-weight: bold;
+  border: solid 1px #ff0101;
 }
-.green {
-  background-color: #6bff95;
+
+.result-scoreboard-draw {
+  background: radial-gradient(
+    circle,
+    transparent 60%,
+    #b0b0b0 100%
+  ); /* Red gradient around edges */
+  font-weight: bold;
+  border: solid 1px #b0b0b0;
 }
-.blue {
-  background-color: #6bbfff;
+
+.result-scoreboard-pending {
+  background: radial-gradient(
+    circle,
+    #ffb56b 20%,
+    transparent 60%
+  ); /* Orange gradient around edges */
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.grey {
-  background-color: #b0b0b0;
+
+.result-scoreboard-other {
+  background: radial-gradient(
+    circle,
+    #6bbfff 20%,
+    transparent 60%
+  ); /* Blue gradient around edges */
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .textShadow {
