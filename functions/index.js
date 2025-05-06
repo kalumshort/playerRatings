@@ -16,7 +16,7 @@ const {
   Timestamp,
 } = require("firebase-admin/firestore");
 const { fetchAllMatchData } = require("./helperFunctions");
-const { onCall, HttpsError } = require("firebase-functions/https");
+const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 
 initializeApp();
 
@@ -355,6 +355,65 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //     }
 //   }
 // }
+
+// exports.tetttt = onRequest(async (req, res) => {
+//   try {
+//     const squadResponse = await axios.get(
+//       `https://v3.football.api-sports.io/players/squads`,
+//       {
+//         params: { team: 33 },
+//         headers: {
+//           "x-rapidapi-host": "v3.football.api-sports.io",
+//           "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+//         },
+//       }
+//     );
+
+//     const squadPlayers = squadResponse.data.response[0]?.players;
+
+//     const playerIds = squadPlayers.map((player) => player.id);
+
+//     // Fetch the existing teamSquads document from Firestore
+//     const teamSquadsDoc = await getFirestore()
+//       .collection("teamSquads")
+//       .doc("33")
+//       .get();
+
+//     // Get the existing seasonSquad if it exists, or initialize an empty array
+//     const existingSeasonSquad = teamSquadsDoc.exists
+//       ? teamSquadsDoc.data().seasonSquad || []
+//       : [];
+
+//     // Merge the new players with the existing seasonSquad (prevent duplicates)
+//     const updatedSeasonSquad = [
+//       ...existingSeasonSquad,
+//       ...squadPlayers.filter(
+//         (newPlayer) =>
+//           !existingSeasonSquad.some(
+//             (existingPlayer) => existingPlayer.id === newPlayer.id
+//           )
+//       ),
+//     ];
+
+//     // Save both squad and manager into teamSquads
+//     await getFirestore().collection("teamSquads").doc("33").set(
+//       {
+//         activeSquad: squadPlayers,
+//         playerIds: playerIds,
+//         seasonSquad: updatedSeasonSquad,
+//       },
+//       { merge: true }
+//     );
+
+//     logger.info(`Saved squad and manager for uniited`);
+//     res
+//       .status(200)
+//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
+//   } catch (error) {
+//     console.error("Error copying Firestore data:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
 
 // exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
 //   const now = Math.floor(Date.now() / 1000);

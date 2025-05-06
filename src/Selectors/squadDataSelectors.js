@@ -9,13 +9,15 @@ const getActiveTeamId = (state) => {
 // Selector for full squad array
 export const selectSquadData = (state) => {
   const teamId = getActiveTeamId(state);
+  console.log("Active Team ID:", teamId); // Debugging line
 
-  return state.teamSquads?.squads?.[teamId]?.activeSquad || [];
+  return state.teamSquads?.squads?.[teamId]?.activeSquad;
 };
 
 // Selector for squad as object keyed by player ID
 export const selectSquadDataObject = (state) => {
   const squad = selectSquadData(state);
+  console.log("Squad Data Object:", squad); // Debugging line
   return squad.reduce((acc, player) => {
     acc[player.id] = player;
     return acc;
