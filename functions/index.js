@@ -16,7 +16,7 @@ const {
   Timestamp,
 } = require("firebase-admin/firestore");
 const { fetchAllMatchData } = require("./helperFunctions");
-const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
+const { onCall, HttpsError } = require("firebase-functions/https");
 
 initializeApp();
 
@@ -124,15 +124,16 @@ exports.updateFixtures = onSchedule(
 
       // Step 1: Get all teams in the Premier League
       const teamsResponse = await axios.get(
-        `https://v3.football.api-sports.io/teams`,
+        `https://api-football-v1.p.rapidapi.com/v3/teams`,
         {
           params: {
             league: LEAGUE_ID,
             season: SEASON,
           },
           headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+            "x-rapidapi-key":
+              "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+            "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
           },
         }
       );
@@ -147,15 +148,16 @@ exports.updateFixtures = onSchedule(
 
         // Step 2: Fetch fixtures
         const fixturesResponse = await axios.get(
-          `https://v3.football.api-sports.io/fixtures`,
+          `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
           {
             params: {
               team: teamId,
               season: SEASON,
             },
             headers: {
-              "x-rapidapi-host": "v3.football.api-sports.io",
-              "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+              "x-rapidapi-key":
+                "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+              "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
             },
           }
         );
@@ -184,17 +186,18 @@ exports.updateFixtures = onSchedule(
 
         // Step 3: Fetch squad
         const squadResponse = await axios.get(
-          `https://v3.football.api-sports.io/players/squads`,
+          `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
           {
             params: { team: teamId },
             headers: {
-              "x-rapidapi-host": "v3.football.api-sports.io",
-              "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+              "x-rapidapi-key":
+                "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+              "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
             },
           }
         );
 
-        const squadPlayers = squadResponse.data.response[0]?.players || [];
+        const squadPlayers = squadResponse.data.response[0]?.players;
 
         const playerIds = squadPlayers.map((player) => player.id);
 
@@ -315,7 +318,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
 // Your Football API Key
 // const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
-// const BASE_URL = "https://v3.football.api-sports.io";
+// const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
 // exports.conversionFunction = onRequest(async (req, res) => {
 //   try {
 //     const sourcePath = "fixtures/2024/data";
@@ -359,13 +362,14 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 // exports.tetttt = onRequest(async (req, res) => {
 //   try {
 //     const squadResponse = await axios.get(
-//       `https://v3.football.api-sports.io/players/squads`,
+//       `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
 //       {
 //         params: { team: 33 },
 //         headers: {
-//           "x-rapidapi-host": "v3.football.api-sports.io",
-//           "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-//         },
+//   "x-rapidapi-key":
+//   "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+// "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+// },
 //       }
 //     );
 
@@ -492,7 +496,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 // exports.updateFixturesRequest = onRequest(async (req, res) => {
 //   try {
 //     const response = await axios.get(
-//       `https://v3.football.api-sports.io/fixtures`,
+//       `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
 //       {
 //         params: {
 //           team: 33, // Example: Manchester United team ID
@@ -544,7 +548,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //   for (const fixtureId of prevIds) {
 //     try {
 //       const response = await axios.get(
-//         `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
+//         `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
 //         {
 //           headers: {
 //             "x-rapidapi-host": "v3.football.api-sports.io",
