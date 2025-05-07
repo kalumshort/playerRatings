@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { selectSquadPlayerById } from "../../Selectors/squadDataSelectors";
 import { Paper } from "@mui/material";
 import {
@@ -119,44 +119,49 @@ const PlayerMatchitem = ({
   );
 
   return (
-    <div className="PlayerMatchItem">
-      <div className="PlayerMatchMeta">
-        <span>{matchTime}</span>
-        <span>{fixture.league.name}</span>
-      </div>
-      <div className="PlayerItemData">
-        <div className="PlayerItemOponentContainer">
-          <img
-            src={oponent.logo}
-            className="PlayerItemOponentLogo"
-            alt={`${oponent.name} logo`}
-          />
-          <div className="PlayerItemTeamScore">
-            <span>{oponent.name}</span>
-            <span>
-              {fixture.score.fulltime.home} - {fixture.score.fulltime.away}
-            </span>
-          </div>
+    <Link
+      to={`/fixture/${fixture.id}`}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <div className="PlayerMatchItem">
+        <div className="PlayerMatchMeta">
+          <span>{matchTime}</span>
+          <span>{fixture.league.name}</span>
         </div>
+        <div className="PlayerItemData">
+          <div className="PlayerItemOponentContainer">
+            <img
+              src={oponent.logo}
+              className="PlayerItemOponentLogo"
+              alt={`${oponent.name} logo`}
+            />
+            <div className="PlayerItemTeamScore">
+              <span>{oponent.name}</span>
+              <span>
+                {fixture.score.fulltime.home} - {fixture.score.fulltime.away}
+              </span>
+            </div>
+          </div>
 
-        {matchPlayerStats ? (
-          <div
-            className={`globalBoxShadow PlayerStatsListItemScoreContainerSmall ${getRatingClass(
-              matchPlayerStats.totalRating / matchPlayerStats.totalSubmits
-            )}`}
-          >
-            <h4 className="PlayerStatsListItemScore">
-              {(
+          {matchPlayerStats ? (
+            <div
+              className={`globalBoxShadow PlayerStatsListItemScoreContainerSmall ${getRatingClass(
                 matchPlayerStats.totalRating / matchPlayerStats.totalSubmits
-              ).toFixed(1)}
-            </h4>
-          </div>
-        ) : (
-          <div className={` PlayerStatsListItemScoreContainerSmall `}>
-            <h4 className="PlayerStatsListItemScore">-</h4>
-          </div>
-        )}
+              )}`}
+            >
+              <h4 className="PlayerStatsListItemScore">
+                {(
+                  matchPlayerStats.totalRating / matchPlayerStats.totalSubmits
+                ).toFixed(1)}
+              </h4>
+            </div>
+          ) : (
+            <div className={` PlayerStatsListItemScoreContainerSmall `}>
+              <h4 className="PlayerStatsListItemScore">-</h4>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
