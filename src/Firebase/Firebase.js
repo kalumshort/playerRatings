@@ -81,7 +81,6 @@ export const firebaseGetDocument = async (path, docId) => {
     if (docSnapshot.exists()) {
       return { id: docSnapshot.id, ...docSnapshot.data() };
     } else {
-      console.error(`No such document! ${path}/${docId}`);
       return null;
     }
   } catch (error) {
@@ -93,7 +92,6 @@ export const firebaseGetDocument = async (path, docId) => {
 export const firebaseAddDoc = async ({ path, data }) => {
   try {
     const docRef = await addDoc(collection(db, path), data);
-    console.log("Document written with ID: ", docRef.id);
   } catch (e) {
     console.error("Error adding document: ", e);
   }
