@@ -91,7 +91,7 @@ export const firebaseGetDocument = async (path, docId) => {
 
 export const firebaseAddDoc = async ({ path, data }) => {
   try {
-    const docRef = await addDoc(collection(db, path), data);
+    await addDoc(collection(db, path), data);
   } catch (e) {
     console.error("Error adding document: ", e);
   }
