@@ -22,7 +22,7 @@ export default function PlayerPage() {
   const playerData = useSelector(selectSquadPlayerById(playerId));
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
-
+  console.log(playerData);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
     useSelector(selectPlayerRatingsLoad);
 

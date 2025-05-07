@@ -187,6 +187,7 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     console.log("fetchTeamSquad with no squadId");
     return;
   }
+
   try {
     dispatch(fetchTeamSquadStart());
 
@@ -197,7 +198,7 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
       activeSquadIds.map(async (playerId) => {
         try {
           const playerDoc = await firebaseGetDocument(
-            "playerImages",
+            `playerImages/data/teams/${squadId}/players`,
             playerId.toString()
           );
 
@@ -207,6 +208,7 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
             );
             if (playerIndex !== -1) {
               teamSquadData.activeSquad[playerIndex].photo = playerDoc.img;
+              teamSquadData.activeSquad[playerIndex].name = playerDoc.name;
             }
           }
         } catch (error) {
