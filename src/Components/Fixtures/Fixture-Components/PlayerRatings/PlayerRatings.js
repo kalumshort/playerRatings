@@ -66,7 +66,7 @@ export default function PlayerRatings({ fixture }) {
 
   const substitutedPlayerIds = fixture?.events
     .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
-    .map((item) => item.player);
+    .map((item) => item.assist);
 
   const players = lineup.map(({ player }) => ({
     id: player.id,
@@ -195,16 +195,18 @@ const PlayerRatingsItems = ({
           usersMatchPlayerRatings={usersMatchPlayerRatings}
         />
       ))}
-      <PlayerRatingItem
-        player={coach}
-        fixture={fixture}
-        isMobile={isMobile}
-        matchRatings={matchRatings}
-        readOnly={readOnly}
-        groupId={groupId}
-        userId={userId}
-        usersMatchPlayerRatings={usersMatchPlayerRatings}
-      />
+      {coach.id && (
+        <PlayerRatingItem
+          player={coach}
+          fixture={fixture}
+          isMobile={isMobile}
+          matchRatings={matchRatings}
+          readOnly={readOnly}
+          groupId={groupId}
+          userId={userId}
+          usersMatchPlayerRatings={usersMatchPlayerRatings}
+        />
+      )}
       {!isMatchRatingsSubmitted && (
         <Button
           onClick={() => handleRatingsSubmit()}

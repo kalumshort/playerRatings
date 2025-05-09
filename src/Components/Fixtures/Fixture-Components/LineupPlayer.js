@@ -133,7 +133,7 @@ export default function LineupPlayer({
       <span className="lineup-player-substitution">
         {substitution && (
           <Tooltip
-            title={`Substituted in at ${substitution.time.elapsed}' from ${substitution.assist.name} to ${substitution.player.name}`}
+            title={`Substituted in at ${substitution.time.elapsed}' from ${substitution.player.name} to ${substitution.assist.name}`}
             placement="top"
           >
             <img

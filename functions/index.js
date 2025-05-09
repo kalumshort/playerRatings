@@ -372,6 +372,38 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //   }
 // });
 
+// exports.eventsFunction = onRequest(async (req, res) => {
+//   try {
+//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const snapshot = await matchesRef.get();
+
+//     if (snapshot.empty) {
+//       console.log("No documents found in collection.");
+//       res.status(404).send("No documents found.");
+//       return;
+//     }
+
+//     snapshot.forEach(async (doc) => {
+//       const fixtureData = doc.data();
+//       const latestFixtureId = fixtureData?.fixture?.id;
+
+//       if (!latestFixtureId) {
+//         console.error(`Error: No fixture id found for document ${doc.id}`);
+//         return;
+//       }
+
+//       await fetchAllMatchData(latestFixtureId);
+//       console.log(`Fetched data for fixture: ${latestFixtureId}`);
+//     });
+
+//     console.log("Successfully fetched all match data.");
+//     res.status(200).send("Successfully fetched all match data.");
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     res.status(500).send(`Error fetching match data: ${error.message}`);
+//   }
+// });
+
 // Your Football API Key
 // const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
 // const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
