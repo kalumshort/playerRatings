@@ -316,6 +316,62 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
   }
 );
 
+// exports.fetchLatestMatchStats = onRequest(async (req, res) => {
+//   try {
+//     const now = Math.floor(Date.now() / 1000);
+
+//     // Query the next match
+//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const nextFixture = await matchesRef
+//       .where("matchDate", ">=", now)
+//       .orderBy("matchDate", "asc")
+//       .limit(1)
+//       .get();
+
+//     const lastFixture = await matchesRef
+//       .where("matchDate", "<=", now)
+//       .orderBy("matchDate", "desc")
+//       .limit(1)
+//       .get();
+
+//     if (nextFixture.empty || lastFixture.empty) {
+//       console.log("Fixture was empty");
+//       res.status(404).send("No match found.");
+//       return;
+//     }
+
+//     const nextFixtureData = nextFixture.docs[0].data();
+//     const lastFixtureData = lastFixture.docs[0].data();
+
+//     let latestFixture = null;
+
+//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+//     if (lastFixtureData.matchDate.seconds * 1000 < twentyFourHoursAgo) {
+//       latestFixture = nextFixtureData;
+//     } else {
+//       latestFixture = lastFixtureData;
+//     }
+
+//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+//     const latestFixtureId = latestFixture?.fixture?.id;
+
+//     if (!latestFixtureId) {
+//       console.error("Error: No latest Fixture Id");
+//       res.status(500).send("Error fetching match data: No latest Fixture Id.");
+//       return;
+//     }
+
+//     await fetchAllMatchData(latestFixtureId);
+
+//     console.log("Successful");
+//     res.status(200).send("Successful");
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     res.status(500).send(`Error fetching match data: ${error.message}`);
+//   }
+// });
+
 // Your Football API Key
 // const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
 // const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";

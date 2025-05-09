@@ -5,11 +5,12 @@ const { getFirestore } = require("firebase-admin/firestore");
 const fetchFixtureData = async (fixtureId) => {
   try {
     const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`,
+      `https://api-football-v1.p.rapidapi.com/v3/fixtures?id=${fixtureId}`,
       {
         headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key
+          "x-rapidapi-key":
+            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -39,11 +40,12 @@ const fetchFixtureData = async (fixtureId) => {
 const fetchStatisticsData = async (fixtureId) => {
   try {
     const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`,
+      `https://api-football-v1.p.rapidapi.com/v3/fixtures/statistics?fixture=${fixtureId}`,
       {
         headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key
+          "x-rapidapi-key":
+            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -66,11 +68,12 @@ const fetchStatisticsData = async (fixtureId) => {
 const fetchEventsData = async (fixtureId) => {
   try {
     const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
+      `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
       {
         headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key
+          "x-rapidapi-key":
+            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -93,11 +96,12 @@ const fetchEventsData = async (fixtureId) => {
 const fetchLineupData = async (fixtureId) => {
   try {
     const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`,
+      `https://api-football-v1.p.rapidapi.com/v3/fixtures/lineups?fixture=${fixtureId}`,
       {
         headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key
+          "x-rapidapi-key":
+            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
