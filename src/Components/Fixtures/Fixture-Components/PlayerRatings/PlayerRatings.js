@@ -61,24 +61,44 @@ export default function PlayerRatings({ fixture }) {
 
   const lineup =
     fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
-
-  // const isPostMatch = fixture?.fixture?.status?.short === "FT";
-
+  // Get the substituted players who are not in the lineup already
+  // Get the substituted players who are not in the lineup already
   const substitutedPlayerIds = fixture?.events
-    .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
-    .map((item) => item.assist);
+    .filter(
+      (item) =>
+        item.type === "subst" && // Ensure it's a substitution event
+        item.team?.id === groupClubId // Check if the substitution is for the specified team
+    )
+    .map((item) => {
+      // If assist is not in the lineup, the assist player is the new player
+      const newPlayer =
+        item.assist &&
+        !lineup.some(
+          (lineupPlayer) => lineupPlayer.player.id === item.assist.id
+        )
+          ? item.assist // Player coming in is in assist
+          : item.player; // Otherwise, fallback to the player field (substituted player)
 
+      return {
+        id: newPlayer.id,
+        name: newPlayer.name,
+      };
+    });
+
+  // Get players from the lineup (existing players on the field)
   const players = lineup.map(({ player }) => ({
     id: player.id,
     name: player.name,
     grid: player.grid,
   }));
 
-  // Combine the two arrays
+  // Combine the players already in the lineup with the new substituted players
   const combinedPlayers = [
     ...players,
-    ...substitutedPlayerIds.map(({ id, name }) => ({ id, name })),
+    ...substitutedPlayerIds, // Add new substituted players
   ];
+
+  console.log(combinedPlayers); // To check the result
 
   const handleRatingsSubmit = async () => {
     const allPlayersRated = combinedPlayers.every(({ id }) => {
