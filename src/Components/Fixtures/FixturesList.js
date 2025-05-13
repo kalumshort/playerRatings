@@ -24,7 +24,7 @@ export default function FixturesList() {
     <div className="fixtures-container">
       <LatestFixtureItem />
       <ScheduleContainer
-        limitAroundLatest={isMobile ? 3 : 0}
+        limitAroundLatest={isMobile ? 2 : 0}
         showLink={isMobile ? true : false}
         scroll={isMobile ? false : true}
       />
