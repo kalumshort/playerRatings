@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-globals */
+
 // src/service-worker.js
 self.addEventListener("fetch", (event) => {
   event.respondWith(
