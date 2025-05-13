@@ -18,7 +18,6 @@ export default function ScorePrediction({ fixture }) {
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
-  console.log(usersMatchData);
 
   const [homeTeamScore, setHomeTeamScore] = useState(0);
   const [homeAwayScore, setAwayTeamScore] = useState(0);

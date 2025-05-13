@@ -5,11 +5,16 @@ import {
   selectLatestFixture,
 } from "../Selectors/fixturesSelectors";
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ContentContainer } from "./GlobalContainer";
 import { MenuItem, Select } from "@mui/material";
 
-export default function ScheduleContainer() {
+export default function ScheduleContainer({
+  limitAroundLatest = 0,
+  showLink,
+  scroll = true,
+}) {
+  // Default to no limit (0)
   const navigate = useNavigate();
 
   const allFixtures = useSelector(selectFixturesState).fixtures;
@@ -32,9 +37,29 @@ export default function ScheduleContainer() {
     ? allFixtures.filter((item) => item.league.name === selectedLeague)
     : allFixtures;
 
+  // Get fixtures around the latestFixture
+  const latestFixtureIndex = filteredFixures.findIndex(
+    (fixture) => fixture.id === latestFixture?.id
+  );
+
+  // Get fixtures to display: limit the number of fixtures around the latestFixture
+  const limitedFixtures = useMemo(() => {
+    if (limitAroundLatest === 0 || latestFixtureIndex === -1) {
+      return filteredFixures; // No limit, return all fixtures
+    }
+
+    const startIndex = Math.max(0, latestFixtureIndex - limitAroundLatest);
+    const endIndex = Math.min(
+      filteredFixures.length,
+      latestFixtureIndex + limitAroundLatest + 1
+    );
+
+    return filteredFixures.slice(startIndex, endIndex);
+  }, [filteredFixures, latestFixtureIndex, limitAroundLatest]);
+
   useEffect(() => {
     if (latestFixture) {
-      const index = [...filteredFixures]
+      const index = [...limitedFixtures]
         .reverse()
         .findIndex((fixture) => fixture.id === latestFixture.id);
 
@@ -44,38 +69,62 @@ export default function ScheduleContainer() {
         });
       }
     }
-  }, [latestFixture, filteredFixures]);
+  }, [latestFixture, limitedFixtures]);
+
   const handleFixtureClick = (matchId) => {
     navigate(`/fixture/${matchId}`);
   };
+
   return (
-    <>
+    <ContentContainer className="containerMargin">
       <div
-        className="containerMargin"
-        style={{ display: "flex", justifyContent: "space-between" }}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "10px 5px",
+        }}
       >
         <h2 className="globalHeading">Schedule</h2>
-        <Select
-          value={selectedLeague}
-          onChange={handleChange}
-          size="small"
-          variant="standard"
-          displayEmpty
-          renderValue={(selected) => (selected ? selected : "All")}
-        >
-          <MenuItem key="" value="">
-            All
-          </MenuItem>
-          {leagueOptions.map((league) => (
-            <MenuItem key={league} value={league}>
-              {league}
+        {!showLink && (
+          <Select
+            value={selectedLeague}
+            onChange={handleChange}
+            size="small"
+            variant="standard"
+            displayEmpty
+            renderValue={(selected) => (selected ? selected : "All")}
+          >
+            <MenuItem key="" value="">
+              All
             </MenuItem>
-          ))}
-        </Select>
+            {leagueOptions.map((league) => (
+              <MenuItem key={league} value={league}>
+                {league}
+              </MenuItem>
+            ))}
+          </Select>
+        )}
+        {showLink && (
+          <Link to="/schedule">
+            <p
+              style={{
+                fontSize: "14px",
+                padding: "0px",
+                margin: "0px",
+                color: "grey",
+                textDecoration: "underline",
+              }}
+            >
+              See All
+            </p>
+          </Link>
+        )}
       </div>
-      <ContentContainer className="containerMargin">
-        <div style={{ maxHeight: "70vh", overflowY: "scroll" }}>
-          {[...filteredFixures].reverse().map((fixture, index) => {
+      <div>
+        <div
+          style={{ maxHeight: "70vh", overflowY: scroll ? "scroll" : "none" }}
+        >
+          {[...limitedFixtures].reverse().map((fixture, index) => {
             const matchTime = new Date(
               fixture.fixture.timestamp * 1000
             ).toLocaleDateString("en-GB", {
@@ -98,7 +147,7 @@ export default function ScheduleContainer() {
             );
           })}
         </div>
-      </ContentContainer>
-    </>
+      </div>
+    </ContentContainer>
   );
 }

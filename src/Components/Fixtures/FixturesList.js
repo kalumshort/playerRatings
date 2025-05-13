@@ -2,11 +2,13 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchFixtures } from "../../Hooks/Fixtures_Hooks";
 import LatestFixtureItem from "./LatestFixtureItem";
-import UpcomingFixtures from "./UpcomingFixtures";
-import PreviousFixtures from "./PreviousFixtures";
+
+import ScheduleContainer from "../../Containers/ScheduleContainer";
+import { useIsMobile } from "../../Hooks/Helper_Functions";
 
 export default function FixturesList() {
   const { fixtures, loading, error } = useSelector((state) => state.fixtures);
+  const isMobile = useIsMobile();
 
   const dispatch = useDispatch();
 
@@ -21,10 +23,11 @@ export default function FixturesList() {
   return (
     <div className="fixtures-container">
       <LatestFixtureItem />
-      <div className="prev-upcom-container containerMargin">
-        <PreviousFixtures />
-        <UpcomingFixtures />
-      </div>
+      <ScheduleContainer
+        limitAroundLatest={isMobile ? 3 : 0}
+        showLink={isMobile ? true : false}
+        scroll={isMobile ? false : true}
+      />
     </div>
   );
 }
