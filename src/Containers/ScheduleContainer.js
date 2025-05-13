@@ -70,7 +70,7 @@ export default function ScheduleContainer({
         });
       }
     }
-  }, [latestFixture, limitedFixtures]);
+  }, [latestFixture, limitedFixtures, scrollOnLoad]);
 
   const handleFixtureClick = (matchId) => {
     navigate(`/fixture/${matchId}`);
