@@ -67,6 +67,7 @@
 .team-name {
   font-size: 20px;
   font-weight: bold;
+  padding: "5px";
 }
 .match-small-details {
   position: relative;
