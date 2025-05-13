@@ -160,7 +160,7 @@ export default function FixtureHeader({
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "10px",
+                  gap: "15px",
                 }}
               >
                 <img
