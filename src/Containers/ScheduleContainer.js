@@ -13,6 +13,7 @@ export default function ScheduleContainer({
   limitAroundLatest = 0,
   showLink,
   scroll = true,
+  scrollOnLoad = true,
 }) {
   // Default to no limit (0)
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function ScheduleContainer({
   }, [filteredFixures, latestFixtureIndex, limitAroundLatest]);
 
   useEffect(() => {
-    if (latestFixture) {
+    if (latestFixture && scrollOnLoad) {
       const index = [...limitedFixtures]
         .reverse()
         .findIndex((fixture) => fixture.id === latestFixture.id);
