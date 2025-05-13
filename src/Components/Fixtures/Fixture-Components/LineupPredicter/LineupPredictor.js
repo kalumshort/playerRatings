@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import DroppablePitch from "./DroppablePitch";
 import DraggableSquad from "./DraggableSquad";
-import { useLocalStorage } from "../../../../Hooks/Helper_Functions";
+
 import { useSelector } from "react-redux";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
@@ -12,13 +12,18 @@ import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
 
 import { DndContext } from "@dnd-kit/core";
 import { Button } from "@mui/material";
+import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 
 export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
+  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
-  const storedUsersPredictedTeam = JSON.parse(
-    useLocalStorage(`userPredictedTeam-${fixture.id}`)
-  );
+  const storedUsersPredictedTeam = Object.keys(
+    usersMatchData?.teamPrediction || {}
+  ).reduce((acc, key) => {
+    acc[key] = usersMatchData?.teamPrediction[key].id.toString();
+    return acc;
+  }, {});
 
   const [chosenTeam, setTeam] = useState({});
 

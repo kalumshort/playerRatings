@@ -17,7 +17,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
 
   const groupClubId = Number(activeGroup.groupClubId);
 
-  const [ratingSrc, setRatingSrc] = useState("Global");
+  const [ratingSrc, setRatingSrc] = useState("Group");
 
   const handleChange = (event) => {
     setRatingSrc(event.target.value);
@@ -52,8 +52,8 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
           variant="standard"
           style={{ position: "absolute", top: "5px", right: "5px", zIndex: 10 }}
         >
-          <MenuItem key="global" value="Global">
-            Global
+          <MenuItem key="global" value="Group">
+            Group
           </MenuItem>
           <MenuItem key="personal" value="Personal">
             Personal
@@ -77,7 +77,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
                     {rowPlayers.map((player) => {
                       // Ensure the player has a valid rating or fallback to an empty object
                       const playerRating =
-                        ratingSrc === "Global"
+                        ratingSrc === "Group"
                           ? matchRatings?.[player.id]?.totalRating &&
                             matchRatings?.[player.id]?.totalSubmits
                             ? matchRatings[player.id].totalRating /
@@ -109,7 +109,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
                 substitutedPlayerIds.length > 0 &&
                 substitutedPlayerIds.map((player) => {
                   const playerRating =
-                    ratingSrc === "Global"
+                    ratingSrc === "Group"
                       ? matchRatings?.[player.id]?.totalRating &&
                         matchRatings?.[player.id]?.totalSubmits
                         ? matchRatings[player.id].totalRating /

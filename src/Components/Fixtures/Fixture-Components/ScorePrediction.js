@@ -5,34 +5,27 @@ import IconButton from "@mui/material/IconButton";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { handlePredictTeamScore } from "../../../Firebase/Firebase";
-import {
-  setLocalStorageItem,
-  useLocalStorage,
-} from "../../../Hooks/Helper_Functions";
+
 import ScorePredictionResults from "./ScorePredictionResults";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
+import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
 
 export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
+  console.log(usersMatchData);
 
   const [homeTeamScore, setHomeTeamScore] = useState(0);
   const [homeAwayScore, setAwayTeamScore] = useState(0);
 
-  const storedUsersPredictedScore = useLocalStorage(
-    `userPredictedScore-${fixture.id}`
-  );
+  const storedUsersPredictedScore = usersMatchData?.ScorePrediction;
 
   const handleTeamScoreSubmit = async () => {
-    setLocalStorageItem(
-      `userPredictedScore-${fixture.id}`,
-      `${homeTeamScore}-${homeAwayScore}`
-    );
-
     await handlePredictTeamScore({
       matchId: fixture.id,
       score: `${homeTeamScore}-${homeAwayScore}`,
@@ -50,7 +43,10 @@ export default function ScorePrediction({ fixture }) {
     );
   };
   return storedUsersPredictedScore ? (
-    <ScorePredictionResults fixture={fixture}></ScorePredictionResults>
+    <ScorePredictionResults
+      fixture={fixture}
+      storedUsersPredictedScore={storedUsersPredictedScore}
+    ></ScorePredictionResults>
   ) : (
     <ContentContainer className="scorePredictionContainer">
       <h1 className="smallHeading">Match Score</h1>

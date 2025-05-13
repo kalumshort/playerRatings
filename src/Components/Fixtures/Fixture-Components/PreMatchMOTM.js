@@ -10,15 +10,12 @@ import { selectSquadDataObject } from "../../../Selectors/squadDataSelectors";
 import { Button, IconButton, Popover } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 
-import {
-  setLocalStorageItem,
-  useLocalStorage,
-} from "../../../Hooks/Helper_Functions";
 import { handlePredictPreMatchMotm } from "../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
+import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -27,10 +24,10 @@ export default function PreMatchMOTM({ fixture }) {
   const [selectedPlayer, setSelectedPlayer] = useState("");
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
-  const storedUsersPlayerToWatch = useLocalStorage(
-    `userPredictedPlayerToWatch-${fixture.id}`
-  );
+  const storedUsersPlayerToWatch = usersMatchData?.preMatchMotm;
+
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -48,11 +45,6 @@ export default function PreMatchMOTM({ fixture }) {
   };
 
   const handlePlayerToWatchSubmit = async () => {
-    setLocalStorageItem(
-      `userPredictedPlayerToWatch-${fixture.id}`,
-      selectedPlayer
-    );
-
     await handlePredictPreMatchMotm({
       matchId: fixture.id,
       playerId: selectedPlayer,

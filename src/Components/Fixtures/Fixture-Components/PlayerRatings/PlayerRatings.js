@@ -49,15 +49,8 @@ export default function PlayerRatings({ fixture }) {
   );
 
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
-
-  const isMatchRatingsSubmittedLocal = useLocalStorage(
-    `userMatchRatingSubmited-${fixture.id}`
-  );
-
-  const isMatchRatingsSubmittedDatabase = usersMatchData?.ratingsSubmitted;
-
-  const isMatchRatingsSubmitted =
-    isMatchRatingsSubmittedLocal || isMatchRatingsSubmittedDatabase;
+  console.log("usersMatchData", usersMatchData);
+  const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
 
   const lineup =
     fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
@@ -98,15 +91,10 @@ export default function PlayerRatings({ fixture }) {
     ...substitutedPlayerIds, // Add new substituted players
   ];
 
-  console.log(combinedPlayers); // To check the result
-
   const handleRatingsSubmit = async () => {
-    const allPlayersRated = combinedPlayers.every(({ id }) => {
-      const storedRating = localStorage.getItem(
-        `userPlayerRatings-${fixture.id}-${id}`
-      );
-      return storedRating !== null;
-    });
+    const allPlayersRated =
+      usersMatchData.players &&
+      combinedPlayers.every(({ id }) => id in usersMatchData.players);
 
     if (!allPlayersRated) {
       showAlert("Missing Some Ratings", "error");
@@ -212,7 +200,7 @@ const PlayerRatingsItems = ({
           readOnly={readOnly}
           groupId={groupId}
           userId={userId}
-          usersMatchPlayerRatings={usersMatchPlayerRatings}
+          usersMatchPlayerRating={usersMatchPlayerRatings?.[player.id]}
         />
       ))}
       {coach.id && (
@@ -224,7 +212,7 @@ const PlayerRatingsItems = ({
           readOnly={readOnly}
           groupId={groupId}
           userId={userId}
-          usersMatchPlayerRatings={usersMatchPlayerRatings}
+          usersMatchPlayerRating={usersMatchPlayerRatings?.[coach.id]}
         />
       )}
       {!isMatchRatingsSubmitted && (
@@ -249,12 +237,11 @@ const PlayerRatingItem = ({
   readOnly,
   groupId,
   userId,
+  usersMatchPlayerRating,
 }) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
-  const storedUsersPlayerRating = useLocalStorage(
-    `userPlayerRatings-${fixture.id}-${player.id}`
-  );
+  const storedUsersPlayerRating = usersMatchPlayerRating;
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
   const [sliderValue, setSliderValue] = useState(6);
@@ -305,10 +292,6 @@ const PlayerRatingItem = ({
     : storedUsersPlayerRating;
 
   const onRatingClick = async () => {
-    setLocalStorageItem(
-      `userPlayerRatings-${fixture.id}-${player.id}`,
-      sliderValue
-    );
     await handlePlayerRatingSubmit({
       matchId: fixture.id,
       playerId: String(player.id),

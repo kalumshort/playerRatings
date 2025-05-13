@@ -11,7 +11,12 @@ import {
   groupDataStart,
   groupDataSuccess,
 } from "../redux/Reducers/groupReducer";
-import { fetchUserDataSuccess } from "../redux/Reducers/userDataReducer";
+import {
+  fetchUserDataSuccess,
+  fetchUserMatchData,
+} from "../redux/Reducers/userDataReducer";
+import { getAuth } from "firebase/auth";
+import { rectIntersection } from "@dnd-kit/core";
 
 export const FixturesListener = ({ teamId, FixtureId }) => {
   const dispatch = useDispatch();
@@ -99,6 +104,50 @@ export const UserDataListener = ({ userId }) => {
 
     return () => unsubscribe(); // Cleanup listener on unmount
   }, [userId, dispatch]);
+
+  return null; // No UI, just listens and dispatches
+};
+
+export const UsersMatchDataListener = ({ matchId, groupId }) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      console.log("User is not authenticated");
+      return;
+    }
+
+    const matchRef = doc(
+      db,
+      `users/${user.uid}/groups/${groupId}/seasons/2024/matches`,
+      matchId
+    );
+
+    // Setup the Firestore real-time listener
+    const unsubscribe = onSnapshot(
+      matchRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const matchData = snapshot.data();
+          console.log("Match data:", matchData);
+          dispatch(fetchUserMatchData({ matchId, data: matchData }));
+        } else {
+          console.log("No match data found");
+        }
+      },
+      (error) => {
+        console.error("Error listening to match document:", error);
+      }
+    );
+
+    // Cleanup listener on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [dispatch, matchId, groupId]);
 
   return null; // No UI, just listens and dispatches
 };

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import { Button } from "@mui/material";
 import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
-import { setLocalStorageItem } from "../../../../Hooks/Helper_Functions";
+
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 
 import { useDroppable } from "@dnd-kit/core";
@@ -49,10 +49,6 @@ export default function DroppablePitch({
       return result;
     }, {});
 
-    setLocalStorageItem(
-      `userPredictedTeam-${fixture.id}`,
-      JSON.stringify(chosenTeam)
-    );
     await handlePredictTeamSubmit({
       players: filteredPlayers,
       matchId: fixture.id,

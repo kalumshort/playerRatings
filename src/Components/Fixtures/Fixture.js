@@ -23,7 +23,10 @@ import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings"
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
 import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
-import { FixturesListener } from "../../Firebase/FirebaseListeners";
+import {
+  FixturesListener,
+  UsersMatchDataListener,
+} from "../../Firebase/FirebaseListeners";
 import {
   footballClubsColours,
   useIsMobile,
@@ -109,6 +112,10 @@ export default function Fixture() {
         <FixturesListener
           teamId={groupData.groupClubId}
           fixtureId={latestFixture.fixture.id}
+        />
+        <UsersMatchDataListener
+          groupId={activeGroup.groupId}
+          matchId={matchId}
         />
         <FixtureHeader
           fixture={fixture}

@@ -5,26 +5,22 @@ import { handlePredictWinningTeam } from "../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-  setLocalStorageItem,
-  useLocalStorage,
-} from "../../../Hooks/Helper_Functions";
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
+import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
-  const storedUsersPredictedResult = useLocalStorage(
-    `userPredictedResult-${fixture.id}`
-  );
+  const storedUsersPredictedResult = usersMatchData?.result;
+
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
   const handleWinningTeamPredict = async (choice) => {
-    setLocalStorageItem(`userPredictedResult-${fixture.id}`, choice);
     await handlePredictWinningTeam({
       matchId: fixture.id,
       choice: choice,

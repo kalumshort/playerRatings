@@ -120,7 +120,6 @@ export const firebaseSetDoc = async ({
     // Firestore reference and write
     const docRef = doc(db, path, docId);
     await setDoc(docRef, sanitizedData, { merge });
-    console.log("Document successfully written/updated!");
   } catch (e) {
     console.error("Error setting document: ", e);
   }
@@ -233,7 +232,7 @@ export const handlePredictTeamScore = async (data) => {
   await firebaseUpdateOrSetDoc({
     path: `users/${data.userId}/groups/${data.groupId}/seasons/2024/matches`,
     docId: data.matchId,
-    data: { scorePrecitions: data.score },
+    data: { ScorePrediction: data.score },
   });
 };
 export const handlePredictWinningTeam = async (data) => {

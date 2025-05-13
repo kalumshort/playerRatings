@@ -3,13 +3,16 @@ import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useSelector } from "react-redux";
 
 import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
-import { useIsMobile, useLocalStorage } from "../../../Hooks/Helper_Functions";
+import { useIsMobile } from "../../../Hooks/Helper_Functions";
 
 import Barchart from "../../Charts/Barchart";
 import Piechart from "../../Charts/Piechart";
 import { Modal, Box, Button } from "@mui/material";
 
-export default function ScorePredictionResults({ fixture }) {
+export default function ScorePredictionResults({
+  fixture,
+  storedUsersPredictedScore,
+}) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -17,9 +20,6 @@ export default function ScorePredictionResults({ fixture }) {
   const isMobile = useIsMobile();
 
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
-  const storedUsersPredictedScore = useLocalStorage(
-    `userPredictedScore-${fixture.id}`
-  );
 
   // Improved data mapping
   const getBarchartData = (data) => {
