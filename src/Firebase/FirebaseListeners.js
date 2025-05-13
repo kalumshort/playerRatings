@@ -16,7 +16,6 @@ import {
   fetchUserMatchData,
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
-import { rectIntersection } from "@dnd-kit/core";
 
 export const FixturesListener = ({ teamId, FixtureId }) => {
   const dispatch = useDispatch();
