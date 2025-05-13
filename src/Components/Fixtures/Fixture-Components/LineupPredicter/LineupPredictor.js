@@ -18,12 +18,17 @@ export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
-  const storedUsersPredictedTeam = Object.keys(
+  const storedUsersPredictedTeamCheck = Object.keys(
     usersMatchData?.teamPrediction || {}
   ).reduce((acc, key) => {
     acc[key] = usersMatchData?.teamPrediction[key].id.toString();
     return acc;
   }, {});
+
+  const storedUsersPredictedTeam =
+    Object.keys(storedUsersPredictedTeamCheck).length === 0
+      ? null
+      : storedUsersPredictedTeamCheck;
 
   const [chosenTeam, setTeam] = useState({});
 
