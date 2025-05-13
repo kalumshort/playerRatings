@@ -94,6 +94,14 @@ function App() {
   if (userLoading) {
     return <Spinner />;
   }
+
+  // index.js or App.js
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js");
+    });
+  }
+
   return (
     <GlobalContainer>
       <Router>
