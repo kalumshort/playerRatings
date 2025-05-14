@@ -103,7 +103,7 @@ function App() {
     if (!playerSeasonOverallRatingsLoaded && user) {
       dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup]);
+  }, [dispatch, playerSeasonOverallRatingsLoaded, user, activeGroup]);
 
   if (userLoading) {
     return <Spinner />;
