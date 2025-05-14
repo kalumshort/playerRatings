@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MenuItem,
   Paper,
@@ -17,6 +17,9 @@ import { useNavigate } from "react-router-dom";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
 
 export default function AllPlayerStats() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const navigate = useNavigate();
 

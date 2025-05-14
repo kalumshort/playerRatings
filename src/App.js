@@ -29,7 +29,11 @@ import GroupHomePage from "./Containers/GroupHomePage";
 import { GlobalContainer } from "./Containers/GlobalContainer";
 import Fixture from "./Components/Fixtures/Fixture";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFixtures, fetchTeamSquad } from "./Hooks/Fixtures_Hooks";
+import {
+  fetchAllPlayersSeasonOverallRating,
+  fetchFixtures,
+  fetchTeamSquad,
+} from "./Hooks/Fixtures_Hooks";
 import Spinner from "./Containers/Helpers";
 
 import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
@@ -48,6 +52,7 @@ import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
 import { UserDataListener } from "./Firebase/FirebaseListeners";
 import ScheduleContainer from "./Containers/ScheduleContainer";
+import { selectPlayerRatingsLoad } from "./Selectors/selectors";
 
 function App() {
   const dispatch = useDispatch();
@@ -60,6 +65,9 @@ function App() {
   const { activeGroup, groupDataLoaded } = useGroupData();
 
   const { loaded: userDataLoaded } = useSelector((state) => state.userData);
+  const { playerSeasonOverallRatingsLoaded } = useSelector(
+    selectPlayerRatingsLoad
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -90,6 +98,12 @@ function App() {
       }
     }
   }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
+
+  useEffect(() => {
+    if (!playerSeasonOverallRatingsLoaded && user) {
+      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+    }
+  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup]);
 
   if (userLoading) {
     return <Spinner />;

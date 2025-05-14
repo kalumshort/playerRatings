@@ -247,3 +247,30 @@
       0 0 0px 0px rgba(76, 175, 119, 0.8);
   }
 }
+.schedule-season-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px; /* Adjust as needed for spacing */
+}
+
+/* For Desktop */
+@media (min-width: 768px) {
+  .schedule-season-container {
+    justify-content: space-between;
+  }
+
+  .schedule-season-container > *:first-child {
+    flex: 2; /* 2/3 of the space */
+  }
+
+  .schedule-season-container > *:last-child {
+    flex: 1; /* 1/3 of the space */
+  }
+}
+
+/* For Mobile */
+@media (max-width: 767px) {
+  .schedule-season-container {
+    flex-direction: column;
+  }
+}

@@ -134,7 +134,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
   );
 }
 
-const RatingLineupPlayer = ({ player, className, playerRating }) => {
+export const RatingLineupPlayer = ({ player, className, playerRating }) => {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
 
   return player ? (
