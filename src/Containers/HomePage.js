@@ -27,27 +27,36 @@ export default function HomePage() {
     },
   ];
   useEffect(() => {
-    // Ensure each video plays when the component is mounted
-    if (videoRef1.current) {
-      videoRef1.current.play().catch((error) => {
-        console.error("Autoplay failed for video 1:", error);
+    const videos = [videoRef1, videoRef2, videoRef3, videoRef4];
+
+    const handleCanPlayThrough = (videoRef) => {
+      if (videoRef.current) {
+        videoRef.current.muted = true; // Ensure the video is muted for autoplay
+        videoRef.current.play().catch((error) => {
+          console.error("Autoplay failed:", error);
+        });
+      }
+    };
+
+    videos.forEach((videoRef) => {
+      if (videoRef.current) {
+        videoRef.current.addEventListener("canplaythrough", () =>
+          handleCanPlayThrough(videoRef)
+        );
+      }
+    });
+
+    // Cleanup the event listeners
+    return () => {
+      videos.forEach((videoRef) => {
+        if (videoRef.current) {
+          videoRef.current.removeEventListener(
+            "canplaythrough",
+            handleCanPlayThrough
+          );
+        }
       });
-    }
-    if (videoRef2.current) {
-      videoRef2.current.play().catch((error) => {
-        console.error("Autoplay failed for video 2:", error);
-      });
-    }
-    if (videoRef3.current) {
-      videoRef3.current.play().catch((error) => {
-        console.error("Autoplay failed for video 3:", error);
-      });
-    }
-    if (videoRef4.current) {
-      videoRef4.current.play().catch((error) => {
-        console.error("Autoplay failed for video 4:", error);
-      });
-    }
+    };
   }, []);
 
   return (
@@ -91,6 +100,7 @@ export default function HomePage() {
                 muted
                 playsInline
                 className="video-player-capture"
+                preload="auto"
               >
                 <source src={videos[0].src} type="video/mp4" />
                 Your browser does not support the video tag.
@@ -115,6 +125,7 @@ export default function HomePage() {
                 muted
                 playsInline
                 className="video-player-capture"
+                preload="auto"
               >
                 <source src={videos[1].src} type="video/mp4" />
                 Your browser does not support the video tag.
@@ -138,6 +149,7 @@ export default function HomePage() {
                 muted
                 playsInline
                 className="video-player-capture"
+                preload="auto"
               >
                 <source src={videos[2].src} type="video/mp4" />
                 Your browser does not support the video tag.
@@ -162,6 +174,7 @@ export default function HomePage() {
                 muted
                 playsInline
                 className="video-player-capture"
+                preload="auto"
               >
                 <source src={videos[3].src} type="video/mp4" />
                 Your browser does not support the video tag.
