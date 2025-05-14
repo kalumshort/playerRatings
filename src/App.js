@@ -100,10 +100,18 @@ function App() {
   }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
 
   useEffect(() => {
-    if (!playerSeasonOverallRatingsLoaded && user) {
-      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+    if (user) {
+      if (!playerSeasonOverallRatingsLoaded && groupDataLoaded) {
+        dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+      }
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded, user, activeGroup]);
+  }, [
+    dispatch,
+    playerSeasonOverallRatingsLoaded,
+    activeGroup,
+    groupDataLoaded,
+    user,
+  ]);
 
   if (userLoading) {
     return <Spinner />;
