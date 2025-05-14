@@ -180,23 +180,6 @@ export default function HomePage() {
                 Your browser does not support the video tag.
               </video>
             </div>
-            <video
-              ref={videoRef1}
-              autoplay
-              loop
-              muted
-              playsInline
-              className="video-player-capture"
-              preload="auto"
-            >
-              <source
-                src={
-                  "https://firebasestorage.googleapis.com/v0/b/player-ratings-ef06c.firebasestorage.app/o/site-assets%2Fscreenshot-videos%2Fpredictions-capture.mp4?alt=media&token=f8fb57fe-f9c9-4aa6-9c56-25383a92d143"
-                }
-                type="video/mp4"
-              />
-              Your browser does not support the video tag.
-            </video>
           </div>
         </div>
       </section>
