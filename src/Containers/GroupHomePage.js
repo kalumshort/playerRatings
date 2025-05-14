@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFixtures } from "../../Hooks/Fixtures_Hooks";
-import LatestFixtureItem from "./LatestFixtureItem";
+import { useIsMobile } from "../Hooks/Helper_Functions";
+import { fetchFixtures } from "../Hooks/Fixtures_Hooks";
+import LatestFixtureItem from "../Components/Fixtures/LatestFixtureItem";
+import ScheduleContainer from "./ScheduleContainer";
 
-import ScheduleContainer from "../../Containers/ScheduleContainer";
-import { useIsMobile } from "../../Hooks/Helper_Functions";
-
-export default function FixturesList() {
+export default function GroupHomePage() {
   const { fixtures, loading, error } = useSelector((state) => state.fixtures);
   const isMobile = useIsMobile();
 

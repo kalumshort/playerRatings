@@ -25,7 +25,7 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 import Header from "./Containers/Header";
-import FixturesContainer from "./Containers/FixturesContainer";
+import GroupHomePage from "./Containers/GroupHomePage";
 import { GlobalContainer } from "./Containers/GlobalContainer";
 import Fixture from "./Components/Fixtures/Fixture";
 import { useDispatch, useSelector } from "react-redux";
@@ -121,7 +121,7 @@ function App() {
               <Routes>
                 <Route
                   path="/"
-                  element={user ? <FixturesContainer /> : <HomePage />}
+                  element={user ? <GroupHomePage /> : <HomePage />}
                 />
                 <Route path="/profile" element={<ProfileContainer />} />
                 <Route
