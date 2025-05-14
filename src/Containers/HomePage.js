@@ -95,6 +95,10 @@ export default function HomePage() {
 
               <video
                 ref={videoRef1}
+                autoplay
+                loop
+                muted
+                playsInline
                 className="video-player-capture"
                 preload="auto"
               >
@@ -116,6 +120,10 @@ export default function HomePage() {
 
               <video
                 ref={videoRef2}
+                autoplay
+                loop
+                muted
+                playsInline
                 className="video-player-capture"
                 preload="auto"
               >
@@ -136,6 +144,10 @@ export default function HomePage() {
 
               <video
                 ref={videoRef3}
+                autoplay
+                loop
+                muted
+                playsInline
                 className="video-player-capture"
                 preload="auto"
               >
@@ -157,6 +169,10 @@ export default function HomePage() {
 
               <video
                 ref={videoRef4}
+                autoplay
+                loop
+                muted
+                playsInline
                 className="video-player-capture"
                 preload="auto"
               >
