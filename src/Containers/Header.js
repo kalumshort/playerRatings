@@ -26,6 +26,7 @@ import ProfileSection from "../Components/Auth/ProfileSection";
 import Login from "../Components/Auth/Login";
 import { useNavigate } from "react-router-dom";
 import useGroupData from "../Hooks/useGroupsData";
+import useUserData from "../Hooks/useUserData";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -115,6 +116,7 @@ export const SettingRow = styled(Box)(({ theme }) => ({
 
 export function DrawerContentComponent({ setDrawerOpen }) {
   const { user } = useAuth();
+  const { isGroupAdmin } = useUserData();
 
   return (
     <DrawerContent

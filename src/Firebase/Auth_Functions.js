@@ -122,11 +122,13 @@ export const fetchUserData = (userId) => async (dispatch) => {
         userData.lastLogin = userData.lastLogin.toDate().toISOString(); // Convert to ISO string
       }
 
-      dispatch(fetchUserDataSuccess(userData)); // Dispatch with the serialized user data
       try {
         if (userData.groups) {
           dispatch(groupDataStart());
           const groupObj = {};
+
+          // Initialize an array to store permissions for each group
+          const groupPermissions = {};
 
           for (let i = 0; i < userData.groups.length; i++) {
             const groupId = userData.groups[i];
@@ -135,6 +137,19 @@ export const fetchUserData = (userId) => async (dispatch) => {
 
             if (groupDoc.exists()) {
               groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
+              // Fetch the permissions/role of the user in the group
+              const groupUserRef = doc(
+                db,
+                `groupUsers/${groupId}/members`,
+                userId
+              );
+              const groupUserDoc = await getDoc(groupUserRef);
+              if (groupUserDoc.exists()) {
+                const groupUserData = groupUserDoc.data();
+
+                // Save the user's permissions for this group in groupPermissions
+                groupPermissions[groupId] = groupUserData.role || {}; // Assuming `permissions` is the field
+              }
             } else {
               // This will log if the group doesn't exist
               console.error(
@@ -143,7 +158,11 @@ export const fetchUserData = (userId) => async (dispatch) => {
             }
           }
 
+          // Dispatch the updated user data with permissions
+          dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
           dispatch(groupDataSuccess(groupObj));
+        } else {
+          dispatch(fetchUserDataSuccess(userData));
         }
       } catch (err) {
         // This will show the exact error message
