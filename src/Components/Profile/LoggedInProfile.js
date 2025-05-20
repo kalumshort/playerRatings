@@ -17,15 +17,24 @@ import useGroupData from "../../Hooks/useGroupsData";
 import UploadAvatar from "./AvatarWithUpload";
 import CustomSelect from "../Inputs/CustomSelect";
 import Logout from "../Auth/Logout";
+import { useDispatch } from "react-redux";
+import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
+import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
+import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
 
 export default function LoggedInProfile() {
+  const dispatch = useDispatch();
+
   const { userData } = useUserData();
   const { groupData, activeGroup } = useGroupData();
 
   const options = convertToSelectOptions(groupData);
 
-  const handleSelectChange = (event) => {
-    console.log(event);
+  const handleSelectChange = async (event) => {
+    await updateUserField(userData.uid, "activeGroup", event.target.value);
+    dispatch(clearTeamSquads());
+    dispatch(clearRatings());
+    dispatch(clearFixtures());
   };
 
   // Initialize state for all fields
