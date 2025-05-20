@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
+
 import Lottie from "react-lottie";
 import animationData from "../assets/animations/football-loader.json"; // Import the Lottie JSON data
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 
-export default function Spinner({ text }) {
+import { ChromePicker } from "react-color";
+import { Box, Button, Popover } from "@mui/material";
+
+export function Spinner({ text }) {
   const defaultOptions = {
     loop: true,
     autoplay: true, // Animation will autoplay
@@ -23,5 +27,51 @@ export default function Spinner({ text }) {
       />
       {text && <p style={{ color: "white" }}>{text}</p>}
     </div>
+  );
+}
+
+export function ColorPicker({ value, onChange }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+
+  return (
+    <Box>
+      <Button
+        onClick={handleClick}
+        sx={{
+          width: "50px",
+          height: "35px",
+          minWidth: 0,
+          padding: 0,
+          backgroundColor: value,
+          "&:hover": { borderColor: "#888" },
+        }}
+      />
+
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left", // This ensures it opens to the bottom-left
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+      >
+        <ChromePicker color={value} onChange={(color) => onChange(color.hex)} />
+      </Popover>
+    </Box>
   );
 }

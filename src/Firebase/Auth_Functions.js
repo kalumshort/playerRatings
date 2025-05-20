@@ -191,3 +191,18 @@ export const updateUserField = async (userId, field, newValue) => {
     console.error("Error updating user field:", err.message);
   }
 };
+
+export const updateGroupField = async (groupId, field, newValue) => {
+  if (!groupId || !field || !newValue) {
+    return;
+  }
+
+  try {
+    const userRef = doc(db, "groups", groupId); // Reference to the user's Firestore document
+    await updateDoc(userRef, {
+      [field]: newValue, // Dynamically update the specified field
+    });
+  } catch (err) {
+    console.error("Error updating user field:", err.message);
+  }
+};

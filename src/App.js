@@ -34,7 +34,7 @@ import {
   fetchFixtures,
   fetchTeamSquad,
 } from "./Hooks/Fixtures_Hooks";
-import Spinner from "./Containers/Helpers";
+import { Spinner } from "./Containers/Helpers";
 
 import PlayerStatsContainer from "./Containers/PlayerStatsContainer";
 import { useIsMobile } from "./Hooks/Helper_Functions";
@@ -50,9 +50,10 @@ import { useAuth } from "./Providers/AuthContext";
 import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
-import { UserDataListener } from "./Firebase/FirebaseListeners";
+import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
 import ScheduleContainer from "./Containers/ScheduleContainer";
 import { selectPlayerRatingsLoad } from "./Selectors/selectors";
+import GroupDashboard from "./Containers/GroupDashboard";
 
 function App() {
   const dispatch = useDispatch();
@@ -69,19 +70,19 @@ function App() {
     selectPlayerRatingsLoad
   );
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && !userDataLoaded) {
-        // Fetch user data if the user is signed in and data is not loaded yet
-        console.log("User signed in, fetching user data.");
-        dispatch(fetchUserData(user.uid));
-      }
-      // No need to clear user data here when user is signed out
-    });
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
+  //     if (user && !userDataLoaded) {
+  //       // Fetch user data if the user is signed in and data is not loaded yet
+  //       console.log("User signed in, fetching user data.");
+  //       dispatch(fetchUserData(user.uid));
+  //     }
+  //     // No need to clear user data here when user is signed out
+  //   });
 
-    // Cleanup the listener when the component unmounts or the effect dependencies change
-    return () => unsubscribe();
-  }, [dispatch, userDataLoaded]); // Dependencies: dispatch and userDataLoaded
+  //   // Cleanup the listener when the component unmounts or the effect dependencies change
+  //   return () => unsubscribe();
+  // }, [dispatch, userDataLoaded]); // Dependencies: dispatch and userDataLoaded
 
   useEffect(() => {
     if (user) {
@@ -128,6 +129,7 @@ function App() {
     <GlobalContainer>
       <Router>
         {user && <UserDataListener userId={user.uid} />}
+        {user && activeGroup && <GroupListener groupId={activeGroup.groupId} />}
 
         {(user && !userDataLoaded) ||
         (user && !fixturesLoaded) ||
@@ -151,6 +153,10 @@ function App() {
                   element={
                     user ? <PlayerStatsContainer /> : <ProfileContainer />
                   }
+                />
+                <Route
+                  path="/group-dashboard"
+                  element={user ? <GroupDashboard /> : <ProfileContainer />}
                 />
                 <Route
                   path="/schedule"

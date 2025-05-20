@@ -4,7 +4,7 @@ import { fetchAllPlayersSeasonOverallRating } from "../Hooks/Fixtures_Hooks";
 import AllPlayerStats from "../Components/PlayerStats/AllPlayerStats";
 import "../Components/PlayerStats/playerStats.css";
 import { selectPlayerRatingsLoad } from "../Selectors/selectors";
-import Spinner from "./Helpers";
+import { Spinner } from "./Helpers";
 import useGroupData from "../Hooks/useGroupsData";
 
 export default function PlayerStatsContainer() {

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
-import Spinner from "../../Containers/Helpers";
+import { Spinner } from "../../Containers/Helpers";
 import useGroupData from "../../Hooks/useGroupsData";
 import { Link } from "react-router-dom";
 

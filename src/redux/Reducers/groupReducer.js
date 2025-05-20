@@ -28,6 +28,10 @@ const groupSlice = createSlice({
       state.loaded = false;
       state.data = {};
     },
+    updateGroupData(state, action) {
+      const { groupId, data } = action.payload;
+      state.data[groupId] = { ...state.data[groupId], ...data };
+    },
   },
 });
 
@@ -36,6 +40,7 @@ export const {
   groupDataFailure,
   groupDataSuccess,
   clearGroupIdData,
+  updateGroupData,
 } = groupSlice.actions;
 
 export default groupSlice.reducer;

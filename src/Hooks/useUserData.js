@@ -15,7 +15,7 @@ const useUserData = () => {
     userDataLoaded,
     isGroupAdmin: userData.groupPermissions
       ? userData.groupPermissions[userData.activeGroup]
-        ? userData.groupPermissions[userData.activeGroup] === "Admin"
+        ? userData.groupPermissions[userData.activeGroup] === "admin"
         : false
       : false,
   };

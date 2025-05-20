@@ -130,7 +130,9 @@ export function DrawerContentComponent({ setDrawerOpen }) {
       {user && (
         <>
           <ProfileSection setDrawerOpen={setDrawerOpen} />
-
+          {isGroupAdmin && (
+            <DrawerGroupAdminContainer setDrawerOpen={setDrawerOpen} />
+          )}
           <DrawerGroupContainer setDrawerOpen={setDrawerOpen} />
         </>
       )}
@@ -174,6 +176,32 @@ function DrawerGroupContainer({ setDrawerOpen }) {
       </SettingRow>
       <SettingRow onClick={handleSeasonStatsClick}>
         <Box>Season Stats</Box>
+        <ArrowForwardIosIcon fontSize="small" />
+      </SettingRow>
+    </Paper>
+  );
+}
+function DrawerGroupAdminContainer({ setDrawerOpen }) {
+  const navigate = useNavigate();
+
+  const handleNavLink = () => {
+    setDrawerOpen(false);
+    navigate("/group-dashboard");
+  };
+  return (
+    <Paper style={{ marginTop: "30px", padding: "10px" }}>
+      <SettingRow
+        style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
+      >
+        <h5
+          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
+          className=""
+        >
+          Group Admin
+        </h5>
+      </SettingRow>
+      <SettingRow onClick={handleNavLink}>
+        <Box>Dashboard</Box>
         <ArrowForwardIosIcon fontSize="small" />
       </SettingRow>
     </Paper>

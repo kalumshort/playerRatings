@@ -10,6 +10,7 @@ import {
   groupDataFailure,
   groupDataStart,
   groupDataSuccess,
+  updateGroupData,
 } from "../redux/Reducers/groupReducer";
 import {
   fetchUserDataSuccess,
@@ -42,6 +43,33 @@ export const FixturesListener = ({ teamId, FixtureId }) => {
 
   return null; // No UI, just listens and dispatches
 };
+export const GroupListener = ({ groupId }) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!groupId) return;
+
+    const fixtureRef = doc(db, `groups`, String(groupId));
+
+    const unsubscribe = onSnapshot(
+      fixtureRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          dispatch(
+            updateGroupData({ groupId: groupId, data: snapshot.data() })
+          );
+        }
+      },
+      (error) => {
+        console.error("Error listening to document:", error);
+      }
+    );
+
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [groupId, dispatch]);
+
+  return null; // No UI, just listens and dispatches
+};
 
 export const UserDataListener = ({ userId }) => {
   const dispatch = useDispatch();
@@ -70,25 +98,50 @@ export const UserDataListener = ({ userId }) => {
           dispatch(fetchUserDataSuccess(userData));
 
           try {
-            // Fetch group data if available
             if (userData.groups) {
               dispatch(groupDataStart());
               const groupObj = {};
 
-              for (let groupId of userData.groups) {
+              // Initialize an array to store permissions for each group
+              const groupPermissions = {};
+
+              for (let i = 0; i < userData.groups.length; i++) {
+                const groupId = userData.groups[i];
                 const groupRef = doc(db, "groups", groupId);
                 const groupDoc = await getDoc(groupRef);
 
                 if (groupDoc.exists()) {
-                  groupObj[groupId] = { ...groupDoc.data(), groupId };
+                  groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
+                  // Fetch the permissions/role of the user in the group
+                  const groupUserRef = doc(
+                    db,
+                    `groupUsers/${groupId}/members`,
+                    userId
+                  );
+                  const groupUserDoc = await getDoc(groupUserRef);
+                  if (groupUserDoc.exists()) {
+                    const groupUserData = groupUserDoc.data();
+
+                    // Save the user's permissions for this group in groupPermissions
+                    groupPermissions[groupId] = groupUserData.role || {}; // Assuming `permissions` is the field
+                  }
+                } else {
+                  // This will log if the group doesn't exist
+                  console.error(
+                    `Group ${groupId} does not exist or the user does not have permission to access it.`
+                  );
                 }
               }
 
-              // Dispatch group data success
+              // Dispatch the updated user data with permissions
+              dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
               dispatch(groupDataSuccess(groupObj));
+            } else {
+              dispatch(fetchUserDataSuccess(userData));
             }
           } catch (err) {
-            // Handle error during group data fetch
+            // This will show the exact error message
+            console.error("Error fetching group data:", err.message);
             dispatch(groupDataFailure(err.message));
           }
 
