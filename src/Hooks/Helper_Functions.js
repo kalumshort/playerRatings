@@ -71,7 +71,19 @@ export const calculateTimeLeft = (targetTime) => {
 
   return { days, hours, minutes, seconds };
 };
+export const generateCustomId = (string) => {
+  const sanitizedGroupName = string
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-") // Replace non-alphanumeric characters with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with a single one
+    .substring(0, 30); // Optionally limit length (Firestore has a 1500 character limit)
 
+  const randomString = Math.random().toString(36).substring(2, 7);
+
+  const customId = `${sanitizedGroupName}-${randomString}`;
+
+  return customId;
+};
 export const useLocalStorage = (key) => {
   const [value, setValue] = useState(localStorage.getItem(key));
 
