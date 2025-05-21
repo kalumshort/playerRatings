@@ -89,11 +89,30 @@ export const firebaseGetDocument = async (path, docId) => {
   }
 };
 
-export const firebaseAddDoc = async ({ path, data }) => {
+export const firebaseAddDoc = async ({ path, data, id = null }) => {
   try {
-    await addDoc(collection(db, path), data);
+    let docRef;
+
+    if (id) {
+      // If an ID is provided, set the document with the given ID
+      const docRefWithId = doc(collection(db, path), id);
+      await setDoc(docRefWithId, data);
+      docRef = docRefWithId;
+    } else {
+      // Otherwise, let Firestore auto-generate an ID
+      docRef = await addDoc(collection(db, path), data);
+    }
+
+    // Return the document reference and data, including the generated or provided ID
+    const docData = {
+      id: docRef.id,
+      ...data,
+    };
+
+    return docData; // This will return the document data including the ID
   } catch (e) {
     console.error("Error adding document: ", e);
+    throw e; // Rethrow the error for handling it elsewhere
   }
 };
 
