@@ -4,11 +4,15 @@ import { Button, Box } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 
 import { handleCreateAccountGoogle } from "../../../Firebase/Auth_Functions";
+import { useNavigate } from "react-router-dom";
 
-const GoogleSignInButton = () => {
+const GoogleSignInButton = ({ groupId }) => {
+  const navigate = useNavigate();
+
   const handleGoogleSignIn = async () => {
     try {
-      await handleCreateAccountGoogle();
+      await handleCreateAccountGoogle({ groupId });
+      navigate("/");
     } catch (error) {
       console.error("Error signing in with Google:", error.message);
     }

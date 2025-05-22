@@ -18,7 +18,12 @@ import {
   groupDataSuccess,
 } from "../redux/Reducers/groupReducer";
 
-export const handleCreateAccount = async ({ email, password }) => {
+export const handleCreateAccount = async ({
+  email,
+  password,
+  groupId = "002",
+}) => {
+  console.log(groupId, email, password);
   try {
     // Call the Cloud Function to add the user to the group
     const functions = getFunctions();
@@ -38,7 +43,7 @@ export const handleCreateAccount = async ({ email, password }) => {
     await createUserDoc({ userId, email });
 
     await addUserToGroup({
-      groupId: "002", // The group to add the user to
+      groupId: groupId, // The group to add the user to
       userId: userId, // The user's UID
       userData: {
         email: email,
@@ -50,7 +55,38 @@ export const handleCreateAccount = async ({ email, password }) => {
   }
 };
 
-export const handleCreateAccountGoogle = async () => {
+export const handleAddUserToGroup = async ({ userData, groupId }) => {
+  try {
+    const functions = getFunctions();
+
+    const addUserToGroup = httpsCallable(functions, "addUserToGroup"); // Call your addUserToGroup function
+
+    await addUserToGroup({
+      groupId: groupId, // The group to add the user to
+      userId: userData.uid, // The user's UID
+      userData: {
+        email: userData.email,
+        role: "user", // Optionally, you could pass more data like role, username, etc.
+      },
+    });
+
+    // Return success status
+    return {
+      success: true,
+      message: "User successfully added to the group.",
+    };
+  } catch (err) {
+    console.error("Error adding user to group:", err);
+
+    // Return error status
+    return {
+      success: false,
+      message: `Error adding user to group: ${err.message}`,
+    };
+  }
+};
+
+export const handleCreateAccountGoogle = async ({ groupId }) => {
   const provider = new GoogleAuthProvider();
 
   try {
@@ -67,9 +103,24 @@ export const handleCreateAccountGoogle = async () => {
     // Check if the user already exists in Firestore by email or UID
     const userRef = doc(db, "users", userId);
     const userDoc = await getDoc(userRef);
+    const functions = getFunctions();
+    const addUserToGroup = httpsCallable(functions, "addUserToGroup"); // Call your addUserToGroup function
 
     if (userDoc.exists()) {
       // User exists, just sign them in
+
+      if (groupId) {
+        if (!userDoc.data().groups.includes(groupId)) {
+          await addUserToGroup({
+            groupId: groupId, // The group to add the user to
+            userId: userId, // The user's UID
+            userData: {
+              email: email,
+              role: "user", // Optionally, you could pass more data like role, username, etc.
+            },
+          });
+        }
+      }
 
       await updateDoc(userRef, {
         lastLogin: Timestamp.fromDate(new Date()), // Update the last login timestamp
@@ -78,8 +129,7 @@ export const handleCreateAccountGoogle = async () => {
       return; // You can handle the login logic here if needed
     } else {
       // Call the Cloud Function to add the user to the group
-      const functions = getFunctions();
-      const addUserToGroup = httpsCallable(functions, "addUserToGroup"); // Call your addUserToGroup function
+
       const createUserDoc = httpsCallable(functions, "createUserDoc");
 
       await createUserDoc({
@@ -91,7 +141,7 @@ export const handleCreateAccountGoogle = async () => {
       });
 
       await addUserToGroup({
-        groupId: "002", // The group to add the user to
+        groupId: groupId || "002", // The group to add the user to
         userId: userId, // The user's UID
         userData: {
           email: email,

@@ -11,12 +11,14 @@ import {
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
 import { handleCreateAccount } from "../../Firebase/Auth_Functions";
+import { useNavigate } from "react-router-dom";
 
-const AuthTabs = () => {
-  const [value, setValue] = useState(0); // To manage the active tab (Sign Up or Login)
+const AuthTabs = ({ groupId }) => {
+  const [value, setValue] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleTabChange = (event, newValue) => {
     setValue(newValue);
@@ -43,9 +45,11 @@ const AuthTabs = () => {
 
     try {
       if (value === 0) {
-        await handleCreateAccount({ email, password });
+        await handleCreateAccount({ email, password, groupId });
+        navigate("/"); // Redirect to the home page after successful sign-up
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+        navigate("/");
       }
     } catch (err) {
       setError(err.message);

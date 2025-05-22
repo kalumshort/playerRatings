@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useDispatch } from "react-redux";
 import { fixtureReducer } from "../redux/Reducers/fixturesReducer";
@@ -17,6 +17,7 @@ import {
   fetchUserMatchData,
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
+import useUserData from "../Hooks/useUserData";
 
 export const FixturesListener = ({ teamId, FixtureId }) => {
   const dispatch = useDispatch();
@@ -94,15 +95,10 @@ export const UserDataListener = ({ userId }) => {
             userData.lastLogin = userData.lastLogin.toDate().toISOString();
           }
 
-          // Dispatch user data
-          dispatch(fetchUserDataSuccess(userData));
-
           try {
             if (userData.groups) {
               dispatch(groupDataStart());
               const groupObj = {};
-
-              // Initialize an array to store permissions for each group
               const groupPermissions = {};
 
               for (let i = 0; i < userData.groups.length; i++) {
@@ -112,7 +108,6 @@ export const UserDataListener = ({ userId }) => {
 
                 if (groupDoc.exists()) {
                   groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
-                  // Fetch the permissions/role of the user in the group
                   const groupUserRef = doc(
                     db,
                     `groupUsers/${groupId}/members`,
@@ -121,32 +116,25 @@ export const UserDataListener = ({ userId }) => {
                   const groupUserDoc = await getDoc(groupUserRef);
                   if (groupUserDoc.exists()) {
                     const groupUserData = groupUserDoc.data();
-
-                    // Save the user's permissions for this group in groupPermissions
-                    groupPermissions[groupId] = groupUserData.role || {}; // Assuming `permissions` is the field
+                    groupPermissions[groupId] = groupUserData.role || {};
                   }
                 } else {
-                  // This will log if the group doesn't exist
                   console.error(
                     `Group ${groupId} does not exist or the user does not have permission to access it.`
                   );
                 }
               }
-
-              // Dispatch the updated user data with permissions
-              dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
               dispatch(groupDataSuccess(groupObj));
+              dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
             } else {
               dispatch(fetchUserDataSuccess(userData));
             }
           } catch (err) {
-            // This will show the exact error message
             console.error("Error fetching group data:", err.message);
             dispatch(groupDataFailure(err.message));
           }
 
-          // Dispatch fixture data
-          dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
+          // dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
         }
       },
       (error) => {

@@ -54,6 +54,7 @@ import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
 import ScheduleContainer from "./Containers/ScheduleContainer";
 import { selectPlayerRatingsLoad } from "./Selectors/selectors";
 import GroupDashboard from "./Containers/GroupDashboard";
+import GroupPublicPage from "./Containers/GroupPublicPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -158,7 +159,7 @@ function App() {
                   path="/group-dashboard"
                   element={user ? <GroupDashboard /> : <ProfileContainer />}
                 />
-                <Route path="/group/:groupId" element={<>test</>} />
+                <Route path="/groups/:groupId" element={<GroupPublicPage />} />
                 <Route
                   path="/schedule"
                   element={user ? <ScheduleContainer /> : <ProfileContainer />}

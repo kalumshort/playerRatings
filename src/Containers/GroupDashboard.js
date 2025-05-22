@@ -26,6 +26,7 @@ export default function GroupDashboard() {
   const { isGroupAdmin, userData } = useUserData();
   const { activeGroup } = useGroupData();
   const [inviteLinkDoc, setInviteLink] = useState(null);
+
   const [formData, setFormData] = useState({
     name: activeGroup.name,
     slug: activeGroup.slug,

@@ -11,6 +11,7 @@ const groupSlice = createSlice({
   reducers: {
     groupDataStart(state) {
       state.loading = true;
+      state.loaded = false;
       state.error = null;
     },
     groupDataFailure(state, action) {
