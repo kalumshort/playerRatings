@@ -158,6 +158,7 @@ function App() {
                   path="/group-dashboard"
                   element={user ? <GroupDashboard /> : <ProfileContainer />}
                 />
+                <Route path="/group/:groupId" element={<>test</>} />
                 <Route
                   path="/schedule"
                   element={user ? <ScheduleContainer /> : <ProfileContainer />}

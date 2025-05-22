@@ -10,6 +10,9 @@ import {
   setDoc,
   increment,
   updateDoc,
+  query,
+  where,
+  deleteDoc,
 } from "firebase/firestore";
 
 import { getAnalytics } from "firebase/analytics";
@@ -103,16 +106,49 @@ export const firebaseAddDoc = async ({ path, data, id = null }) => {
       docRef = await addDoc(collection(db, path), data);
     }
 
-    // Return the document reference and data, including the generated or provided ID
+    // Return success status with document data and ID
     const docData = {
+      success: true,
+      message: `Document successfully added with ID ${docRef.id}`,
       id: docRef.id,
       ...data,
     };
 
-    return docData; // This will return the document data including the ID
+    return docData; // Return document data including ID and success message
   } catch (e) {
     console.error("Error adding document: ", e);
-    throw e; // Rethrow the error for handling it elsewhere
+
+    // Return error status with error message
+    return {
+      success: false,
+      message: `Error adding document: ${e.message}`,
+    };
+  }
+};
+
+export const firebaseDeleteDoc = async ({ path, id }) => {
+  try {
+    // Reference to the document to delete
+    const docRef = doc(db, path, id);
+
+    // Delete the document
+    await deleteDoc(docRef);
+    console.log(`Document with ID ${id} successfully deleted`);
+
+    // Return success status with some result data
+    return {
+      success: true,
+      message: `Document with ID ${id} successfully deleted`,
+      deletedId: id, // Returning the ID of the deleted document
+    };
+  } catch (e) {
+    console.error("Error deleting document: ", e);
+
+    // Return error status with error message
+    return {
+      success: false,
+      message: `Error deleting document: ${e.message}`,
+    };
   }
 };
 
@@ -131,7 +167,7 @@ export const firebaseSetDoc = async ({
       throw new Error("Invalid docId provided.");
     }
 
-    // Sanitize data
+    // Sanitize data: Remove any undefined values
     const sanitizedData = Object.fromEntries(
       Object.entries(data).filter(([_, value]) => value !== undefined)
     );
@@ -139,10 +175,25 @@ export const firebaseSetDoc = async ({
     // Firestore reference and write
     const docRef = doc(db, path, docId);
     await setDoc(docRef, sanitizedData, { merge });
+
+    // Return success status with the document ID and a success message
+    return {
+      success: true,
+      message: `Document with ID ${docId} successfully set`,
+      id: docId,
+      ...sanitizedData, // Return the sanitized data along with success details
+    };
   } catch (e) {
     console.error("Error setting document: ", e);
+
+    // Return error status with error message
+    return {
+      success: false,
+      message: `Error setting document: ${e.message}`,
+    };
   }
 };
+
 export const firebaseUpdateDoc = async ({ path, docId, data = {} }) => {
   try {
     // Validate inputs
@@ -156,14 +207,26 @@ export const firebaseUpdateDoc = async ({ path, docId, data = {} }) => {
     // Firestore reference to the document
     const docRef = doc(db, path, docId);
 
-    // Update the document (merge new player data)
+    // Update the document (merge new data)
     await updateDoc(docRef, data);
-    console.log("Document successfully updated!");
+
+    // Return success status with the document ID and a success message
+    return {
+      success: true,
+      message: `Document with ID ${docId} successfully updated`,
+      id: docId,
+      updatedData: data, // Optionally include the updated data
+    };
   } catch (e) {
     console.error("Error updating document: ", e);
+
+    // Return error status with the error message
+    return {
+      success: false,
+      message: `Error updating document: ${e.message}`,
+    };
   }
 };
-
 export const firebaseUpdateOrSetDoc = async ({
   path,
   docId,
@@ -340,6 +403,30 @@ export const handleMatchMotmVote = async (data) => {
   });
 };
 
+export const fetchInviteLink = async (group) => {
+  if (!group || !group.id) return; // Ensure group and its ID exist
+
+  // Create a reference to the groupInviteLinks collection
+  const inviteRef = collection(db, "groupInviteLinks");
+
+  // Create a query to fetch the invite link where groupId matches group.id
+  const q = query(inviteRef, where("groupId", "==", group.id));
+
+  try {
+    // Get the documents that match the query
+    const querySnapshot = await getDocs(q);
+
+    // If we have matching documents, extract the first one
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() }; // Set the invite link
+    } else {
+      console.log("No invite link found for this group.");
+    }
+  } catch (error) {
+    console.error("Error fetching invite link:", error);
+  }
+};
 // // 4. Firestore Collection Listener Component
 // export const CollectionListener = ({ path }) => {
 //   const dispatch = useDispatch();
