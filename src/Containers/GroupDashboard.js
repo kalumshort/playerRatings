@@ -130,7 +130,6 @@ export default function GroupDashboard() {
   };
 
   const handleToggleDeletePopper = () => {
-    console.log("testt");
     setOpenDeletePopper((prev) => !prev);
   };
 
