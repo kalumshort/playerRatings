@@ -23,7 +23,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useAlert } from "../Components/HelpfulComponents";
 
 export default function GroupDashboard() {
-  const { isGroupAdmin, userData } = useUserData();
+  const { userData } = useUserData();
   const { activeGroup } = useGroupData();
   const [inviteLinkDoc, setInviteLink] = useState(null);
 

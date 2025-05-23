@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { useDispatch } from "react-redux";
 import { fixtureReducer } from "../redux/Reducers/fixturesReducer";
@@ -17,7 +17,6 @@ import {
   fetchUserMatchData,
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
-import useUserData from "../Hooks/useUserData";
 
 export const FixturesListener = ({ teamId, FixtureId }) => {
   const dispatch = useDispatch();

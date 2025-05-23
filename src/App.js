@@ -42,9 +42,7 @@ import MobileHeader from "./Containers/MobileHeader";
 import PlayerPage from "./Components/PlayerStats/PlayerPage";
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
 import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./Firebase/Firebase";
-import { fetchUserData } from "./Firebase/Auth_Functions";
+
 import { useAuth } from "./Providers/AuthContext";
 
 import ProfileContainer from "./Containers/ProfileContainer";

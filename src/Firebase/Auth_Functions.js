@@ -23,7 +23,6 @@ export const handleCreateAccount = async ({
   password,
   groupId = "002",
 }) => {
-  console.log(groupId, email, password);
   try {
     // Call the Cloud Function to add the user to the group
     const functions = getFunctions();
@@ -54,6 +53,22 @@ export const handleCreateAccount = async ({
     console.error("Error creating account:", err);
   }
 };
+
+// export const handleSignIn = async ({ email, password, groupId }) => {
+//   try {
+//     await signInWithEmailAndPassword(auth, email, password);
+//      await addUserToGroup({
+//       groupId: groupId, // The group to add the user to
+//       userId: userId, // The user's UID
+//       userData: {
+//         email: email,
+//         role: "user", // Optionally, you could pass more data like role, username, etc.
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Error signing in:", err);
+//   }
+// };
 
 export const handleAddUserToGroup = async ({ userData, groupId }) => {
   try {

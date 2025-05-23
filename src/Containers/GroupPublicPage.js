@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  fetchGroupByInviteLink,
-  firebaseGetDocument,
-} from "../Firebase/Firebase";
+import { firebaseGetDocument } from "../Firebase/Firebase";
 import { useNavigate, useParams } from "react-router-dom";
 import useUserData from "../Hooks/useUserData";
 import { Button, Paper, Typography, Box } from "@mui/material";
 import { Spinner } from "./Helpers";
-import AuthTabs from "../Components/Auth/AuthTabs";
+
 import { handleAddUserToGroup } from "../Firebase/Auth_Functions";
 import { useAlert } from "../Components/HelpfulComponents";
 import Login from "../Components/Auth/Login";
@@ -17,7 +14,7 @@ import { clearRatings } from "../redux/Reducers/playerRatingsReducer";
 import { clearFixtures } from "../redux/Reducers/fixturesReducer";
 
 export default function GroupPublicPage() {
-  const { isGroupAdmin, userData } = useUserData();
+  const { userData } = useUserData();
 
   const [inviteLinkDoc, setInviteLink] = useState(null);
   const { groupId } = useParams();

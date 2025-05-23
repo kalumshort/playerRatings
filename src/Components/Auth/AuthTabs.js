@@ -49,7 +49,6 @@ const AuthTabs = ({ groupId }) => {
         navigate("/"); // Redirect to the home page after successful sign-up
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        navigate("/");
       }
     } catch (err) {
       setError(err.message);
