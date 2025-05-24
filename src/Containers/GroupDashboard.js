@@ -153,6 +153,13 @@ export default function GroupDashboard() {
   return (
     <>
       <Paper
+        className="containerMargin"
+        style={{ padding: "1px", textAlign: "center" }}
+      >
+        <h2>{activeGroup.name}</h2>
+      </Paper>
+
+      <Paper
         style={{ marginTop: "30px", padding: "10px" }}
         className="containerMargin"
       >
