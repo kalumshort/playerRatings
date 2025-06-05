@@ -306,7 +306,7 @@ export const handlePredictTeamScore = async (data) => {
     path: `groups/${data.groupId}/seasons/2024/predictions`,
     docId: data.matchId,
     data: {
-      scorePrecitions: { [data.score]: increment(1) },
+      scorePredictions: { [data.score]: increment(1) },
       homeGoals: { [data.homeGoals]: increment(1) },
       awayGoals: { [data.awayGoals]: increment(1) },
     },
