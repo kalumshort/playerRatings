@@ -18,13 +18,13 @@ import {
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
 
-export const FixturesListener = ({ teamId, FixtureId }) => {
+export const FixturesListener = ({ teamId, fixtureId }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!teamId || FixtureId) return;
+    if (!teamId || !fixtureId) return;
 
-    const fixtureRef = doc(db, `fixtures/2024/${teamId}`, String(FixtureId));
+    const fixtureRef = doc(db, `fixtures/2024/${teamId}`, String(fixtureId));
 
     const unsubscribe = onSnapshot(
       fixtureRef,
@@ -39,7 +39,7 @@ export const FixturesListener = ({ teamId, FixtureId }) => {
     );
 
     return () => unsubscribe(); // Cleanup listener on unmount
-  }, [teamId, FixtureId, dispatch]);
+  }, [teamId, fixtureId, dispatch]);
 
   return null; // No UI, just listens and dispatches
 };
