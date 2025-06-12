@@ -33,7 +33,7 @@ export default function ScorePredictionResults({
   const barchartDataAwayGoals = getBarchartData(matchPredictions?.awayGoals);
   const barchartDataHomeGoals = getBarchartData(matchPredictions?.homeGoals);
   // const barchartDataScoreline = getBarchartData(
-  //   matchPredictions?.scorePrecitions
+  //   matchPredictions?.scorePredictions
   // );
 
   // Check if match predictions are loaded
@@ -41,15 +41,15 @@ export default function ScorePredictionResults({
     return <div>Loading...</div>; // Or a spinner/loading component
   }
   let highestScorePredictions;
-  if (matchPredictions?.scorePrecitions) {
+  if (matchPredictions?.scorePredictions) {
     const maxValue = Math.max(
-      ...Object.values(matchPredictions?.scorePrecitions)
+      ...Object.values(matchPredictions?.scorePredictions)
     );
 
     // Filter keys that have the maximum value
     highestScorePredictions = Object.keys(
-      matchPredictions?.scorePrecitions
-    ).filter((key) => matchPredictions?.scorePrecitions[key] === maxValue);
+      matchPredictions?.scorePredictions
+    ).filter((key) => matchPredictions?.scorePredictions[key] === maxValue);
   }
   const style = {
     position: "absolute",
@@ -108,7 +108,7 @@ export default function ScorePredictionResults({
                 Predicted Scoreline
               </h1>
               <Piechart
-                chartData={matchPredictions?.scorePrecitions || []}
+                chartData={matchPredictions?.scorePredictions || []}
                 width={isMobile ? 300 : 220}
                 height={220}
                 outerRadius={75}
