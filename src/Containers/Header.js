@@ -174,8 +174,11 @@ function DrawerGroupContainer({ setDrawerOpen }) {
         </h5>
         <Box style={{ fontSize: "15px" }}>{activeGroup?.name}</Box>
       </SettingRow>
-      <SettingRow onClick={handleSeasonStatsClick}>
-        <Box>Season Stats</Box>
+      <SettingRow
+        onClick={handleSeasonStatsClick}
+        style={{ cursor: "pointer" }}
+      >
+        <Box>Player Stats</Box>
         <ArrowForwardIosIcon fontSize="small" />
       </SettingRow>
     </Paper>
@@ -200,7 +203,7 @@ function DrawerGroupAdminContainer({ setDrawerOpen }) {
           Group Admin
         </h5>
       </SettingRow>
-      <SettingRow onClick={handleNavLink}>
+      <SettingRow onClick={handleNavLink} style={{ cursor: "pointer" }}>
         <Box>Dashboard</Box>
         <ArrowForwardIosIcon fontSize="small" />
       </SettingRow>

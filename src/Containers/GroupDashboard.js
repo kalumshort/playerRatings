@@ -86,7 +86,7 @@ export default function GroupDashboard() {
       }
     }
     if (updatedFields.length > 0) {
-      console.log("Updated fields:", updatedFields);
+      showAlert("Group details updated successfully.");
     }
   };
 
@@ -171,7 +171,7 @@ export default function GroupDashboard() {
           </h5>
         </SettingRow>
         <SettingRow>
-          <Box>Group Link</Box>
+          <Box>Join Group Link</Box>
           {inviteLinkDoc?.inviteLink ? (
             <Box style={{ display: "flex", gap: "20px" }}>
               <Button onClick={handleCopyInviteLink} variant="contained">
@@ -193,7 +193,7 @@ export default function GroupDashboard() {
               >
                 <Paper elevation={3} sx={{ padding: 2 }}>
                   <Typography variant="body1" gutterBottom>
-                    Confirm Group Link Delete?
+                    Confirm Join Group Link Delete?
                   </Typography>
                   <Box
                     sx={{ display: "flex", justifyContent: "space-between" }}
