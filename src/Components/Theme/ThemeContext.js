@@ -13,7 +13,7 @@ import {
 // Create a Context for the theme
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children, accentColor }) => {
   // Initialize themeMode as 'light' or 'dark' based on localStorage or default to 'light'
   const [themeMode, setThemeMode] = useState("dark"); // Default to 'light'
 
@@ -56,7 +56,7 @@ export const ThemeProvider = ({ children }) => {
                   shadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
                 },
                 primary: {
-                  main: "#DA291C",
+                  main: accentColor,
                   contrastText: "#ffffff",
                 },
                 secondary: {
@@ -77,7 +77,7 @@ export const ThemeProvider = ({ children }) => {
                   shadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
                 },
                 primary: {
-                  main: "#DA291C",
+                  main: accentColor,
                   contrastText: "#ffffff",
                 },
                 secondary: {
@@ -176,7 +176,7 @@ export const ThemeProvider = ({ children }) => {
           },
         },
       }),
-    [themeMode] // Recreate the theme when themeMode changes
+    [themeMode, accentColor] // Recreate the theme when themeMode changes
   );
 
   // Render a loading state or nothing until the themeMode has been set

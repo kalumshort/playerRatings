@@ -31,6 +31,7 @@ import ScheduleContainer from "./Containers/ScheduleContainer";
 import { selectPlayerRatingsLoad } from "./Selectors/selectors";
 import GroupDashboard from "./Containers/GroupDashboard";
 import GroupPublicPage from "./Containers/GroupPublicPage";
+import { ThemeProvider } from "./Components/Theme/ThemeContext";
 
 function App() {
   const dispatch = useDispatch();
@@ -102,58 +103,67 @@ function App() {
   }
 
   return (
-    <GlobalContainer>
-      <Router>
-        {user && <UserDataListener userId={user.uid} />}
-        {user && activeGroup && <GroupListener groupId={activeGroup.groupId} />}
+    <ThemeProvider accentColor={activeGroup?.accentColor || "#DA291C"}>
+      <GlobalContainer>
+        <Router>
+          {user && <UserDataListener userId={user.uid} />}
+          {user && activeGroup && (
+            <GroupListener groupId={activeGroup.groupId} />
+          )}
 
-        {(user && !userDataLoaded) ||
-        (user && !fixturesLoaded) ||
-        (user && !squadLoaded) ? (
-          <div style={{ textAlign: "center" }}>
-            <Spinner text={"Loading Data..."} />
-          </div>
-        ) : (
-          <>
-            {!isMobile && <Header />}
-            {isMobile && <MobileHeader />}
-            <div style={{ maxWidth: "1400px", margin: "auto" }}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={user ? <GroupHomePage /> : <HomePage />}
-                />
-                <Route path="/profile" element={<ProfileContainer />} />
-                <Route
-                  path="/season-stats"
-                  element={
-                    user ? <PlayerStatsContainer /> : <ProfileContainer />
-                  }
-                />
-                <Route
-                  path="/group-dashboard"
-                  element={user ? <GroupDashboard /> : <ProfileContainer />}
-                />
-                <Route path="/groups/:groupId" element={<GroupPublicPage />} />
-                <Route
-                  path="/schedule"
-                  element={user ? <ScheduleContainer /> : <ProfileContainer />}
-                />
-                <Route
-                  path="/fixture/:matchId"
-                  element={user ? <Fixture /> : <ProfileContainer />}
-                />
-                <Route
-                  path="/players/:playerId"
-                  element={user ? <PlayerPage /> : <ProfileContainer />}
-                />
-              </Routes>
+          {(user && !userDataLoaded) ||
+          (user && !fixturesLoaded) ||
+          (user && !squadLoaded) ? (
+            <div style={{ textAlign: "center" }}>
+              <Spinner text={"Loading Data..."} />
             </div>
-          </>
-        )}
-      </Router>
-      <div style={{ height: "50px" }}></div>
-    </GlobalContainer>
+          ) : (
+            <>
+              {!isMobile && <Header />}
+              {isMobile && <MobileHeader />}
+              <div style={{ maxWidth: "1400px", margin: "auto" }}>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={user ? <GroupHomePage /> : <HomePage />}
+                  />
+                  <Route path="/profile" element={<ProfileContainer />} />
+                  <Route
+                    path="/season-stats"
+                    element={
+                      user ? <PlayerStatsContainer /> : <ProfileContainer />
+                    }
+                  />
+                  <Route
+                    path="/group-dashboard"
+                    element={user ? <GroupDashboard /> : <ProfileContainer />}
+                  />
+                  <Route
+                    path="/groups/:groupId"
+                    element={<GroupPublicPage />}
+                  />
+                  <Route
+                    path="/schedule"
+                    element={
+                      user ? <ScheduleContainer /> : <ProfileContainer />
+                    }
+                  />
+                  <Route
+                    path="/fixture/:matchId"
+                    element={user ? <Fixture /> : <ProfileContainer />}
+                  />
+                  <Route
+                    path="/players/:playerId"
+                    element={user ? <PlayerPage /> : <ProfileContainer />}
+                  />
+                </Routes>
+              </div>
+            </>
+          )}
+        </Router>
+        <div style={{ height: "50px" }}></div>
+      </GlobalContainer>
+    </ThemeProvider>
   );
 }
 

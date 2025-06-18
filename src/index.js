@@ -12,7 +12,7 @@ import "animate.css";
 import { Provider } from "react-redux";
 
 import store from "./redux/store";
-import { ThemeProvider } from "./Components/Theme/ThemeContext";
+
 import { AlertProvider } from "./Components/HelpfulComponents";
 import { AuthProvider } from "./Providers/AuthContext";
 
@@ -21,11 +21,9 @@ root.render(
   // <React.StrictMode>
   <AuthProvider>
     <Provider store={store}>
-      <ThemeProvider>
-        <AlertProvider>
-          <App />
-        </AlertProvider>
-      </ThemeProvider>
+      <AlertProvider>
+        <App />
+      </AlertProvider>
     </Provider>
   </AuthProvider>
   // </React.StrictMode>
