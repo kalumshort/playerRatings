@@ -96,11 +96,11 @@ function App() {
     return <Spinner />;
   }
 
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js");
-    });
-  }
+  // if ("serviceWorker" in navigator) {
+  //   window.addEventListener("load", () => {
+  //     navigator.serviceWorker.register("/service-worker.js");
+  //   });
+  // }
 
   return (
     <ThemeProvider accentColor={activeGroup?.accentColor || "#DA291C"}>
