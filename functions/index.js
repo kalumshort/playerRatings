@@ -119,7 +119,7 @@ exports.updateFixtures = onSchedule(
   },
   async (event) => {
     try {
-      const SEASON = 2024;
+      const SEASON = 2025;
       const LEAGUE_ID = 39; // Premier League
 
       // Step 1: Get all teams in the Premier League
@@ -253,7 +253,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
     try {
       // Query the next match
-      const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+      const matchesRef = getFirestore().collection(`fixtures/2025/33`);
       const nextFixture = await matchesRef
         .where("matchDate", ">=", now)
         .orderBy("matchDate", "asc")
