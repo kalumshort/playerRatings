@@ -20,6 +20,8 @@ import {
 } from "../Firebase/Firebase";
 import { generateCustomId } from "../Hooks/Helper_Functions";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SettingsIcon from "@mui/icons-material/Settings";
+
 import { useAlert } from "../Components/HelpfulComponents";
 
 export default function GroupDashboard() {
@@ -158,7 +160,28 @@ export default function GroupDashboard() {
       >
         <h2>{activeGroup.name}</h2>
       </Paper>
+      <Paper
+        style={{ marginTop: "30px", padding: "10px" }}
+        className="containerMargin"
+      >
+        <SettingRow
+          style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
+        >
+          <h5 style={{ padding: "0px", margin: "5px 0px", color: "grey" }}>
+            Group Plan
+          </h5>
+        </SettingRow>
 
+        <SettingRow>
+          <Box>Active Plan </Box>
+          <Box style={{ display: "flex", gap: "20px" }}>
+            <Box>Club</Box>
+            <IconButton color="primary" aria-label="membership settings">
+              <SettingsIcon />
+            </IconButton>
+          </Box>
+        </SettingRow>
+      </Paper>
       <Paper
         style={{ marginTop: "30px", padding: "10px" }}
         className="containerMargin"
@@ -234,6 +257,14 @@ export default function GroupDashboard() {
           <h5 style={{ padding: "0px", margin: "5px 0px", color: "grey" }}>
             Customisation
           </h5>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateGroupDetails}
+            disabled={isButtonDisabled}
+          >
+            Update
+          </Button>
         </SettingRow>
         <SettingRow>
           <Box>Group Name</Box>
@@ -254,17 +285,27 @@ export default function GroupDashboard() {
             }
           />
         </SettingRow>
+      </Paper>
+
+      <Paper
+        style={{ marginTop: "30px", padding: "10px" }}
+        className="containerMargin"
+      >
         <SettingRow
-          sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}
+          style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
         >
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleUpdateGroupDetails}
-            disabled={isButtonDisabled}
-          >
-            Update
-          </Button>
+          <h5 style={{ padding: "0px", margin: "5px 0px", color: "grey" }}>
+            Members
+          </h5>
+        </SettingRow>
+
+        <SettingRow>
+          <Box>Members Limit </Box>
+          <Box>Unlimited</Box>
+        </SettingRow>
+        <SettingRow>
+          <Box>Active Members </Box>
+          <Box>na</Box>
         </SettingRow>
       </Paper>
     </>
