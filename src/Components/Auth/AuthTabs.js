@@ -7,8 +7,12 @@ import {
   Tabs,
   Tab,
   Container,
+  Link,
 } from "@mui/material";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
 import { handleCreateAccount } from "../../Firebase/Auth_Functions";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +59,19 @@ const AuthTabs = ({ groupId }) => {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("Enter your email to reset password");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setError("Password reset email sent.");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <Container style={{ padding: "0px" }}>
       <Box>
@@ -65,9 +82,10 @@ const AuthTabs = ({ groupId }) => {
 
         <Box sx={{ paddingTop: 2 }}>
           <form onSubmit={handleSubmit}>
-            <Typography variant="p" gutterBottom align="center">
+            <Typography gutterBottom align="center">
               {value === 0 ? "Create an Account" : "Log In"}
             </Typography>
+
             <TextField
               label="Email"
               type="email"
@@ -86,14 +104,29 @@ const AuthTabs = ({ groupId }) => {
               margin="normal"
               variant="outlined"
             />
+
+            {value === 1 && (
+              <Box sx={{ textAlign: "right", mt: 1 }}>
+                <Link
+                  component="button"
+                  variant="body2"
+                  onClick={handlePasswordReset}
+                >
+                  Forgot Password?
+                </Link>
+              </Box>
+            )}
+
             {error && (
-              <Typography color="error" sx={{ marginBottom: 2 }}>
+              <Typography
+                color={error.includes("sent") ? "success.main" : "error"}
+                sx={{ mt: 2 }}
+              >
                 {error}
               </Typography>
             )}
-            <Box
-              sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}
-            >
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
               <Button variant="contained" color="primary" type="submit">
                 {value === 0 ? "Sign Up" : "Log In"}
               </Button>
