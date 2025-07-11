@@ -17,14 +17,21 @@ import {
   fetchUserMatchData,
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
+import useGlobalData from "../Hooks/useGlobalData";
 
 export const FixturesListener = ({ teamId, fixtureId }) => {
   const dispatch = useDispatch();
 
+  const globalData = useGlobalData();
+
   useEffect(() => {
     if (!teamId || !fixtureId) return;
 
-    const fixtureRef = doc(db, `fixtures/2024/${teamId}`, String(fixtureId));
+    const fixtureRef = doc(
+      db,
+      `fixtures/${globalData.currentYear}/${teamId}`,
+      String(fixtureId)
+    );
 
     const unsubscribe = onSnapshot(
       fixtureRef,
@@ -149,6 +156,7 @@ export const UserDataListener = ({ userId }) => {
 
 export const UsersMatchDataListener = ({ matchId, groupId }) => {
   const dispatch = useDispatch();
+  const globalData = useGlobalData();
 
   useEffect(() => {
     const auth = getAuth();
@@ -161,7 +169,7 @@ export const UsersMatchDataListener = ({ matchId, groupId }) => {
 
     const matchRef = doc(
       db,
-      `users/${user.uid}/groups/${groupId}/seasons/2024/matches`,
+      `users/${user.uid}/groups/${groupId}/seasons/${globalData.currentYear}/matches`,
       matchId
     );
 

@@ -16,6 +16,8 @@ import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelect
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
+import useGlobalData from "../../../Hooks/useGlobalData";
+import { current } from "@reduxjs/toolkit";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -24,6 +26,8 @@ export default function PreMatchMOTM({ fixture }) {
   const [selectedPlayer, setSelectedPlayer] = useState("");
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const globalData = useGlobalData();
+
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   const storedUsersPlayerToWatch = usersMatchData?.preMatchMotm;
@@ -50,12 +54,14 @@ export default function PreMatchMOTM({ fixture }) {
       playerId: selectedPlayer,
       groupId: activeGroup.groupId,
       userId: user.uid,
+      currentYear: globalData.currentYear,
     });
 
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
         groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
       })
     );
   };

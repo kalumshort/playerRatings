@@ -12,11 +12,15 @@ import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
+import useGlobalData from "../../../Hooks/useGlobalData";
+import { current } from "@reduxjs/toolkit";
 
 export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const globalData = useGlobalData();
+
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   const [homeTeamScore, setHomeTeamScore] = useState(0);
@@ -32,12 +36,14 @@ export default function ScorePrediction({ fixture }) {
       awayGoals: homeAwayScore,
       groupId: activeGroup.groupId,
       userId: user.uid,
+      currentYear: globalData.currentYear,
     });
 
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
         groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
       })
     );
   };

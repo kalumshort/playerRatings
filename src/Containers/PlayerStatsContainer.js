@@ -6,10 +6,13 @@ import "../Components/PlayerStats/playerStats.css";
 import { selectPlayerRatingsLoad } from "../Selectors/selectors";
 import { Spinner } from "./Helpers";
 import useGroupData from "../Hooks/useGroupsData";
+import useGlobalData from "../Hooks/useGlobalData";
 
 export default function PlayerStatsContainer() {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
+
+  const globalData = useGlobalData();
 
   const { playerSeasonOverallRatingsLoaded } = useSelector(
     selectPlayerRatingsLoad
@@ -17,7 +20,12 @@ export default function PlayerStatsContainer() {
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
-      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+      dispatch(
+        fetchAllPlayersSeasonOverallRating({
+          groupId: activeGroup.groupId,
+          currentYear: globalData.currentYear,
+        })
+      );
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 

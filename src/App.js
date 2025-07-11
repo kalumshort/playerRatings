@@ -32,6 +32,7 @@ import { selectPlayerRatingsLoad } from "./Selectors/selectors";
 import GroupDashboard from "./Containers/GroupDashboard";
 import GroupPublicPage from "./Containers/GroupPublicPage";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
+import useGlobalData from "./Hooks/useGlobalData";
 
 function App() {
   const dispatch = useDispatch();
@@ -42,6 +43,8 @@ function App() {
   const { fixturesLoaded } = useSelector(selectFixturesLoad);
 
   const { activeGroup, groupDataLoaded } = useGroupData();
+
+  const { currentYear } = useGlobalData();
 
   const { loaded: userDataLoaded } = useSelector((state) => state.userData);
   const { playerSeasonOverallRatingsLoaded } = useSelector(
@@ -73,7 +76,12 @@ function App() {
   useEffect(() => {
     if (user) {
       if (!fixturesLoaded && groupDataLoaded) {
-        dispatch(fetchFixtures(activeGroup.groupClubId));
+        dispatch(
+          fetchFixtures({
+            clubId: activeGroup.groupClubId,
+            currentYear: currentYear,
+          })
+        );
       }
     }
   }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
@@ -81,7 +89,12 @@ function App() {
   useEffect(() => {
     if (user) {
       if (!playerSeasonOverallRatingsLoaded && groupDataLoaded) {
-        dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+        dispatch(
+          fetchAllPlayersSeasonOverallRating({
+            groupId: activeGroup.groupId,
+            currentYear: currentYear,
+          })
+        );
       }
     }
   }, [

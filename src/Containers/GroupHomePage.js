@@ -16,6 +16,7 @@ export default function GroupHomePage() {
 
   useEffect(() => {
     if (!fixtures) {
+      console.log("Fetching fixtures... In GroupHomePage");
       dispatch(fetchFixtures());
     }
   }, [dispatch, fixtures]);

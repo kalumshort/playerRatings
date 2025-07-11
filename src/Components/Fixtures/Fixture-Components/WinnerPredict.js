@@ -9,11 +9,15 @@ import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelect
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
+import useGlobalData from "../../../Hooks/useGlobalData";
+import { current } from "@reduxjs/toolkit";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const globalData = useGlobalData();
+
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   const storedUsersPredictedResult = usersMatchData?.result;
@@ -26,11 +30,13 @@ export default function WinnerPredict({ fixture }) {
       choice: choice,
       groupId: activeGroup.groupId,
       userId: user.uid,
+      currentYear: globalData.currentYear,
     });
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
         groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
       })
     );
   };

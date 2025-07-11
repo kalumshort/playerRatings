@@ -37,6 +37,7 @@ import WinnerPredict from "./Fixture-Components/WinnerPredict";
 import { selectPredictionsLoad } from "../../Selectors/predictionsSelectors";
 import { selectPlayerRatingsLoad } from "../../Selectors/selectors";
 import useGroupData from "../../Hooks/useGroupsData";
+import useGlobalData from "../../Hooks/useGlobalData";
 
 export default function Fixture() {
   const { matchId } = useParams();
@@ -49,6 +50,8 @@ export default function Fixture() {
   );
 
   const isMobile = useIsMobile();
+
+  const { currentYear } = useGlobalData();
 
   const dispatch = useDispatch();
 
@@ -64,7 +67,11 @@ export default function Fixture() {
 
   useEffect(() => {
     dispatch(
-      fetchMatchPredictions({ matchId: matchId, groupId: activeGroup.groupId })
+      fetchMatchPredictions({
+        matchId: matchId,
+        groupId: activeGroup.groupId,
+        currentYear: currentYear,
+      })
     );
   }, [dispatch, matchId, activeGroup.groupId]);
 
@@ -73,19 +80,29 @@ export default function Fixture() {
       fetchMatchPlayerRatings({
         matchId: matchId,
         groupId: activeGroup.groupId,
+        currentYear: currentYear,
       })
     );
   }, [dispatch, matchId, activeGroup.groupId]);
 
   useEffect(() => {
     dispatch(
-      fetchUsersMatchData({ matchId: matchId, groupId: activeGroup.groupId })
+      fetchUsersMatchData({
+        matchId: matchId,
+        groupId: activeGroup.groupId,
+        currentYear: currentYear,
+      })
     );
   }, [dispatch, matchId, activeGroup.groupId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
-      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+      dispatch(
+        fetchAllPlayersSeasonOverallRating({
+          groupId: activeGroup.groupId,
+          currentYear: currentYear,
+        })
+      );
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 

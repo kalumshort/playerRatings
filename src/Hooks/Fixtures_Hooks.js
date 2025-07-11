@@ -46,26 +46,30 @@ import { fetchUserMatchData } from "../redux/Reducers/userDataReducer";
 //     dispatch(fetchFixturesFailure(error.message));
 //   }
 // };
-export const fetchFixtures = (clubId) => async (dispatch) => {
-  try {
-    dispatch(fetchFixturesStart()); // Start loading
+export const fetchFixtures =
+  ({ clubId, currentYear }) =>
+  async (dispatch) => {
+    try {
+      dispatch(fetchFixturesStart()); // Start loading
 
-    const fixturesData = await firebaseGetCollecion(`fixtures/2024/${clubId}`);
+      const fixturesData = await firebaseGetCollecion(
+        `fixtures/${currentYear}/${clubId}`
+      );
 
-    const fixtures = Object.entries(fixturesData)
-      .map(([id, fixture]) => ({ id, ...fixture }))
-      .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
+      const fixtures = Object.entries(fixturesData)
+        .map(([id, fixture]) => ({ id, ...fixture }))
+        .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
-    dispatch(fixturesReducer(fixtures));
-    dispatch(fetchFixturesSuccess());
-  } catch (error) {
-    console.error("Error getting fixtures:", error);
-    dispatch(fetchFixturesFailure(error.message));
-  }
-};
+      dispatch(fixturesReducer(fixtures));
+      dispatch(fetchFixturesSuccess());
+    } catch (error) {
+      console.error("Error getting fixtures:", error);
+      dispatch(fetchFixturesFailure(error.message));
+    }
+  };
 
 export const fetchPlayerRatingsAllMatches =
-  ({ playerId, groupId }) =>
+  ({ playerId, groupId, currentYear }) =>
   async (dispatch) => {
     try {
       dispatch(fetchPlayerAllMatchesRatingLoading());
@@ -81,7 +85,7 @@ export const fetchPlayerRatingsAllMatches =
       }
 
       const fixturesData = await firebaseGetCollecion(
-        `groups/${groupId}/seasons/2024/players/${playerId}/matches`
+        `groups/${groupId}/seasons/${currentYear}/players/${playerId}/matches`
       );
 
       const fixtures = Object.entries(fixturesData).map(([id, fixture]) => ({
@@ -100,7 +104,8 @@ export const fetchPlayerRatingsAllMatches =
   };
 
 export const fetchAllPlayersSeasonOverallRating =
-  (groupId) => async (dispatch) => {
+  ({ groupId, currentYear }) =>
+  async (dispatch) => {
     dispatch(fetchPlayerOverallSeasonRatingsStart());
     const auth = getAuth();
 
@@ -112,7 +117,7 @@ export const fetchAllPlayersSeasonOverallRating =
 
     try {
       const playerRatings = await firebaseGetCollecion(
-        `groups/${groupId}/seasons/2024/players`
+        `groups/${groupId}/seasons/${currentYear}/players`
       );
 
       dispatch(
@@ -125,9 +130,10 @@ export const fetchAllPlayersSeasonOverallRating =
   };
 
 export const fetchMatchPlayerRatings =
-  ({ matchId, groupId }) =>
+  ({ matchId, groupId, currentYear }) =>
   async (dispatch) => {
-    if (!matchId) {
+    if (!matchId || !groupId || !currentYear) {
+      console.log("fetchMatchPlayerRatings called with missing parameters");
       return;
     }
 
@@ -143,11 +149,11 @@ export const fetchMatchPlayerRatings =
       dispatch(fetchRatingsStart()); // Start loading
 
       const playerRatings = await firebaseGetCollecion(
-        `groups/${groupId}/seasons/2024/playerRatings/${matchId}/players`
+        `groups/${groupId}/seasons/${currentYear}/playerRatings/${matchId}/players`
       );
 
       const matchMotmVotes = await firebaseGetDocument(
-        `groups/${groupId}/seasons/2024/playerRatings`,
+        `groups/${groupId}/seasons/${currentYear}/playerRatings`,
         matchId
       );
 
@@ -166,14 +172,14 @@ export const fetchMatchPlayerRatings =
   };
 
 export const fetchUsersMatchData =
-  ({ matchId, groupId }) =>
+  ({ matchId, groupId, currentYear }) =>
   async (dispatch) => {
     const auth = getAuth();
     const user = auth.currentUser;
 
     try {
       const matchData = await firebaseGetDocument(
-        `users/${user.uid}/groups/${groupId}/seasons/2024/matches`,
+        `users/${user.uid}/groups/${groupId}/seasons/${currentYear}/matches`,
         matchId
       );
       dispatch(fetchUserMatchData({ matchId: matchId, data: matchData }));
@@ -229,7 +235,7 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
 };
 
 export const fetchMatchPredictions =
-  ({ matchId, groupId }) =>
+  ({ matchId, groupId, currentYear }) =>
   async (dispatch) => {
     if (!matchId) {
       return;
@@ -249,7 +255,7 @@ export const fetchMatchPredictions =
 
       // Proceed with the Firestore call since the user is authenticated
       const matchPredictions = await firebaseGetDocument(
-        `groups/${groupId}/seasons/2024/predictions`,
+        `groups/${groupId}/seasons/${currentYear}/predictions`,
         matchId
       );
 

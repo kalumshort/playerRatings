@@ -34,12 +34,14 @@ import RatingLineup from "./RatingLineup";
 import MOTMPopover from "./MotmPlayerPopper";
 import { useAuth } from "../../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
+import useGlobalData from "../../../../Hooks/useGlobalData";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
+  const globalData = useGlobalData();
 
   const groupClubId = Number(activeGroup.groupClubId);
   const groupId = activeGroup.groupId;
@@ -49,7 +51,6 @@ export default function PlayerRatings({ fixture }) {
   );
 
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
-  console.log("usersMatchData", usersMatchData);
   const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
 
   const lineup =
@@ -118,6 +119,7 @@ export default function PlayerRatings({ fixture }) {
       value: 1,
       groupId: groupId,
       userId: user.uid,
+      currentYear: globalData.currentYear,
     });
 
     setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
@@ -125,10 +127,15 @@ export default function PlayerRatings({ fixture }) {
       fetchMatchPlayerRatings({
         matchId: fixture.id,
         groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
       })
     );
     dispatch(
-      fetchUsersMatchData({ matchId: fixture.id, groupId: activeGroup.groupId })
+      fetchUsersMatchData({
+        matchId: fixture.id,
+        groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
+      })
     );
   };
 
@@ -151,6 +158,7 @@ export default function PlayerRatings({ fixture }) {
         groupId={groupId}
         userId={user.uid}
         usersMatchPlayerRatings={usersMatchData?.players}
+        currentYear={globalData.currentYear}
       />
     )
   ) : (
@@ -176,6 +184,7 @@ const PlayerRatingsItems = ({
   groupId,
   userId,
   usersMatchPlayerRatings,
+  currentYear,
 }) => {
   const isMobile = useIsMobile();
   const { activeGroup } = useGroupData();
@@ -201,6 +210,7 @@ const PlayerRatingsItems = ({
           groupId={groupId}
           userId={userId}
           usersMatchPlayerRating={usersMatchPlayerRatings?.[player.id]}
+          currentYear={currentYear}
         />
       ))}
       {coach.id && (
@@ -213,6 +223,7 @@ const PlayerRatingsItems = ({
           groupId={groupId}
           userId={userId}
           usersMatchPlayerRating={usersMatchPlayerRatings?.[coach.id]}
+          currentYear={currentYear}
         />
       )}
       {!isMatchRatingsSubmitted && (
@@ -238,6 +249,7 @@ const PlayerRatingItem = ({
   groupId,
   userId,
   usersMatchPlayerRating,
+  currentYear,
 }) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
@@ -298,6 +310,7 @@ const PlayerRatingItem = ({
       rating: sliderValue,
       userId: userId,
       groupId: groupId,
+      currentYear,
     });
   };
   const handleMotmClick = async () => {

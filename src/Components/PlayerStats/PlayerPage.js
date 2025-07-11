@@ -14,15 +14,16 @@ import {
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
 import useGroupData from "../../Hooks/useGroupsData";
+import useGlobalData from "../../Hooks/useGlobalData";
 
 export default function PlayerPage() {
   const { playerId } = useParams();
   const { activeGroup } = useGroupData();
+  const globalData = useGlobalData();
 
   const playerData = useSelector(selectSquadPlayerById(playerId));
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
-  console.log(playerData);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
     useSelector(selectPlayerRatingsLoad);
 
@@ -33,13 +34,19 @@ export default function PlayerPage() {
       fetchPlayerRatingsAllMatches({
         playerId: playerId,
         groupId: activeGroup.groupId,
+        currentYear: globalData.currentYear,
       })
     );
   }, [dispatch, playerId, activeGroup.groupId]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
-      dispatch(fetchAllPlayersSeasonOverallRating(activeGroup.groupId));
+      dispatch(
+        fetchAllPlayersSeasonOverallRating({
+          groupId: activeGroup.groupId,
+          currentYear: globalData.currentYear,
+        })
+      );
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
 
