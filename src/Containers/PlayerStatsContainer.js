@@ -17,7 +17,7 @@ export default function PlayerStatsContainer() {
   const { playerSeasonOverallRatingsLoaded } = useSelector(
     selectPlayerRatingsLoad
   );
-
+  console.log(playerSeasonOverallRatingsLoaded);
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(

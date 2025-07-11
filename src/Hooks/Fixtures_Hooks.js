@@ -216,6 +216,15 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
               teamSquadData.activeSquad[playerIndex].photo = playerDoc.img;
               teamSquadData.activeSquad[playerIndex].name = playerDoc.name;
             }
+            const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
+              (player) => player.id === playerId
+            );
+            if (seasonPlayerIndex !== -1) {
+              teamSquadData.seasonSquad[seasonPlayerIndex].photo =
+                playerDoc.img;
+              teamSquadData.seasonSquad[seasonPlayerIndex].name =
+                playerDoc.name;
+            }
           }
         } catch (error) {
           console.error(

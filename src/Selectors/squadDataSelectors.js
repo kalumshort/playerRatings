@@ -12,10 +12,23 @@ export const selectSquadData = (state) => {
 
   return state.teamSquads?.squads?.[teamId]?.activeSquad;
 };
+export const selectSeasonSquadData = (state) => {
+  const teamId = getActiveTeamId(state);
+
+  return state.teamSquads?.squads?.[teamId]?.seasonSquad;
+};
 
 // Selector for squad as object keyed by player ID
 export const selectSquadDataObject = (state) => {
   const squad = selectSquadData(state);
+
+  return squad.reduce((acc, player) => {
+    acc[player.id] = player;
+    return acc;
+  }, {});
+};
+export const selectSeasonSquadDataObject = (state) => {
+  const squad = selectSeasonSquadData(state);
 
   return squad.reduce((acc, player) => {
     acc[player.id] = player;

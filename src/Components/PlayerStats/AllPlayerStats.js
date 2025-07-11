@@ -9,7 +9,10 @@ import {
 
 import { useSelector } from "react-redux";
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
-import { selectSquadDataObject } from "../../Selectors/squadDataSelectors";
+import {
+  selectSeasonSquadDataObject,
+  selectSquadDataObject,
+} from "../../Selectors/squadDataSelectors";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -23,7 +26,7 @@ export default function AllPlayerStats() {
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const navigate = useNavigate();
 
-  const squadData = useSelector(selectSquadDataObject);
+  const squadData = useSelector(selectSeasonSquadDataObject);
   const [sort, setSort] = useState("desc"); // Default to descending
   const [positionFilter, setPositionFilter] = useState("");
 
@@ -40,7 +43,7 @@ export default function AllPlayerStats() {
     .map(([playerId, stats]) => ({
       playerId,
       stats,
-      playerName: squadData[playerId]?.name || "Unknown Player",
+      playerName: squadData[playerId]?.name || `Unknown Player - ${playerId}`,
       playerImg: squadData[playerId]?.photo || "Unknown Player",
       playerAverageRating: stats.totalRating / stats.totalSubmits,
     }))
