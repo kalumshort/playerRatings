@@ -198,10 +198,12 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     dispatch(fetchTeamSquadStart());
 
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
-    const activeSquadIds = teamSquadData.playerIds;
+    // const activeSquadIds = teamSquadData.playerIds;
+    const seasonSquad = teamSquadData.seasonSquad;
+    const squadIds = seasonSquad.map((player) => player.id);
 
     await Promise.all(
-      activeSquadIds.map(async (playerId) => {
+      squadIds.map(async (playerId) => {
         try {
           const playerDoc = await firebaseGetDocument(
             `playerImages/data/teams/${squadId}/players`,
