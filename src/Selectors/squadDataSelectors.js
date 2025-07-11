@@ -43,4 +43,4 @@ export const selectSquadLoad = (state) => ({
 });
 
 export const selectSquadPlayerById = (id) =>
-  createSelector([selectSquadDataObject], (squadState) => squadState[id]);
+  createSelector([selectSeasonSquadDataObject], (squadState) => squadState[id]);
