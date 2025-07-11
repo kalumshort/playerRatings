@@ -9,10 +9,7 @@ import {
 
 import { useSelector } from "react-redux";
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
-import {
-  selectSeasonSquadDataObject,
-  selectSquadDataObject,
-} from "../../Selectors/squadDataSelectors";
+import { selectSeasonSquadDataObject } from "../../Selectors/squadDataSelectors";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";

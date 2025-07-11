@@ -46,7 +46,7 @@ export const FixturesListener = ({ teamId, fixtureId }) => {
     );
 
     return () => unsubscribe(); // Cleanup listener on unmount
-  }, [teamId, fixtureId, dispatch]);
+  }, [teamId, fixtureId, dispatch, globalData.currentYear]);
 
   return null; // No UI, just listens and dispatches
 };
@@ -194,7 +194,7 @@ export const UsersMatchDataListener = ({ matchId, groupId }) => {
     return () => {
       unsubscribe();
     };
-  }, [dispatch, matchId, groupId]);
+  }, [dispatch, matchId, groupId, globalData.currentYear]);
 
   return null; // No UI, just listens and dispatches
 };

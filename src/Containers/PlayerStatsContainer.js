@@ -27,7 +27,12 @@ export default function PlayerStatsContainer() {
         })
       );
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
+  }, [
+    dispatch,
+    playerSeasonOverallRatingsLoaded,
+    activeGroup.groupId,
+    globalData.currentYear,
+  ]);
 
   return playerSeasonOverallRatingsLoaded ? <AllPlayerStats /> : <Spinner />;
 }

@@ -84,7 +84,14 @@ function App() {
         );
       }
     }
-  }, [dispatch, fixturesLoaded, groupDataLoaded, activeGroup, user]);
+  }, [
+    dispatch,
+    fixturesLoaded,
+    groupDataLoaded,
+    activeGroup,
+    user,
+    currentYear,
+  ]);
 
   useEffect(() => {
     if (user) {
@@ -103,6 +110,7 @@ function App() {
     activeGroup,
     groupDataLoaded,
     user,
+    currentYear,
   ]);
 
   if (userLoading) {

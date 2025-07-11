@@ -10,7 +10,6 @@ import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../Hooks/useGlobalData";
-import { current } from "@reduxjs/toolkit";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();

@@ -37,7 +37,7 @@ export default function PlayerPage() {
         currentYear: globalData.currentYear,
       })
     );
-  }, [dispatch, playerId, activeGroup.groupId]);
+  }, [dispatch, playerId, activeGroup.groupId, globalData.currentYear]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
@@ -48,7 +48,12 @@ export default function PlayerPage() {
         })
       );
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
+  }, [
+    dispatch,
+    playerSeasonOverallRatingsLoaded,
+    activeGroup.groupId,
+    globalData.currentYear,
+  ]);
 
   if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded) {
     return <></>;

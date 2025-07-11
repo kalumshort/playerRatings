@@ -73,7 +73,7 @@ export default function Fixture() {
         currentYear: currentYear,
       })
     );
-  }, [dispatch, matchId, activeGroup.groupId]);
+  }, [dispatch, matchId, activeGroup.groupId, currentYear]);
 
   useEffect(() => {
     dispatch(
@@ -83,7 +83,7 @@ export default function Fixture() {
         currentYear: currentYear,
       })
     );
-  }, [dispatch, matchId, activeGroup.groupId]);
+  }, [dispatch, matchId, activeGroup.groupId, currentYear]);
 
   useEffect(() => {
     dispatch(
@@ -93,7 +93,7 @@ export default function Fixture() {
         currentYear: currentYear,
       })
     );
-  }, [dispatch, matchId, activeGroup.groupId]);
+  }, [dispatch, matchId, activeGroup.groupId, currentYear]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
@@ -104,7 +104,12 @@ export default function Fixture() {
         })
       );
     }
-  }, [dispatch, playerSeasonOverallRatingsLoaded, activeGroup.groupId]);
+  }, [
+    dispatch,
+    playerSeasonOverallRatingsLoaded,
+    activeGroup.groupId,
+    currentYear,
+  ]);
 
   if (predictionsError || ratingsError) {
     console.log(predictionsError, ratingsError);
