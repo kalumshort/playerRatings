@@ -77,3 +77,5 @@ export const selectMotmPercentagesByMatchId = (matchId) =>
         .sort((a, b) => b.percentage - a.percentage); // Sort by percentage in descending order
     }
   );
+
+export const selectGlobalData = (state) => state.globalData;

@@ -7,6 +7,7 @@ import ratingsSlice from "./Reducers/playerRatingsReducer";
 import teamSquadsSlice from "./Reducers/teamSquads";
 import userDataSlice from "./Reducers/userDataReducer";
 import groupSlice from "./Reducers/groupReducer";
+import globalSlice from "./Reducers/globalReducer";
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     teamSquads: teamSquadsSlice,
     userData: userDataSlice,
     groupData: groupSlice,
+    globalData: globalSlice,
   },
 });
 
