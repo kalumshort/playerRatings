@@ -71,7 +71,7 @@ export default function AllPlayerStats() {
           <MenuItem value="Attacker">Forward</MenuItem>
           <MenuItem value="Midfielder">Midfielder</MenuItem>
           <MenuItem value="Defender">Defender</MenuItem>
-          <MenuItem value="Goalkepper">Goalkeeper</MenuItem>
+          <MenuItem value="Goalkeeper">Goalkeeper</MenuItem>
         </Select>
         <ToggleButtonGroup
           size="small"
