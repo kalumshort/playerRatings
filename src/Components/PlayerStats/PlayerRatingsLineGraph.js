@@ -23,7 +23,7 @@ export default function PlayerRatingsLineGraph({ allPlayerRatings }) {
     <ResponsiveContainer width="100%" height={250}>
       <LineChart
         data={chartData}
-        margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+        margin={{ top: 10, right: 30, left: -15, bottom: 5 }}
       >
         {/* <CartesianGrid strokeDasharray="5 5" /> */}
         <XAxis />
