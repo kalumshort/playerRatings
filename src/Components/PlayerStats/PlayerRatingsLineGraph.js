@@ -49,8 +49,15 @@ const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const matchId = payload[0].payload.id;
     const match = allFixtures.find((f) => f.id === matchId);
-
     if (!match) return null;
+
+    const matchDate = new Date(match.fixture.date);
+
+    const formattedDate = matchDate.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
 
     const { home, away } = match.teams;
     const { home: homeGoals, away: awayGoals } = match.goals || {};
@@ -59,18 +66,20 @@ const CustomTooltip = ({ active, payload }) => {
       <div
         style={{
           background: "#222",
-          padding: "12px",
+          padding: "6px",
           borderRadius: "8px",
           color: "#fff",
           maxWidth: 280,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
         {/* <p style={{ marginBottom: 8 }}>
           <strong>{label}</strong>
         </p> */}
-        <p>
-          Avg Rating: <strong>{payload[0].value}</strong>
-        </p>
+        <p style={{ fontSize: 12, margin: 0 }}>{formattedDate} </p>
 
         <div style={{ display: "flex", alignItems: "center", margin: "8px 0" }}>
           <img
@@ -95,7 +104,9 @@ const CustomTooltip = ({ active, payload }) => {
             style={{ width: 24, height: 24, marginLeft: 8 }}
           />
         </div>
-
+        <p style={{ fontSize: 25, margin: 5 }}>
+          <strong>{payload[0].value}</strong>
+        </p>
         {/* <p style={{ fontSize: "0.85rem", marginTop: 6 }}>
           📅 {format(new Date(date), "dd MMM yyyy, HH:mm")} UTC
         </p> */}
