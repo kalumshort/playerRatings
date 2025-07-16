@@ -65,31 +65,36 @@ export default function PlayerPage() {
 
   return (
     <div className="PlayerPageContainer">
-      <Paper className="PlayerPageHeader">
-        <img
-          src={playerData?.photo}
-          className="PlayerPageImg"
-          alt={`${playerData.name}`}
-        />
-        <h2 className="globalHeading">{playerData.name}</h2>
-        <h3 className="PlayerPageNumber">{playerData.number}</h3>
-      </Paper>
+      <div>
+        <Paper className="containerMargin PlayerPageHeader">
+          <img
+            src={playerData?.photo}
+            className="PlayerPageImg"
+            alt={`${playerData.name}`}
+          />
+          <h2 className="globalHeading">{playerData.name}</h2>
+          <h3 className="PlayerPageNumber">{playerData.number}</h3>
+        </Paper>
+        <Paper className="containerMargin">
+          <div className="SeasonRatingContainer">
+            <h4 className="subHeadingGlobal">Avg. Rating</h4>
+            <div
+              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+                seasonAverageRating
+              )}`}
+            >
+              <h4 className="PlayerStatsListItemScore">
+                {seasonAverageRating.toFixed(1)}
+              </h4>
+            </div>
+          </div>
+        </Paper>
+      </div>
+
       {!allPlayerRatings?.matches && <div className="spinner"></div>}
       {allPlayerRatings?.matches && previousFixtures && (
-        <>
-          <Paper className="containerMargin ">
-            <div className="SeasonRatingContainer">
-              <h4 className="subHeadingGlobal">Season Rating</h4>
-              <div
-                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                  seasonAverageRating
-                )}`}
-              >
-                <h4 className="PlayerStatsListItemScore">
-                  {seasonAverageRating.toFixed(1)}
-                </h4>
-              </div>
-            </div>
+        <div style={{ width: "100%" }}>
+          <Paper className="containerMargin " style={{ padding: "10px" }}>
             <PlayerRatingsLineGraph allPlayerRatings={allPlayerRatings} />
           </Paper>
 
@@ -115,7 +120,7 @@ export default function PlayerPage() {
               );
             })}
           </Paper>
-        </>
+        </div>
       )}
     </div>
   );
