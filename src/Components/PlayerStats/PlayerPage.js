@@ -15,6 +15,7 @@ import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { getRatingClass } from "../../Hooks/Helper_Functions";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
+import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
 
 export default function PlayerPage() {
   const { playerId } = useParams();
@@ -58,7 +59,6 @@ export default function PlayerPage() {
   if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded) {
     return <></>;
   }
-
   const seasonAverageRating =
     allPlayerRatings?.seasonOverall?.totalRating /
     allPlayerRatings?.seasonOverall?.totalSubmits;
@@ -77,18 +77,22 @@ export default function PlayerPage() {
       {!allPlayerRatings?.matches && <div className="spinner"></div>}
       {allPlayerRatings?.matches && previousFixtures && (
         <>
-          <Paper className="containerMargin SeasonRatingContainer">
-            <h4 className="subHeadingGlobal">Season Rating</h4>
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                seasonAverageRating
-              )}`}
-            >
-              <h4 className="PlayerStatsListItemScore">
-                {seasonAverageRating.toFixed(1)}
-              </h4>
+          <Paper className="containerMargin ">
+            <div className="SeasonRatingContainer">
+              <h4 className="subHeadingGlobal">Season Rating</h4>
+              <div
+                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+                  seasonAverageRating
+                )}`}
+              >
+                <h4 className="PlayerStatsListItemScore">
+                  {seasonAverageRating.toFixed(1)}
+                </h4>
+              </div>
             </div>
+            <PlayerRatingsLineGraph allPlayerRatings={allPlayerRatings} />
           </Paper>
+
           <Paper className="containerMargin PlayerMatchList">
             {previousFixtures?.map((fixture, index) => {
               const matchTime = new Date(
