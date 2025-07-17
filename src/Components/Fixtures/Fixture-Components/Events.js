@@ -84,8 +84,8 @@ const EventItem = ({ event }) => {
             <img
               src={
                 event.detail === "Yellow Card"
-                  ? "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg"
-                  : "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg"
+                  ? "/assets/11Votes_Yellow_Card.png"
+                  : "/assets/11Votes_Red_Card.png"
               }
               alt="Card Icon"
               height={20}
@@ -151,8 +151,8 @@ const EventItem = ({ event }) => {
               </div>
             </div>
             <img
-              src="https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/sub-w.svg"
-              alt="Card Icon"
+              src="/assets\11Votes_Sub_Icon.png"
+              alt="Sub Icon"
               height={20}
               style={{ marginRight: "20px" }}
             />

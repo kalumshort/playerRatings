@@ -137,9 +137,9 @@ export default function LineupPlayer({
             placement="top"
           >
             <img
-              src="https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/sub-w.svg"
+              src="/assets\11Votes_Sub_Icon.png"
               height={20}
-              alt={player.name}
+              alt={"substitution icon"}
               style={{ cursor: "pointer" }} // Optional, to indicate it's interactive
             />
           </Tooltip>
