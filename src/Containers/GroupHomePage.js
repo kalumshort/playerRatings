@@ -24,17 +24,18 @@ export default function GroupHomePage() {
   if (loading) return <p>Loading fixtures...</p>;
   if (error) return <p>Error: {error}</p>;
   return (
-    <div>
-      <LatestFixtureItem />
-      <div className="schedule-season-container">
+    <div className="schedule-season-container containerMargin">
+      <div>
+        <LatestFixtureItem />
         <ScheduleContainer
           limitAroundLatest={isMobile ? 2 : 3}
           showLink={true}
           scroll={false}
           scrollOnLoad={false}
         />
-        <LatestTeamSeasonRating />
       </div>
+
+      <LatestTeamSeasonRating />
     </div>
   );
 }

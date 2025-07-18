@@ -12,6 +12,7 @@ export default function FixtureHeader({
   showDate = false,
   showDetails = false,
   showScorers = false,
+  addClass,
 }) {
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
@@ -59,7 +60,7 @@ export default function FixtureHeader({
 
   return (
     <>
-      <ContentContainer className="fixture-header-outer containerMargin">
+      <ContentContainer className={`fixture-header-outer ${addClass}`}>
         <div
           style={{
             background: fixtureGradient,

@@ -77,7 +77,7 @@ export default function ScheduleContainer({
   };
 
   return (
-    <ContentContainer className="containerMargin">
+    <ContentContainer>
       <div
         style={{
           display: "flex",

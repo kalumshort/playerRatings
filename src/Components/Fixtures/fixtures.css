@@ -26,12 +26,13 @@
 }
 .fixture-header-outer {
   overflow: hidden;
+  margin-bottom: 20px;
 }
 .fixture-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 350px;
+  min-height: 200px;
   position: relative;
 }
 .headerExpand {
@@ -59,7 +60,7 @@
 }
 
 .team-logo {
-  height: 150px;
+  height: 100px;
   width: auto;
   object-fit: contain;
 }

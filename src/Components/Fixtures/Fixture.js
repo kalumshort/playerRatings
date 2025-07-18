@@ -143,6 +143,7 @@ export default function Fixture() {
           fixture={fixture}
           showDetails={true}
           showScorers={true}
+          addClass={"containerMargin"}
         />
         {isMobile ? (
           <MobileFixtureContainer fixture={fixture} />

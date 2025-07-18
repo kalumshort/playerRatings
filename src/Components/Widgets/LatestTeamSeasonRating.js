@@ -23,8 +23,8 @@ export default function LatestTeamSeasonRating() {
   }
 
   return (
-    <ContentContainer className="containerMargin" style={{ padding: "10px " }}>
-      <h2 className="globalHeading">Previous XI Seasons Rating</h2>
+    <ContentContainer style={{ padding: "10px " }}>
+      <h2 className="globalHeading">Previous XI Avg. Rating</h2>
 
       <div className="pitch" style={{ marginTop: "10px" }}>
         {lineup &&
