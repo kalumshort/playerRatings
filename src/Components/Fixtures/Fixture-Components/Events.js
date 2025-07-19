@@ -151,7 +151,7 @@ const EventItem = ({ event }) => {
               </div>
             </div>
             <img
-              src="/assets\11Votes_Sub_Icon.png"
+              src="/assets\u0009Votes_Sub_Icon.png"
               alt="Sub Icon"
               height={20}
               style={{ marginRight: "20px" }}

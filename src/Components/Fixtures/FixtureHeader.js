@@ -2,7 +2,7 @@ import React from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
 import { CountdownTimer } from "../../Hooks/Helper_Functions";
 import FixtureEventsList from "./FixtureEventsList";
-import { Paper } from "@mui/material";
+
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 import { useFixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
