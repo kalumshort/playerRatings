@@ -137,7 +137,7 @@ export default function LineupPlayer({
             placement="top"
           >
             <img
-              src="/assets\u0009Votes_Sub_Icon.png"
+              src="/assets\Sub_Icon.png"
               height={20}
               alt={"substitution icon"}
               style={{ cursor: "pointer" }} // Optional, to indicate it's interactive
