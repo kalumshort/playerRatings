@@ -112,14 +112,14 @@ export default function FixtureHeader({
             ) : (
               <>
                 {fixture?.fixture?.status?.short === "TBD" ? (
-                  <Paper className="fixture-status-container">
+                  <div className="fixture-status-container">
                     {" "}
                     <span className="fixture-status-short">
                       {fixture.fixture.status.short}
                     </span>
-                  </Paper>
+                  </div>
                 ) : (
-                  <Paper className="fixture-status-container">
+                  <div className="fixture-status-container">
                     <div
                       style={{
                         display: "flex",
@@ -152,7 +152,7 @@ export default function FixtureHeader({
                         {fixture.score.halftime.away}
                       </span>
                     )}
-                  </Paper>
+                  </div>
                 )}
               </>
             )}
