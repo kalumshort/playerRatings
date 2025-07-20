@@ -27,12 +27,12 @@ import ProfileContainer from "./Containers/ProfileContainer";
 import HomePage from "./Containers/HomePage";
 import useGroupData from "./Hooks/useGroupsData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import ScheduleContainer from "./Containers/ScheduleContainer";
 import { selectPlayerRatingsLoad } from "./Selectors/selectors";
 import GroupDashboard from "./Containers/GroupDashboard";
 import GroupPublicPage from "./Containers/GroupPublicPage";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import useGlobalData from "./Hooks/useGlobalData";
+import SchedulePage from "./Containers/SchedulePage";
 
 function App() {
   const dispatch = useDispatch();
@@ -165,9 +165,7 @@ function App() {
                   />
                   <Route
                     path="/schedule"
-                    element={
-                      user ? <ScheduleContainer /> : <ProfileContainer />
-                    }
+                    element={user ? <SchedulePage /> : <ProfileContainer />}
                   />
                   <Route
                     path="/fixture/:matchId"

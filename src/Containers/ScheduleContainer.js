@@ -15,7 +15,6 @@ export default function ScheduleContainer({
   scroll = true,
   scrollOnLoad = true,
 }) {
-  // Default to no limit (0)
   const navigate = useNavigate();
 
   const allFixtures = useSelector(selectFixturesState).fixtures;
@@ -27,8 +26,8 @@ export default function ScheduleContainer({
     setSelectedLeague(event.target.value);
   };
 
-  // Create a ref array for the fixture elements
   const fixtureRefs = useRef([]);
+  const containerRef = useRef(null);
 
   const leagueOptions = useMemo(() => {
     return [...new Set(allFixtures?.map((item) => item.league.name))];
@@ -38,15 +37,13 @@ export default function ScheduleContainer({
     ? allFixtures.filter((item) => item.league.name === selectedLeague)
     : allFixtures;
 
-  // Get fixtures around the latestFixture
   const latestFixtureIndex = filteredFixures.findIndex(
     (fixture) => fixture.id === latestFixture?.id
   );
 
-  // Get fixtures to display: limit the number of fixtures around the latestFixture
   const limitedFixtures = useMemo(() => {
     if (limitAroundLatest === 0 || latestFixtureIndex === -1) {
-      return filteredFixures; // No limit, return all fixtures
+      return filteredFixures;
     }
 
     const startIndex = Math.max(0, latestFixtureIndex - limitAroundLatest);
@@ -59,14 +56,26 @@ export default function ScheduleContainer({
   }, [filteredFixures, latestFixtureIndex, limitAroundLatest]);
 
   useEffect(() => {
-    if (latestFixture && scrollOnLoad) {
+    if (latestFixture && scrollOnLoad && containerRef.current) {
       const index = [...limitedFixtures]
         .reverse()
         .findIndex((fixture) => fixture.id === latestFixture.id);
 
-      if (index !== -1 && fixtureRefs.current[index]) {
-        fixtureRefs.current[index].scrollIntoView({
-          block: "center",
+      const container = containerRef.current;
+      const target = fixtureRefs.current[index];
+
+      if (index !== -1 && target) {
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+
+        const offset = targetRect.top - containerRect.top;
+
+        container.scrollTo({
+          top:
+            container.scrollTop +
+            offset -
+            container.clientHeight / 2 +
+            target.clientHeight / 2,
         });
       }
     }
@@ -123,30 +132,32 @@ export default function ScheduleContainer({
       </div>
       <div>
         <div
-          style={{ maxHeight: "70vh", overflowY: scroll ? "scroll" : "none" }}
+          ref={containerRef}
+          style={{ maxHeight: "70vh", overflowY: scroll ? "scroll" : "hidden" }}
         >
-          {[...limitedFixtures].reverse().map((fixture, index) => {
-            const matchTime = new Date(
-              fixture.fixture.timestamp * 1000
-            ).toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            });
+          {(fixtureRefs.current = []) &&
+            [...limitedFixtures].reverse().map((fixture, index) => {
+              const matchTime = new Date(
+                fixture.fixture.timestamp * 1000
+              ).toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              });
 
-            return (
-              <div
-                key={fixture.id || index}
-                ref={(el) => (fixtureRefs.current[index] = el)} // Store reference to each fixture
-              >
-                <FixtureListItem
-                  fixture={fixture}
-                  matchTime={matchTime}
-                  handleFixtureClick={handleFixtureClick}
-                />
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={fixture.id || index}
+                  ref={(el) => (fixtureRefs.current[index] = el)}
+                >
+                  <FixtureListItem
+                    fixture={fixture}
+                    matchTime={matchTime}
+                    handleFixtureClick={handleFixtureClick}
+                  />
+                </div>
+              );
+            })}
         </div>
       </div>
     </ContentContainer>
