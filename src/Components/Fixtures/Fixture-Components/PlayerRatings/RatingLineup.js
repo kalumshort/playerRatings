@@ -140,7 +140,7 @@ export const RatingLineupPlayer = ({ player, className, playerRating }) => {
   return player ? (
     <div
       key={player.id}
-      className={`player ${className}`}
+      className={`player ratingPlayer ${className}`}
       style={{ order: player?.grid?.split(":")[1], position: "relative" }}
     >
       <img

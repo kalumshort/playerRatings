@@ -47,6 +47,10 @@
   box-sizing: border-box;
   border: 1px #282828 solid;
 }
+.ratingPlayer {
+  max-height: 100px;
+  max-width: 80px;
+}
 .player-substitute {
   width: 75px;
   height: 100px !important;
