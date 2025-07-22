@@ -9,7 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 
-import SettingsIcon from "@mui/icons-material/Settings";
+import MenuIcon from "@mui/icons-material/Menu";
 import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
 
@@ -35,8 +35,6 @@ const HeaderContainer = styled("div")(({ theme }) => ({
   right: 0,
   zIndex: 1000,
   backgroundColor: theme.palette.background.paper,
-  borderBottom: "1px solid",
-  borderColor: theme.palette.background.accent,
 }));
 
 export default function Header() {
@@ -76,7 +74,7 @@ export default function Header() {
             onClick={() => toggleDrawer(true)}
             size="large"
           >
-            <SettingsIcon />
+            <MenuIcon />
           </IconButton>
         </Box>
       </Toolbar>
