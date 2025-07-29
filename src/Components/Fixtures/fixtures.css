@@ -493,9 +493,6 @@
   border-radius: 5px;
   margin: 10px 10px -5px 10px;
 }
-.pkopredictions-container > * {
-  margin: 10px;
-}
 
 @media (min-width: 1024px) {
   .PlayerRatingImg {
@@ -513,9 +510,12 @@
   }
   .pkopredictions-container {
     display: flex;
-    gap: 0px;
+    gap: 15px;
     align-items: flex-start;
     width: 100%;
+  }
+  .pkopredictions-container .chosen-lineup-container {
+    margin: 0px !important;
   }
   .scorePredictionResultsContainer {
     width: 33.33% !important;
