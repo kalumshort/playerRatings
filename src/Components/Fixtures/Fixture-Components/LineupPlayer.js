@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
+import useGroupData from "../../../Hooks/useGroupsData";
 
 export default function LineupPlayer({
   player,
@@ -17,6 +18,11 @@ export default function LineupPlayer({
   showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
+
+  const { activeGroup } = useGroupData();
+
+  const groupColour = activeGroup?.accentColor || "#DA291C";
+
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
@@ -158,7 +164,7 @@ export default function LineupPlayer({
         <div className="percentage-bar-container">
           <div
             className="percentage-bar"
-            style={{ width: `${percentage}%` }}
+            style={{ width: `${percentage}%`, background: groupColour }}
           ></div>
           <span className="percentage-text">{percentage.toFixed(0)}%</span>
         </div>

@@ -332,11 +332,7 @@
 
 .percentage-bar {
   height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    #4e73df,
-    #9b59b6
-  ); /* Gradient background */
+
   border-radius: 2px; /* Rounded corners for the filled part */
   transition: width 0.3s ease; /* Smooth transition for dynamic updates */
 }
