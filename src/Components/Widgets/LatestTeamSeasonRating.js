@@ -9,16 +9,25 @@ import useGroupData from "../../Hooks/useGroupsData";
 import { Link } from "react-router-dom";
 
 export default function LatestTeamSeasonRating() {
-  const previousFixture = useSelector(selectPreviousFixtures)[0];
+  const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const { activeGroup } = useGroupData();
 
-  const groupClubId = Number(activeGroup.groupClubId);
-  const lineup =
-    previousFixture?.lineups?.find((team) => team.team.id === groupClubId)
-      ?.startXI || [];
+  // Find the first fixture that contains the lineup
+  const fixtureWithLineup = previousFixtures.find((fixture) =>
+    fixture.lineups.some(
+      (team) => team.team.id === Number(activeGroup.groupClubId)
+    )
+  );
 
-  if (!previousFixture && !playerStats) {
+  // Extract the lineup if found, otherwise default to an empty array
+  const lineup = fixtureWithLineup
+    ? fixtureWithLineup.lineups.find(
+        (team) => team.team.id === Number(activeGroup.groupClubId)
+      ).startXI
+    : [];
+
+  if (!fixtureWithLineup && !playerStats) {
     return <Spinner />;
   }
 
@@ -53,7 +62,7 @@ export default function LatestTeamSeasonRating() {
                     <RatingLineupPlayer
                       key={player.id}
                       player={player}
-                      fixture={previousFixture}
+                      fixture={fixtureWithLineup}
                       playerRating={playerRating?.toFixed(2) || "na"}
                     />
                   );
