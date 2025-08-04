@@ -30,7 +30,7 @@ export default function LatestTeamSeasonRating() {
   if (!fixtureWithLineup && !playerStats) {
     return <Spinner />;
   }
-
+  console.log(lineup.length);
   return (
     <ContentContainer style={{ padding: "10px " }}>
       <h2 className="globalHeading">Previous XI Avg. Rating</h2>
@@ -70,6 +70,11 @@ export default function LatestTeamSeasonRating() {
               </div>
             ))}
       </div>
+      {(!lineup || lineup.length === 0) && (
+        <div style={{ textAlign: "center", color: "grey" }}>
+          No Previous Lineup{" "}
+        </div>
+      )}
       <div style={{ textAlign: "right" }}>
         <Link to="/season-stats">
           <p
