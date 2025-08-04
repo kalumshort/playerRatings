@@ -271,11 +271,11 @@ export const handlePredictTeamSubmit = async ({
   currentYear,
 }) => {
   // await firebaseAddDoc({
-  //   path: `groups/${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
+  //   path: `groups/${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
   //   data: players,
   // });
   // await firebaseSetDoc({
-  //   path: `groups//${groupId}/seasons/2024/predictions/${matchId}/teamSubmissions`,
+  //   path: `groups//${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
   //   docId: matchId,
   //   data: { totalTeamSubmits: increment(1) },
   // });

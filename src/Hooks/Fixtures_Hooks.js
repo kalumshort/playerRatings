@@ -38,7 +38,7 @@ import { fetchUserMatchData } from "../redux/Reducers/userDataReducer";
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
 //     const fetchedFixtures = [];
-//     await firebaseGet("fixtures/2024", (docId, data) => {
+//     await firebaseGet("fixtures/2025", (docId, data) => {
 //       fetchedFixtures.push({ id: docId, ...data });
 //     });
 //     dispatch(fetchFixturesSuccess(fetchedFixtures));

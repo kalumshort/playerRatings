@@ -119,7 +119,7 @@ exports.updateFixtures = onSchedule(
   },
   async (event) => {
     try {
-      const SEASON = 2024;
+      const SEASON = 2025;
       const LEAGUE_ID = 39; // Premier League
 
       // Step 1: Get all teams in the Premier League
@@ -253,7 +253,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
     try {
       // Query the next match
-      const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+      const matchesRef = getFirestore().collection(`fixtures/2025/33`);
       const nextFixture = await matchesRef
         .where("matchDate", ">=", now)
         .orderBy("matchDate", "asc")
@@ -321,7 +321,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //     const now = Math.floor(Date.now() / 1000);
 
 //     // Query the next match
-//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
 //     const nextFixture = await matchesRef
 //       .where("matchDate", ">=", now)
 //       .orderBy("matchDate", "asc")
@@ -374,7 +374,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
 // exports.eventsFunction = onRequest(async (req, res) => {
 //   try {
-//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
 //     const snapshot = await matchesRef.get();
 
 //     if (snapshot.empty) {
@@ -409,8 +409,8 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 // const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
 // exports.conversionFunction = onRequest(async (req, res) => {
 //   try {
-//     const sourcePath = "fixtures/2024/data";
-//     const destinationPath = "fixtures/2024/33";
+//     const sourcePath = "fixtures/2025/data";
+//     const destinationPath = "fixtures/2025/33";
 
 //     if (!sourcePath || !destinationPath) {
 //       return res.status(400).send("Missing source or destination path.");
@@ -512,7 +512,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
 //   try {
 //     // Query the next match
-//     const matchesRef = getFirestore().collection(`fixtures/2024/33`);
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
 //     const nextFixture = await matchesRef
 //       .where("matchDate", ">=", now)
 //       .orderBy("matchDate", "asc")
@@ -588,7 +588,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //       {
 //         params: {
 //           team: 33, // Example: Manchester United team ID
-//           season: 2024, // Example: 2024 season
+//           season: 2025, // Example: 2025 season
 //         },
 //         headers: {
 //           "x-rapidapi-host": "v3.football.api-sports.io",
@@ -649,7 +649,7 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
 //       await getFirestore()
 //         .collection("fixtures")
-//         .doc("2024")
+//         .doc("2025")
 //         .collection("data")
 //         .doc(fixtureId.toString())
 //         .set({ events }, { merge: true });
