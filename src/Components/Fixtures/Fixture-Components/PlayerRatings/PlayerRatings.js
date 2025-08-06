@@ -140,7 +140,9 @@ export default function PlayerRatings({ fixture }) {
   };
 
   return fixture?.fixture?.status?.elapsed > 80 ? (
-    isMatchRatingsSubmitted ? (
+    lineup.length === 0 ? (
+      <div style={{ textAlign: "center", padding: "10px" }}>Missing Lineup</div>
+    ) : isMatchRatingsSubmitted ? (
       <SubmittedPlayerRatings
         motmPercentages={motmPercentages}
         combinedPlayers={combinedPlayers}

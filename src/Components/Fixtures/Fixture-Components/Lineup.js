@@ -18,47 +18,51 @@ export default function Lineup({ fixture, showRating }) {
 
   return (
     <div className="lineup-container containerMargin">
-      <div style={{ position: "relative" }}>
-        <div className="pitch">
-          {lineup
-            .reduce((rows, { player }) => {
-              const [row] = player.grid.split(":").map(Number);
+      {lineup.length === 0 ? (
+        <div style={{ textAlign: "center" }}>Missing Lineup</div>
+      ) : (
+        <div style={{ position: "relative" }}>
+          <div className="pitch">
+            {lineup
+              .reduce((rows, { player }) => {
+                const [row] = player.grid.split(":").map(Number);
 
-              if (!rows[row]) rows[row] = [];
+                if (!rows[row]) rows[row] = [];
 
-              rows[row].push(player);
+                rows[row].push(player);
 
-              return rows;
-            }, [])
-            .map((rowPlayers, rowIndex) => (
-              <div key={rowIndex} className="row">
-                {rowPlayers.map((player) => (
-                  <LineupPlayer
-                    key={player.id} // Add unique key based on player ID
-                    player={player}
-                    fixture={fixture}
-                  />
-                ))}
-              </div>
+                return rows;
+              }, [])
+              .map((rowPlayers, rowIndex) => (
+                <div key={rowIndex} className="row">
+                  {rowPlayers.map((player) => (
+                    <LineupPlayer
+                      key={player.id} // Add unique key based on player ID
+                      player={player}
+                      fixture={fixture}
+                    />
+                  ))}
+                </div>
+              ))}
+          </div>
+          <h2
+            className="heading2"
+            style={{ textAlign: "center", marginTop: "20px" }}
+          >
+            Substitutes
+          </h2>
+          <div className="subs-container">
+            {subs.map((substitute) => (
+              <LineupPlayer
+                key={substitute.player.id} // Add unique key based on player ID
+                player={substitute.player}
+                fixture={fixture}
+                // className="player-substitute"
+              />
             ))}
+          </div>
         </div>
-        <h2
-          className="heading2"
-          style={{ textAlign: "center", marginTop: "20px" }}
-        >
-          Substitutes
-        </h2>
-        <div className="subs-container">
-          {subs.map((substitute) => (
-            <LineupPlayer
-              key={substitute.player.id} // Add unique key based on player ID
-              player={substitute.player}
-              fixture={fixture}
-              // className="player-substitute"
-            />
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

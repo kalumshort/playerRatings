@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   selectFixtureById,
   selectLatestFixture,
+  selectUpcomingFixtures,
 } from "../../Selectors/fixturesSelectors";
 
 import FixtureHeader from "./FixtureHeader";
@@ -43,6 +44,8 @@ export default function Fixture() {
   const { matchId } = useParams();
   const { groupData, activeGroup } = useGroupData();
 
+  const upcomingFixtureId = useSelector(selectUpcomingFixtures)[0].id;
+  console.log("Upcoming Fixture:", upcomingFixtureId);
   const fixture = useSelector(selectFixtureById(matchId));
   const { predictionsError } = useSelector(selectPredictionsLoad);
   const { ratingsError, playerSeasonOverallRatingsLoaded } = useSelector(
@@ -122,6 +125,7 @@ export default function Fixture() {
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";
 
+  const showPredictions = upcomingFixtureId === matchId;
   return (
     <>
       <FixtureGradientProvider
@@ -146,10 +150,13 @@ export default function Fixture() {
           addClass={"containerMargin"}
         />
         {isMobile ? (
-          <MobileFixtureContainer fixture={fixture} />
+          <MobileFixtureContainer
+            fixture={fixture}
+            showPredictions={showPredictions}
+          />
         ) : (
           <>
-            {isPreMatch && (
+            {showPredictions && (
               <div className="ScorePredictPTWContainer containerMargin">
                 <WinnerPredict fixture={fixture} />
                 <ScorePrediction fixture={fixture} />
@@ -163,20 +170,16 @@ export default function Fixture() {
                 flexWrap: "wrap",
               }}
             >
-              {!fixture?.lineups || fixture.lineups.length === 0 ? (
-                <LineupPredictor fixture={fixture} />
-              ) : (
-                <LineupAndPlayerRatings fixture={fixture} />
-              )}
+              {showPredictions && <LineupPredictor fixture={fixture} />}
 
-              <div className="lineup-sidebar">
-                {!isPreMatch && (
-                  <>
-                    <Statistics fixture={fixture} />
-                    <Events events={fixture?.events} />
-                  </>
-                )}
-              </div>
+              {fixture?.lineups && <LineupAndPlayerRatings fixture={fixture} />}
+
+              {!isPreMatch && (
+                <div className="lineup-sidebar">
+                  <Statistics fixture={fixture} />
+                  <Events events={fixture?.events} />
+                </div>
+              )}
               {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
             </div>
           </>

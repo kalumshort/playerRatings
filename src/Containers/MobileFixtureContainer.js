@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ScorePrediction from "../Components/Fixtures/Fixture-Components/ScorePrediction";
 import PreMatchMOTM from "../Components/Fixtures/Fixture-Components/PreMatchMOTM";
 import LineupPredictor from "../Components/Fixtures/Fixture-Components/LineupPredicter/LineupPredictor";
@@ -11,19 +11,49 @@ import Lineup from "../Components/Fixtures/Fixture-Components/Lineup";
 import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatings/PlayerRatings";
 import WinnerPredict from "../Components/Fixtures/Fixture-Components/WinnerPredict";
 
-export default function MobileFixtureContainer({ fixture }) {
+export default function MobileFixtureContainer({ fixture, showPredictions }) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
 
-  const getFirstTabValue = () => {
-    if (fixture?.lineups?.length > 0) return "Lineup";
-    if (isPreMatch) return "Predict-XI";
-  };
+  // Dynamically build tabs array using useMemo for stable reference
+  const tabs = React.useMemo(() => {
+    const arr = [];
+    if (fixture?.lineups) arr.push({ label: "Lineup", value: "Lineup" });
+    if (
+      (!fixture?.lineups || fixture.lineups.length === 0) &&
+      isPreMatch &&
+      showPredictions
+    )
+      arr.push({ label: "Predict XI", value: "Predict-XI" });
+    if (isPreMatch && showPredictions)
+      arr.push({ label: "Predicts", value: "Predicts" });
+    if (!isPreMatch) arr.push({ label: "Ratings", value: "Ratings" });
+    if (!isPreMatch) arr.push({ label: "Stats", value: "Stats" });
+    if (!isPreMatch) arr.push({ label: "Events", value: "Events" });
+    if (!isPreMatch) arr.push({ label: "Predictions", value: "PostPredicts" });
+    return arr;
+  }, [fixture, isPreMatch, showPredictions]);
+
+  // The value of the first tab or undefined if none exist
+  const getFirstTabValue = React.useCallback(
+    () => (tabs[0] ? tabs[0].value : undefined),
+    [tabs]
+  );
 
   const [selectedTab, setSelectedTab] = useState(getFirstTabValue());
 
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
-  };
+  // If the available tabs change (fixture or showPredictions changes), update the selected tab
+  useEffect(() => {
+    setSelectedTab(getFirstTabValue());
+  }, [fixture, showPredictions, getFirstTabValue]);
+
+  // If no tabs at all, you might want to show a "No data" or blank state here
+  if (tabs.length === 0) {
+    return (
+      <div style={{ padding: 16, textAlign: "center" }}>
+        To early for predictions.
+      </div>
+    );
+  }
 
   return (
     <>
@@ -33,7 +63,7 @@ export default function MobileFixtureContainer({ fixture }) {
       >
         <Tabs
           value={selectedTab}
-          onChange={handleTabChange}
+          onChange={(_, newValue) => setSelectedTab(newValue)}
           aria-label="MobileFixtureNav"
           variant="scrollable"
           scrollButtons="off"
@@ -60,28 +90,20 @@ export default function MobileFixtureContainer({ fixture }) {
             },
           }}
         >
-          {!fixture?.lineups || fixture.lineups.length === 0 ? (
-            <Tab label="Predict XI" value="Predict-XI" />
-          ) : (
-            <Tab label="Lineup" value="Lineup" />
-          )}
-          {isPreMatch && <Tab label="Predicts" value="Predicts" />}
-          {!isPreMatch && <Tab label="Ratings" value="Ratings" />}
-          {!isPreMatch && <Tab label="Stats" value="Stats" />}
-          {!isPreMatch && <Tab label="Events" value="Events" />}
-          {!isPreMatch && <Tab label="Predictions" value="PostPredicts" />}
+          {tabs.map((tab) => (
+            <Tab key={tab.value} label={tab.label} value={tab.value} />
+          ))}
         </Tabs>
       </Paper>
+
       {selectedTab === "Predicts" && (
         <div className="ScorePredictPTWContainer containerMargin">
           <WinnerPredict fixture={fixture} />
           <ScorePrediction fixture={fixture} />
-
           <PreMatchMOTM fixture={fixture} />
         </div>
       )}
       {selectedTab === "Predict-XI" && <LineupPredictor fixture={fixture} />}
-
       {selectedTab === "Lineup" && (
         <Paper className="containerMargin" style={{ padding: "10px 0px" }}>
           <Lineup fixture={fixture} />
