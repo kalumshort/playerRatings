@@ -137,7 +137,7 @@ export function DrawerContentComponent({ setDrawerOpen }) {
 
       <SettingsContainer>
         <SettingRow>
-          <Box>Theme</Box>
+          <Box></Box>
           <ThemeToggle />
         </SettingRow>
         {/* {user && (

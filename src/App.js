@@ -33,6 +33,7 @@ import GroupPublicPage from "./Containers/GroupPublicPage";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import useGlobalData from "./Hooks/useGlobalData";
 import SchedulePage from "./Containers/SchedulePage";
+import SeasonPredictionsPage from "./Containers/SeasonPredictionsPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -158,6 +159,12 @@ function App() {
                   <Route
                     path="/group-dashboard"
                     element={user ? <GroupDashboard /> : <ProfileContainer />}
+                  />
+                  <Route
+                    path="/season-predictions"
+                    element={
+                      user ? <SeasonPredictionsPage /> : <ProfileContainer />
+                    }
                   />
                   <Route
                     path="/groups/:groupId"

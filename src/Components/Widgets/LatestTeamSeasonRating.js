@@ -30,7 +30,7 @@ export default function LatestTeamSeasonRating() {
   if (!fixtureWithLineup && !playerStats) {
     return <Spinner />;
   }
-  console.log(lineup.length);
+
   return (
     <ContentContainer style={{ padding: "10px " }}>
       <h2 className="globalHeading">Previous XI Avg. Rating</h2>

@@ -17,3 +17,19 @@ export const ContentContainer = styled("div")(({ theme }) => ({
   borderRadius: "8px",
   boxShadow: theme.shadows[1],
 }));
+
+export const InnerContent = styled("div")(({ theme }) => ({
+  background:
+    theme.palette.mode === "light"
+      ? "#ededed" // slightly darker than paper (#f7f7f7)
+      : "#242424", // slightly lighter than paper (#1e1e1e)
+  color: theme.palette.text.primary,
+  borderRadius: theme.shape.borderRadius,
+  [theme.breakpoints.up("md")]: {
+    // Apply marginTop only on large screens
+    paddingRight: "250px",
+    paddingLeft: "250px",
+  },
+  padding: "16px",
+  margin: "8px 0",
+}));

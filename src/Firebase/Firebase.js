@@ -319,6 +319,24 @@ export const handlePredictTeamScore = async (data) => {
   });
 };
 
+export const handleSeasonPredictions = async (data) => {
+  for (const [questionKey, answer] of Object.entries(data.predictions)) {
+    await firebaseSetDoc({
+      path: `groups/${data.groupId}/seasons/${data.currentYear}/seasonPredictions`,
+      docId: questionKey,
+      data: {
+        [answer]: increment(1),
+        totalSubmits: increment(1),
+      },
+    });
+  }
+  await firebaseSetDoc({
+    path: `users/${data.userId}/groups/${data.groupId}/seasons`,
+    docId: `${data.currentYear}`,
+    data: { seasonPredictions: data.predictions },
+  });
+};
+
 export const handlePredictWinningTeam = async (data) => {
   await firebaseSetDoc({
     path: `groups/${data.groupId}/seasons/${data.currentYear}/predictions`,
