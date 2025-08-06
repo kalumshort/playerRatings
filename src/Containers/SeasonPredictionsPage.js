@@ -10,7 +10,7 @@ import {
 import useGroupData from "../Hooks/useGroupsData";
 import { useAuth } from "../Providers/AuthContext";
 import useGlobalData from "../Hooks/useGlobalData";
-import Barchart from "../Components/Charts/Barchart";
+
 import { useSelector } from "react-redux";
 import { selectSquadDataObject } from "../Selectors/squadDataSelectors";
 
@@ -262,137 +262,137 @@ const Section = ({ title, children }) => (
 );
 
 // Helper for showing a chart for each question
-const ResultsBar = ({ question, data }) => {
-  const totalSubmits = data.totalSubmits || 0;
-  const barchartData = question.options.map((option) => ({
-    name: option,
-    value: data[option] || 0,
-  }));
-  return (
-    <InnerContent
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        marginBottom: "24px",
-      }}
-    >
-      <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
-        {question.label}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-        <Barchart barchartData={barchartData} height={220} width="100%" />
-        <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-          {question.options
-            .map((option) => {
-              const count = data[option] || 0;
-              const percent =
-                totalSubmits > 0
-                  ? ((count / totalSubmits) * 100).toFixed(1)
-                  : "0.0";
-              return { option, count, percent };
-            })
-            .filter(({ count }) => count > 0)
-            .map(({ option, count, percent }) => (
-              <li
-                key={option}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 16,
-                  padding: "4px 0",
-                  borderBottom: "1px solid #474747ff",
-                  gap: "8px",
-                }}
-              >
-                <span>
-                  {option}
-                  {option === "Winners" && " 🏆"}
-                </span>
+// const ResultsBar = ({ question, data }) => {
+//   const totalSubmits = data.totalSubmits || 0;
+//   const barchartData = question.options.map((option) => ({
+//     name: option,
+//     value: data[option] || 0,
+//   }));
+//   return (
+//     <InnerContent
+//       style={{
+//         display: "flex",
+//         flexDirection: "column",
+//         alignItems: "flex-start",
+//         marginBottom: "24px",
+//       }}
+//     >
+//       <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
+//         {question.label}
+//       </div>
+//       <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+//         <Barchart barchartData={barchartData} height={220} width="100%" />
+//         <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+//           {question.options
+//             .map((option) => {
+//               const count = data[option] || 0;
+//               const percent =
+//                 totalSubmits > 0
+//                   ? ((count / totalSubmits) * 100).toFixed(1)
+//                   : "0.0";
+//               return { option, count, percent };
+//             })
+//             .filter(({ count }) => count > 0)
+//             .map(({ option, count, percent }) => (
+//               <li
+//                 key={option}
+//                 style={{
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   fontSize: 16,
+//                   padding: "4px 0",
+//                   borderBottom: "1px solid #474747ff",
+//                   gap: "8px",
+//                 }}
+//               >
+//                 <span>
+//                   {option}
+//                   {option === "Winners" && " 🏆"}
+//                 </span>
 
-                <span>{percent}%</span>
-              </li>
-            ))}
-        </ul>
-      </div>
+//                 <span>{percent}%</span>
+//               </li>
+//             ))}
+//         </ul>
+//       </div>
 
-      {totalSubmits === 0 && (
-        <div style={{ color: "#999", fontStyle: "italic" }}>
-          No submissions yet
-        </div>
-      )}
-    </InnerContent>
-  );
-};
-const ButtonGroupResultBar = ({ question, data }) => {
-  const totalSubmits = data.totalSubmits || 0;
-  const counts = question.options.map((option) => data[option] || 0);
-  const percents = counts.map((count) =>
-    totalSubmits > 0 ? (count / totalSubmits) * 100 : 0
-  );
+//       {totalSubmits === 0 && (
+//         <div style={{ color: "#999", fontStyle: "italic" }}>
+//           No submissions yet
+//         </div>
+//       )}
+//     </InnerContent>
+//   );
+// };
+// const ButtonGroupResultBar = ({ question, data }) => {
+//   const totalSubmits = data.totalSubmits || 0;
+//   const counts = question.options.map((option) => data[option] || 0);
+//   const percents = counts.map((count) =>
+//     totalSubmits > 0 ? (count / totalSubmits) * 100 : 0
+//   );
 
-  // Two colors for the two options, you can customize them
-  const colors = ["#4e73df", "#9b59b6"];
-  const gradient = `linear-gradient(
-    to right,
-    ${colors[0]} 0%, 
-    ${colors[0]} ${percents[0]}%, 
-    ${colors[1]} ${percents[0]}%, 
-    ${colors[1]} 100%
-  )`;
+//   // Two colors for the two options, you can customize them
+//   const colors = ["#4e73df", "#9b59b6"];
+//   const gradient = `linear-gradient(
+//     to right,
+//     ${colors[0]} 0%,
+//     ${colors[0]} ${percents[0]}%,
+//     ${colors[1]} ${percents[0]}%,
+//     ${colors[1]} 100%
+//   )`;
 
-  return (
-    <InnerContent
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        marginBottom: "24px",
-      }}
-    >
-      <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
-        {question.label}
-      </div>
-      <div
-        style={{
-          width: "100%",
-          height: 40,
-          borderRadius: 12,
-          background: gradient,
-          display: "flex",
-          alignItems: "center",
-          position: "relative",
-          boxShadow: "0 2px 10px #0001",
-          overflow: "hidden",
-        }}
-      >
-        {question.options.map((option, i) =>
-          percents[i] > 0 ? (
-            <div
-              key={option}
-              style={{
-                position: "absolute",
-                left: i === 0 ? 8 : undefined,
-                right: i === 1 ? 8 : undefined,
-                color: "#fff",
-                fontWeight: 700,
-                textShadow: "0 1px 3px #0005",
-                fontSize: 18,
-                top: "50%",
-                transform: "translateY(-50%)",
-              }}
-            >
-              {option}: {percents[i].toFixed(1)}%
-            </div>
-          ) : null
-        )}
-      </div>
-      <div style={{ fontSize: 14, color: "#999", marginTop: 4 }}>
-        {counts[0]} {question.options[0]} / {counts[1]} {question.options[1]}
-      </div>
-    </InnerContent>
-  );
-};
+//   return (
+//     <InnerContent
+//       style={{
+//         display: "flex",
+//         flexDirection: "column",
+//         alignItems: "flex-start",
+//         marginBottom: "24px",
+//       }}
+//     >
+//       <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
+//         {question.label}
+//       </div>
+//       <div
+//         style={{
+//           width: "100%",
+//           height: 40,
+//           borderRadius: 12,
+//           background: gradient,
+//           display: "flex",
+//           alignItems: "center",
+//           position: "relative",
+//           boxShadow: "0 2px 10px #0001",
+//           overflow: "hidden",
+//         }}
+//       >
+//         {question.options.map((option, i) =>
+//           percents[i] > 0 ? (
+//             <div
+//               key={option}
+//               style={{
+//                 position: "absolute",
+//                 left: i === 0 ? 8 : undefined,
+//                 right: i === 1 ? 8 : undefined,
+//                 color: "#fff",
+//                 fontWeight: 700,
+//                 textShadow: "0 1px 3px #0005",
+//                 fontSize: 18,
+//                 top: "50%",
+//                 transform: "translateY(-50%)",
+//               }}
+//             >
+//               {option}: {percents[i].toFixed(1)}%
+//             </div>
+//           ) : null
+//         )}
+//       </div>
+//       <div style={{ fontSize: 14, color: "#999", marginTop: 4 }}>
+//         {counts[0]} {question.options[0]} / {counts[1]} {question.options[1]}
+//       </div>
+//     </InnerContent>
+//   );
+// };
 const SelectPercentBar = ({ question, data }) => {
   const totalSubmits = data.totalSubmits || 0;
   // Pick a palette or random colors
@@ -775,8 +775,7 @@ export default function SeasonPredictionsPage() {
   if (loading) return <div>Loading...</div>;
 
   return userSubmission ? (
-    // <SeasonPredictionsResults />
-    <SeasonPredictions userSubmission={userSubmission} />
+    <SeasonPredictionsResults />
   ) : (
     <SeasonPredictions userSubmission={userSubmission} />
   );
