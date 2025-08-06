@@ -17,6 +17,7 @@ import useGroupData from "../../../Hooks/useGroupsData";
 import { useAuth } from "../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../Hooks/useGlobalData";
+import PlayersSelect from "../../Widgets/PlayersSelect";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -153,49 +154,7 @@ export default function PreMatchMOTM({ fixture }) {
           height: "100%",
         }}
       >
-        <Select
-          value={selectedPlayer}
-          onChange={handleChange}
-          displayEmpty
-          variant="standard"
-          renderValue={(selected) =>
-            selected && squadData[selected] ? (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Avatar
-                  alt={squadData[selected].name}
-                  src={squadData[selected].photo}
-                  style={{
-                    height: 80,
-                    width: 60,
-                    borderRadius: "8px",
-                    objectFit: "contain",
-                  }}
-                />
-                <Typography>{squadData[selected].name}</Typography>
-              </Box>
-            ) : (
-              "Choose A Player"
-            )
-          }
-          style={{ minWidth: 220 }}
-        >
-          {Object.values(squadData).map((player) => (
-            <MenuItem key={player.id} value={player.id}>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Avatar
-                  alt={player.name}
-                  src={player.photo}
-                  style={{
-                    height: 50,
-                    borderRadius: "8px",
-                    objectFit: "contain",
-                  }}
-                />
-                <Typography>{player.name}</Typography>
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
+        <PlayersSelect onChange={(e) => handleChange(e)} showAvatar={true} />
       </div>
       {selectedPlayer && (
         <Button

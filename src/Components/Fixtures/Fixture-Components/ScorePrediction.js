@@ -50,7 +50,7 @@ export default function ScorePrediction({ fixture }) {
     <ScorePredictionResults
       fixture={fixture}
       storedUsersPredictedScore={storedUsersPredictedScore}
-    ></ScorePredictionResults>
+    />
   ) : (
     <ContentContainer className="scorePredictionContainer">
       <h1 className="smallHeading">Match Score</h1>
