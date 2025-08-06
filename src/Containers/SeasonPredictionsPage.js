@@ -643,7 +643,7 @@ const PlayerPodium = ({ question, data }) => {
                   border: `3px solid ${color}`,
                   overflow: "hidden",
                   background: "#f5f5f5",
-                  boxShadow: isFirst ? "0 2px 10px #ffe58f" : "0 2px 8px #ccc",
+                  // boxShadow: isFirst ? "0 2px 10px #ffe58f" : "0 2px 8px #ccc",
                 }}
               >
                 <img
@@ -658,8 +658,8 @@ const PlayerPodium = ({ question, data }) => {
                 {player.name}
               </div>
               <div style={{ color: "#666", fontSize: 14, marginTop: 2 }}>
-                {podiumText[idx]} • {player.count} vote
-                {player.count !== 1 ? "s" : ""}
+                {podiumText[idx]} • {player.count}
+                {/* {player.count !== 1 ? "s" : ""} */}
               </div>
             </div>
           );
