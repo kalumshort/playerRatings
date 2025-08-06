@@ -13,6 +13,7 @@ import useGlobalData from "../Hooks/useGlobalData";
 
 import { useSelector } from "react-redux";
 import { selectSquadDataObject } from "../Selectors/squadDataSelectors";
+import { Spinner } from "./Helpers";
 
 // OPTIONS
 const selectOptions = {
@@ -668,7 +669,7 @@ const PlayerPodium = ({ question, data }) => {
   );
 };
 
-const SeasonPredictions = () => {
+const SeasonPredictions = ({ setUserSubmission }) => {
   const [predictions, setPredictions] = React.useState({});
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
@@ -685,6 +686,7 @@ const SeasonPredictions = () => {
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
+    setUserSubmission(predictions);
   };
   const requiredKeys = [
     ...achievementQuestions.map((q) => q.key),
@@ -768,7 +770,7 @@ const SeasonPredictionsResults = () => {
     fetchResults();
   }, [activeGroup?.groupId, globalData?.currentYear]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Spinner />;
 
   // Helper to render a section with bar charts for a group of questions
   const renderSection = (sectionTitle, questions) => (
@@ -836,11 +838,14 @@ export default function SeasonPredictionsPage() {
     fetchUserPredictions();
   }, [user, activeGroup?.groupId, globalData?.currentYear]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Spinner />;
 
   return userSubmission ? (
     <SeasonPredictionsResults />
   ) : (
-    <SeasonPredictions userSubmission={userSubmission} />
+    <SeasonPredictions
+      userSubmission={userSubmission}
+      setUserSubmission={setUserSubmission}
+    />
   );
 }
