@@ -393,31 +393,27 @@ const Section = ({ title, children }) => (
 //     </InnerContent>
 //   );
 // };
-const SelectPercentBar = ({ question, data }) => {
-  const totalSubmits = data.totalSubmits || 0;
-  // Pick a palette or random colors
-  const colors = [
-    "#4e73df",
-    "#9b59b6",
-    "#22c55e",
-    "#f59e42",
-    "#f43f5e",
-    "#eab308",
-    "#14b8a6",
-    "#6366f1",
-    "#ff7f50",
-    "#b91c1c",
-    "#64748b",
-  ];
 
-  // Prepare percent segments
-  const segments = question.options
-    .map((option, i) => {
+const SelectPercentBar = ({ question, data }) => {
+  const [activeOption, setActiveOption] = useState(null);
+
+  const totalSubmits = data.totalSubmits || 0;
+  const green = "#85e89d";
+  const otherColors = ["#ffc285", "#ffb3b3", "#ffd6a5", "#ffabab", "#ff8c8c"];
+
+  const sortedSegments = question.options
+    .map((option) => {
       const count = data[option] || 0;
       const percent = totalSubmits > 0 ? (count / totalSubmits) * 100 : 0;
-      return { option, count, percent, color: colors[i % colors.length] };
+      return { option, count, percent };
     })
-    .filter(({ count }) => count > 0);
+    .filter(({ count }) => count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const segments = sortedSegments.map((seg, i) => ({
+    ...seg,
+    color: i === 0 ? green : otherColors[(i - 1) % otherColors.length],
+  }));
 
   if (!totalSubmits) {
     return (
@@ -432,52 +428,74 @@ const SelectPercentBar = ({ question, data }) => {
     );
   }
 
+  const handleBarClick = (option, e) => {
+    e.stopPropagation();
+    setActiveOption((prev) => (prev === option ? null : option));
+  };
+
+  // Clicking anywhere in the question content (not a bar) clears selection
+  const handleClearSelection = () => setActiveOption(null);
+
+  const activeData = segments.find((seg) => seg.option === activeOption);
+
   return (
-    <InnerContent
-      style={{
-        flexDirection: "column",
-        alignItems: "flex-start",
-        marginBottom: "24px",
-      }}
-    >
-      <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
-        {question.label}
-      </div>
-      <div
+    <div onClick={handleClearSelection} style={{ width: "100%" }}>
+      <InnerContent
         style={{
-          display: "flex",
-          height: 38,
-          width: "100%",
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 2px 10px #0001",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          marginBottom: "24px",
         }}
       >
-        {segments.map(({ option, percent, color }) => (
+        <div className="subHeadingGlobal" style={{ marginBottom: 8 }}>
+          {question.label}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            height: 38,
+            width: "100%",
+            borderRadius: 12,
+            overflow: "hidden",
+            boxShadow: "0 2px 10px #0001",
+            cursor: "pointer",
+            position: "relative",
+          }}
+        >
+          {segments.map(({ option, percent, color }) => (
+            <div
+              key={option}
+              style={{
+                width: `${percent}%`,
+                background: color,
+                height: "100%",
+                display: percent > 0 ? "block" : "none",
+                border: activeOption === option ? "2px solid #222" : undefined,
+                boxSizing: "border-box",
+                transition: "width 0.5s, border 0.2s",
+                cursor: "pointer",
+              }}
+              onClick={(e) => handleBarClick(option, e)}
+              title={`Click to show percentage for "${option}"`}
+              aria-label={`Show percentage for ${option}`}
+            />
+          ))}
+        </div>
+        {activeData && (
           <div
-            key={option}
             style={{
-              width: `${percent}%`,
-              background: color,
-              height: "100%",
-              transition: "width 0.5s",
-              display: percent > 0 ? "block" : "none",
+              margin: "10px 0 0 0",
+              padding: "7px 15px",
+              background: "#fafcff",
+              border: `2px solid ${activeData.color}`,
+              borderRadius: 7,
+              fontWeight: 600,
+              fontSize: 16,
+              color: "#333",
+              boxShadow: "0 2px 7px #0001",
+              alignSelf: "flex-start",
+              transition: "border 0.2s",
             }}
-          />
-        ))}
-      </div>
-      <ul
-        style={{
-          margin: "8px 0 0 0",
-          padding: 0,
-          listStyle: "none",
-          fontSize: 15,
-        }}
-      >
-        {segments.map(({ option, count, percent, color }) => (
-          <li
-            key={option}
-            style={{ display: "flex", alignItems: "center", marginBottom: 2 }}
           >
             <span
               style={{
@@ -486,18 +504,64 @@ const SelectPercentBar = ({ question, data }) => {
                 height: 14,
                 borderRadius: 3,
                 marginRight: 8,
-                background: color,
+                background: activeData.color,
                 border: "1px solid #e2e2e2",
+                verticalAlign: "middle",
               }}
             />
-            <span style={{ marginRight: 8 }}>{option}</span>
-            <span style={{ color: "#666" }}>
-              {count} ({percent.toFixed(1)}%)
-            </span>
-          </li>
-        ))}
-      </ul>
-    </InnerContent>
+            {activeData.option}: <b>{activeData.percent.toFixed(1)}%</b> (
+            {activeData.count} vote{activeData.count !== 1 ? "s" : ""})
+          </div>
+        )}
+        <ul
+          style={{
+            margin: "8px 0 0 0",
+            padding: 0,
+            listStyle: "none",
+            fontSize: 15,
+          }}
+        >
+          {segments.map(({ option, count, percent, color }) => (
+            <li
+              key={option}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: 2,
+                background:
+                  activeOption === option
+                    ? "rgba(133,232,157,0.13)"
+                    : undefined,
+                borderRadius: 4,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 14,
+                  height: 14,
+                  borderRadius: 3,
+                  marginRight: 8,
+                  background: color,
+                  border: "1px solid #e2e2e2",
+                }}
+              />
+              <span
+                style={{
+                  marginRight: 8,
+                  fontWeight: activeOption === option ? 700 : 400,
+                }}
+              >
+                {option}
+              </span>
+              <span style={{ color: "#666" }}>
+                {count} ({percent.toFixed(1)}%)
+              </span>
+            </li>
+          ))}
+        </ul>
+      </InnerContent>
+    </div>
   );
 };
 
