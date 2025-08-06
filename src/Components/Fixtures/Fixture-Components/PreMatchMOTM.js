@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
+
 import { ContentContainer } from "../../../Containers/GlobalContainer";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadDataObject } from "../../../Selectors/squadDataSelectors";
