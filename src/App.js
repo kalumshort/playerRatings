@@ -147,7 +147,7 @@ function App() {
                 <Routes>
                   <Route
                     path="/"
-                    element={user ? <GroupHomePage /> : <HomePage />}
+                    element={user ? <GroupHomePage /> : <ProfileContainer />}
                   />
                   <Route path="/profile" element={<ProfileContainer />} />
                   <Route
