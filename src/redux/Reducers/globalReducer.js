@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const globalSlice = createSlice({
   name: "globalData",
   initialState: {
-    currentYear: 2025,
+    currentYear: 2024,
   },
   reducers: {},
 });

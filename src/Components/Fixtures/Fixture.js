@@ -44,8 +44,8 @@ export default function Fixture() {
   const { matchId } = useParams();
   const { groupData, activeGroup } = useGroupData();
 
-  const upcomingFixtureId = useSelector(selectUpcomingFixtures)[0].id;
-  console.log("Upcoming Fixture:", upcomingFixtureId);
+  const upcomingFixture = useSelector(selectUpcomingFixtures)[0];
+
   const fixture = useSelector(selectFixtureById(matchId));
   const { predictionsError } = useSelector(selectPredictionsLoad);
   const { ratingsError, playerSeasonOverallRatingsLoaded } = useSelector(
@@ -125,7 +125,7 @@ export default function Fixture() {
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";
 
-  const showPredictions = upcomingFixtureId === matchId;
+  const showPredictions = upcomingFixture?.id === matchId;
   return (
     <>
       <FixtureGradientProvider
@@ -135,10 +135,12 @@ export default function Fixture() {
           awayTeamColour: awayTeamColour,
         }}
       >
-        <FixturesListener
-          teamId={groupData.groupClubId}
-          fixtureId={latestFixture.fixture.id}
-        />
+        {latestFixture === matchId && (
+          <FixturesListener
+            teamId={groupData.groupClubId}
+            fixtureId={latestFixture?.fixture.id}
+          />
+        )}
         <UsersMatchDataListener
           groupId={activeGroup.groupId}
           matchId={matchId}
