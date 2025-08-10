@@ -35,6 +35,8 @@ import {
 import { getAuth } from "firebase/auth";
 import { fetchUserMatchData } from "../redux/Reducers/userDataReducer";
 
+import unitedPlayers from "../redux/unitedPlayers.json"; // adjust if JSON is in another file
+
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
 //     const fetchedFixtures = [];
@@ -198,44 +200,30 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     dispatch(fetchTeamSquadStart());
 
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
-    // const activeSquadIds = teamSquadData.playerIds;
     const seasonSquad = teamSquadData.seasonSquad;
     const squadIds = seasonSquad.map((player) => player.id);
 
-    await Promise.all(
-      squadIds.map(async (playerId) => {
-        try {
-          const playerDoc = await firebaseGetDocument(
-            `playerImages/data/teams/${squadId}/players`,
-            playerId.toString()
-          );
+    squadIds.forEach((playerId) => {
+      const playerData = unitedPlayers[playerId];
 
-          if (playerDoc) {
-            const playerIndex = teamSquadData.activeSquad.findIndex(
-              (player) => player.id === playerId
-            );
-            if (playerIndex !== -1) {
-              teamSquadData.activeSquad[playerIndex].photo = playerDoc.img;
-              teamSquadData.activeSquad[playerIndex].name = playerDoc.name;
-            }
-            const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
-              (player) => player.id === playerId
-            );
-            if (seasonPlayerIndex !== -1) {
-              teamSquadData.seasonSquad[seasonPlayerIndex].photo =
-                playerDoc.img;
-              teamSquadData.seasonSquad[seasonPlayerIndex].name =
-                playerDoc.name;
-            }
-          }
-        } catch (error) {
-          console.error(
-            `Error fetching player document for playerId ${playerId}:`,
-            error
-          );
+      if (playerData) {
+        const playerIndex = teamSquadData.activeSquad.findIndex(
+          (player) => player.id === playerId
+        );
+        if (playerIndex !== -1) {
+          teamSquadData.activeSquad[playerIndex].photo = playerData.photo;
+          teamSquadData.activeSquad[playerIndex].name = playerData.name;
         }
-      })
-    );
+
+        const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
+          (player) => player.id === playerId
+        );
+        if (seasonPlayerIndex !== -1) {
+          teamSquadData.seasonSquad[seasonPlayerIndex].photo = playerData.photo;
+          teamSquadData.seasonSquad[seasonPlayerIndex].name = playerData.name;
+        }
+      }
+    });
 
     dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
     dispatch(fetchTeamSquadSuccess());

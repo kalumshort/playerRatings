@@ -1,0 +1,329 @@
+{
+  "18": {
+    "age": 25,
+    "position": "Attacker",
+    "photo": "/playerImages/18.png",
+    "number": 19,
+    "name": "Sancho",
+    "id": 18
+  },
+  "526": {
+    "photo": "/playerImages/526.png",
+    "age": 29,
+    "number": 24,
+    "position": "Goalkeeper",
+    "name": "Onana",
+    "id": 526
+  },
+  "532": {
+    "photo": "/playerImages/532.png",
+    "position": "Defender",
+    "name": "De Ligt",
+    "number": 4,
+    "id": 532,
+    "age": 26
+  },
+  "545": {
+    "name": "Mazraoui",
+    "photo": "/playerImages/545.png",
+    "position": "Defender",
+    "id": 545,
+    "number": 3,
+    "age": 28
+  },
+  "747": {
+    "position": "Midfielder",
+    "name": "Casemiro",
+    "id": 747,
+    "number": 18,
+    "age": 33,
+    "photo": "/playerImages/747.png"
+  },
+  "886": {
+    "photo": "/playerImages/886.png",
+    "age": 26,
+    "id": 886,
+    "position": "Defender",
+    "name": "Dalot",
+    "number": 20
+  },
+  "891": {
+    "age": 30,
+    "photo": "/playerImages/891.png",
+    "number": 23,
+    "id": 891,
+    "name": "Shaw",
+    "position": "Defender"
+  },
+  "1165": {
+    "name": "Cunha",
+    "age": 26,
+    "id": 1165,
+    "position": "Attacker",
+    "photo": "/playerImages/1165.png",
+    "number": 10
+  },
+  "1485": {
+    "id": 1485,
+    "name": "Fernandes",
+    "number": 8,
+    "position": "Midfielder",
+    "age": 31,
+    "photo": "/playerImages/1485.png"
+  },
+  "2467": {
+    "position": "Defender",
+    "age": 27,
+    "id": 2467,
+    "photo": "/playerImages/2467.png",
+    "name": "L. Martínez",
+    "number": 6
+  },
+  "2931": {
+    "age": 39,
+    "number": 22,
+    "id": 2931,
+    "name": "Heaton",
+    "position": "Goalkeeper",
+    "photo": "/playerImages/2931.png"
+  },
+  "2935": {
+    "photo": "/playerImages/2935.png",
+    "age": 32,
+    "id": 2935,
+    "position": "Defender",
+    "number": 5,
+    "name": "Maguire"
+  },
+  "9971": {
+    "age": 25,
+    "id": 9971,
+    "photo": "/playerImages/9971.png",
+    "name": "Antony",
+    "number": 21,
+    "position": "Attacker"
+  },
+  "19220": {
+    "age": 26,
+    "id": 19220,
+    "number": 7,
+    "photo": "/playerImages/19220.png",
+    "name": "Mount",
+    "position": "Midfielder"
+  },
+  "20589": {
+    "age": 26,
+    "photo": "/playerImages/20589.png",
+    "position": "Attacker",
+    "name": "Mbeumo",
+    "number": 19,
+    "id": 20589
+  },
+  "37145": {
+    "id": 37145,
+    "position": "Defender",
+    "age": 26,
+    "name": "Malacia",
+    "photo": "/playerImages/37145.png",
+    "number": 3
+  },
+  "50132": {
+    "number": 1,
+    "id": 50132,
+    "photo": "/playerImages/50132.png",
+    "position": "Goalkeeper",
+    "age": 27,
+    "name": "Bayındır"
+  },
+  "51494": {
+    "number": 25,
+    "photo": "/playerImages/51494.png",
+    "age": 24,
+    "id": 51494,
+    "position": "Midfielder",
+    "name": "Ugarte"
+  },
+  "70100": {
+    "id": 70100,
+    "number": 11,
+    "photo": "/playerImages/70100.png",
+    "name": "Zirkzee",
+    "position": "Attacker",
+    "age": 24
+  },
+  "157997": {
+    "photo": "/playerImages/157997.png",
+    "number": 16,
+    "id": 157997,
+    "name": "Diallo",
+    "position": "Attacker",
+    "age": 23
+  },
+  "284322": {
+    "number": 37,
+    "position": "Midfielder",
+    "id": 284322,
+    "name": "Mainoo",
+    "age": 20,
+    "photo": "/playerImages/284322.png"
+  },
+  "284324": {
+    "number": 17,
+    "id": 284324,
+    "position": "Attacker",
+    "name": "Garnacho",
+    "age": 21,
+    "photo": "/playerImages/284324.png"
+  },
+  "284382": {
+    "position": "Goalkeeper",
+    "number": 1,
+    "name": "Mee",
+    "id": 284382,
+    "photo": "/playerImages/284382.png",
+    "age": 23
+  },
+  "284400": {
+    "number": 8,
+    "name": "Collyer",
+    "id": 284400,
+    "position": "Midfielder",
+    "age": 21,
+    "photo": "/playerImages/284400.png"
+  },
+  "288006": {
+    "position": "Attacker",
+    "photo": "/playerImages/288006.png",
+    "number": 9,
+    "name": "Højlund",
+    "id": 288006,
+    "age": 22
+  },
+  "328101": {
+    "photo": "/playerImages/328101.png",
+    "age": 20,
+    "name": "Fredricson",
+    "id": 328101,
+    "position": "Defender",
+    "number": 4
+  },
+  "342970": {
+    "name": "Yoro",
+    "age": 20,
+    "number": 15,
+    "photo": "/playerImages/342970.png",
+    "id": 342970,
+    "position": "Defender"
+  },
+  "362270": {
+    "position": "Attacker",
+    "name": "Wheatley",
+    "age": 19,
+    "id": 362270,
+    "photo": "/playerImages/362270.png",
+    "number": 9
+  },
+  "365664": {
+    "photo": "/playerImages/365664.png",
+    "age": 20,
+    "position": "Attacker",
+    "number": 7,
+    "id": 365664,
+    "name": "Williams"
+  },
+  "382452": {
+    "position": "Defender",
+    "number": 13,
+    "age": 21,
+    "photo": "/playerImages/382452.png",
+    "name": "Dorgu",
+    "id": 382452
+  },
+  "383770": {
+    "age": 18,
+    "name": "Fletcher",
+    "position": "Midfielder",
+    "number": 10,
+    "id": 383770,
+    "photo": "/playerImages/383770.png"
+  },
+  "389309": {
+    "name": "Obi",
+    "id": 389309,
+    "age": 18,
+    "position": "Attacker",
+    "number": 9,
+    "photo": "/playerImages/389309.png"
+  },
+  "402329": {
+    "photo": "/playerImages/402329.png",
+    "number": 5,
+    "age": 19,
+    "id": 402329,
+    "name": "Heaven",
+    "position": "Defender"
+  },
+  "18772": {
+    "name": "Evans",
+    "photo": "/playerImages/18772.png",
+    "id": 18772
+  },
+  "889": {
+    "name": "Lindelöf",
+    "photo": "/playerImages/889.png",
+    "id": 889
+  },
+  "174": {
+    "name": "Eriksen",
+    "photo": "/playerImages/174.png",
+    "id": 174
+  },
+  "402331": {
+    "name": "Munro",
+    "photo": "/playerImages/402331.png",
+    "number": 14,
+    "position": "Defender",
+    "age": 19,
+    "id": 402331
+  },
+  "403064": {
+    "age": 18,
+    "name": "Amass",
+    "number": 3,
+    "position": "Defender",
+    "photo": "/playerImages/403064.png",
+    "id": 403064
+  },
+  "404769": {
+    "number": 7,
+    "photo": "/playerImages/404769.png",
+    "name": "Mantato",
+    "position": "Midfielder",
+    "age": 17,
+    "id": 404769
+  },
+  "406098": {
+    "name": "Murdock",
+    "position": "Goalkeeper",
+    "photo": "/playerImages/406098.png",
+    "id": 406098,
+    "age": 18,
+    "number": 13
+  },
+  "418210": {
+    "position": "Midfielder",
+    "photo": "/playerImages/418210.png",
+    "id": 418210,
+    "number": 10,
+    "age": 19,
+    "name": "Koné"
+  },
+  "475598": {
+    "id": 475598,
+    "number": 37,
+    "position": "Defender",
+    "name": "León",
+    "photo": "/playerImages/475598.png",
+    "age": 18
+  }
+}
