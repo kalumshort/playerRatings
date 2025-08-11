@@ -113,7 +113,7 @@ exports.removeUserFromGroup = onCall(async (request, context) => {
 
 exports.updateFixtures = onSchedule(
   {
-    schedule: "every day 13:00",
+    schedule: "every day 00:00",
     timeoutSeconds: 240, // ⏱️ 4 minutes
     memory: "512MiB", // Optional: increase memory if needed
   },
