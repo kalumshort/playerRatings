@@ -39,7 +39,7 @@
   /* background-color: #282828; */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   max-width: 80px;
-  overflow: hidden;
+  /* overflow: hidden; */
   height: 120px;
   box-sizing: border-box;
   background-color: #f5f5f500 !important; /* Semi-transparent background */
@@ -298,25 +298,26 @@
   display: flex;
   flex-wrap: wrap;
   width: calc(100% - 20px);
-  gap: 20px;
+  gap: 15px; /* Reduce gap for a slimmer layout */
 }
 
 .chosen-lineup {
   position: relative;
-  flex: 1 1 calc(50% - 10px); /* Take 50% width minus spacing */
-  box-sizing: border-box; /* Prevent padding/border from breaking layout */
+  flex: 1 1 calc(50% - 7.5px); /* Slightly reduce width for slimmer layout */
+  box-sizing: border-box;
 }
+
 .community-team-stats {
-  padding: 25px 10px 10px 0px;
+  padding: 20px 8px 8px 0px; /* Reduced padding for a more compact look */
   position: relative;
-  flex: 1 1 calc(50% - 10px); /* Take 50% width minus spacing */
-  box-sizing: border-box; /* Prevent padding/border from breaking layout */
-  flex-wrap: wrap;
+  flex: 1 1 calc(50% - 7.5px); /* Adjusted width for consistency */
+  box-sizing: border-box;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start; /* Align children at the top of the container */
-  overflow: scroll;
-  max-height: 800px;
+  align-items: flex-start;
+  overflow-y: auto; /* Use vertical scroll for better control */
+  max-height: 700px; /* Reduced height for a more compact section */
 }
 
 .lineup-player-container {

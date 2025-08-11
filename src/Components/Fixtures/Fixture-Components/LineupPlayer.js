@@ -18,7 +18,7 @@ export default function LineupPlayer({
   showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
-  console.log(percentage);
+
   const { activeGroup } = useGroupData();
 
   const groupColour = activeGroup?.accentColor || "#DA291C";
