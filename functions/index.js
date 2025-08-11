@@ -113,7 +113,7 @@ exports.removeUserFromGroup = onCall(async (request, context) => {
 
 exports.updateFixtures = onSchedule(
   {
-    schedule: "every day 00:00",
+    schedule: "every day 13:00",
     timeoutSeconds: 240, // ⏱️ 4 minutes
     memory: "512MiB", // Optional: increase memory if needed
   },
@@ -143,6 +143,9 @@ exports.updateFixtures = onSchedule(
       for (const teamObj of teams) {
         const teamId = teamObj.team.id;
         const teamName = teamObj.team.name;
+        if (teamId !== 33) {
+          continue; // Skip teams that are not Manchester United
+        }
 
         logger.info(`Processing team: ${teamName} (${teamId})`);
 
@@ -203,8 +206,8 @@ exports.updateFixtures = onSchedule(
 
         // Fetch the existing teamSquads document from Firestore
         const teamSquadsDoc = await getFirestore()
-          .collection("teamSquads")
-          .doc(teamId.toString())
+          .collection(`teamSquads/${teamId}/season`)
+          .doc(SEASON.toString())
           .get();
 
         // Get the existing seasonSquad if it exists, or initialize an empty array
@@ -225,8 +228,8 @@ exports.updateFixtures = onSchedule(
 
         // Save both squad and manager into teamSquads
         await getFirestore()
-          .collection("teamSquads")
-          .doc(teamId.toString())
+          .collection(`teamSquads/${teamId}/season`)
+          .doc(SEASON.toString())
           .set(
             {
               activeSquad: squadPlayers,

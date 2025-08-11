@@ -202,7 +202,7 @@ export const fetchTeamSquad = (squadId) => async (dispatch) => {
     const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
     const seasonSquad = teamSquadData.seasonSquad;
     const squadIds = seasonSquad.map((player) => player.id);
-
+    console.log("teamSquadData", teamSquadData);
     squadIds.forEach((playerId) => {
       const playerData = unitedPlayers[playerId];
 
