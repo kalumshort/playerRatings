@@ -69,10 +69,15 @@ function App() {
   useEffect(() => {
     if (user) {
       if (!squadLoaded && groupDataLoaded) {
-        dispatch(fetchTeamSquad(activeGroup.groupClubId));
+        dispatch(
+          fetchTeamSquad({
+            squadId: activeGroup.groupClubId,
+            currentYear: currentYear,
+          })
+        );
       }
     }
-  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup, user]);
+  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup, user, currentYear]);
 
   useEffect(() => {
     if (user) {

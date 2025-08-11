@@ -84,6 +84,7 @@ export const firebaseGetDocument = async (path, docId) => {
     if (docSnapshot.exists()) {
       return { id: docSnapshot.id, ...docSnapshot.data() };
     } else {
+      console.log("No such document!", path, docId);
       return null;
     }
   } catch (error) {

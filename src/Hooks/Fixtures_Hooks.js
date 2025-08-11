@@ -190,48 +190,56 @@ export const fetchUsersMatchData =
     }
   };
 
-export const fetchTeamSquad = (squadId) => async (dispatch) => {
-  if (!squadId) {
-    console.log("fetchTeamSquad with no squadId");
-    return;
-  }
+export const fetchTeamSquad =
+  ({ squadId, currentYear }) =>
+  async (dispatch) => {
+    if (!squadId || !currentYear) {
+      console.log("fetchTeamSquad with no squadId");
+      return;
+    }
 
-  try {
-    dispatch(fetchTeamSquadStart());
+    try {
+      dispatch(fetchTeamSquadStart());
 
-    const teamSquadData = await firebaseGetDocument(`teamSquads`, squadId);
-    const seasonSquad = teamSquadData.seasonSquad;
-    const squadIds = seasonSquad.map((player) => player.id);
-    console.log("teamSquadData", teamSquadData);
-    squadIds.forEach((playerId) => {
-      const playerData = unitedPlayers[playerId];
+      const teamSquadData = await firebaseGetDocument(
+        `teamSquads/${squadId}/season`,
+        currentYear.toString()
+      );
+      console.log("teamSquadData", teamSquadData);
 
-      if (playerData) {
-        const playerIndex = teamSquadData.activeSquad.findIndex(
-          (player) => player.id === playerId
-        );
-        if (playerIndex !== -1) {
-          teamSquadData.activeSquad[playerIndex].photo = playerData.photo;
-          teamSquadData.activeSquad[playerIndex].name = playerData.name;
+      const seasonSquad = teamSquadData.seasonSquad;
+      const squadIds = seasonSquad.map((player) => player.id);
+      squadIds.forEach((playerId) => {
+        const playerData = unitedPlayers[playerId];
+
+        if (playerData) {
+          console.log(playerData);
+          const playerIndex = teamSquadData.activeSquad.findIndex(
+            (player) => player.id === playerId
+          );
+          if (playerIndex !== -1) {
+            teamSquadData.activeSquad[playerIndex].photo = playerData.photo;
+            teamSquadData.activeSquad[playerIndex].name = playerData.name;
+          }
+
+          const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
+            (player) => player.id === playerId
+          );
+          if (seasonPlayerIndex !== -1) {
+            teamSquadData.seasonSquad[seasonPlayerIndex].photo =
+              playerData.photo;
+            teamSquadData.seasonSquad[seasonPlayerIndex].name = playerData.name;
+          }
         }
-
-        const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
-          (player) => player.id === playerId
-        );
-        if (seasonPlayerIndex !== -1) {
-          teamSquadData.seasonSquad[seasonPlayerIndex].photo = playerData.photo;
-          teamSquadData.seasonSquad[seasonPlayerIndex].name = playerData.name;
-        }
-      }
-    });
-
-    dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
-    dispatch(fetchTeamSquadSuccess());
-  } catch (error) {
-    dispatch(fetchTeamSquadFailure());
-    console.log(error);
-  }
-};
+      });
+      console.log("teamSquadData after adding photos", teamSquadData);
+      dispatch(fetchTeamSquadAction({ squadId, data: teamSquadData }));
+      dispatch(fetchTeamSquadSuccess());
+    } catch (error) {
+      dispatch(fetchTeamSquadFailure());
+      console.log(error);
+    }
+  };
 
 export const fetchMatchPredictions =
   ({ matchId, groupId, currentYear }) =>
