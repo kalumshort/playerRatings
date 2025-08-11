@@ -18,7 +18,7 @@ export default function LineupPlayer({
   showPlayerName = true,
 }) {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
-
+  console.log(percentage);
   const { activeGroup } = useGroupData();
 
   const groupColour = activeGroup?.accentColor || "#DA291C";
@@ -87,9 +87,9 @@ export default function LineupPlayer({
           {playerData?.name || player.name}
         </span>
       )}
-      <span className="lineup-player-number ">
+      {/* <span className="lineup-player-number ">
         {playerData?.number || player.numbner}
-      </span>
+      </span> */}
       <span className="lineup-player-goals">
         {goals?.map((goal, index) => (
           <Tooltip

@@ -3,7 +3,7 @@ import { Tabs, Tab, Box } from "@mui/material";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
-import playerCardBg from "../../../../assets/appAssets/cardBackground.png";
+import playerCardBg from "../../../../assets/appAssets/playerBackgroundBaseBlack.png";
 
 export default function DraggableSquad({ squad, chosenTeam }) {
   const [selectedTab, setSelectedTab] = useState("Goalkeeper");
@@ -106,7 +106,7 @@ export function DraggablePlayer({ player, locationId, useAnimation }) {
       style={{
         ...style,
         backgroundImage: `url(${playerCardBg})`,
-        backgroundSize: "contain",
+        backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }}
@@ -118,6 +118,7 @@ export function DraggablePlayer({ player, locationId, useAnimation }) {
           className="lineup-player-img"
         />
       </div>
+
       <span className="lineup-player-name">{player.name}</span>
     </div>
   );

@@ -6,6 +6,7 @@ import { Button } from "@mui/material";
 import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
 
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
+import playerCardBg from "../../../../assets/appAssets/playerBackgroundBaseBlack.png";
 
 import { useDroppable } from "@dnd-kit/core";
 import { DraggablePlayer } from "./DraggableSquad";
@@ -117,6 +118,11 @@ function DroppableLocation({ id, player }) {
           ? "0 0 10px 2px green"
           : "0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4)",
         position: "relative",
+
+        backgroundImage: `url(${playerCardBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
       }}
     ></div>
   );

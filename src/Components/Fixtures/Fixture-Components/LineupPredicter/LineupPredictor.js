@@ -8,11 +8,12 @@ import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSel
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import LineupPlayer from "../LineupPlayer";
 import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
-// import html2canvas from "html2canvas";
+import html2canvas from "html2canvas";
 
 import { DndContext } from "@dnd-kit/core";
-import { Button } from "@mui/material";
+import { Button, IconButton, Tooltip } from "@mui/material";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
+import DownloadIcon from "@mui/icons-material/Download"; // MUI download icon
 
 export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -145,42 +146,66 @@ export default function LineupPredictor({ fixture, readOnly }) {
 function ChosenLineup({ squadData, UsersPredictedTeam }) {
   const lineupRef = useRef(); // Create a reference to the content container
 
-  // const handleSaveImage = () => {
-  //   // Capture the content of the component using html2canvas
-  //   html2canvas(lineupRef.current, {
-  //     useCORS: true, // Ensure images from external sources are included
-  //     allowTaint: true, // Allow images with tainting (e.g., CORS issues)
-  //     logging: false, // Disable logging for a cleaner output
-  //     onclone: (document) => {
-  //       // Ensure images are loaded before capturing
-  //       const images = document.querySelectorAll("img");
-  //       images.forEach((img) => {
-  //         if (img.complete) {
-  //           return;
-  //         }
-  //         img.onload = img.onerror = () => {
-  //           // Ensure all images are loaded
-  //           html2canvas(lineupRef.current).then((canvas) => {
-  //             const imgData = canvas.toDataURL("image/png");
-  //             const link = document.createElement("a");
-  //             link.href = imgData;
-  //             link.download = "chosen-lineup.png"; // Set the file name
-  //             link.click(); // Programmatically trigger the download
-  //           });
-  //         };
-  //       });
-  //     },
-  //   }).then((canvas) => {
-  //     // Convert the canvas to an image (PNG format)
-  //     const imgData = canvas.toDataURL("image/png");
+  // Improved saver
+  const handleSaveImage = async () => {
+    const target = lineupRef.current;
+    if (!target) return;
 
-  //     // Create a link element to trigger the download
-  //     const link = document.createElement("a");
-  //     link.href = imgData;
-  //     link.download = "chosen-lineup.png"; // Set the file name
-  //     link.click(); // Programmatically trigger the download
-  //   });
-  // };
+    const dpr = Math.min(2, window.devicePixelRatio || 1); // crisper export
+    const styles = getComputedStyle(target);
+    const radius = parseFloat(styles.borderRadius) || 0;
+
+    const canvas = await html2canvas(target, {
+      backgroundColor: null, // keep transparent bg (no white corners)
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      scale: dpr,
+      ignoreElements: (el) => el?.dataset?.nosnap === "true", // hide button
+    });
+
+    // If the component has rounded corners, apply a rounded mask to the export
+    const finalCanvas =
+      radius > 0 ? applyRoundMask(canvas, radius * dpr) : canvas;
+
+    const imgData = finalCanvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = imgData;
+    link.download = "11Votes-chosen-lineup.png";
+    link.click();
+  };
+
+  // helpers
+  function applyRoundMask(srcCanvas, r) {
+    const masked = document.createElement("canvas");
+    masked.width = srcCanvas.width;
+    masked.height = srcCanvas.height;
+    const ctx = masked.getContext("2d");
+
+    // draw source
+    ctx.drawImage(srcCanvas, 0, 0);
+
+    // rounded-rect mask
+    ctx.globalCompositeOperation = "destination-in";
+    roundRect(ctx, 0, 0, masked.width, masked.height, r);
+    ctx.fill();
+
+    // reset comp mode (good hygiene if reused)
+    ctx.globalCompositeOperation = "source-over";
+    return masked;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
   return (
     <ContentContainer className="chosen-lineup " ref={lineupRef}>
       <img
@@ -220,8 +245,17 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
           ))}
         </div>
       )}
-      {/* <button onClick={handleSaveImage}>Save as Image</button>{" "} */}
-      {/* Button to save as image */}
+      <div style={{ position: "absolute", bottom: "15px", right: "15px" }}>
+        <Tooltip title="Save as Image">
+          <IconButton
+            data-nosnap="true"
+            color="primary"
+            onClick={handleSaveImage}
+          >
+            <DownloadIcon />
+          </IconButton>
+        </Tooltip>
+      </div>
     </ContentContainer>
   );
 }
