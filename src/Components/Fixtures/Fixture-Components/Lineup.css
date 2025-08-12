@@ -28,7 +28,7 @@
 .player {
   text-align: center;
   width: 30%;
-  max-height: 120px;
+  height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,11 +36,9 @@
   margin: 1%;
   border-radius: 8px;
   position: relative;
-  /* background-color: #282828; */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
   max-width: 80px;
   /* overflow: hidden; */
-  height: 120px;
   box-sizing: border-box;
   background-color: #f5f5f500 !important; /* Semi-transparent background */
 }
@@ -66,8 +64,8 @@
   /* height: 100%; */
 }
 .lineup-player-img {
-  width: 125%; /* Make sure it fills the container */
-  object-fit: cover; /* Ensures the image covers the container, cropping excess */
+  width: 80%; /* Make sure it fills the container */
+  border-radius: 50%;
 }
 .lineup-player-name {
   bottom: 0px !important;
@@ -252,8 +250,9 @@
     margin: 0px;
   }
   .player {
-    height: 90px;
+    height: 80px;
     width: 20%;
+    max-width: 60px;
     margin: 3px;
     font-size: 15px;
   }
@@ -262,7 +261,7 @@
     /* height: 100%; */
   }
   .lineup-player-img {
-    width: 100%; /* Make sure it fills the container */
+    width: 80%;
   }
   .lineup-player-name {
     font-size: 10px;
@@ -328,7 +327,6 @@
 }
 
 .percentage-bar-container {
-  position: absolute;
   width: 100%; /* Full width of the container */
   height: 8px; /* Height of the percentage bar */
   background-color: #3e3d3d; /* Light background for the bar */

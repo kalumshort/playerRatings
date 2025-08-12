@@ -11,9 +11,10 @@ import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
 import html2canvas from "html2canvas";
 
 import { DndContext } from "@dnd-kit/core";
-import { Button, IconButton, Tooltip } from "@mui/material";
+import { Button, IconButton, Paper, Tooltip } from "@mui/material";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import DownloadIcon from "@mui/icons-material/Download"; // MUI download icon
+import useGroupData from "../../../../Hooks/useGroupsData";
 
 export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -262,6 +263,9 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
 
 export function CommunityTeamStats({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
+  const { activeGroup } = useGroupData();
+
+  const groupColour = activeGroup?.accentColor || "#DA291C";
 
   const squadData = useSelector(selectSquadDataObject);
 
@@ -279,18 +283,106 @@ export function CommunityTeamStats({ fixture }) {
 
   return (
     <ContentContainer className="community-team-stats">
-      <h1 className="smallHeading">Players Chosen </h1>
-      {percentagesArray?.map(({ id, percentage }) => (
-        <LineupPlayer
-          key={id} // Add a unique key prop here
-          player={squadData[id]}
-          onDelete={false}
-          draggable={false}
-          percentage={percentage}
-          className={"marginBottom"}
-        />
-      ))}
-      {percentagesArray.length === 0 && "No Data"}
+      <TeamStats
+        percentagesArray={percentagesArray}
+        squadData={squadData}
+        groupColour={groupColour}
+      />
     </ContentContainer>
   );
 }
+
+const PlayerCard = ({ player, percentage, groupColour }) => {
+  return (
+    <Paper style={styles.card}>
+      <div style={styles.playerInfo}>
+        <img src={player.photo} alt={player.name} style={styles.playerImage} />
+        <span style={styles.playerName}>{player.name}</span>
+      </div>
+      <div style={styles.percentageBarContainer}>
+        <div
+          style={{
+            ...styles.percentageBar,
+            width: `${percentage}%`,
+            background: groupColour,
+          }}
+        ></div>
+        <span style={styles.percentageText}>{percentage.toFixed(0)}%</span>
+      </div>
+    </Paper>
+  );
+};
+
+const TeamStats = ({ percentagesArray, squadData, groupColour }) => {
+  return (
+    <div style={styles.container}>
+      <h1 className="smallHeading">Players Chosen</h1>
+      {percentagesArray?.map(({ id, percentage }) => (
+        <PlayerCard
+          key={id}
+          player={squadData[id]}
+          percentage={percentage}
+          groupColour={groupColour}
+        />
+      ))}
+      {percentagesArray.length === 0 && <span>No Data</span>}
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    display: "flex", // Grid layout
+    flexWrap: "wrap", // Allow items to wrap to the next line
+    gap: "20px", // Space between items
+    padding: "10px",
+  },
+
+  card: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "10px",
+    width: "80px",
+    margin: "0 auto",
+  },
+  playerInfo: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "5px",
+  },
+  playerImage: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    marginBottom: "10px",
+  },
+  playerName: {
+    fontSize: "16px",
+    fontWeight: "500",
+    textAlign: "center",
+    TextsmsOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+  },
+  percentageBarContainer: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    position: "relative",
+  },
+  percentageBar: {
+    height: "10px",
+    width: "100%",
+    borderRadius: "2px",
+  },
+  percentageText: {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    fontSize: "12px",
+    fontWeight: "600",
+  },
+};

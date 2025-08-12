@@ -1,19 +1,18 @@
 import React, { useState } from "react";
 
-import { ContentContainer } from "../../../Containers/GlobalContainer";
-import { useDispatch, useSelector } from "react-redux";
-import { selectSquadDataObject } from "../../../Selectors/squadDataSelectors";
 import { Button, IconButton, Popover } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
-
-import { handlePredictPreMatchMotm } from "../../../Firebase/Firebase";
-import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
-import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
-import useGroupData from "../../../Hooks/useGroupsData";
-import { useAuth } from "../../../Providers/AuthContext";
-import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
-import useGlobalData from "../../../Hooks/useGlobalData";
-import PlayersSelect from "../../Widgets/PlayersSelect";
+import { useDispatch, useSelector } from "react-redux";
+import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
+import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
+import useGroupData from "../../../../Hooks/useGroupsData";
+import { useAuth } from "../../../../Providers/AuthContext";
+import useGlobalData from "../../../../Hooks/useGlobalData";
+import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
+import { handlePredictPreMatchMotm } from "../../../../Firebase/Firebase";
+import { ContentContainer } from "../../../../Containers/GlobalContainer";
+import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
+import PlayersSelect from "../../../Widgets/PlayersSelect";
 
 export default function PreMatchMOTM({ fixture }) {
   const squadData = useSelector(selectSquadDataObject);

@@ -5,6 +5,7 @@ import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 import useGroupData from "../../../Hooks/useGroupsData";
+import { Paper } from "@mui/material";
 
 export default function LineupPlayer({
   player,
@@ -69,7 +70,7 @@ export default function LineupPlayer({
   }
 
   return player ? (
-    <div
+    <Paper
       key={player.id}
       className={`player ${className} ${cardClassName}`}
       style={{ order: player?.grid?.split(":")[1] }}
@@ -169,7 +170,7 @@ export default function LineupPlayer({
           <span className="percentage-text">{percentage.toFixed(0)}%</span>
         </div>
       )}
-    </div>
+    </Paper>
   ) : (
     <></>
   );

@@ -11,7 +11,7 @@ import FixtureHeader from "./FixtureHeader";
 
 import Statistics from "./Fixture-Components/Statistics";
 import Events from "./Fixture-Components/Events";
-import ScorePrediction from "./Fixture-Components/ScorePrediction";
+import ScorePrediction from "./Fixture-Components/Predictions/ScorePrediction";
 import {
   fetchMatchPlayerRatings,
   fetchMatchPredictions,
@@ -23,7 +23,7 @@ import { useEffect } from "react";
 import LineupAndPlayerRatings from "./Fixture-Components/LineupAndPlayerRatings";
 import LineupPredictor from "./Fixture-Components/LineupPredicter/LineupPredictor";
 import PostKickoffPredictions from "./Fixture-Components/PostKickoffPredictions";
-import PreMatchMOTM from "./Fixture-Components/PreMatchMOTM";
+
 import {
   FixturesListener,
   UsersMatchDataListener,
@@ -34,11 +34,12 @@ import {
 } from "../../Hooks/Helper_Functions";
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
-import WinnerPredict from "./Fixture-Components/WinnerPredict";
+import WinnerPredict from "./Fixture-Components/Predictions/WinnerPredict";
 import { selectPredictionsLoad } from "../../Selectors/predictionsSelectors";
 import { selectPlayerRatingsLoad } from "../../Selectors/selectors";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
+import PreMatchMOTM from "./Fixture-Components/Predictions/PreMatchMOTM";
 
 export default function Fixture() {
   const { matchId } = useParams();

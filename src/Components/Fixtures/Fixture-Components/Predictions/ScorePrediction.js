@@ -1,18 +1,19 @@
 import React, { useState } from "react";
-import { ContentContainer } from "../../../Containers/GlobalContainer";
+
 import { Button } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { handlePredictTeamScore } from "../../../Firebase/Firebase";
 
-import ScorePredictionResults from "./ScorePredictionResults";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
-import useGroupData from "../../../Hooks/useGroupsData";
-import { useAuth } from "../../../Providers/AuthContext";
-import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
-import useGlobalData from "../../../Hooks/useGlobalData";
+import useGroupData from "../../../../Hooks/useGroupsData";
+import { useAuth } from "../../../../Providers/AuthContext";
+import useGlobalData from "../../../../Hooks/useGlobalData";
+import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
+import { handlePredictTeamScore } from "../../../../Firebase/Firebase";
+import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
+import { ContentContainer } from "../../../../Containers/GlobalContainer";
+import ScorePredictionResults from "../ScorePredictionResults";
 
 export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();

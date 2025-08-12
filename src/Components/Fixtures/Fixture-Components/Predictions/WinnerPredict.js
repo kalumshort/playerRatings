@@ -1,15 +1,15 @@
 import React from "react";
-import { ContentContainer } from "../../../Containers/GlobalContainer";
+import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import { Button } from "@mui/material";
-import { handlePredictWinningTeam } from "../../../Firebase/Firebase";
-import { fetchMatchPredictions } from "../../../Hooks/Fixtures_Hooks";
+import { handlePredictWinningTeam } from "../../../../Firebase/Firebase";
+import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 import { useDispatch, useSelector } from "react-redux";
 
-import { selectPredictionsByMatchId } from "../../../Selectors/predictionsSelectors";
-import useGroupData from "../../../Hooks/useGroupsData";
-import { useAuth } from "../../../Providers/AuthContext";
-import { selectUserMatchData } from "../../../Selectors/userDataSelectors";
-import useGlobalData from "../../../Hooks/useGlobalData";
+import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
+import useGroupData from "../../../../Hooks/useGroupsData";
+import { useAuth } from "../../../../Providers/AuthContext";
+import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
+import useGlobalData from "../../../../Hooks/useGlobalData";
 
 export default function WinnerPredict({ fixture }) {
   const dispatch = useDispatch();
@@ -59,55 +59,68 @@ export default function WinnerPredict({ fixture }) {
       <h1 className="smallHeading">Who will win?</h1>
       {!storedUsersPredictedResult ? (
         <div className="winnerPredictButtonGroup">
-          <Button onClick={() => handleWinningTeamPredict("home")} s>
+          <Button
+            onClick={() => handleWinningTeamPredict("home")}
+            className="team-button"
+          >
             <img
               src={fixture.teams.home.logo}
               alt={`${fixture.teams.home.name} logo`}
               className="team-logo-small"
             />
+            {/* {fixture.teams.home.name} */}
           </Button>
-          <Button onClick={() => handleWinningTeamPredict("draw")}>Draw</Button>
-          <Button onClick={() => handleWinningTeamPredict("away")}>
+          <Button
+            onClick={() => handleWinningTeamPredict("draw")}
+            className="draw-button"
+          >
+            Draw
+          </Button>
+          <Button
+            onClick={() => handleWinningTeamPredict("away")}
+            className="team-button"
+          >
             <img
               src={fixture.teams.away.logo}
               alt={`${fixture.teams.away.name} logo`}
               className="team-logo-small"
             />
+            {/* {fixture.teams.away.name} */}
           </Button>
         </div>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-evenly",
-            width: "100%",
-          }}
-        >
-          <div className={`WinnerPredictTeamContainer`}>
+        <div className="predictionResultContainer">
+          <div className="WinnerPredictTeamContainer">
             <img
               src={fixture.teams.home.logo}
               alt={`${fixture.teams.home.name} logo`}
               className="team-logo-small"
             />
-            <span>
-              {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
-            </span>
+            <div className="percentage">
+              <span className="team-name">{fixture.teams.home.name}</span>
+              <span>
+                {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
+              </span>
+            </div>
           </div>
-          <div className={`WinnerPredictTeamContainer `}>
-            <span style={{ color: "grey" }}>X</span>
-            <span>
+          <div className="WinnerPredictTeamContainer draw">
+            <span className="draw-text">X</span>
+            <span className="percentage">
               {isNaN(percentages?.draw) ? 0 : percentages.draw.toFixed(0)}%
             </span>
           </div>
-          <div className={`WinnerPredictTeamContainer`}>
+          <div className="WinnerPredictTeamContainer">
             <img
               src={fixture.teams.away.logo}
               alt={`${fixture.teams.away.name} logo`}
               className="team-logo-small"
             />
-            <span>
-              {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%
-            </span>
+            <div className="percentage">
+              <span className="team-name">{fixture.teams.away.name}</span>
+              <span>
+                {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%
+              </span>
+            </div>
           </div>
         </div>
       )}

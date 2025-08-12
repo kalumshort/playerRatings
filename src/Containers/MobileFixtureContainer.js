@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import ScorePrediction from "../Components/Fixtures/Fixture-Components/ScorePrediction";
-import PreMatchMOTM from "../Components/Fixtures/Fixture-Components/PreMatchMOTM";
+import ScorePrediction from "../Components/Fixtures/Fixture-Components/Predictions/ScorePrediction";
+
 import LineupPredictor from "../Components/Fixtures/Fixture-Components/LineupPredicter/LineupPredictor";
 
 import Statistics from "../Components/Fixtures/Fixture-Components/Statistics";
@@ -9,7 +9,8 @@ import PostKickoffPredictions from "../Components/Fixtures/Fixture-Components/Po
 import { Paper, Tab, Tabs } from "@mui/material";
 import Lineup from "../Components/Fixtures/Fixture-Components/Lineup";
 import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatings/PlayerRatings";
-import WinnerPredict from "../Components/Fixtures/Fixture-Components/WinnerPredict";
+import WinnerPredict from "../Components/Fixtures/Fixture-Components/Predictions/WinnerPredict";
+import PreMatchMOTM from "../Components/Fixtures/Fixture-Components/Predictions/PreMatchMOTM";
 
 export default function MobileFixtureContainer({ fixture, showPredictions }) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
@@ -23,7 +24,7 @@ export default function MobileFixtureContainer({ fixture, showPredictions }) {
       isPreMatch &&
       showPredictions
     )
-      arr.push({ label: "Predict XI", value: "Predict-XI" });
+      arr.push({ label: "Your XI ", value: "Predict-XI" });
     if (isPreMatch && showPredictions)
       arr.push({ label: "Predicts", value: "Predicts" });
     if (!isPreMatch) arr.push({ label: "Ratings", value: "Ratings" });
