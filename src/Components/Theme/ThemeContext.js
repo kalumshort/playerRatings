@@ -10,6 +10,11 @@ import {
   createTheme,
 } from "@mui/material/styles";
 
+import playerCardBgBlackBanner from "../../assets/appAssets/playerBackgroundBaseBlackBanner.png";
+import playerCardBgWhiteBanner from "../../assets/appAssets/playerBackgroundBaseWhiteBanner.png";
+import playerCardBgWhite from "../../assets/appAssets/playerBackgroundBaseWhite.png";
+import playerCardBgBlack from "../../assets/appAssets/playerBackgroundBaseBlack.png";
+
 // Create a Context for the theme
 const ThemeContext = createContext();
 
@@ -184,8 +189,20 @@ export const ThemeProvider = ({ children, accentColor }) => {
     return null; // You can optionally render a loading spinner here
   }
 
+  const themeBackgroundImageBanner =
+    themeMode === "dark" ? playerCardBgBlackBanner : playerCardBgWhiteBanner;
+  const themeBackgroundImage =
+    themeMode === "dark" ? playerCardBgBlack : playerCardBgWhite;
+
   return (
-    <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        themeBackgroundImageBanner,
+        themeBackgroundImage,
+        themeMode,
+        toggleTheme,
+      }}
+    >
       <MUIThemeProvider theme={theme}>{children}</MUIThemeProvider>
     </ThemeContext.Provider>
   );

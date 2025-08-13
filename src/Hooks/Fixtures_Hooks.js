@@ -201,11 +201,14 @@ export const fetchTeamSquad =
     try {
       dispatch(fetchTeamSquadStart());
 
+      // const teamSquadData = await firebaseGetDocument(
+      //   `teamSquads/${squadId}/season`,
+      //   currentYear.toString()
+      // );
       const teamSquadData = await firebaseGetDocument(
-        `teamSquads/${squadId}/season`,
-        currentYear.toString()
+        `teamSquads`,
+        squadId.toString()
       );
-      console.log("teamSquadData", teamSquadData);
 
       const seasonSquad = teamSquadData.seasonSquad;
       const squadIds = seasonSquad.map((player) => player.id);

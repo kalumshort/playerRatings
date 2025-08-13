@@ -385,48 +385,34 @@
   margin: 10px;
 }
 .PlayerRatingsIcon {
-  /* width: 25px; */
   height: 25px;
   margin: 0px 5px;
   object-fit: contain;
 }
-.PlayerRatingsButtonGroup {
-  /* display: flex;
-  justify-content: center; 
-  align-items: center; */
-  display: flex;
-  flex: 1 1 calc(20%);
-}
+
 .PlayerRatingsChoices {
-  /* display: grid;
-  grid-template-columns: repeat(5, 1fr); 
-  gap: 5px; 
-  padding: 10px;
-  margin-left: 20px;
- */
-
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 2 rows of 5 columns */
   gap: 5px;
-  justify-content: space-between;
-  /* padding: 5px; */
+  width: 100%;
 }
 
-.PlayerRatingsButton {
-  flex: 5 !important;
-  padding: 2px !important;
-
-  /* padding: 0px !important; */
+.PlayerRatingsButtonGroup {
+  display: flex;
+  justify-content: space-between; /* spread buttons across full width */
+  width: 100%; /* make group take all available column width */
 }
+
+.PlayerRatingsButton,
 .PlayerRatingsButton2 {
-  flex: 1 !important;
-  padding: 0px !important;
-  margin: 0px !important;
-
-  /* font-size: 15px !important;
-  padding: 0px !important; */
+  flex: 1; /* each button grows equally */
+  margin: 0 2px; /* small spacing between buttons */
+  min-width: 0; /* allow buttons to shrink if needed */
 }
 
+.PlayerRatingSubmit {
+  margin: 10px !important;
+}
 .PlayerRatingsCommunityContainer {
   display: flex;
   flex-direction: column;
@@ -457,10 +443,6 @@
 }
 .PlayerRatingMotm {
   cursor: pointer;
-  background-color: #1f1f1f;
-  padding: 2px;
-  border-radius: 5px;
-  margin-left: 10px;
 }
 .motm {
   animation: boxShadowPulse 2s infinite alternate;
@@ -505,7 +487,7 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    opacity: 0.3; /* Make it look like an overlay */
+    opacity: 0.7; /* Make it look like an overlay */
     z-index: 0; /* Sit behind content */
   }
   .pkopredictions-container {

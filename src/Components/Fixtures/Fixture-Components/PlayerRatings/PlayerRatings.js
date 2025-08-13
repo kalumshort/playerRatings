@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
-import { Button, IconButton, Paper, Slider } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
+import { Button, ButtonGroup, Paper } from "@mui/material";
 
 import {
   getRatingClass,
@@ -35,6 +34,8 @@ import MOTMPopover from "./MotmPlayerPopper";
 import { useAuth } from "../../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
+
+import { useTheme } from "../../../Theme/ThemeContext";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
@@ -235,7 +236,7 @@ const PlayerRatingsItems = ({
           fontSize="large"
           className="PlayerRatingSubmit"
         >
-          Submit
+          Submit Ratings
         </Button>
       )}
     </div>
@@ -255,14 +256,16 @@ const PlayerRatingItem = ({
 }) => {
   const playerData = useSelector(selectSquadPlayerById(player.id));
 
+  const { themeBackgroundImageBanner } = useTheme();
+
   const storedUsersPlayerRating = usersMatchPlayerRating;
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
-  const [sliderValue, setSliderValue] = useState(6);
+  // const [sliderValue, setSliderValue] = useState(6);
 
-  const handleSliderChange = (event, newValue) => {
-    setSliderValue(newValue);
-  };
+  // const handleSliderChange = (event, newValue) => {
+  //   setSliderValue(newValue);
+  // };
 
   const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
@@ -305,11 +308,11 @@ const PlayerRatingItem = ({
       ).toFixed(1)
     : storedUsersPlayerRating;
 
-  const onRatingClick = async () => {
+  const onRatingClick = async (rating) => {
     await handlePlayerRatingSubmit({
       matchId: fixture.id,
       playerId: String(player.id),
-      rating: sliderValue,
+      rating: rating,
       userId: userId,
       groupId: groupId,
       currentYear,
@@ -329,11 +332,24 @@ const PlayerRatingItem = ({
   return (
     <div
       className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
-      style={{ width: "100%" }}
+      style={{
+        width: "100%",
+        backgroundImage: `url(${themeBackgroundImageBanner})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       <div className="PlayerRatingInner">
         <span className="PlayerRatingsNameContainer">
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-evenly",
+              width: "100%",
+              alignItems: "center",
+            }}
+          >
             <h2 className="PlayerRatingName">
               {playerData?.name || player.name}
             </h2>
@@ -346,17 +362,17 @@ const PlayerRatingItem = ({
             >
               {isMOTM ? (
                 <StarIcon
-                  fontSize="medium"
+                  fontSize="large"
                   onClick={handleMotmClick}
                   color="primary"
                 />
               ) : !readOnly ? (
-                <StarOutlineIcon fontSize="medium" onClick={handleMotmClick} />
+                <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
               ) : null}
             </div>
           </div>
 
-          {!storedUsersPlayerRating && (
+          {/* {!storedUsersPlayerRating && (
             <div
               className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
                 sliderValue
@@ -367,7 +383,7 @@ const PlayerRatingItem = ({
                 {sliderValue}
               </h4>
             </div>
-          )}
+          )} */}
 
           {/* {goals?.map((goal, index) => (
             <img
@@ -394,60 +410,42 @@ const PlayerRatingItem = ({
         {!storedUsersPlayerRating ? (
           <div
             style={{
-              margin: "auto",
               display: "flex",
-              alignItems: "center",
-              width: "95%",
-              gap: "25px",
+              width: "75%",
+              margin: "0 20px 0 auto",
             }}
           >
-            <Slider
-              className="slider-marks-top"
-              value={sliderValue}
-              onChange={handleSliderChange}
-              step={0.5}
-              min={1}
-              max={10}
-            />
-            <IconButton
-              aria-label="confirm"
-              size="large"
-              variant="outlined"
-              onClick={() => onRatingClick()}
-            >
-              <CheckIcon />
-            </IconButton>
+            <div className="PlayerRatingsChoices">
+              {Array.from({ length: 10 }, (_, i) => (
+                <ButtonGroup
+                  key={i}
+                  className="PlayerRatingsButtonGroup"
+                  aria-label="PlayerRatingsButtonGroup"
+                  orientation={isMobile ? "horizontal" : "horizontal"}
+                  size="large"
+                >
+                  <Button
+                    variant="contained"
+                    className="PlayerRatingsButton"
+                    onClick={() => onRatingClick(i + 1)}
+                  >
+                    {i + 1}
+                  </Button>
+
+                  {i !== 9 && (
+                    <Button
+                      variant="outlined"
+                      className="PlayerRatingsButton PlayerRatingsButton2"
+                      onClick={() => onRatingClick(i + 1.5)}
+                    >
+                      .5
+                    </Button>
+                  )}
+                </ButtonGroup>
+              ))}
+            </div>
           </div>
         ) : (
-          /* <div className="PlayerRatingsChoices">
-            {Array.from({ length: 10 }, (_, i) => (
-              <ButtonGroup
-                key={i}
-                className="PlayerRatingsButtonGroup"
-                aria-label="PlayerRatingsButtonGroup"
-                orientation={isMobile ? "horizontal" : "horizontal"}
-                size="large"
-              >
-                <Button
-                  variant="contained"
-                  className="PlayerRatingsButton"
-                  onClick={() => onRatingClick(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-
-                {i !== 9 && (
-                  <Button
-                    variant="outlined"
-                    className="PlayerRatingsButton PlayerRatingsButton2"
-                    onClick={() => onRatingClick(i + 1.5)}
-                  >
-                    .5
-                  </Button>
-                )}
-              </ButtonGroup>
-            ))}
-          </div> */
           <div className="PlayerRatingsResults">
             <div className="PlayerRatingsCommunityContainer">
               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
@@ -552,3 +550,20 @@ const SubmittedPlayerRatings = ({
     </>
   );
 };
+
+// <Slider
+//             className="slider-marks-top"
+//             value={sliderValue}
+//             onChange={handleSliderChange}
+//             step={0.5}
+//             min={1}
+//             max={10}
+//           />
+//           <IconButton
+//             aria-label="confirm"
+//             size="large"
+//             variant="outlined"
+//             onClick={() => onRatingClick()}
+//           >
+//             <CheckIcon />
+//           </IconButton>
