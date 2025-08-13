@@ -9,7 +9,7 @@ import {
   missingPlayerImg,
 } from "../../../../Hooks/Helper_Functions";
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
-import { MenuItem, Select } from "@mui/material";
+import { MenuItem, Paper, Select } from "@mui/material";
 
 export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
   const { activeGroup } = useGroupData();
@@ -104,7 +104,13 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
             >
               Substitutes
             </h2>
-            <div style={{ display: "flex", justifyContent: "space-evenly" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-evenly",
+              }}
+            >
               {substitutedPlayerIds &&
                 substitutedPlayerIds.length > 0 &&
                 substitutedPlayerIds.map((player) => {
@@ -138,45 +144,48 @@ export const RatingLineupPlayer = ({ player, className, playerRating }) => {
   const playerData = useSelector(selectSquadPlayerById(player?.id));
 
   return player ? (
-    <div
+    <Paper
       key={player.id}
-      className={`player ratingPlayer ${className}`}
-      style={{ order: player?.grid?.split(":")[1], position: "relative" }}
+      className={`player ${getRatingLineupClass(playerRating)}`}
+      style={{
+        order: player?.grid?.split(":")[1],
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
       <img
         src={player?.photo || playerData?.photo || missingPlayerImg}
         className="lineup-player-img"
         alt={player.name}
-        style={{ position: "relative", zIndex: 1 }}
       />
-      {playerRating !== "na" && (
-        <div
-          className={`rating-overlay  ${getRatingLineupClass(playerRating)}`}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            color: "#fff",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2,
-          }}
-        >
-          <span
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              textShadow: "2px 2px 5px rgba(0, 0, 0, 0.7)", // Strong text shadow
-            }}
-          >
-            {playerRating !== "na" ? playerRating : "N/A"}
-          </span>
-        </div>
-      )}
-    </div>
+
+      <span className="lineup-player-name">
+        {playerData?.name || player.name}
+      </span>
+
+      {/* Gradient overlay */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.6))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontSize: "20px",
+          fontWeight: "bold",
+          textShadow: "2px 2px 6px rgba(0,0,0,0.8)",
+          zIndex: 2,
+        }}
+      >
+        {playerRating !== "na" ? playerRating : "N/A"}
+      </div>
+    </Paper>
   ) : (
     <></>
   );

@@ -65,6 +65,7 @@
 }
 .lineup-player-img {
   width: 80%; /* Make sure it fills the container */
+  max-height: 65px;
   border-radius: 50%;
 }
 .lineup-player-name {

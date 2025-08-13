@@ -196,26 +196,23 @@
   /* background-color: rgba(255, 107, 107, 0.3); */
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 8px;
-  border: 1px solid #ff6b6b;
+  border: 2px solid #ff6b6b;
 }
 .ratingLineupAverage {
   /* background-color: rgba(255, 181, 107, 0.3); */
   background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid #ffb56b;
-
+  border: 2px solid #ffb56b;
   border-radius: 8px;
 }
 .ratingLineupGood {
   /* background-color: rgba(107, 255, 149, 0.3); */
   background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid #6bff95;
-
+  border: 2px solid #6bff95;
   border-radius: 8px;
 }
 .ratingLineupGreat {
   /* background-color: rgba(107, 191, 255, 0.3); */
   background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid #6bbfff;
-
+  border: 2px solid #6bbfff;
   border-radius: 8px;
 }
