@@ -37,11 +37,12 @@ export default function AllPlayerStats() {
 
   // Convert playerStats object into an array and sort
   const sortedPlayers = Object.entries(playerStats)
+    .filter(([playerId]) => squadData[playerId]) // ✅ only include players in squadData
     .map(([playerId, stats]) => ({
       playerId,
       stats,
-      playerName: squadData[playerId]?.name || `Unknown Player - ${playerId}`,
-      playerImg: squadData[playerId]?.photo || "Unknown Player",
+      playerName: squadData[playerId]?.name,
+      playerImg: squadData[playerId]?.photo,
       playerAverageRating: stats.totalRating / stats.totalSubmits,
     }))
     .filter((player) => player.playerId !== "4720") // exclude player with ID 4720
@@ -50,6 +51,7 @@ export default function AllPlayerStats() {
         ? a.playerAverageRating - b.playerAverageRating
         : b.playerAverageRating - a.playerAverageRating
     );
+
   const filteredPlayers = sortedPlayers.filter(({ playerId }) =>
     positionFilter ? squadData[playerId]?.position === positionFilter : true
   );
