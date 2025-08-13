@@ -59,6 +59,7 @@ export const fetchFixtures =
       );
 
       const fixtures = Object.entries(fixturesData)
+        .filter(([id]) => !["1371777", "1402829"].includes(id)) // exclude unwanted IDs preseason matches with no data
         .map(([id, fixture]) => ({ id, ...fixture }))
         .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
