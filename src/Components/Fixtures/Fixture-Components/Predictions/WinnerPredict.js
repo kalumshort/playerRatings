@@ -97,7 +97,6 @@ export default function WinnerPredict({ fixture }) {
               className="team-logo-small"
             />
             <div className="percentage">
-              <span className="team-name">{fixture.teams.home.name}</span>
               <span>
                 {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
               </span>
@@ -116,7 +115,6 @@ export default function WinnerPredict({ fixture }) {
               className="team-logo-small"
             />
             <div className="percentage">
-              <span className="team-name">{fixture.teams.away.name}</span>
               <span>
                 {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%
               </span>

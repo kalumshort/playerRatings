@@ -260,6 +260,11 @@
   display: flex;
   padding: 10px;
 }
+.predictionResultContainer {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+}
 .ScorePredictPTWContainer {
   display: flex;
   flex-direction: row;
