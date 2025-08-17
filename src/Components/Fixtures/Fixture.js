@@ -173,16 +173,26 @@ export default function Fixture() {
                 flexWrap: "wrap",
               }}
             >
-              {showPredictions && <LineupPredictor fixture={fixture} />}
+              {showPredictions && !fixture?.lineups && (
+                <LineupPredictor fixture={fixture} />
+              )}
 
-              {fixture?.lineups && <LineupAndPlayerRatings fixture={fixture} />}
+              {fixture?.lineups && (
+                <>
+                  <LineupAndPlayerRatings fixture={fixture} />
+                  <div className="lineup-sidebar">
+                    <Statistics fixture={fixture} />
+                    <Events events={fixture?.events} />
+                  </div>
+                </>
+              )}
 
-              {!isPreMatch && (
+              {/* {!isPreMatch && (
                 <div className="lineup-sidebar">
                   <Statistics fixture={fixture} />
                   <Events events={fixture?.events} />
                 </div>
-              )}
+              )} */}
               {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
             </div>
           </>

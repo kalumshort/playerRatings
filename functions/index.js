@@ -250,7 +250,7 @@ exports.updateFixtures = onSchedule(
 );
 
 exports.scheduledLatestTeamDataFetch = onSchedule(
-  "every 5 minutes",
+  "every 1 minutes",
   async (event) => {
     const now = Math.floor(Date.now() / 1000);
 
