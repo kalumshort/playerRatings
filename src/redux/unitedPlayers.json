@@ -23,6 +23,7 @@
     "id": 532,
     "age": 26
   },
+
   "545": {
     "name": "Mazraoui",
     "photo": "/playerImages/545.png",
@@ -158,6 +159,11 @@
     "name": "Diallo",
     "position": "Attacker",
     "age": 23
+  },
+  "115589": {
+    "photo": "/playerImages/115589.png",
+    "name": "Šeško",
+    "id": 115589
   },
   "284322": {
     "number": 37,
