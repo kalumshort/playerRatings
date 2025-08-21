@@ -163,12 +163,14 @@ export default function Fixture() {
           />
         ) : (
           <>
-            <MoodSelector
-              fixture={fixture}
-              groupId={activeGroup.groupId}
-              currentYear={currentYear}
-              matchId={matchId}
-            />
+            {!isPreMatch && (
+              <MoodSelector
+                fixture={fixture}
+                groupId={activeGroup.groupId}
+                currentYear={currentYear}
+                matchId={matchId}
+              />
+            )}
             {showPredictions && (
               <div className="ScorePredictPTWContainer containerMargin">
                 <WinnerPredict fixture={fixture} />
