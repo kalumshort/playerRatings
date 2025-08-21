@@ -36,10 +36,8 @@ const MOOD_EMOJIS = {
 const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
   const [explosions, setExplosions] = useState([]);
   const [matchMoods, setMatchMoods] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const matchFinished = fixture?.fixture?.status?.short === "FT";
-  console.log("Match finished:", matchFinished);
 
   useEffect(() => {
     const fetchMoods = async () => {
@@ -51,8 +49,6 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
         setMatchMoods(data);
       } catch (error) {
         console.error("Error fetching fixture moods:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
