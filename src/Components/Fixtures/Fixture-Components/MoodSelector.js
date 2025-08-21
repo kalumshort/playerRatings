@@ -82,7 +82,7 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
 
   return (
     <ContentContainer className=" MoodSelectorContainer containerMargin">
-      {matchFinished && (
+      {!matchFinished && (
         <div
           style={{
             display: "flex",
