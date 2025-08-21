@@ -40,10 +40,11 @@ import { selectPlayerRatingsLoad } from "../../Selectors/selectors";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
 import PreMatchMOTM from "./Fixture-Components/Predictions/PreMatchMOTM";
+import MoodSelector from "./Fixture-Components/MoodSelector";
 
 export default function Fixture() {
   const { matchId } = useParams();
-  const { groupData, activeGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const upcomingFixture = useSelector(selectUpcomingFixtures)[0];
 
@@ -127,6 +128,7 @@ export default function Fixture() {
     fixture?.fixture?.status?.short === "TBD";
 
   const showPredictions = upcomingFixture?.id === matchId;
+
   return (
     <>
       <FixtureGradientProvider
@@ -136,9 +138,9 @@ export default function Fixture() {
           awayTeamColour: awayTeamColour,
         }}
       >
-        {latestFixture === matchId && (
+        {String(latestFixture?.fixture.id) === matchId && (
           <FixturesListener
-            teamId={groupData.groupClubId}
+            teamId={activeGroup.groupClubId}
             fixtureId={latestFixture?.fixture.id}
           />
         )}
@@ -156,9 +158,17 @@ export default function Fixture() {
           <MobileFixtureContainer
             fixture={fixture}
             showPredictions={showPredictions}
+            groupId={activeGroup.groupId}
+            currentYear={currentYear}
           />
         ) : (
           <>
+            <MoodSelector
+              fixture={fixture}
+              groupId={activeGroup.groupId}
+              currentYear={currentYear}
+              matchId={matchId}
+            />
             {showPredictions && (
               <div className="ScorePredictPTWContainer containerMargin">
                 <WinnerPredict fixture={fixture} />

@@ -338,6 +338,34 @@ export const handleSeasonPredictions = async (data) => {
   });
 };
 
+export const handleFixtureMood = async ({
+  groupId,
+  currentYear,
+  matchId,
+  timeElapsed,
+  moodKey,
+}) => {
+  try {
+    if (!groupId || !currentYear || !matchId || !timeElapsed || !moodKey) {
+      throw new Error("Missing required parameters");
+    }
+
+    const timestampKey = String(timeElapsed);
+
+    const result = await firebaseSetDoc({
+      path: `groups/${groupId}/seasons/${currentYear}/fixtureMoods`,
+      docId: matchId,
+      data: { [`${timestampKey}`]: { [moodKey]: increment(1) } },
+      merge: true,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error updating fixture mood:", error);
+    return { success: false, message: error.message };
+  }
+};
+
 export const handlePredictWinningTeam = async (data) => {
   await firebaseSetDoc({
     path: `groups/${data.groupId}/seasons/${data.currentYear}/predictions`,
@@ -447,6 +475,7 @@ export const fetchInviteLink = async (group) => {
     console.error("Error fetching invite link:", error);
   }
 };
+
 // // 4. Firestore Collection Listener Component
 // export const CollectionListener = ({ path }) => {
 //   const dispatch = useDispatch();

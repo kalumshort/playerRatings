@@ -11,9 +11,16 @@ import Lineup from "../Components/Fixtures/Fixture-Components/Lineup";
 import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatings/PlayerRatings";
 import WinnerPredict from "../Components/Fixtures/Fixture-Components/Predictions/WinnerPredict";
 import PreMatchMOTM from "../Components/Fixtures/Fixture-Components/Predictions/PreMatchMOTM";
+import MoodSelector from "../Components/Fixtures/Fixture-Components/MoodSelector";
 
-export default function MobileFixtureContainer({ fixture, showPredictions }) {
+export default function MobileFixtureContainer({
+  fixture,
+  showPredictions,
+  currentYear,
+  groupId,
+}) {
   const isPreMatch = fixture?.fixture?.status?.short === "NS";
+  console.log(fixture);
 
   // Dynamically build tabs array using useMemo for stable reference
   const tabs = React.useMemo(() => {
@@ -27,6 +34,7 @@ export default function MobileFixtureContainer({ fixture, showPredictions }) {
       arr.push({ label: "Your XI ", value: "Predict-XI" });
     if (isPreMatch && showPredictions)
       arr.push({ label: "Predicts", value: "Predicts" });
+    if (!isPreMatch) arr.push({ label: "Moods", value: "Moods" });
     if (!isPreMatch) arr.push({ label: "Ratings", value: "Ratings" });
     if (!isPreMatch) arr.push({ label: "Stats", value: "Stats" });
     if (!isPreMatch) arr.push({ label: "Events", value: "Events" });
@@ -111,6 +119,14 @@ export default function MobileFixtureContainer({ fixture, showPredictions }) {
         </Paper>
       )}
       {selectedTab === "Ratings" && <PlayerRatings fixture={fixture} />}
+      {selectedTab === "Moods" && (
+        <MoodSelector
+          fixture={fixture}
+          groupId={groupId}
+          currentYear={currentYear}
+          matchId={fixture.id}
+        />
+      )}
       {selectedTab === "Stats" && <Statistics fixture={fixture} />}
       {selectedTab === "Events" && <Events events={fixture?.events} />}
       {selectedTab === "PostPredicts" && (
