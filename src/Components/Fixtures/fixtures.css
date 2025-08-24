@@ -397,22 +397,52 @@
 
 .PlayerRatingsChoices {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 2 rows of 5 columns */
-  gap: 5px;
-  width: 100%;
+  grid-template-columns: repeat(5, 1fr); /* 5 columns */
+  gap: 10px; /* space between groups */
 }
 
 .PlayerRatingsButtonGroup {
   display: flex;
-  justify-content: space-between; /* spread buttons across full width */
-  width: 100%; /* make group take all available column width */
+  gap: 5px;
+  justify-content: center;
+  width: 100%;
 }
 
-.PlayerRatingsButton,
+.PlayerRatingsButton {
+  flex: 2; /* main button bigger */
+  font-size: 1rem;
+}
+
 .PlayerRatingsButton2 {
-  flex: 1; /* each button grows equally */
-  margin: 0 2px; /* small spacing between buttons */
-  min-width: 0; /* allow buttons to shrink if needed */
+  flex: 1; /* secondary .5 button smaller */
+  font-size: 0.8rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .PlayerRatingsChoices {
+    grid-template-columns: repeat(3, 1fr); /* 2 columns on mobile */
+    gap: 8px;
+    padding: 20px;
+  }
+
+  .PlayerRatingsButton {
+    font-size: 0.9rem;
+  }
+
+  .PlayerRatingsButton2 {
+    font-size: 0.7rem;
+  }
+  .PlayerRatingsChoices .PlayerRatingsButtonGroup:last-child {
+    grid-column: 1 / -1; /* span all columns */
+    width: 100%;
+  }
+}
+@media (min-width: 600px) {
+  .PlayerRatingsChoices {
+    padding-left: 20%;
+    padding-right: 5%;
+  }
 }
 
 .PlayerRatingSubmit {
@@ -591,18 +621,7 @@
   .PlayerRatingImg {
     width: 100px;
   }
-  .PlayerRatingsChoices {
-    margin-left: 5px;
-  }
 
-  .PlayerRatingsButton {
-    font-size: 14px !important;
-    padding: 3px !important;
-  }
-  .PlayerRatingsButton2 {
-    padding: 0px !important;
-    font-size: 10px !important;
-  }
   .PlayerRatingName {
     font-size: 22px;
   }

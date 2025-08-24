@@ -408,42 +408,34 @@ const PlayerRatingItem = ({
         </span>
 
         {!storedUsersPlayerRating ? (
-          <div
-            style={{
-              display: "flex",
-              width: "75%",
-              margin: "0 20px 0 auto",
-            }}
-          >
-            <div className="PlayerRatingsChoices">
-              {Array.from({ length: 10 }, (_, i) => (
-                <ButtonGroup
-                  key={i}
-                  className="PlayerRatingsButtonGroup"
-                  aria-label="PlayerRatingsButtonGroup"
-                  orientation={isMobile ? "horizontal" : "horizontal"}
-                  size="large"
+          <div className="PlayerRatingsChoices">
+            {Array.from({ length: 10 }, (_, i) => (
+              <ButtonGroup
+                key={i}
+                className="PlayerRatingsButtonGroup"
+                aria-label="PlayerRatingsButtonGroup"
+                orientation={isMobile ? "horizontal" : "horizontal"}
+                size="large"
+              >
+                <Button
+                  variant="contained"
+                  className="PlayerRatingsButton"
+                  onClick={() => onRatingClick(i + 1)}
                 >
-                  <Button
-                    variant="contained"
-                    className="PlayerRatingsButton"
-                    onClick={() => onRatingClick(i + 1)}
-                  >
-                    {i + 1}
-                  </Button>
+                  {i + 1}
+                </Button>
 
-                  {i !== 9 && (
-                    <Button
-                      variant="outlined"
-                      className="PlayerRatingsButton PlayerRatingsButton2"
-                      onClick={() => onRatingClick(i + 1.5)}
-                    >
-                      .5
-                    </Button>
-                  )}
-                </ButtonGroup>
-              ))}
-            </div>
+                {i !== 9 && (
+                  <Button
+                    variant="outlined"
+                    className="PlayerRatingsButton PlayerRatingsButton2"
+                    onClick={() => onRatingClick(i + 1.5)}
+                  >
+                    .5
+                  </Button>
+                )}
+              </ButtonGroup>
+            ))}
           </div>
         ) : (
           <div className="PlayerRatingsResults">
