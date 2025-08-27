@@ -47,6 +47,7 @@ export default function LatestTeamSeasonRating() {
 
               return rows;
             }, [])
+            .reverse()
             .map((rowPlayers, rowIndex) => (
               <div key={rowIndex} className="row">
                 {rowPlayers.map((player) => {
