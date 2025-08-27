@@ -188,13 +188,12 @@
 
 .predictTeamSubmit {
   position: absolute !important;
-  top: 15px !important;
+  bottom: 15px !important;
   right: 30px !important;
 }
 .lineupPredicClear {
   position: absolute !important;
-  left: 10px;
-  top: 50px;
+
   width: 50px;
   z-index: 9999;
 }
@@ -204,6 +203,10 @@
 }
 
 @media (min-width: 768px) {
+  .lineupPredicClear {
+    left: 5px;
+    top: 10px;
+  }
   .lineup-sidebar {
     width: calc(40% - 40px);
   }
@@ -243,6 +246,10 @@
 }
 
 @media (max-width: 450px) {
+  .lineupPredicClear {
+    bottom: 15px !important;
+    left: 30px !important;
+  }
   .DroppablePitchContainer {
     padding: 0px;
     max-width: 100vw !important;

@@ -95,7 +95,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
     });
   };
 
-  return storedUsersPredictedTeam || readOnly ? (
+  return !storedUsersPredictedTeam || readOnly ? (
     <div className="chosen-lineup-container containerMargin">
       {storedUsersPredictedTeam && (
         <ChosenLineup
@@ -107,16 +107,10 @@ export default function LineupPredictor({ fixture, readOnly }) {
     </div>
   ) : (
     <ContentContainer className="Prediction-lineup-container containerMargin">
-      <h1 className="smallHeading">
+      {/* <h1 className="smallHeading">
         Preferred <br></br>Lineup
-      </h1>
-      <Button
-        className="lineupPredicClear"
-        variant="outlined"
-        onClick={() => setTeam({})}
-      >
-        Clear
-      </Button>
+      </h1> */}
+
       <DndContext
         onDragEnd={(event) => {
           const { active, over } = event;
@@ -229,21 +223,23 @@ function ChosenLineup({ squadData, UsersPredictedTeam }) {
             [7, 8, 9, 10, 11],
             [12, 13, 14, 15, 16],
             [17, 18, 19, 20, 21],
-          ].map((row, rowIndex) => (
-            <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
-              {row.map((id) =>
-                squadData[UsersPredictedTeam[id]] ? (
-                  <LineupPlayer
-                    key={id}
-                    id={id} // Pass the 'id' prop to DroppableLocation
-                    player={squadData[UsersPredictedTeam[id]]}
-                  />
-                ) : (
-                  <></>
-                )
-              )}
-            </div>
-          ))}
+          ]
+            .reverse()
+            .map((row, rowIndex) => (
+              <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
+                {row.map((id) =>
+                  squadData[UsersPredictedTeam[id]] ? (
+                    <LineupPlayer
+                      key={id}
+                      id={id} // Pass the 'id' prop to DroppableLocation
+                      player={squadData[UsersPredictedTeam[id]]}
+                    />
+                  ) : (
+                    <></>
+                  )
+                )}
+              </div>
+            ))}
         </div>
       )}
       <div style={{ position: "absolute", bottom: "15px", right: "15px" }}>

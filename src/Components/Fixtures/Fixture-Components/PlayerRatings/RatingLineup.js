@@ -72,6 +72,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
 
                   return rows;
                 }, [])
+                .reverse() // Reverse the order of rows
                 .map((rowPlayers, rowIndex) => (
                   <div key={rowIndex} className="row">
                     {rowPlayers.map((player) => {

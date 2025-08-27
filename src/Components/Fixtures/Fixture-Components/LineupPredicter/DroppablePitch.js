@@ -19,6 +19,7 @@ export default function DroppablePitch({
   readOnly = false,
   chosenTeam,
   UsersPredictedTeam,
+  setTeam,
 }) {
   const dispatch = useDispatch();
 
@@ -80,17 +81,19 @@ export default function DroppablePitch({
         [7, 8, 9, 10, 11],
         [12, 13, 14, 15, 16],
         [17, 18, 19, 20, 21],
-      ].map((row, rowIndex) => (
-        <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
-          {row.map((id) => (
-            <DroppableLocation
-              key={id}
-              id={id} // Pass the 'id' prop to DroppableLocation
-              player={squadData[chosenTeam[id]]}
-            />
-          ))}
-        </div>
-      ))}
+      ]
+        .reverse()
+        .map((row, rowIndex) => (
+          <div className="DroppablePitchRow" key={`row-${rowIndex}`}>
+            {row.map((id) => (
+              <DroppableLocation
+                key={id}
+                id={id} // Pass the 'id' prop to DroppableLocation
+                player={squadData[chosenTeam[id]]}
+              />
+            ))}
+          </div>
+        ))}
       {Object.keys(chosenTeam).length === 11 && !readOnly && (
         <Button
           variant="contained"
@@ -98,6 +101,15 @@ export default function DroppablePitch({
           onClick={handleTeamSubmit}
         >
           Submit
+        </Button>
+      )}
+      {Object.entries(chosenTeam).length > 0 && (
+        <Button
+          className="lineupPredicClear"
+          variant="text"
+          onClick={() => setTeam({})}
+        >
+          ❌
         </Button>
       )}
     </div>

@@ -33,11 +33,12 @@ export default function Lineup({ fixture, showRating }) {
 
                 return rows;
               }, [])
+              .reverse() // Reverse the order of rows
               .map((rowPlayers, rowIndex) => (
                 <div key={rowIndex} className="row">
                   {rowPlayers.map((player) => (
                     <LineupPlayer
-                      key={player.id} // Add unique key based on player ID
+                      key={player.id} // Unique key based on player ID
                       player={player}
                       fixture={fixture}
                     />
