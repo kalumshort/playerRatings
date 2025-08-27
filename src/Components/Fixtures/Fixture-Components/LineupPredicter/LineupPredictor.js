@@ -95,7 +95,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
     });
   };
 
-  return !storedUsersPredictedTeam || readOnly ? (
+  return storedUsersPredictedTeam || readOnly ? (
     <div className="chosen-lineup-container containerMargin">
       {storedUsersPredictedTeam && (
         <ChosenLineup
