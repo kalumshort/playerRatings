@@ -38,8 +38,11 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
   const [matchMoods, setMatchMoods] = useState(null);
 
   const matchFinished = fixture?.fixture?.status?.short === "FT";
+  const matchNotStated = fixture?.fixture?.status?.short === "NS";
 
   useEffect(() => {
+    let intervalId;
+
     const fetchMoods = async () => {
       try {
         const data = await firebaseGetDocument(
@@ -52,8 +55,19 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
       }
     };
 
+    // Always fetch once
     fetchMoods();
-  }, [groupId, currentYear, matchId]);
+
+    // Only set up interval if match is active
+    if (!matchNotStated && !matchFinished) {
+      intervalId = setInterval(fetchMoods, 10000); // every 10 seconds
+    }
+
+    // Cleanup
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [groupId, currentYear, matchId, matchNotStated, matchFinished]);
 
   const timeElapsed = fixture?.fixture?.status?.elapsed || 0;
 
