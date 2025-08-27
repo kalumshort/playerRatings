@@ -11,7 +11,7 @@ import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
 import html2canvas from "html2canvas";
 
 import { DndContext } from "@dnd-kit/core";
-import { Button, IconButton, Paper, Tooltip } from "@mui/material";
+import { IconButton, Paper, Tooltip } from "@mui/material";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import DownloadIcon from "@mui/icons-material/Download"; // MUI download icon
 import useGroupData from "../../../../Hooks/useGroupsData";
