@@ -153,6 +153,7 @@ export default function Fixture() {
           showDetails={true}
           showScorers={true}
           addClass={"containerMargin"}
+          showPenaltys={true}
         />
         {isMobile ? (
           <MobileFixtureContainer
@@ -163,14 +164,6 @@ export default function Fixture() {
           />
         ) : (
           <>
-            {!isPreMatch && (
-              <MoodSelector
-                fixture={fixture}
-                groupId={activeGroup.groupId}
-                currentYear={currentYear}
-                matchId={matchId}
-              />
-            )}
             {showPredictions && (
               <div className="ScorePredictPTWContainer containerMargin">
                 <WinnerPredict fixture={fixture} />
@@ -197,6 +190,16 @@ export default function Fixture() {
                     <Events events={fixture?.events} />
                   </div>
                 </>
+              )}
+              {!isPreMatch && (
+                <div style={{ width: "100%" }}>
+                  <MoodSelector
+                    fixture={fixture}
+                    groupId={activeGroup.groupId}
+                    currentYear={currentYear}
+                    matchId={matchId}
+                  />
+                </div>
               )}
 
               {/* {!isPreMatch && (

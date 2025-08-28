@@ -37,7 +37,7 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
   const [explosions, setExplosions] = useState([]);
   const [matchMoods, setMatchMoods] = useState(null);
 
-  const matchFinished = fixture?.fixture?.status?.short === "FT";
+  const matchFinished = fixture?.fixture?.status?.long === "Match Finished";
   const matchNotStated = fixture?.fixture?.status?.short === "NS";
 
   useEffect(() => {

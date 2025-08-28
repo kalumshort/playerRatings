@@ -23,13 +23,13 @@ export default function LineupPlayer({
   const { activeGroup } = useGroupData();
 
   const groupColour = activeGroup?.accentColor || "#DA291C";
-  console.log(fixture?.events);
+
   // Filter: Goals scored by the player
   const goals = fixture?.events.filter(
     (event) =>
-      ((event.type === "Goal" && event.detail !== "Missed Penalty") ||
-        event.detail === "Penalty") &&
-      event.player?.id === player.id
+      event.player?.id === player.id &&
+      (event.detail === "Normal Goal" ||
+        (event.detail === "Penalty" && event.comments !== "Penalty Shootout"))
   );
 
   // Filter: Assists for goals by the player

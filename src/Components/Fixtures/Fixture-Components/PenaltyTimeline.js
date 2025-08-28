@@ -7,67 +7,99 @@ import TimelineContent from "@mui/lab/TimelineContent";
 import TimelineDot from "@mui/lab/TimelineDot";
 import Typography from "@mui/material/Typography";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
-
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function PenaltyTimeline({ penaltyEvents }) {
   if (!penaltyEvents) {
     return <div className="spinner"></div>;
   }
+
   return (
     <div
       style={{
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
+        width: "90%",
+        margin: "auto",
       }}
     >
       <Accordion
         style={{
-          width: "400px",
+          maxWidth: "400px",
+          width: "100%",
         }}
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1-content"
           id="panel1-header"
+          sx={{
+            padding: "6px 12px",
+            minHeight: "40px !important",
+            "& .MuiAccordionSummary-content": {
+              margin: 0,
+            },
+          }}
         >
-          <Typography component="span">Penalty Details</Typography>
+          <Typography
+            component="span"
+            sx={{
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              letterSpacing: "0.3px",
+            }}
+          >
+            Penalty Shootout
+          </Typography>
         </AccordionSummary>
-        <AccordionDetails>
-          <Timeline position="alternate">
-            {penaltyEvents.map((event, index) => (
+
+        <AccordionDetails sx={{ p: 1.5 }}>
+          <Timeline
+            position="alternate"
+            sx={{
+              padding: 0,
+              "& .MuiTimelineItem-root": {
+                minHeight: "30px", // reduce vertical space
+              },
+              "& .MuiTimelineContent-root": {
+                py: 0.2, // tighter padding top/bottom
+              },
+              "& .MuiTimelineDot-root": {
+                margin: 0, // remove extra margin
+              },
+            }}
+          >
+            {penaltyEvents.reverse().map((event, index) => (
               <TimelineItem key={index}>
                 <TimelineSeparator>
                   <TimelineDot
                     style={{
-                      backgroundColor: "transparent", // Remove background color
+                      backgroundColor: "transparent",
                       padding: 0,
                     }}
                   >
-                    <img
-                      src={event.team.logo}
-                      alt={event.team.name}
-                      style={{ width: 30, height: 30 }}
-                    />
+                    {event.detail === "Missed Penalty" ? "❌" : "✅"}
                   </TimelineDot>
-                  {index < penaltyEvents.length - 1 && <TimelineConnector />}
+                  {index < penaltyEvents.length - 1 && (
+                    <TimelineConnector sx={{ minHeight: 20 }} />
+                  )}
                 </TimelineSeparator>
+
                 <TimelineContent
-                  style={{
+                  sx={{
                     display: "flex",
-                    alignItems: "center",
                     justifyContent: "center",
+                    py: 0,
                   }}
                 >
                   <Typography
-                    variant="body1"
-                    style={{
+                    variant="body2"
+                    sx={{
                       color:
                         event.detail === "Missed Penalty"
                           ? "#FF6B6B"
                           : "#6BCB77",
+                      fontSize: "0.85rem",
                     }}
                   >
                     {event.player.name}

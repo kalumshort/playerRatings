@@ -13,6 +13,7 @@ export default function FixtureHeader({
   showDetails = false,
   showScorers = false,
   addClass,
+  showPenaltys = false,
 }) {
   const homeTeamId = fixture.teams.home.id;
   const awayTeamId = fixture.teams.away.id;
@@ -189,7 +190,7 @@ export default function FixtureHeader({
             )}
           </div>
         )}
-        {fixture.score.penalty.home && (
+        {fixture.score.penalty.home && showPenaltys && (
           <PenaltyTimeline penaltyEvents={penaltyEvents} />
         )}
         {showDetails && (
