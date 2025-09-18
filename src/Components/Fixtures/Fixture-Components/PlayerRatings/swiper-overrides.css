@@ -1,9 +1,9 @@
 /* swiper-overrides.css */
 
 /* Kill card shadows */
-.swiper {
+/* .swiper {
   margin: 0px !important;
-}
+} */
 .swiper-cards .swiper-slide {
   box-shadow: none !important;
 }

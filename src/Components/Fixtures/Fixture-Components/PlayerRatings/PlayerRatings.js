@@ -241,7 +241,7 @@ const PlayerRatingsItems = ({
           currentYear={currentYear}
         />
       ))} */}
-      {/* {coach.id && (
+      {coach.id === "121200" && (
         <PlayerRatingItem
           player={coach}
           fixture={fixture}
@@ -253,7 +253,7 @@ const PlayerRatingsItems = ({
           usersMatchPlayerRating={usersMatchPlayerRatings?.[coach.id]}
           currentYear={currentYear}
         />
-      )} */}
+      )}
       {!isMatchRatingsSubmitted && (
         <Button
           onClick={() => handleRatingsSubmit()}
