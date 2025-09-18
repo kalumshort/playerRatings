@@ -1,0 +1,42 @@
+/* swiper-overrides.css */
+
+/* Kill card shadows */
+.swiper {
+  margin: 0px !important;
+}
+.swiper-cards .swiper-slide {
+  box-shadow: none !important;
+}
+
+/* Optional: tweak spacing/scale so it's cleaner */
+.swiper-cards .swiper-slide {
+  border-radius: 16px; /* keep rounded corners if you want */
+  overflow: hidden;
+}
+/* nav arrows */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #3d3d3d; /* neon green */
+  font-weight: bold;
+}
+
+/* Make the arrow icons smaller */
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 18px !important; /* default is ~27px */
+}
+
+/* Optional: shrink the button hitbox itself */
+.swiper-button-next,
+.swiper-button-prev {
+  width: 20px;
+  height: 20px;
+  padding: 10px;
+}
+.ratings-stack-wrap {
+  padding: 20px;
+  overflow: hidden;
+}
+.no-swipe {
+  touch-action: none; /* stops horizontal pan from bubbling to Swiper on mobile */
+}

@@ -37,6 +37,8 @@ import useGlobalData from "../../../../Hooks/useGlobalData";
 
 import { useTheme } from "../../../Theme/ThemeContext";
 
+import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
+
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
@@ -179,7 +181,7 @@ export default function PlayerRatings({ fixture }) {
 }
 
 const PlayerRatingsItems = ({
-  combinedPlayers,
+  combinedPlayers: players,
   fixture,
   isMatchRatingsSubmitted,
   handleRatingsSubmit,
@@ -193,17 +195,40 @@ const PlayerRatingsItems = ({
   const { activeGroup } = useGroupData();
 
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
-  if (!combinedPlayers) {
-    return <div className="spinner"></div>;
-  }
   const coach = fixture.lineups.find(
     (team) => team.team.id === Number(activeGroup.groupClubId)
   )?.coach; // Convert activeGroup.groupClubId to number
 
+  if (!players) {
+    return <div className="spinner"></div>;
+  }
+
+  const combinedPlayers = [...players, coach];
   return (
     <div className="PlayerRatingsItemsContainer">
-      {combinedPlayers.map((player, rowIndex) => (
+      {/* <PlayerRatingsCards
+        combinedPlayers={combinedPlayers}
+        fixture={fixture}
+        isMobile={isMobile}
+        matchRatings={matchRatings}
+        readOnly={readOnly}
+        groupId={groupId}
+        userId={userId}
+        currentYear={currentYear}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+      /> */}
+      <PlayerRatingsCardStack
+        combinedPlayers={combinedPlayers}
+        fixture={fixture}
+        isMobile={isMobile}
+        matchRatings={matchRatings}
+        readOnly={readOnly}
+        groupId={groupId}
+        userId={userId}
+        currentYear={currentYear}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+      />
+      {/* {combinedPlayers.map((player, rowIndex) => (
         <PlayerRatingItem
           player={player}
           fixture={fixture}
@@ -215,8 +240,8 @@ const PlayerRatingsItems = ({
           usersMatchPlayerRating={usersMatchPlayerRatings?.[player.id]}
           currentYear={currentYear}
         />
-      ))}
-      {coach.id && (
+      ))} */}
+      {/* {coach.id && (
         <PlayerRatingItem
           player={coach}
           fixture={fixture}
@@ -228,7 +253,7 @@ const PlayerRatingsItems = ({
           usersMatchPlayerRating={usersMatchPlayerRatings?.[coach.id]}
           currentYear={currentYear}
         />
-      )}
+      )} */}
       {!isMatchRatingsSubmitted && (
         <Button
           onClick={() => handleRatingsSubmit()}
