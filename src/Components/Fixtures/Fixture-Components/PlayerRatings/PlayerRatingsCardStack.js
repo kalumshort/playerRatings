@@ -1,5 +1,5 @@
 // PlayerRatingsCardStack.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards, Navigation } from "swiper/modules";
 import "swiper/css";
@@ -8,6 +8,7 @@ import "swiper/css/navigation";
 import "./swiper-overrides.css";
 
 import { PlayerRatingCard } from "./PlayerRatingsCards";
+import PlayerImageCarousel from "./PlayerImageCarousel";
 
 export default function PlayerRatingsCardStack({
   combinedPlayers = [],
@@ -19,26 +20,40 @@ export default function PlayerRatingsCardStack({
   userId,
   usersMatchPlayerRatings,
   currentYear,
+  storedUsersMatchMOTM,
 }) {
+  const swiperRef = useRef(null);
+  const [index, setIndex] = useState(0);
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),
     [combinedPlayers]
   );
-
   if (!players.length) return null;
-
-  const swiperRef = React.createRef();
 
   return (
     <div className="ratings-stack-wrap">
+      {/* NEW: thumbnail carousel */}
+      <PlayerImageCarousel
+        combinedPlayers={players}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+        currentIndex={index}
+        isMobile={isMobile}
+        storedUsersMatchMOTM={storedUsersMatchMOTM}
+        onSelect={(i) => {
+          setIndex(i);
+          if (swiperRef.current) swiperRef.current.slideTo(i);
+        }}
+      />
+
       <Swiper
         effect="cards"
-        grabCursor={true}
+        grabCursor
         modules={[EffectCards, Navigation]}
         navigation
         onSwiper={(s) => (swiperRef.current = s)}
+        onSlideChange={(s) => setIndex(s.activeIndex)}
         noSwiping
-        noSwipingClass="no-swipe" // any element with this class won't start a swipe
+        noSwipingClass="no-swipe"
         style={{ width: isMobile ? "100%" : 520, height: isMobile ? 420 : 650 }}
       >
         {players.map((p) => (
@@ -53,7 +68,7 @@ export default function PlayerRatingsCardStack({
               userId={userId}
               usersMatchPlayerRating={usersMatchPlayerRatings?.[p.id]}
               currentYear={currentYear}
-              swiperRef={swiperRef}
+              swiperRef={swiperRef} // keep your slider conflict fix
             />
           </SwiperSlide>
         ))}

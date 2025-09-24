@@ -27,6 +27,7 @@ import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
+import PlayerImageCarousel from "./PlayerImageCarousel";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
@@ -160,6 +161,7 @@ export default function PlayerRatings({ fixture }) {
         usersMatchPlayerRatings={usersMatchData?.players}
         currentYear={globalData.currentYear}
         isSubmittable={isSubmittable}
+        storedUsersMatchMOTM={storedUsersMatchMOTM}
       />
     )
   ) : (
@@ -187,6 +189,7 @@ const PlayerRatingsItems = ({
   usersMatchPlayerRatings,
   currentYear,
   isSubmittable,
+  storedUsersMatchMOTM,
 }) => {
   const isMobile = useIsMobile();
 
@@ -209,6 +212,7 @@ const PlayerRatingsItems = ({
         currentYear={currentYear}
         usersMatchPlayerRatings={usersMatchPlayerRatings}
       /> */}
+
       <PlayerRatingsCardStack
         combinedPlayers={combinedPlayers}
         fixture={fixture}
@@ -219,6 +223,7 @@ const PlayerRatingsItems = ({
         userId={userId}
         currentYear={currentYear}
         usersMatchPlayerRatings={usersMatchPlayerRatings}
+        storedUsersMatchMOTM={storedUsersMatchMOTM}
       />
       {/* {combinedPlayers.map((player, rowIndex) => (
         <PlayerRatingItem
