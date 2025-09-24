@@ -1,27 +1,18 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
-import { Button, ButtonGroup, Paper } from "@mui/material";
+import { Button, Paper } from "@mui/material";
 
 import {
-  getRatingClass,
-  missingPlayerImg,
   setLocalStorageItem,
   useIsMobile,
-  useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
-import {
-  handleMatchMotmVote,
-  handlePlayerRatingSubmit,
-} from "../../../../Firebase/Firebase";
+import { handleMatchMotmVote } from "../../../../Firebase/Firebase";
 import {
   selectMatchRatingsById,
   selectMotmPercentagesByMatchId,
 } from "../../../../Selectors/selectors";
 
-import StarOutlineIcon from "@mui/icons-material/StarOutline";
-import StarIcon from "@mui/icons-material/Star";
 import {
   fetchMatchPlayerRatings,
   fetchUsersMatchData,
@@ -34,8 +25,6 @@ import MOTMPopover from "./MotmPlayerPopper";
 import { useAuth } from "../../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
-
-import { useTheme } from "../../../Theme/ThemeContext";
 
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
 
@@ -88,26 +77,31 @@ export default function PlayerRatings({ fixture }) {
     name: player.name,
     grid: player.grid,
   }));
+  const coach = fixture.lineups.find(
+    (team) => team.team.id === Number(activeGroup.groupClubId)
+  )?.coach;
 
   // Combine the players already in the lineup with the new substituted players
   const combinedPlayers = [
     ...players,
-    ...substitutedPlayerIds, // Add new substituted players
+    ...substitutedPlayerIds,
+    coach, // Add new substituted players
   ];
 
-  const handleRatingsSubmit = async () => {
-    const allPlayersRated =
-      usersMatchData.players &&
-      combinedPlayers.every(({ id }) => id in usersMatchData.players);
+  const allPlayersRated =
+    usersMatchData.players &&
+    combinedPlayers.every(({ id }) => id in usersMatchData.players);
+  const storedUsersMatchMOTM = localStorage.getItem(
+    `userMatchMOTM-${fixture.id}`
+  );
+  const isSubmittable = allPlayersRated && storedUsersMatchMOTM;
 
+  const handleRatingsSubmit = async () => {
     if (!allPlayersRated) {
       showAlert("Missing Some Ratings", "error");
 
       return;
     }
-    const storedUsersMatchMOTM = localStorage.getItem(
-      `userMatchMOTM-${fixture.id}`
-    );
 
     if (!storedUsersMatchMOTM) {
       showAlert("Missing your MOTM");
@@ -115,31 +109,32 @@ export default function PlayerRatings({ fixture }) {
       console.log("Missing Your MOTM");
       return;
     }
-
-    await handleMatchMotmVote({
-      matchId: fixture.id,
-      playerId: String(storedUsersMatchMOTM),
-      value: 1,
-      groupId: groupId,
-      userId: user.uid,
-      currentYear: globalData.currentYear,
-    });
-
-    setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
-    dispatch(
-      fetchMatchPlayerRatings({
+    if (isSubmittable) {
+      await handleMatchMotmVote({
         matchId: fixture.id,
-        groupId: activeGroup.groupId,
+        playerId: String(storedUsersMatchMOTM),
+        value: 1,
+        groupId: groupId,
+        userId: user.uid,
         currentYear: globalData.currentYear,
-      })
-    );
-    dispatch(
-      fetchUsersMatchData({
-        matchId: fixture.id,
-        groupId: activeGroup.groupId,
-        currentYear: globalData.currentYear,
-      })
-    );
+      });
+
+      setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
+      dispatch(
+        fetchMatchPlayerRatings({
+          matchId: fixture.id,
+          groupId: activeGroup.groupId,
+          currentYear: globalData.currentYear,
+        })
+      );
+      dispatch(
+        fetchUsersMatchData({
+          matchId: fixture.id,
+          groupId: activeGroup.groupId,
+          currentYear: globalData.currentYear,
+        })
+      );
+    }
   };
 
   return fixture?.fixture?.status?.elapsed > 80 ? (
@@ -164,6 +159,7 @@ export default function PlayerRatings({ fixture }) {
         userId={user.uid}
         usersMatchPlayerRatings={usersMatchData?.players}
         currentYear={globalData.currentYear}
+        isSubmittable={isSubmittable}
       />
     )
   ) : (
@@ -181,7 +177,7 @@ export default function PlayerRatings({ fixture }) {
 }
 
 const PlayerRatingsItems = ({
-  combinedPlayers: players,
+  combinedPlayers,
   fixture,
   isMatchRatingsSubmitted,
   handleRatingsSubmit,
@@ -190,20 +186,16 @@ const PlayerRatingsItems = ({
   userId,
   usersMatchPlayerRatings,
   currentYear,
+  isSubmittable,
 }) => {
   const isMobile = useIsMobile();
-  const { activeGroup } = useGroupData();
 
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-  const coach = fixture.lineups.find(
-    (team) => team.team.id === Number(activeGroup.groupClubId)
-  )?.coach; // Convert activeGroup.groupClubId to number
 
-  if (!players) {
+  if (!combinedPlayers) {
     return <div className="spinner"></div>;
   }
 
-  const combinedPlayers = [...players, coach];
   return (
     <div className="PlayerRatingsItemsContainer">
       {/* <PlayerRatingsCards
@@ -241,260 +233,251 @@ const PlayerRatingsItems = ({
           currentYear={currentYear}
         />
       ))} */}
-      {coach.id === "121200" && (
-        <PlayerRatingItem
-          player={coach}
-          fixture={fixture}
-          isMobile={isMobile}
-          matchRatings={matchRatings}
-          readOnly={readOnly}
-          groupId={groupId}
-          userId={userId}
-          usersMatchPlayerRating={usersMatchPlayerRatings?.[coach.id]}
-          currentYear={currentYear}
-        />
-      )}
+
       {!isMatchRatingsSubmitted && (
-        <Button
-          onClick={() => handleRatingsSubmit()}
-          variant="contained"
-          fontSize="large"
-          className="PlayerRatingSubmit"
-        >
-          Submit Ratings
-        </Button>
+        <div style={{ textAlign: "center", width: "100%" }}>
+          <Button
+            onClick={() => handleRatingsSubmit()}
+            variant="outlined"
+            fontSize="large"
+            className="PlayerRatingSubmit"
+            disabled={!isSubmittable}
+          >
+            Submit Ratings
+          </Button>
+        </div>
       )}
     </div>
   );
 };
 
-const PlayerRatingItem = ({
-  player,
-  fixture,
-  isMobile,
-  matchRatings,
-  readOnly,
-  groupId,
-  userId,
-  usersMatchPlayerRating,
-  currentYear,
-}) => {
-  const playerData = useSelector(selectSquadPlayerById(player.id));
+// const PlayerRatingItem = ({
+//   player,
+//   fixture,
+//   isMobile,
+//   matchRatings,
+//   readOnly,
+//   groupId,
+//   userId,
+//   usersMatchPlayerRating,
+//   currentYear,
+// }) => {
+//   const playerData = useSelector(selectSquadPlayerById(player.id));
 
-  const { themeBackgroundImageBanner } = useTheme();
+//   const { themeBackgroundImageBanner } = useTheme();
 
-  const storedUsersPlayerRating = usersMatchPlayerRating;
-  const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
+//   const storedUsersPlayerRating = usersMatchPlayerRating;
+//   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
-  // const [sliderValue, setSliderValue] = useState(6);
+//   // const [sliderValue, setSliderValue] = useState(6);
 
-  // const handleSliderChange = (event, newValue) => {
-  //   setSliderValue(newValue);
-  // };
+//   // const handleSliderChange = (event, newValue) => {
+//   //   setSliderValue(newValue);
+//   // };
 
-  const isMOTM = storedUsersMatchMOTM === String(player?.id);
+//   const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
-  // Filter: Goals scored by the player
-  // const goals = fixture?.events.filter(
-  //   (event) => event.type === "Goal" && event.player?.id === player.id
-  // );
+//   // Filter: Goals scored by the player
+//   // const goals = fixture?.events.filter(
+//   //   (event) => event.type === "Goal" && event.player?.id === player.id
+//   // );
 
-  // Filter: Assists for goals by the player
-  // const assists = fixture?.events.filter(
-  //   (event) => event.type === "Goal" && event.assist?.id === player.id
-  // );
+//   // Filter: Assists for goals by the player
+//   // const assists = fixture?.events.filter(
+//   //   (event) => event.type === "Goal" && event.assist?.id === player.id
+//   // );
 
-  // Filter: Cards received by the player
-  // const cards = fixture?.events.filter(
-  //   (event) => event.type === "Card" && event.player?.id === player.id
-  // );
+//   // Filter: Cards received by the player
+//   // const cards = fixture?.events.filter(
+//   //   (event) => event.type === "Card" && event.player?.id === player.id
+//   // );
 
-  // const yellowCards = cards?.filter(
-  //   (card) => card.detail === "Yellow Card"
-  // ).length;
-  // const redCards = cards?.filter((card) => card.detail === "Red Card").length;
+//   // const yellowCards = cards?.filter(
+//   //   (card) => card.detail === "Yellow Card"
+//   // ).length;
+//   // const redCards = cards?.filter((card) => card.detail === "Red Card").length;
 
-  // let cardIcon = null;
-  // if (yellowCards === 2 && redCards === 1) {
-  //   cardIcon =
-  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
-  // } else if (yellowCards === 1 && redCards === 0) {
-  //   cardIcon =
-  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
-  // } else if (redCards === 1) {
-  //   cardIcon =
-  //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
-  // }
+//   // let cardIcon = null;
+//   // if (yellowCards === 2 && redCards === 1) {
+//   //   cardIcon =
+//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
+//   // } else if (yellowCards === 1 && redCards === 0) {
+//   //   cardIcon =
+//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
+//   // } else if (redCards === 1) {
+//   //   cardIcon =
+//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
+//   // }
 
-  const playerRatingAverage = matchRatings?.[player.id]?.totalRating
-    ? (
-        matchRatings[player.id]?.totalRating /
-        matchRatings[player.id]?.totalSubmits
-      ).toFixed(1)
-    : storedUsersPlayerRating;
+//   const playerRatingAverage = matchRatings?.[player.id]?.totalRating
+//     ? (
+//         matchRatings[player.id]?.totalRating /
+//         matchRatings[player.id]?.totalSubmits
+//       ).toFixed(1)
+//     : storedUsersPlayerRating;
 
-  const onRatingClick = async (rating) => {
-    await handlePlayerRatingSubmit({
-      matchId: fixture.id,
-      playerId: String(player.id),
-      rating: rating,
-      userId: userId,
-      groupId: groupId,
-      currentYear,
-    });
-  };
-  const handleMotmClick = async () => {
-    if (readOnly) {
-      return;
-    }
-    if (isMOTM) {
-      setLocalStorageItem(`userMatchMOTM-${fixture.id}`, null);
-    } else {
-      setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
-    }
-  };
+//   const onRatingClick = async (rating) => {
+//     await handlePlayerRatingSubmit({
+//       matchId: fixture.id,
+//       playerId: String(player.id),
+//       rating: rating,
+//       userId: userId,
+//       groupId: groupId,
+//       currentYear,
+//     });
+//   };
+//   const handleMotmClick = async () => {
+//     if (readOnly) {
+//       return;
+//     }
+//     if (isMOTM) {
+//       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, null);
+//     } else {
+//       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
+//     }
+//   };
 
-  return (
-    <div
-      className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
-      style={{
-        width: "100%",
-        backgroundImage: `url(${themeBackgroundImageBanner})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="PlayerRatingInner">
-        <span className="PlayerRatingsNameContainer">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-evenly",
-              width: "100%",
-              alignItems: "center",
-            }}
-          >
-            <h2 className="PlayerRatingName">
-              {playerData?.name || player.name}
-            </h2>
-            <div
-              className="PlayerRatingMotm"
-              style={{
-                cursor: readOnly ? "default" : "pointer",
-                pointerEvents: readOnly ? "none" : "auto",
-              }}
-            >
-              {isMOTM ? (
-                <StarIcon
-                  fontSize="large"
-                  onClick={handleMotmClick}
-                  color="primary"
-                />
-              ) : !readOnly ? (
-                <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
-              ) : null}
-            </div>
-          </div>
+//   return (
+//     <div
+//       className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
+//       style={{
+//         width: "100%",
+//         backgroundImage: `url(${themeBackgroundImageBanner})`,
+//         backgroundSize: "cover",
+//         backgroundPosition: "center",
+//         backgroundRepeat: "no-repeat",
+//       }}
+//     >
+//       <div className="PlayerRatingInner">
+//         <span className="PlayerRatingsNameContainer">
+//           <div
+//             style={{
+//               display: "flex",
+//               justifyContent: "space-evenly",
+//               width: "100%",
+//               alignItems: "center",
+//             }}
+//           >
+//             <h2 className="PlayerRatingName">
+//               {playerData?.name || player.name}
+//             </h2>
+//             <div
+//               className="PlayerRatingMotm"
+//               style={{
+//                 cursor: readOnly ? "default" : "pointer",
+//                 pointerEvents: readOnly ? "none" : "auto",
+//               }}
+//             >
+//               {isMOTM ? (
+//                 <StarIcon
+//                   fontSize="large"
+//                   onClick={handleMotmClick}
+//                   color="primary"
+//                 />
+//               ) : !readOnly ? (
+//                 <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
+//               ) : null}
+//             </div>
+//           </div>
 
-          {/* {!storedUsersPlayerRating && (
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                sliderValue
-              )}`}
-              style={{ justifySelf: "end" }}
-            >
-              <h4 className="PlayerRatingsCommunityScore textShadow">
-                {sliderValue}
-              </h4>
-            </div>
-          )} */}
+//           {/* {!storedUsersPlayerRating && (
+//             <div
+//               className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+//                 sliderValue
+//               )}`}
+//               style={{ justifySelf: "end" }}
+//             >
+//               <h4 className="PlayerRatingsCommunityScore textShadow">
+//                 {sliderValue}
+//               </h4>
+//             </div>
+//           )} */}
 
-          {/* {goals?.map((goal, index) => (
-            <img
-              key={index}
-              src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
-              alt="Goal Icon"
-              className="PlayerRatingsIcon"
-            />
-          ))}
+//           {/* {goals?.map((goal, index) => (
+//             <img
+//               key={index}
+//               src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
+//               alt="Goal Icon"
+//               className="PlayerRatingsIcon"
+//             />
+//           ))}
 
-          {cardIcon && (
-            <img src={cardIcon} alt="Card Icon" className="PlayerRatingsIcon" />
-          )} */}
-          <div
-            className="PlayerRatingImg"
-            style={{
-              backgroundImage: `url(${
-                playerData?.photo || player.photo || missingPlayerImg
-              })`,
-            }}
-          ></div>
-        </span>
+//           {cardIcon && (
+//             <img src={cardIcon} alt="Card Icon" className="PlayerRatingsIcon" />
+//           )} */}
+//           <div
+//             className="PlayerRatingImg"
+//             style={{
+//               backgroundImage: `url(${
+//                 playerData?.photo || player.photo || missingPlayerImg
+//               })`,
+//             }}
+//           ></div>
+//         </span>
 
-        {!storedUsersPlayerRating ? (
-          <div className="PlayerRatingsChoices">
-            {Array.from({ length: 10 }, (_, i) => (
-              <ButtonGroup
-                key={i}
-                className="PlayerRatingsButtonGroup"
-                aria-label="PlayerRatingsButtonGroup"
-                orientation={isMobile ? "horizontal" : "horizontal"}
-                size="large"
-              >
-                <Button
-                  variant="contained"
-                  className="PlayerRatingsButton"
-                  onClick={() => onRatingClick(i + 1)}
-                >
-                  {i + 1}
-                </Button>
+//         {!storedUsersPlayerRating ? (
+//           <div className="PlayerRatingsChoices">
+//             {Array.from({ length: 10 }, (_, i) => (
+//               <ButtonGroup
+//                 key={i}
+//                 className="PlayerRatingsButtonGroup"
+//                 aria-label="PlayerRatingsButtonGroup"
+//                 orientation={isMobile ? "horizontal" : "horizontal"}
+//                 size="large"
+//               >
+//                 <Button
+//                   variant="contained"
+//                   className="PlayerRatingsButton"
+//                   onClick={() => onRatingClick(i + 1)}
+//                 >
+//                   {i + 1}
+//                 </Button>
 
-                {i !== 9 && (
-                  <Button
-                    variant="outlined"
-                    className="PlayerRatingsButton PlayerRatingsButton2"
-                    onClick={() => onRatingClick(i + 1.5)}
-                  >
-                    .5
-                  </Button>
-                )}
-              </ButtonGroup>
-            ))}
-          </div>
-        ) : (
-          <div className="PlayerRatingsResults">
-            <div className="PlayerRatingsCommunityContainer">
-              <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
-              <div
-                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                  storedUsersPlayerRating
-                )}`}
-              >
-                <h4 className="PlayerRatingsCommunityScore textShadow">
-                  {storedUsersPlayerRating}
-                </h4>
-              </div>
-            </div>
+//                 {i !== 9 && (
+//                   <Button
+//                     variant="outlined"
+//                     className="PlayerRatingsButton PlayerRatingsButton2"
+//                     onClick={() => onRatingClick(i + 1.5)}
+//                   >
+//                     .5
+//                   </Button>
+//                 )}
+//               </ButtonGroup>
+//             ))}
+//           </div>
+//         ) : (
+//           <div className="PlayerRatingsResults">
+//             <div className="PlayerRatingsCommunityContainer">
+//               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
+//               <div
+//                 className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+//                   storedUsersPlayerRating
+//                 )}`}
+//               >
+//                 <h4 className="PlayerRatingsCommunityScore textShadow">
+//                   {storedUsersPlayerRating}
+//                 </h4>
+//               </div>
+//             </div>
 
-            <div className="PlayerRatingsCommunityContainer">
-              <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
-              <div
-                className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                  playerRatingAverage
-                )}`}
-              >
-                <h4 className="PlayerRatingsCommunityScore textShadow">
-                  {playerRatingAverage}
-                </h4>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+//             <div className="PlayerRatingsCommunityContainer">
+//               <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
+//               <div
+//                 className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
+//                   playerRatingAverage
+//                 )}`}
+//               >
+//                 <h4 className="PlayerRatingsCommunityScore textShadow">
+//                   {playerRatingAverage}
+//                 </h4>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
 
 const SubmittedPlayerRatings = ({
   motmPercentages,

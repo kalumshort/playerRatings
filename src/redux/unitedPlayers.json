@@ -331,5 +331,11 @@
     "name": "León",
     "photo": "/playerImages/475598.png",
     "age": 18
+  },
+  "4720": {
+    "name": "Ruben Amorim",
+    "photo": "/playerImages/4720.png",
+    "id": 4720,
+    "position": "Manager"
   }
 }

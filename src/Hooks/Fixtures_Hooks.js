@@ -217,7 +217,6 @@ export const fetchTeamSquad =
         const playerData = unitedPlayers[playerId];
 
         if (playerData) {
-          console.log(playerData);
           const playerIndex = teamSquadData.activeSquad.findIndex(
             (player) => player.id === playerId
           );
