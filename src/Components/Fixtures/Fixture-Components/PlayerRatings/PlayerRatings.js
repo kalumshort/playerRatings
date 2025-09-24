@@ -27,7 +27,6 @@ import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
-import PlayerImageCarousel from "./PlayerImageCarousel";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
