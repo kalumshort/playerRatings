@@ -89,8 +89,8 @@ export default function PlayerRatings({ fixture }) {
   ];
 
   const allPlayersRated =
-    usersMatchData.players &&
-    combinedPlayers.every(({ id }) => id in usersMatchData.players);
+    usersMatchData?.players &&
+    combinedPlayers.every(({ id }) => id in usersMatchData?.players);
   const storedUsersMatchMOTM = localStorage.getItem(
     `userMatchMOTM-${fixture.id}`
   );
