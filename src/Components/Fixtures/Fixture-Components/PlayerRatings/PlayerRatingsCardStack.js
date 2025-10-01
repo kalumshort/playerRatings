@@ -39,6 +39,7 @@ export default function PlayerRatingsCardStack({
         currentIndex={index}
         isMobile={isMobile}
         storedUsersMatchMOTM={storedUsersMatchMOTM}
+        fixture={fixture}
         onSelect={(i) => {
           setIndex(i);
           if (swiperRef.current) swiperRef.current.slideTo(i);

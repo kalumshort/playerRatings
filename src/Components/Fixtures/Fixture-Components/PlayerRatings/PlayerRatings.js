@@ -6,6 +6,7 @@ import { Button, Paper } from "@mui/material";
 import {
   setLocalStorageItem,
   useIsMobile,
+  useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
 import { handleMatchMotmVote } from "../../../../Firebase/Firebase";
 import {
@@ -34,6 +35,8 @@ export default function PlayerRatings({ fixture }) {
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
+
+  const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
   const groupClubId = Number(activeGroup.groupClubId);
   const groupId = activeGroup.groupId;
@@ -91,9 +94,7 @@ export default function PlayerRatings({ fixture }) {
   const allPlayersRated =
     usersMatchData?.players &&
     combinedPlayers.every(({ id }) => id in usersMatchData?.players);
-  const storedUsersMatchMOTM = localStorage.getItem(
-    `userMatchMOTM-${fixture.id}`
-  );
+
   const isSubmittable = allPlayersRated && storedUsersMatchMOTM;
 
   const handleRatingsSubmit = async () => {

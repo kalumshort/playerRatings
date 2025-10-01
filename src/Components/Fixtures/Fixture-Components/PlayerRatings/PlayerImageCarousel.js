@@ -11,6 +11,7 @@ export default function PlayerImageCarousel({
   usersMatchPlayerRatings = {},
   isMobile = false,
   storedUsersMatchMOTM,
+  fixture,
 }) {
   const trackRef = useRef(null);
 
@@ -88,6 +89,7 @@ export default function PlayerImageCarousel({
             onSelect={onSelect}
             usersMatchPlayerRatings={usersMatchPlayerRatings}
             storedUsersMatchMOTM={storedUsersMatchMOTM}
+            fixture={fixture}
           />
         ))}
       </Box>
