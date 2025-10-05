@@ -133,7 +133,7 @@ exports.updateFixtures = onSchedule(
           headers: {
             "x-rapidapi-key":
               "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-            "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+            // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
           },
         }
       );
@@ -160,7 +160,7 @@ exports.updateFixtures = onSchedule(
             headers: {
               "x-rapidapi-key":
                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-              "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+              // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
             },
           }
         );
@@ -195,7 +195,7 @@ exports.updateFixtures = onSchedule(
             headers: {
               "x-rapidapi-key":
                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-              "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+              // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
             },
           }
         );

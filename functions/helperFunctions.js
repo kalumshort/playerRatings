@@ -10,7 +10,7 @@ const fetchFixtureData = async (fixtureId) => {
         headers: {
           "x-rapidapi-key":
             "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -45,7 +45,7 @@ const fetchStatisticsData = async (fixtureId) => {
         headers: {
           "x-rapidapi-key":
             "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -73,7 +73,7 @@ const fetchEventsData = async (fixtureId) => {
         headers: {
           "x-rapidapi-key":
             "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
@@ -101,7 +101,7 @@ const fetchLineupData = async (fixtureId) => {
         headers: {
           "x-rapidapi-key":
             "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
         },
       }
     );
