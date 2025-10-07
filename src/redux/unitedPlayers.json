@@ -337,5 +337,11 @@
     "photo": "/playerImages/4720.png",
     "id": 4720,
     "position": "Manager"
+  },
+  "162511": {
+    "name": "Lammens",
+    "photo": "/playerImages/162511.png",
+    "id": 162511,
+    "position": "Goalkeeper"
   }
 }
