@@ -289,23 +289,30 @@ export function CommunityTeamStats({ fixture }) {
 }
 
 const PlayerCard = ({ player, percentage, groupColour }) => {
+  console.log("Rendering PlayerCard for:", player);
   return (
-    <Paper style={styles.card}>
-      <div style={styles.playerInfo}>
-        <img src={player.photo} alt={player.name} style={styles.playerImage} />
-        <span style={styles.playerName}>{player.name}</span>
-      </div>
-      <div style={styles.percentageBarContainer}>
-        <div
-          style={{
-            ...styles.percentageBar,
-            width: `${percentage}%`,
-            background: groupColour,
-          }}
-        ></div>
-        <span style={styles.percentageText}>{percentage.toFixed(0)}%</span>
-      </div>
-    </Paper>
+    player && (
+      <Paper style={styles.card}>
+        <div style={styles.playerInfo}>
+          <img
+            src={player.photo}
+            alt={player.name}
+            style={styles.playerImage}
+          />
+          <span style={styles.playerName}>{player.name}</span>
+        </div>
+        <div style={styles.percentageBarContainer}>
+          <div
+            style={{
+              ...styles.percentageBar,
+              width: `${percentage}%`,
+              background: groupColour,
+            }}
+          ></div>
+          <span style={styles.percentageText}>{percentage.toFixed(0)}%</span>
+        </div>
+      </Paper>
+    )
   );
 };
 

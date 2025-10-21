@@ -2,6 +2,8 @@ import {
   firebaseGetCollecion,
   firebaseGetDocument,
 } from "../Firebase/Firebase";
+import missingPlayerImage from "../assets/appAssets/missingPlayerImage.png";
+
 import {
   fetchFixturesFailure,
   fetchFixturesSuccess,
@@ -213,25 +215,28 @@ export const fetchTeamSquad =
 
       const seasonSquad = teamSquadData.seasonSquad;
       const squadIds = seasonSquad.map((player) => player.id);
+
       squadIds.forEach((playerId) => {
         const playerData = unitedPlayers[playerId];
 
         if (playerData) {
+          const playerPhoto = playerData.photo || missingPlayerImage;
+          const playerName = playerData.name || "Unknown Player";
+
           const playerIndex = teamSquadData.activeSquad.findIndex(
             (player) => player.id === playerId
           );
           if (playerIndex !== -1) {
-            teamSquadData.activeSquad[playerIndex].photo = playerData.photo;
-            teamSquadData.activeSquad[playerIndex].name = playerData.name;
+            teamSquadData.activeSquad[playerIndex].photo = playerPhoto;
+            teamSquadData.activeSquad[playerIndex].name = playerName;
           }
 
           const seasonPlayerIndex = teamSquadData.seasonSquad.findIndex(
             (player) => player.id === playerId
           );
           if (seasonPlayerIndex !== -1) {
-            teamSquadData.seasonSquad[seasonPlayerIndex].photo =
-              playerData.photo;
-            teamSquadData.seasonSquad[seasonPlayerIndex].name = playerData.name;
+            teamSquadData.seasonSquad[seasonPlayerIndex].photo = playerPhoto;
+            teamSquadData.seasonSquad[seasonPlayerIndex].name = playerName;
           }
         }
       });
