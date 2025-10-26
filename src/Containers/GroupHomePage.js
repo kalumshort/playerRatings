@@ -36,7 +36,7 @@ export default function GroupHomePage() {
         />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <SeasonPredictions />
+        {/* <SeasonPredictions /> */}
         <LatestTeamSeasonRating />
       </div>
     </div>

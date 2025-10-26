@@ -165,12 +165,12 @@ function App() {
                     path="/group-dashboard"
                     element={user ? <GroupDashboard /> : <ProfileContainer />}
                   />
-                  <Route
+                  {/* <Route
                     path="/season-predictions"
                     element={
                       user ? <SeasonPredictionsPage /> : <ProfileContainer />
                     }
-                  />
+                  /> */}
                   <Route
                     path="/groups/:groupId"
                     element={<GroupPublicPage />}
