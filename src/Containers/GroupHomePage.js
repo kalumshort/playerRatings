@@ -7,7 +7,7 @@ import LatestFixtureItem from "../Components/Fixtures/LatestFixtureItem";
 import ScheduleContainer from "./ScheduleContainer";
 import LatestTeamSeasonRating from "../Components/Widgets/LatestTeamSeasonRating";
 import "./HomePage.css"; // Make sure to import the new CSS
-import SeasonPredictions from "../Components/Widgets/SeasonPredictions";
+// import SeasonPredictions from "../Components/Widgets/SeasonPredictions";
 
 export default function GroupHomePage() {
   const { fixtures, loading, error } = useSelector((state) => state.fixtures);
