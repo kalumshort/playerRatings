@@ -17,6 +17,7 @@ const groupSlice = createSlice({
     groupDataFailure(state, action) {
       state.error = action.payload;
       state.loading = false;
+      state.loaded = true;
     },
     groupDataSuccess(state, action) {
       state.loading = false;

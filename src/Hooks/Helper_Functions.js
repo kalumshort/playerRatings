@@ -136,11 +136,11 @@ export const useIsMobile = () => {
 };
 
 export const footballClubsColours = {
-  33: "#DA291C", // Man United
+  33: "#DA291C", // Manchester United
   40: "#C8102E", // Liverpool
-  50: "#6CABDD", // Man City
+  50: "#6CABDD", // Manchester City
   42: "#EF0107", // Arsenal
-  65: "#DD0000", // Nottingham Forrest
+  65: "#DD0000", // Nottingham Forest
   34: "#241F20", // Newcastle
   49: "#034694", // Chelsea
   35: "#DA291C", // Bournemouth
@@ -155,8 +155,114 @@ export const footballClubsColours = {
   39: "#FDB913", // Wolves
   57: "#1C3473", // Ipswich
   46: "#0053A0", // Leicester
-  41: "#D71920", // Southhampton
+  41: "#D71920", // Southampton
+  746: "#E03A3E", // Sunderland
+  44: "#6C1D45", // Burnley
+  63: "#FFCD00", // Leeds United
 };
+
+export const teamList = [
+  {
+    teamId: 42,
+    name: "Arsenal",
+    logo: "https://media.api-sports.io/football/teams/42.png",
+  },
+  {
+    teamId: 746,
+    name: "Sunderland",
+    logo: "https://media.api-sports.io/football/teams/746.png",
+  },
+  {
+    teamId: 50,
+    name: "Manchester City",
+    logo: "https://media.api-sports.io/football/teams/50.png",
+  },
+  {
+    teamId: 33,
+    name: "Manchester United",
+    logo: "https://media.api-sports.io/football/teams/33.png",
+  },
+  {
+    teamId: 35,
+    name: "Bournemouth",
+    logo: "https://media.api-sports.io/football/teams/35.png",
+  },
+  {
+    teamId: 40,
+    name: "Liverpool",
+    logo: "https://media.api-sports.io/football/teams/40.png",
+  },
+  {
+    teamId: 47,
+    name: "Tottenham",
+    logo: "https://media.api-sports.io/football/teams/47.png",
+  },
+  {
+    teamId: 49,
+    name: "Chelsea",
+    logo: "https://media.api-sports.io/football/teams/49.png",
+  },
+  {
+    teamId: 52,
+    name: "Crystal Palace",
+    logo: "https://media.api-sports.io/football/teams/52.png",
+  },
+  {
+    teamId: 55,
+    name: "Brentford",
+    logo: "https://media.api-sports.io/football/teams/55.png",
+  },
+  {
+    teamId: 34,
+    name: "Newcastle",
+    logo: "https://media.api-sports.io/football/teams/34.png",
+  },
+  {
+    teamId: 66,
+    name: "Aston Villa",
+    logo: "https://media.api-sports.io/football/teams/66.png",
+  },
+  {
+    teamId: 51,
+    name: "Brighton",
+    logo: "https://media.api-sports.io/football/teams/51.png",
+  },
+  {
+    teamId: 45,
+    name: "Everton",
+    logo: "https://media.api-sports.io/football/teams/45.png",
+  },
+  {
+    teamId: 63,
+    name: "Leeds",
+    logo: "https://media.api-sports.io/football/teams/63.png",
+  },
+  {
+    teamId: 36,
+    name: "Fulham",
+    logo: "https://media.api-sports.io/football/teams/36.png",
+  },
+  {
+    teamId: 44,
+    name: "Burnley",
+    logo: "https://media.api-sports.io/football/teams/44.png",
+  },
+  {
+    teamId: 65,
+    name: "Nottingham Forest",
+    logo: "https://media.api-sports.io/football/teams/65.png",
+  },
+  {
+    teamId: 48,
+    name: "West Ham",
+    logo: "https://media.api-sports.io/football/teams/48.png",
+  },
+  {
+    teamId: 39,
+    name: "Wolves",
+    logo: "https://media.api-sports.io/football/teams/39.png",
+  },
+];
 
 export const blendColors = (color1, color2, weight) => {
   const c1 = parseInt(color1.slice(1), 16);

@@ -33,6 +33,8 @@ import GroupPublicPage from "./Containers/GroupPublicPage";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import useGlobalData from "./Hooks/useGlobalData";
 import SchedulePage from "./Containers/SchedulePage";
+import GlobalGroupSelect from "./Containers/GlobalGroupSelect";
+
 // import SeasonPredictionsPage from "./Containers/SeasonPredictionsPage";
 
 function App() {
@@ -68,7 +70,7 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      if (!squadLoaded && groupDataLoaded) {
+      if (!squadLoaded && activeGroup) {
         dispatch(
           fetchTeamSquad({
             squadId: activeGroup.groupClubId,
@@ -77,11 +79,11 @@ function App() {
         );
       }
     }
-  }, [dispatch, squadLoaded, groupDataLoaded, activeGroup, user, currentYear]);
+  }, [dispatch, squadLoaded, activeGroup, user, currentYear]);
 
   useEffect(() => {
     if (user) {
-      if (!fixturesLoaded && groupDataLoaded) {
+      if (!fixturesLoaded && activeGroup) {
         dispatch(
           fetchFixtures({
             clubId: activeGroup.groupClubId,
@@ -90,18 +92,11 @@ function App() {
         );
       }
     }
-  }, [
-    dispatch,
-    fixturesLoaded,
-    groupDataLoaded,
-    activeGroup,
-    user,
-    currentYear,
-  ]);
+  }, [dispatch, fixturesLoaded, activeGroup, user, currentYear]);
 
   useEffect(() => {
     if (user) {
-      if (!playerSeasonOverallRatingsLoaded && groupDataLoaded) {
+      if (!playerSeasonOverallRatingsLoaded && activeGroup) {
         dispatch(
           fetchAllPlayersSeasonOverallRating({
             groupId: activeGroup.groupId,
@@ -114,21 +109,15 @@ function App() {
     dispatch,
     playerSeasonOverallRatingsLoaded,
     activeGroup,
-    groupDataLoaded,
     user,
     currentYear,
   ]);
-
-  if (userLoading) {
-    return <Spinner />;
-  }
 
   // if ("serviceWorker" in navigator) {
   //   window.addEventListener("load", () => {
   //     navigator.serviceWorker.register("/service-worker.js");
   //   });
   // }
-
   return (
     <ThemeProvider accentColor={activeGroup?.accentColor || "#DA291C"}>
       <GlobalContainer>
@@ -137,56 +126,90 @@ function App() {
           {user && activeGroup && (
             <GroupListener groupId={activeGroup.groupId} />
           )}
-
-          {(user && !userDataLoaded) ||
-          (user && !fixturesLoaded) ||
-          (user && !squadLoaded) ? (
-            <div style={{ textAlign: "center" }}>
-              <Spinner text={"Loading Data..."} />
-            </div>
+          {user && (userLoading || !groupDataLoaded) ? (
+            <>
+              {!isMobile && <Header />}
+              {isMobile && <MobileHeader />}
+              <Spinner />
+            </>
           ) : (
             <>
               {!isMobile && <Header />}
               {isMobile && <MobileHeader />}
+              {user &&
+                activeGroup &&
+                (!userDataLoaded || !fixturesLoaded || !squadLoaded) && (
+                  <div style={{ textAlign: "center" }}>
+                    <Spinner text="Loading Data..." />
+                  </div>
+                )}
               <div style={{ maxWidth: "1400px", margin: "auto" }}>
                 <Routes>
                   <Route
                     path="/"
-                    element={user ? <GroupHomePage /> : <ProfileContainer />}
-                  />
-                  <Route path="/profile" element={<ProfileContainer />} />
-                  <Route
-                    path="/season-stats"
                     element={
-                      user ? <PlayerStatsContainer /> : <ProfileContainer />
+                      user ? (
+                        activeGroup ? (
+                          <GroupHomePage />
+                        ) : (
+                          <GlobalGroupSelect />
+                        )
+                      ) : (
+                        <ProfileContainer />
+                      )
                     }
                   />
-                  <Route
-                    path="/group-dashboard"
-                    element={user ? <GroupDashboard /> : <ProfileContainer />}
-                  />
-                  {/* <Route
-                    path="/season-predictions"
-                    element={
-                      user ? <SeasonPredictionsPage /> : <ProfileContainer />
-                    }
-                  /> */}
-                  <Route
-                    path="/groups/:groupId"
-                    element={<GroupPublicPage />}
-                  />
-                  <Route
-                    path="/schedule"
-                    element={user ? <SchedulePage /> : <ProfileContainer />}
-                  />
-                  <Route
-                    path="/fixture/:matchId"
-                    element={user ? <Fixture /> : <ProfileContainer />}
-                  />
-                  <Route
-                    path="/players/:playerId"
-                    element={user ? <PlayerPage /> : <ProfileContainer />}
-                  />
+                  {user && (
+                    <Route path="/profile" element={<ProfileContainer />} />
+                  )}
+
+                  {activeGroup &&
+                    userDataLoaded &&
+                    fixturesLoaded &&
+                    squadLoaded && (
+                      <>
+                        <Route
+                          path="/season-stats"
+                          element={
+                            user ? (
+                              <PlayerStatsContainer />
+                            ) : (
+                              <ProfileContainer />
+                            )
+                          }
+                        />
+                        <Route
+                          path="/group-dashboard"
+                          element={
+                            user ? <GroupDashboard /> : <ProfileContainer />
+                          }
+                        />
+                        {/* <Route
+      path="/season-predictions"
+      element={
+        user ? <SeasonPredictionsPage /> : <ProfileContainer />
+      }
+    /> */}
+                        <Route
+                          path="/groups/:groupId"
+                          element={<GroupPublicPage />}
+                        />
+                        <Route
+                          path="/schedule"
+                          element={
+                            user ? <SchedulePage /> : <ProfileContainer />
+                          }
+                        />
+                        <Route
+                          path="/fixture/:matchId"
+                          element={user ? <Fixture /> : <ProfileContainer />}
+                        />
+                        <Route
+                          path="/players/:playerId"
+                          element={user ? <PlayerPage /> : <ProfileContainer />}
+                        />
+                      </>
+                    )}
                 </Routes>
               </div>
             </>

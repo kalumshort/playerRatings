@@ -15,7 +15,7 @@ export default function LatestTeamSeasonRating() {
 
   // Find the first fixture that contains the lineup
   const fixtureWithLineup = previousFixtures.find((fixture) =>
-    fixture.lineups.some(
+    fixture?.lineups?.some(
       (team) => team.team.id === Number(activeGroup.groupClubId)
     )
   );

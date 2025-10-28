@@ -18,11 +18,7 @@ import {
   groupDataSuccess,
 } from "../redux/Reducers/groupReducer";
 
-export const handleCreateAccount = async ({
-  email,
-  password,
-  groupId = "002",
-}) => {
+export const handleCreateAccount = async ({ email, password, groupId }) => {
   try {
     // Call the Cloud Function to add the user to the group
     const functions = getFunctions();
@@ -40,15 +36,16 @@ export const handleCreateAccount = async ({
     const createUserDoc = httpsCallable(functions, "createUserDoc");
 
     await createUserDoc({ userId, email });
-
-    await addUserToGroup({
-      groupId: groupId, // The group to add the user to
-      userId: userId, // The user's UID
-      userData: {
-        email: email,
-        role: "user", // Optionally, you could pass more data like role, username, etc.
-      },
-    });
+    if (groupId) {
+      await addUserToGroup({
+        groupId: groupId, // The group to add the user to
+        userId: userId, // The user's UID
+        userData: {
+          email: email,
+          role: "user", // Optionally, you could pass more data like role, username, etc.
+        },
+      });
+    }
   } catch (err) {
     console.error("Error creating account:", err);
   }

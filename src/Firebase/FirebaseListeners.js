@@ -104,6 +104,7 @@ export const UserDataListener = ({ userId }) => {
           try {
             if (userData.groups) {
               dispatch(groupDataStart());
+
               const groupObj = {};
               const groupPermissions = {};
 
@@ -133,14 +134,16 @@ export const UserDataListener = ({ userId }) => {
               dispatch(groupDataSuccess(groupObj));
               dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
             } else {
+              dispatch(groupDataFailure("User has no groups"));
               dispatch(fetchUserDataSuccess(userData));
             }
           } catch (err) {
-            console.error("Error fetching group data:", err.message);
             dispatch(groupDataFailure(err.message));
           }
 
           // dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
+        } else {
+          console.log("No user data found for userId:", userId);
         }
       },
       (error) => {
