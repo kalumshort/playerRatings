@@ -118,6 +118,7 @@ function App() {
   //     navigator.serviceWorker.register("/service-worker.js");
   //   });
   // }
+  console.log(userDataLoaded, fixturesLoaded, squadLoaded);
   return (
     <ThemeProvider accentColor={activeGroup?.accentColor || "#DA291C"}>
       <GlobalContainer>

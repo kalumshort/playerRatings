@@ -33,7 +33,11 @@ service cloud.firestore {
     }
 
     // Team Squads - read allowed for authenticated users, write denied
-    match /teamSquads/{squadId} {
+     match /teamSquads/{squadId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /teamSquads/{squadId}/season/{seasonId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
@@ -65,7 +69,14 @@ service cloud.firestore {
             allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
           }
         }
-
+        match /fixtureMoods/{matchId}{
+				allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+        
+        }
+        // Per-question aggregate predictions (bar chart style)
+        match /seasonPredictions/{questionKey} {
+          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+        }
         // Predictions - read and write for authenticated users in the group
         match /predictions/{matchId} {
           allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
