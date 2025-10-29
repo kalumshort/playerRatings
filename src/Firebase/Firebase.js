@@ -54,10 +54,10 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app); // Get Firebase Functions
 
 // Check if you're running locally (in development mode)
-if (window.location.hostname === "localhost") {
-  // Use the emulator for local development
-  connectFunctionsEmulator(functions, "localhost", 5001); // Adjust port if necessary
-}
+// if (window.location.hostname === "localhost") {
+//   // Use the emulator for local development
+//   connectFunctionsEmulator(functions, "localhost", 5001); // Adjust port if necessary
+// }
 // Generates a unique key for new documents
 export const newDocKey = Date.now();
 
