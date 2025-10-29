@@ -18,7 +18,7 @@ import {
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
+import { getFunctions } from "firebase/functions";
 
 // Load environment variables (Optional, but recommended)
 const firebaseConfig = {
