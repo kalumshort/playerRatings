@@ -24,7 +24,7 @@ import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
 import { useAuth } from "./Providers/AuthContext";
 
 import ProfileContainer from "./Containers/ProfileContainer";
-// import HomePage from "./Containers/HomePage";
+
 import useGroupData from "./Hooks/useGroupsData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
 import { selectPlayerRatingsLoad } from "./Selectors/selectors";
