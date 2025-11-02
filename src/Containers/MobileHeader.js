@@ -4,15 +4,17 @@ import { AppBar, Toolbar, IconButton, Drawer, styled } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { DrawerContentComponent } from "./Header";
 
-import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
-import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
+// import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
+// import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 import MenuIcon from "@mui/icons-material/Menu";
-import { useTheme } from "../Components/Theme/ThemeContext";
+// import { useTheme } from "../Components/Theme/ThemeContext";
+
+import SiteIcon from "../assets/logo/11Votes_Icon.png";
 
 export default function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
+  // const theme = useTheme();
 
   const Logo = styled("img")({
     height: "50px",
@@ -38,7 +40,7 @@ export default function MobileHeader() {
           }}
         >
           <Logo
-            src={theme.themeMode === "dark" ? whiteLogo : blackLogo}
+            src={SiteIcon}
             alt="11Votes Logo"
             onClick={() => navigate(`/`)}
           />
