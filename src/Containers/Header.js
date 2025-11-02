@@ -10,8 +10,10 @@ import {
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
-import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
-import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
+// import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
+// import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
+import SiteIconText from "../assets/logo/11Votes_IconText.png";
+import SiteIconTextBlack from "../assets/logo/11Votes_IconBlackText.png";
 
 import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
@@ -59,9 +61,9 @@ export default function Header() {
           }}
         >
           <img
-            src={theme.themeMode === "dark" ? whiteLogo : blackLogo}
+            src={theme.themeMode === "dark" ? SiteIconText : SiteIconTextBlack}
             alt="Logo"
-            style={{ height: "70px", width: "70px", cursor: "pointer" }}
+            style={{ width: "120px", cursor: "pointer" }}
             onClick={() => {
               window.history.pushState({}, "", "/");
               window.dispatchEvent(new PopStateEvent("popstate"));
