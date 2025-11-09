@@ -3,6 +3,7 @@ const axios = require("axios");
 const { getFirestore } = require("firebase-admin/firestore");
 
 const fetchFixtureData = async (fixtureId) => {
+  console.log(`Fetching fixture data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures?id=${fixtureId}`,
@@ -38,6 +39,7 @@ const fetchFixtureData = async (fixtureId) => {
   }
 };
 const fetchStatisticsData = async (fixtureId) => {
+  console.log(`Fetching statistics data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/statistics?fixture=${fixtureId}`,
@@ -66,6 +68,7 @@ const fetchStatisticsData = async (fixtureId) => {
   }
 };
 const fetchEventsData = async (fixtureId) => {
+  console.log(`Fetching events data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
@@ -94,6 +97,7 @@ const fetchEventsData = async (fixtureId) => {
   }
 };
 const fetchLineupData = async (fixtureId) => {
+  console.log(`Fetching lineup data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/lineups?fixture=${fixtureId}`,
@@ -122,7 +126,8 @@ const fetchLineupData = async (fixtureId) => {
   }
 };
 
-const fetchAllMatchData = async (fixtureId) => {
+const fetchAllMatchData = async ({ fixtureId, teamId }) => {
+  console.log(`Fetching all data for fixture: ${fixtureId}, team: ${teamId}`);
   try {
     const fixtureData = await fetchFixtureData(fixtureId);
 
@@ -148,7 +153,7 @@ const fetchAllMatchData = async (fixtureId) => {
     await getFirestore()
       .collection("fixtures")
       .doc(year.toString())
-      .collection("33")
+      .collection(teamId.toString())
       .doc(fixtureId.toString())
       .set(combinedFixtureData, { merge: true });
 
@@ -162,6 +167,73 @@ const fetchAllMatchData = async (fixtureId) => {
   }
 };
 
+const checkTeamsLatestFixture = async (teamId) => {
+  const now = Math.floor(Date.now() / 1000);
+  console.log(`Checking latest fixture for team: ${teamId}`);
+  try {
+    // Query the next match
+    const matchesRef = getFirestore().collection(`fixtures/2025/${teamId}`);
+    const nextFixture = await matchesRef
+      .where("matchDate", ">=", now)
+      .orderBy("matchDate", "asc")
+      .limit(1)
+      .get();
+
+    const lastFixture = await matchesRef
+      .where("matchDate", "<=", now)
+      .orderBy("matchDate", "desc")
+      .limit(1)
+      .get();
+
+    if (nextFixture.empty || lastFixture.empty) {
+      console.log("Fixture was empty");
+      return;
+    }
+
+    const nextFixtureData = nextFixture.docs[0].data();
+    const lastFixtureData = lastFixture.docs[0].data();
+
+    let latestFixture = null;
+
+    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
+      latestFixture = nextFixtureData;
+    } else {
+      latestFixture = lastFixtureData;
+    }
+
+    const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+    const latestFixtureId = latestFixture?.fixture?.id;
+
+    if (!latestFixtureId) {
+      console.error("Error: No latest Fixture Id");
+      return;
+    }
+
+    // Calculate the difference in seconds
+    const timeDifference = Math.abs(now - matchStartingTimestamp);
+
+    // Check if the difference is within 1 hour (3600 seconds)
+    if (timeDifference <= 3600) {
+      console.log("The timestamp is within an hour of the starting time.");
+      await fetchAllMatchData({ fixtureId: latestFixtureId, teamId: teamId });
+    } else if (
+      latestFixture.fixture.status.long !== "Match Finished" &&
+      latestFixture.fixture.status.long !== "Not Started"
+    ) {
+      console.log("Match Inplay.");
+      await fetchAllMatchData({ fixtureId: latestFixtureId, teamId: teamId });
+    } else {
+      console.log("Match is not within 1 hour and is not in play");
+    }
+
+    console.log("Successful");
+  } catch (error) {
+    console.error("Error fetching match data:", error);
+  }
+};
+
 //  if (process.env.FIRESTORE_EMULATOR_HOST) {
 //   console.log(
 //     "Using Firestore Emulator:",
@@ -170,10 +242,12 @@ const fetchAllMatchData = async (fixtureId) => {
 // } else {
 //   console.log("Using Firestore Production Database");
 // }
+
 module.exports = {
   fetchFixtureData,
   fetchStatisticsData,
   fetchLineupData,
   fetchEventsData,
   fetchAllMatchData,
+  checkTeamsLatestFixture,
 };

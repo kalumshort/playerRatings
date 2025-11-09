@@ -25,7 +25,7 @@ const firebaseConfig = {
   apiKey:
     process.env.REACT_APP_FIREBASE_API_KEY ||
     "AIzaSyAjX2Cg56qn2WDyp_jgJw1jpmUTIZxpkwk",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "11votes.com",
+  authDomain: "11votes.com",
   projectId:
     process.env.REACT_APP_FIREBASE_PROJECT_ID || "player-ratings-ef06c",
   storageBucket:

@@ -15,7 +15,7 @@ const {
   FieldValue,
   Timestamp,
 } = require("firebase-admin/firestore");
-const { fetchAllMatchData } = require("./helperFunctions");
+const { checkTeamsLatestFixture } = require("./helperFunctions");
 const { onCall, HttpsError } = require("firebase-functions/https");
 
 initializeApp();
@@ -252,71 +252,74 @@ exports.updateFixtures = onSchedule(
 
 exports.scheduledLatestTeamDataFetch = onSchedule(
   "every 1 minutes",
-  async (event) => {
-    const now = Math.floor(Date.now() / 1000);
+  async () => {
+    const TEAM_IDS = [
+      42, 746, 50, 33, 35, 40, 47, 49, 52, 55, 34, 66, 51, 45, 63, 36, 44, 65,
+      48, 39,
+    ];
 
-    try {
-      // Query the next match
-      const matchesRef = getFirestore().collection(`fixtures/2025/33`);
-      const nextFixture = await matchesRef
-        .where("matchDate", ">=", now)
-        .orderBy("matchDate", "asc")
-        .limit(1)
-        .get();
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-      const lastFixture = await matchesRef
-        .where("matchDate", "<=", now)
-        .orderBy("matchDate", "desc")
-        .limit(1)
-        .get();
-
-      if (nextFixture.empty || lastFixture.empty) {
-        console.log("Fixture was empty");
-        return;
+    // eslint-disable-next-line require-jsdoc
+    async function withRetry(fn, { retries = 2, baseMs = 500 } = {}) {
+      let attempt = 0;
+      for (;;) {
+        try {
+          return await fn();
+        } catch (err) {
+          if (attempt >= retries) throw err;
+          const backoff =
+            baseMs * 2 ** attempt + Math.floor(Math.random() * 250);
+          await sleep(backoff);
+          attempt++;
+        }
       }
-
-      const nextFixtureData = nextFixture.docs[0].data();
-      const lastFixtureData = lastFixture.docs[0].data();
-
-      let latestFixture = null;
-
-      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-      if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
-        latestFixture = nextFixtureData;
-      } else {
-        latestFixture = lastFixtureData;
-      }
-
-      const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
-      const latestFixtureId = latestFixture?.fixture?.id;
-
-      if (!latestFixtureId) {
-        console.error("Error: No latest Fixture Id");
-        return;
-      }
-
-      // Calculate the difference in seconds
-      const timeDifference = Math.abs(now - matchStartingTimestamp);
-
-      // Check if the difference is within 1 hour (3600 seconds)
-      if (timeDifference <= 3600) {
-        console.log("The timestamp is within an hour of the starting time.");
-        await fetchAllMatchData(latestFixtureId);
-      } else if (
-        latestFixture.fixture.status.long !== "Match Finished" &&
-        latestFixture.fixture.status.long !== "Not Started"
-      ) {
-        console.log("Match Inplay.");
-        await fetchAllMatchData(latestFixtureId);
-      } else {
-        console.log("Match is not within 1 hour and is not in play");
-      }
-
-      console.log("Successful");
-    } catch (error) {
-      console.error("Error fetching match data:", error);
     }
+
+    // eslint-disable-next-line require-jsdoc
+    async function mapWithConcurrency(items, limit, worker) {
+      const results = [];
+      let idx = 0;
+
+      const run = async () => {
+        while (idx < items.length) {
+          const cur = idx++;
+          const item = items[cur];
+          results[cur] = await worker(item, cur);
+        }
+      };
+
+      const runners = Array.from(
+        { length: Math.min(limit, items.length) },
+        run
+      );
+      await Promise.all(runners);
+      return results;
+    }
+
+    const started = Date.now();
+    const successes = [];
+    const failures = [];
+
+    await mapWithConcurrency(TEAM_IDS, 4, async (teamId) => {
+      try {
+        await withRetry(() => checkTeamsLatestFixture(teamId), {
+          retries: 2,
+          baseMs: 600,
+        });
+        successes.push(teamId);
+      } catch (err) {
+        failures.push({ teamId, error: String(err?.message || err) });
+        console.error("Team failed:", teamId, err);
+      }
+    });
+
+    console.log("Job done", {
+      durationMs: Date.now() - started,
+      ok: successes.length,
+      failed: failures.length,
+      failures,
+    });
   }
 );
 
