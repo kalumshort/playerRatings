@@ -349,9 +349,9 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //     for (const teamObj of teams) {
 //       const teamId = teamObj.team.id;
 //       const teamName = teamObj.team.name;
-//       // if (teamId !== 33) {
-//       //   continue; // Skip teams that are not Manchester United
-//       // }
+//       if (teamId <= 65) {
+//         continue; // Skip teams that are not Manchester United
+//       }
 
 //       logger.info(`Processing team: ${teamName} (${teamId})`);
 
@@ -375,77 +375,82 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 
 //       for (const fixtureObj of fixtures) {
 //         const fixtureId = fixtureObj.fixture.id;
+//         const now = Math.floor(Date.now() / 1000);
 
-//         const fixtureData = {
-//           fixture: fixtureObj.fixture,
-//           league: fixtureObj.league,
-//           teams: fixtureObj.teams,
-//           goals: fixtureObj.goals,
-//           score: fixtureObj.score,
-//           matchDate: fixtureObj.fixture.timestamp,
-//         };
+//         if (fixtureObj.fixture.timestamp < now) {
+//           await fetchAllMatchData({ fixtureId: fixtureId, teamId: teamId });
+//         }
 
-//         await getFirestore()
-//           .collection(`fixtures/${SEASON}/${teamId}`)
-//           .doc(fixtureId.toString())
-//           .set(fixtureData, { merge: true });
+//         // const fixtureData = {
+//         //   fixture: fixtureObj.fixture,
+//         //   league: fixtureObj.league,
+//         //   teams: fixtureObj.teams,
+//         //   goals: fixtureObj.goals,
+//         //   score: fixtureObj.score,
+//         //   matchDate: fixtureObj.fixture.timestamp,
+//         // };
+
+//         // await getFirestore()
+//         //   .collection(`fixtures/${SEASON}/${teamId}`)
+//         //   .doc(fixtureId.toString())
+//         //   .set(fixtureData, { merge: true });
 //       }
 
 //       logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
 
-//       // Step 3: Fetch squad
-//       const squadResponse = await axios.get(
-//         `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
-//         {
-//           params: { team: teamId },
-//           headers: {
-//             "x-rapidapi-key":
-//               "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//             // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//           },
-//         }
-//       );
+//       // // Step 3: Fetch squad
+//       // const squadResponse = await axios.get(
+//       //   `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
+//       //   {
+//       //     params: { team: teamId },
+//       //     headers: {
+//       //       "x-rapidapi-key":
+//       //         "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//       //       // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//       //     },
+//       //   }
+//       // );
 
-//       const squadPlayers = squadResponse.data.response[0]?.players;
+//       // const squadPlayers = squadResponse.data.response[0]?.players;
 
-//       const playerIds = squadPlayers.map((player) => player.id);
+//       // const playerIds = squadPlayers.map((player) => player.id);
 
-//       // Fetch the existing teamSquads document from Firestore
-//       const teamSquadsDoc = await getFirestore()
-//         .collection(`teamSquads/${teamId}/season`)
-//         .doc(SEASON.toString())
-//         .get();
+//       // // Fetch the existing teamSquads document from Firestore
+//       // const teamSquadsDoc = await getFirestore()
+//       //   .collection(`teamSquads/${teamId}/season`)
+//       //   .doc(SEASON.toString())
+//       //   .get();
 
-//       // Get the existing seasonSquad if it exists, or initialize an empty array
-//       const existingSeasonSquad = teamSquadsDoc.exists
-//         ? teamSquadsDoc.data().seasonSquad || []
-//         : [];
+//       // // Get the existing seasonSquad if it exists, or initialize an empty array
+//       // const existingSeasonSquad = teamSquadsDoc.exists
+//       //   ? teamSquadsDoc.data().seasonSquad || []
+//       //   : [];
 
-//       // Merge the new players with the existing seasonSquad (prevent duplicates)
-//       const updatedSeasonSquad = [
-//         ...existingSeasonSquad,
-//         ...squadPlayers.filter(
-//           (newPlayer) =>
-//             !existingSeasonSquad.some(
-//               (existingPlayer) => existingPlayer.id === newPlayer.id
-//             )
-//         ),
-//       ];
+//       // // Merge the new players with the existing seasonSquad (prevent duplicates)
+//       // const updatedSeasonSquad = [
+//       //   ...existingSeasonSquad,
+//       //   ...squadPlayers.filter(
+//       //     (newPlayer) =>
+//       //       !existingSeasonSquad.some(
+//       //         (existingPlayer) => existingPlayer.id === newPlayer.id
+//       //       )
+//       //   ),
+//       // ];
 
-//       // Save both squad and manager into teamSquads
-//       await getFirestore()
-//         .collection(`teamSquads/${teamId}/season`)
-//         .doc(SEASON.toString())
-//         .set(
-//           {
-//             activeSquad: squadPlayers,
-//             playerIds: playerIds,
-//             seasonSquad: updatedSeasonSquad,
-//           },
-//           { merge: true }
-//         );
+//       // // Save both squad and manager into teamSquads
+//       // await getFirestore()
+//       //   .collection(`teamSquads/${teamId}/season`)
+//       //   .doc(SEASON.toString())
+//       //   .set(
+//       //     {
+//       //       activeSquad: squadPlayers,
+//       //       playerIds: playerIds,
+//       //       seasonSquad: updatedSeasonSquad,
+//       //     },
+//       //     { merge: true }
+//       //   );
 
-//       logger.info(`Saved squad and manager for ${teamName}`);
+//       // logger.info(`Saved squad and manager for ${teamName}`);
 //     }
 
 //     logger.info(`Finished processing all Premier League teams`);

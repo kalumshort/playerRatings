@@ -29,6 +29,7 @@ import Login from "../Components/Auth/Login";
 import { useNavigate } from "react-router-dom";
 import useGroupData from "../Hooks/useGroupsData";
 import useUserData from "../Hooks/useUserData";
+// import { getFunctions, httpsCallable } from "firebase/functions";
 
 const HeaderContainer = styled("div")(({ theme }) => ({
   position: "fixed",
@@ -46,10 +47,22 @@ export default function Header() {
   const toggleDrawer = (open) => {
     setDrawerOpen(open);
   };
+  // const functions = getFunctions();
+
+  // const updateFixtures = httpsCallable(functions, "updateFixturesonCall");
+  // const handleClick = async () => {
+  //   try {
+  //     const result = await updateFixtures(); // optional: pass data like {foo: "bar"}
+  //     console.log("Function result:", result.data);
+  //   } catch (error) {
+  //     console.error("Error calling function:", error);
+  //   }
+  // };
 
   return (
     <HeaderContainer>
       <Toolbar style={{ height: 90 }}>
+        {/* <button onClick={handleClick}>Update Fixtures</button> */}
         <Box
           sx={{
             display: "flex",
