@@ -1,6 +1,22 @@
 import React, { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import "./HomePage.css"; // Make sure to import the new CSS
+import {
+  Box,
+  // Button,
+  // Card,
+  // CardContent,
+  Container,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+
+// import GroupsIcon from "@mui/icons-material/Groups";
+// import HowToVoteIcon from "@mui/icons-material/HowToVote";
+// import BarChartIcon from "@mui/icons-material/BarChart";
+import Login from "../Components/Auth/Login";
 
 export default function HomePage() {
   const videoRef1 = useRef(null);
@@ -61,24 +77,54 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1 className="hero-title">The Ultimate Football Community Hub</h1>
-          <p className="hero-subtitle">
-            11Votes gives football communities the power to create their own
-            spaces where fans can predict, vote, and discuss everything about
-            upcoming matches, player ratings, and more.
-          </p>
-          <Link to="/profile" className="cta-button">
-            Beta Is Live! Join Now
-          </Link>
-          <div className="beta-info">
-            <p style={{ fontSize: "14px", fontStyle: "italic" }}>
-              * Beta Currently available for Manchester United games only
-            </p>
-          </div>
-        </div>
-      </section>
+      <Box
+        component="section"
+        sx={{
+          pt: { xs: 14, md: 18 },
+          pb: { xs: 8, md: 12 },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={7}>
+              <Typography
+                variant="overline"
+                sx={{
+                  letterSpacing: 1.5,
+                  fontWeight: 700,
+                }}
+              >
+                Premier League
+              </Typography>
+              <Typography
+                variant="h2"
+                sx={{ fontWeight: 900, lineHeight: 1.1, mt: 1 }}
+              >
+                Your team. Your votes. Your voice.
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{ mt: 2, color: "text.secondary", maxWidth: 600 }}
+              >
+                Join your club’s fan group to predict scores, rate players, and
+                react to every match. See what the crowd thinks and be part of
+                the conversation that shapes the game.
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                sx={{ mt: 4 }}
+              ></Stack>
+            </Grid>
+            <Grid item xs={12} md={5}>
+              <Paper elevation={3} sx={{ padding: 3 }}>
+                <Login />
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+      {/* <HowItWorks /> */}
       <section className="video-features">
         <div className="video-features-content">
           {/* <h2 className="section-title">Features</h2> */}
@@ -183,13 +229,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <Link to="/profile" className="cta-button">
-          Beta Is Live! Join Now
-        </Link>
-      </div>
 
-      <section className="features">
+      {/* <section className="features">
         <div className="features-content">
           <h2 className="section-title">Why Create a Community on 11Votes?</h2>
           <div className="feature-item">
@@ -219,7 +260,60 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }
+// function HowItWorks() {
+//   const steps = [
+//     {
+//       title: "Join your club",
+//       desc: "Pick your Premier League team and become part of its fan group community.",
+//       icon: <GroupsIcon fontSize="large" />,
+//     },
+//     {
+//       title: "Make your picks",
+//       desc: "Predict scores, rate players, and share your matchday reactions.",
+//       icon: <HowToVoteIcon fontSize="large" />,
+//     },
+//     {
+//       title: "See the consensus",
+//       desc: "Watch live averages of ratings, predictions, and mood from fans like you.",
+//       icon: <BarChartIcon fontSize="large" />,
+//     },
+//   ];
+
+//   return (
+//     <Box id="how-it-works" component="section" sx={{ py: { xs: 10, md: 14 } }}>
+//       <Container maxWidth="lg">
+//         <Typography
+//           variant="h3"
+//           sx={{ fontWeight: 900, textAlign: "center", mb: 6 }}
+//         >
+//           How It Works
+//         </Typography>
+//         <Grid container spacing={4}>
+//           {steps.map((step, index) => (
+//             <Grid item xs={12} md={4} key={index}>
+//               <Card sx={{ height: "100%", textAlign: "center", p: 3 }}>
+//                 <CardContent>
+//                   <Box
+//                     sx={{ display: "flex", justifyContent: "center", mb: 2 }}
+//                   >
+//                     {step.icon}
+//                   </Box>
+//                   <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+//                     {step.title}
+//                   </Typography>
+//                   <Typography variant="body1" color="text.secondary">
+//                     {step.desc}
+//                   </Typography>
+//                 </CardContent>
+//               </Card>
+//             </Grid>
+//           ))}
+//         </Grid>
+//       </Container>
+//     </Box>
+//   );
+// }

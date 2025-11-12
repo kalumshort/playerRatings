@@ -34,6 +34,7 @@ import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import useGlobalData from "./Hooks/useGlobalData";
 import SchedulePage from "./Containers/SchedulePage";
 import GlobalGroupSelect from "./Containers/GlobalGroupSelect";
+import HomePage from "./Containers/HomePage";
 
 // import SeasonPredictionsPage from "./Containers/SeasonPredictionsPage";
 
@@ -156,7 +157,7 @@ function App() {
                           <GlobalGroupSelect />
                         )
                       ) : (
-                        <ProfileContainer />
+                        <HomePage />
                       )
                     }
                   />
