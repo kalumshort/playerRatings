@@ -9,9 +9,11 @@ import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
 import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
 import { clearPredictions } from "../../redux/Reducers/predictionsReducer";
 import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
+import { useNavigate } from "react-router-dom";
 
 const Logout = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false); // Controls the visibility of the Popper
   const anchorRef = useRef(null); // Reference for the anchor element (the text button)
@@ -34,6 +36,7 @@ const Logout = () => {
       dispatch(clearTeamSquads());
 
       setOpen(false); // Close the popper after logout
+      navigate("/");
     } catch (err) {
       console.error("Error logging out:", err);
     }
