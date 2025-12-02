@@ -106,9 +106,9 @@ export default function HomePage() {
                 variant="h6"
                 sx={{ mt: 2, color: "text.secondary", maxWidth: 600 }}
               >
-                Join your club’s fan group to predict scores, rate players, and
-                react to every match. See what the crowd thinks and be part of
-                the conversation that shapes the game.
+                Predict. Rate. React. Do it all with your club’s supporters —
+                and watch the whole fanbase’s decisions come together as one
+                powerful consensus.
               </Typography>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
