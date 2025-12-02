@@ -29,35 +29,37 @@ export default function GlobalGroupSelect() {
   }, [overlay?.phase]);
 
   const handleTeamClick = async (team) => {
-    const imgEl = imgRefs.current[team.teamId];
     const color = footballClubsColors[team.teamId] || "#121212";
 
-    if (imgEl) {
-      const rect = imgEl.getBoundingClientRect();
-      setOverlay({
-        imgSrc: team.logo,
-        color,
-        rect: {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-        },
-        phase: "start",
-      });
-    }
+    // Start overlay
+    setOverlay({
+      imgSrc: team.logo,
+      color,
+      phase: "start",
+    });
 
     try {
-      const response = await handleAddUserToGroup({
+      await handleAddUserToGroup({
         userData: user,
         groupId: team.teamId,
       });
-      console.log(`User added to team: ${response}`);
     } catch (e) {
       console.error(e);
-    } finally {
+
+      // Show exit animation, but DO NOT kill the overlay instantly
       setOverlay((o) => (o ? { ...o, phase: "exit" } : o));
-      setTimeout(() => setOverlay(null), 380);
+
+      alert(
+        "Failed to join the team. Please try again. If the issue persists, contact support."
+      );
+    } finally {
+      // Normal exit animation
+      setOverlay((o) => (o ? { ...o, phase: "exit" } : o));
+
+      // Remove ONLY after falling animation ends
+      setTimeout(() => {
+        setOverlay(null);
+      }, 5200); // match the longest falling logo duration
     }
   };
 
@@ -81,7 +83,7 @@ export default function GlobalGroupSelect() {
           textAlign: "center",
         }}
       >
-        Select Your Team
+        Choose Your Club
       </Typography>
 
       <Grid container spacing={{ xs: 1.5, sm: 2 }}>
@@ -164,46 +166,58 @@ export default function GlobalGroupSelect() {
           sx={{
             position: "fixed",
             inset: 0,
-            zIndex: 1400,
+            zIndex: 2000,
             pointerEvents: "none",
-            backgroundColor:
-              overlay.phase === "start" || overlay.phase === "exit"
-                ? "transparent"
-                : overlay.color,
-            transition: "background-color 260ms ease",
+            overflow: "hidden",
+            background:
+              overlay.phase === "start" ? "transparent" : `${overlay.color}40`,
+            transition: "background 400ms ease",
           }}
         >
-          {/* Logo that moves to center & scales */}
-          <Box
-            component="img"
-            src={overlay.imgSrc}
-            alt="selected team"
-            sx={{
-              position: "absolute",
-              left:
-                overlay.phase === "start" ? `${overlay.rect.left}px` : "50%",
-              top: overlay.phase === "start" ? `${overlay.rect.top}px` : "50%",
-              width:
-                overlay.phase === "start"
-                  ? `${overlay.rect.width}px`
-                  : "min(42vh, 42vw)",
-              height:
-                overlay.phase === "start" ? `${overlay.rect.height}px` : "auto",
-              transform:
-                overlay.phase === "start"
-                  ? "translate(0, 0) scale(1)"
-                  : "translate(-50%, -50%) scale(1)",
-              opacity: overlay.phase === "exit" ? 0 : 1,
-              objectFit: "contain",
-              filter: "drop-shadow(0 16px 40px rgba(0,0,0,.55))",
-              transition:
-                "left 520ms cubic-bezier(.2,.8,.2,1), " +
-                "top 520ms cubic-bezier(.2,.8,.2,1), " +
-                "width 520ms cubic-bezier(.2,.8,.2,1), " +
-                "transform 520ms cubic-bezier(.2,.8,.2,1), " +
-                "opacity 260ms ease",
-            }}
-          />
+          {Array.from({ length: 18 }).map((_, i) => {
+            const startX = Math.random() * 100; // 0–100 vw
+            const delay = Math.random() * 0.8; // stagger
+            const duration = 3.5 + Math.random() * 2.5; // 3.5–6s
+            return (
+              <Box
+                key={i}
+                component="img"
+                src={overlay.imgSrc}
+                alt=""
+                sx={{
+                  position: "absolute",
+                  top: "-10vh", // just above view
+                  left: `${startX}vw`,
+                  width: `${28 + Math.random() * 30}px`,
+                  opacity: 1,
+                  filter: "drop-shadow(0 14px 30px rgba(0,0,0,.5))",
+                  animation: `fall-${i} ${duration}s linear ${delay}s forwards`,
+                }}
+              />
+            );
+          })}
+
+          {/* keyframes for the falling logos */}
+          <style>
+            {Array.from({ length: 18 })
+              .map((_, i) => {
+                const driftX = (Math.random() - 0.5) * 80; // side drift
+                const rotate = (Math.random() - 0.5) * 160; // rotation
+                return `
+            @keyframes fall-${i} {
+              0% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 1;
+              }
+              100% {
+                transform: translate(${driftX}px, 120vh) rotate(${rotate}deg);
+                opacity: 0;
+              }
+            }
+          `;
+              })
+              .join("")}
+          </style>
         </Box>
       )}
     </Box>
