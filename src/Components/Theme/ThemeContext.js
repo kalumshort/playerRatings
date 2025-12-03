@@ -50,138 +50,234 @@ export const ThemeProvider = ({ children, accentColor }) => {
           ...(themeMode === "light"
             ? {
                 background: {
-                  default: "#ffffff",
-                  paper: "#f7f7f7",
-                  gradient: "linear-gradient(135deg, #ffffff, #eaeaea)",
+                  default: "#f0f2f5", // Soft clean gray-blue
+                  paper: "rgba(255, 255, 255, 0.65)", // Highly transparent glass
+                  gradient: "linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%)",
                 },
                 text: {
-                  primary: "#111111",
-                  secondary: "#555555",
-                  disabled: "#9e9e9e",
-                  shadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+                  primary: "#1a2027",
+                  secondary: "#5A6A85",
+                  disabled: "#B0B8C4",
                 },
                 primary: {
                   main: accentColor,
-                  contrastText: "#ffffff",
-                },
-                secondary: {
-                  main: "#f5f5f5",
                   contrastText: "#000000",
                 },
+                secondary: {
+                  main: "#000000",
+                  contrastText: "#ffffff",
+                },
+                divider: "rgba(0,0,0,0.04)",
               }
             : {
                 background: {
-                  default: "#121212",
-                  paper: "#1e1e1e",
-                  gradient: "linear-gradient(135deg, #1e1e1e, #3d3d3d)",
+                  default: "#09090b", // Rich black-gray
+                  paper: "rgba(24, 24, 27, 0.6)", // Dark smoked glass
+                  gradient: "linear-gradient(135deg, #18181b 0%, #09090b 100%)",
                 },
                 text: {
-                  primary: "#f5f5f5",
-                  secondary: "#aaaaaa",
-                  disabled: "#666666",
-                  shadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
+                  primary: "#ffffff",
+                  secondary: "#A1A1AA",
+                  disabled: "#52525B",
                 },
                 primary: {
                   main: accentColor,
-                  contrastText: "#ffffff",
+                  contrastText: "#000000",
                 },
                 secondary: {
-                  main: "#2c2c2c",
-                  contrastText: "#ffffff",
+                  main: "#ffffff",
+                  contrastText: "#000000",
                 },
+                divider: "rgba(255,255,255,0.06)",
               }),
         },
 
         shape: {
-          borderRadius: 5, // Modern rounded corners
+          borderRadius: 24, // Very modern, soft curves
         },
 
-        shadows: Array(25).fill(
-          themeMode === "light"
-            ? "0px 4px 12px rgba(0, 0, 0, 0.08)"
-            : "0px 4px 12px rgba(0, 0, 0, 0.5)"
-        ),
+        shadows: Array(25).fill("none"), // Reset default shadows to avoid conflicts
 
         typography: {
-          fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+          // Retro Fonts Preserved
+          fontFamily: "'Space Mono', 'Courier New', monospace",
           fontWeightRegular: 400,
-          fontWeightMedium: 500,
+          fontWeightMedium: 700,
           fontWeightBold: 700,
-          button: {
-            textTransform: "none",
-            fontWeight: 600,
+
+          h1: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            lineHeight: 1,
           },
+          h2: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            lineHeight: 1.1,
+          },
+          h3: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+          },
+          h4: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+          },
+          h5: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+          },
+          h6: {
+            fontFamily: "'VT323', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+          },
+
+          button: {
+            fontFamily: "'Graduate', serif",
+            textTransform: "uppercase",
+            fontWeight: 400,
+            fontSize: "1rem",
+            letterSpacing: "1px",
+          },
+          subtitle1: {
+            fontFamily: "'Space Mono', monospace",
+            letterSpacing: "-0.5px",
+          },
+          body1: { fontFamily: "'Space Mono', monospace", lineHeight: 1.6 },
         },
 
         components: {
+          // 1. The Glass Card (Neutral Borders Only)
           MuiPaper: {
             styleOverrides: {
-              rounded: {
-                borderRadius: 16,
+              root: {
+                backdropFilter: "blur(20px)", // Heavy high-end blur
+                WebkitBackdropFilter: "blur(20px)",
+                backgroundImage: "none",
+                // Neutral border for "cut glass" look. No accent color here.
+                border:
+                  themeMode === "light"
+                    ? "1px solid rgba(255, 255, 255, 0.8)"
+                    : "1px solid rgba(255, 255, 255, 0.08)",
+                // Soft diffuse shadow
+                boxShadow:
+                  themeMode === "light"
+                    ? "0 4px 30px rgba(0, 0, 0, 0.03)"
+                    : "0 4px 30px rgba(0, 0, 0, 0.2)",
+              },
+              elevation1: {
+                boxShadow:
+                  themeMode === "light"
+                    ? "0 4px 20px rgba(0,0,0,0.02)"
+                    : "0 4px 20px rgba(0,0,0,0.2)",
               },
             },
           },
+
+          // 2. Buttons (Pill shaped, Accent used here)
           MuiButton: {
             styleOverrides: {
               root: {
-                borderRadius: 8,
-                textTransform: "none",
-                padding: "3px 6px!important",
+                borderRadius: 100, // Full pill shape
+                textTransform: "uppercase",
+                padding: "10px 24px",
+                border: "1px solid transparent",
+                boxShadow: "none",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                "&:hover": {
+                  transform: "translateY(-1px)",
+                  boxShadow: `0 8px 20px -4px ${accentColor}60`, // Glow only on hover
+                },
+              },
+              containedPrimary: {
+                background: accentColor,
+                color: "#000", // Retro contrast
+                fontWeight: 600,
+                "&:hover": {
+                  background: accentColor, // Maintain color, just add glow (above)
+                },
+              },
+              outlined: {
+                border: `2px solid ${themeMode === "light" ? "#000" : "#fff"}`,
+                color: themeMode === "light" ? "#000" : "#fff",
+                "&:hover": {
+                  border: `2px solid ${accentColor}`,
+                  color: accentColor,
+                  backgroundColor: "transparent",
+                },
               },
             },
           },
-          // Customize the InputBase component globally
-          MuiInputBase: {
-            styleOverrides: {
-              input: {
-                padding: "2px", // Adjust padding here (smaller than default)
-              },
-            },
-          },
-          // Customize the OutlinedInput component (for inputs with borders)
+
+          // 3. Inputs (Clean Glass, Neutral Borders)
           MuiOutlinedInput: {
             styleOverrides: {
               root: {
-                padding: "2px", // Less padding on the outer container
-              },
-              input: {
-                padding: "2px", // Adjust padding inside the input
-              },
-            },
-          },
-          // Customize the TextField component if you're using it as well
-          MuiTextField: {
-            styleOverrides: {
-              root: {
-                "& .MuiInputBase-root": {
-                  padding: "2px", // Less padding in the TextField's input
+                borderRadius: 16,
+                backgroundColor:
+                  themeMode === "light"
+                    ? "rgba(255,255,255,0.4)"
+                    : "rgba(0,0,0,0.2)",
+                transition: "all 0.2s ease",
+                "& fieldset": {
+                  borderWidth: "1px",
+                  // Neutral borders
+                  borderColor:
+                    themeMode === "light"
+                      ? "rgba(0,0,0,0.06)"
+                      : "rgba(255,255,255,0.08)",
+                },
+                "&:hover": {
+                  backgroundColor:
+                    themeMode === "light"
+                      ? "rgba(255,255,255,0.7)"
+                      : "rgba(0,0,0,0.3)",
+                },
+                "&.Mui-focused": {
+                  backgroundColor:
+                    themeMode === "light" ? "#fff" : "rgba(0,0,0,0.4)",
+                  boxShadow: `0 4px 20px -2px ${accentColor}30`, // Subtle glow only when typing
+                  "& fieldset": {
+                    borderWidth: "1px !important",
+                    borderColor: `${accentColor} !important`,
+                  },
                 },
               },
-            },
-          },
-          // Customize the Select component
-          MuiSelect: {
-            styleOverrides: {
-              root: {
-                padding: "2px", // Adjust padding inside the Select input
+              input: {
+                padding: "12px 16px",
               },
             },
           },
+
+          // 4. Overrides for cleaner UI
           MuiInputLabel: {
             styleOverrides: {
               root: {
-                fontSize: "0.75rem", // Adjust the font size of the label
-                marginTop: "-8px", // Adjust the margin to prevent the label from being pushed down
+                fontFamily: "'Space Mono', monospace",
+                fontSize: "0.85rem",
                 "&.Mui-focused": {
-                  // Optional: Adjust the label position when the input is focused
-                  marginTop: "0px",
+                  color: accentColor,
                 },
+              },
+            },
+          },
+          MuiCard: {
+            styleOverrides: {
+              root: {
+                borderRadius: 24,
+                overflow: "hidden",
               },
             },
           },
         },
       }),
-    [themeMode, accentColor] // Recreate the theme when themeMode changes
+    [themeMode, accentColor]
   );
 
   // Render a loading state or nothing until the themeMode has been set

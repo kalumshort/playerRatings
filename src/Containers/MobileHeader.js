@@ -9,7 +9,7 @@ import { DrawerContentComponent } from "./Header";
 import MenuIcon from "@mui/icons-material/Menu";
 // import { useTheme } from "../Components/Theme/ThemeContext";
 
-import SiteIcon from "../assets/logo/11Votes_Icon.png";
+import SiteIcon from "../assets/logo/11Votes_Icon_Logo.png";
 
 export default function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);

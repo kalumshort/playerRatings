@@ -12,12 +12,10 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 // import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
 // import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
-import SiteIconText from "../assets/logo/11Votes_IconText.png";
-import SiteIconTextBlack from "../assets/logo/11Votes_IconBlackText.png";
+import SiteIconText from "../assets/logo/11Votes_Text_Logo.png";
 
 import { styled } from "@mui/system";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
-import { useTheme } from "../Components/Theme/ThemeContext";
 
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
@@ -42,7 +40,6 @@ const HeaderContainer = styled("div")(({ theme }) => ({
 
 export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const theme = useTheme();
 
   const toggleDrawer = (open) => {
     setDrawerOpen(open);
@@ -74,9 +71,9 @@ export default function Header() {
           }}
         >
           <img
-            src={theme.themeMode === "dark" ? SiteIconText : SiteIconTextBlack}
+            src={SiteIconText}
             alt="Logo"
-            style={{ width: "120px", cursor: "pointer" }}
+            style={{ width: "150px", cursor: "pointer" }}
             onClick={() => {
               window.history.pushState({}, "", "/");
               window.dispatchEvent(new PopStateEvent("popstate"));
