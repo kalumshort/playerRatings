@@ -6,13 +6,13 @@ import { Button } from "@mui/material";
 import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
 
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
-import playerCardBg from "../../../../assets/appAssets/playerBackgroundBaseBlack.png";
 
 import { useDroppable } from "@dnd-kit/core";
 import { DraggablePlayer } from "./DraggableSquad";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
+import "../../../../retro-patterns.css"; // Make sure to import the file
 
 export default function DroppablePitch({
   fixture,
@@ -72,7 +72,7 @@ export default function DroppablePitch({
 
   return (
     <div
-      className="DroppablePitchContainer"
+      className="DroppablePitchContainer "
       onDragOver={(e) => e.preventDefault()}
     >
       {[
@@ -124,17 +124,14 @@ function DroppableLocation({ id, player }) {
     <div
       ref={setNodeRef}
       key={`${id}-${player ? "filled" : "empty"}`} // Forces React to remount when empty
-      className={`droppable-location player ${isOver ? "over" : ""}`}
+      className={`bg-90s-jersey  droppable-location player ${
+        isOver ? "over" : ""
+      }`}
       style={{
         boxShadow: isOver
           ? "0 0 10px 2px green"
           : "0 4px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4)",
         position: "relative",
-
-        backgroundImage: `url(${playerCardBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
       }}
     ></div>
   );

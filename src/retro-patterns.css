@@ -1,0 +1,136 @@
+/* ========================================
+  90s RETRO PATTERN LIBRARY
+  ========================================
+  Usage: Add these classes to your player placeholder divs.
+*/
+
+/* OPTION 1: "The Bruised Banana" / Chevron Jersey
+  Vibe: 1991-1993 Premier League Away Kits.
+  Why: Bold zig-zags were the peak of 90s fashion. 
+*/
+.bg-90s-jersey {
+  /* Vibrant Teal Base */
+  background-color: #2fb5a3;
+  /* Complex Zig-Zag Gradient */
+  background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.2) 75%,
+      transparent 75%,
+      transparent
+    ),
+    linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.1) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.1) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 40px 40px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* OPTION 2: "Cyber Pitch" / Arcade Grid
+  Vibe: 16-bit Soccer Games & Sci-Fi UI.
+  Why: High contrast neon grid feels techy and gamified.
+*/
+.bg-90s-turf {
+  background-color: #0b3d25; /* Deep dark green */
+  background-image: linear-gradient(rgba(57, 255, 20, 0.3) 1px, transparent 1px),
+    /* Neon green lines */
+      linear-gradient(90deg, rgba(57, 255, 20, 0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+  /* Inner glow to make it look like a CRT screen */
+  box-shadow: inset 0 0 30px #000000;
+  position: relative;
+}
+
+/* OPTION 3: "The Goalie" / Memphis Chaos
+  Vibe: The iconic "Jazz" Cup & Goalkeeper kits.
+  Why: Purple, Pink, and Teal squiggles are the definition of 90s retro.
+*/
+.bg-90s-goalie {
+  background-color: #592e83; /* Deep Purple */
+  background-image: radial-gradient(
+      circle at 10% 20%,
+      #ff00cc 10%,
+      transparent 11%
+    ),
+    /* Hot Pink Dots */
+      radial-gradient(circle at 90% 80%, #00f0ff 10%, transparent 11%),
+    /* Cyan Dots */
+      linear-gradient(
+        45deg,
+        transparent 45%,
+        #ffeb3b 45%,
+        #ffeb3b 55%,
+        transparent 55%
+      ); /* Yellow Strike */
+  background-size: 60px 60px, 60px 60px, 30px 30px;
+  background-position: 0 0, 0 0, 15px 15px;
+}
+
+/* OPTION 4: "Static Noise" / TV Glitch
+  Vibe: MTV Interstitials & VHS Tapes.
+  Why: Adds grit and texture to empty slots.
+*/
+.bg-90s-static {
+  background-color: #e0e0e0;
+  background-image: repeating-radial-gradient(
+    circle at 50% 50%,
+    #000 0,
+    #000 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  background-size: 8px 8px;
+  opacity: 0.7;
+}
+
+/* UTILITY: The "Holographic" Sticker Effect
+  Add this class ON TOP of the others for a rare card feel.
+*/
+.glass-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-overlay::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  /* A subtle, narrow white shine */
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0) 45%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  transform: rotate(25deg) translateY(-100%);
+  pointer-events: none;
+  /* Long duration with a short active period creates the "random" feel.
+     The shine happens quickly, then there's a long pause.
+  */
+  animation: shine 7s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: rotate(25deg) translateY(-100%);
+  }
+  20% {
+    transform: rotate(25deg) translateY(100%);
+  } /* Shine passes quickly */
+  100% {
+    transform: rotate(25deg) translateY(100%);
+  } /* Long pause */
+}
