@@ -286,7 +286,7 @@ const MoodAreaChart = ({ matchMoods }) => {
     if (val >= 30) return { label: "NERVOUS", color: "#FF9100" };
 
     // Blue Zone (29 - 10)
-    if (val >= 10) return { label: "UPSET", color: "#1E90FF" };
+    if (val >= 10) return { label: "DISAPPOINTED", color: "#1E90FF" };
 
     // Red Zone (9 - 0)
     return { label: "FRUSTRATED", color: "#FF4500" };
