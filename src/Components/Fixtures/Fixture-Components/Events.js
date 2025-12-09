@@ -1,223 +1,366 @@
 import React, { useMemo, useState } from "react";
-import { ContentContainer } from "../../../Containers/GlobalContainer";
-import { MenuItem, Select } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  Stack,
+  Select,
+  MenuItem,
+  Avatar,
+  useTheme,
+} from "@mui/material";
+import {
+  SportsSoccer,
+  Style,
+  SwapHoriz,
+  Flag,
+  FilterList,
+} from "@mui/icons-material";
 
 export default function Events({ events }) {
-  const eventOptions = useMemo(() => {
-    return [...new Set(events?.map((item) => item.type))];
-  }, [events]);
-  const [selectedLeague, setSelectedLeague] = useState("");
-  const handleChange = (event) => {
-    setSelectedLeague(event.target.value);
-  };
-  const filteredFixures = selectedLeague
-    ? events.filter((item) => item.type === selectedLeague)
-    : events;
+  const theme = useTheme();
+  const [selectedType, setSelectedType] = useState("All");
 
-  if (!events) {
+  const eventOptions = useMemo(() => {
+    if (!events) return [];
+    return ["All", ...new Set(events.map((item) => item.type))];
+  }, [events]);
+
+  const filteredEvents =
+    selectedType === "All"
+      ? events
+      : events?.filter((item) => item.type === selectedType);
+
+  if (!events || events.length === 0) {
     return (
-      <ContentContainer className="events-container containerMargin">
-        <h2 className="heading2" style={{ textAlign: "center" }}>
-          No Events
-        </h2>
-      </ContentContainer>
+      <Paper
+        sx={{
+          p: 4,
+          textAlign: "center",
+          borderStyle: "dashed",
+          borderColor: "divider",
+        }}
+        elevation={0}
+      >
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ fontFamily: "Space Mono" }}
+        >
+          No Match Events Yet
+        </Typography>
+      </Paper>
     );
   }
+
   return (
-    <ContentContainer className="containerMargin">
-      <div className="fixtures-list-header">
-        <h2 className="globalHeading">Events</h2>
+    <Paper
+      sx={{
+        p: 0,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+      elevation={0}
+      className="containerMargin"
+    >
+      {/* --- HEADER --- */}
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.action.hover,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Flag fontSize="small" color="primary" />
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: "Space Mono",
+              fontWeight: "bold",
+              letterSpacing: 1,
+            }}
+          >
+            MATCH FEED
+          </Typography>
+        </Stack>
+
         <Select
-          value={selectedLeague}
-          onChange={handleChange}
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
           size="small"
           variant="standard"
-          displayEmpty
-          renderValue={(selected) => (selected ? selected : "All")}
+          disableUnderline
+          IconComponent={FilterList}
+          sx={{
+            fontSize: "0.8rem",
+            fontFamily: "Space Mono",
+            color: "text.secondary",
+            "& .MuiSelect-select": {
+              pr: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            },
+          }}
+          MenuProps={{
+            PaperProps: { sx: { borderRadius: 2, mt: 1, minWidth: 120 } },
+          }}
         >
-          <MenuItem key="" value="">
-            All
-          </MenuItem>
-          {eventOptions.map((league) => (
-            <MenuItem key={league} value={league}>
-              {league}
+          {eventOptions.map((opt) => (
+            <MenuItem
+              key={opt}
+              value={opt}
+              sx={{ fontSize: "0.8rem", fontFamily: "Space Mono" }}
+            >
+              {opt.toUpperCase()}
             </MenuItem>
           ))}
         </Select>
-      </div>
-      <div className="events-container">
-        {filteredFixures.map((event, index) => (
-          <EventItem key={index} event={event} />
+      </Box>
+
+      {/* --- SCROLLABLE LIST (No Horizontal Scroll) --- */}
+      <Box
+        sx={{
+          maxHeight: 400,
+          overflowY: "auto",
+          overflowX: "hidden", // STRICTLY PREVENT HORIZONTAL SCROLL
+          p: 0,
+        }}
+      >
+        {filteredEvents.map((event, index) => (
+          <EventItem
+            key={index}
+            event={event}
+            isLast={index === filteredEvents.length - 1}
+          />
         ))}
-      </div>
-    </ContentContainer>
+      </Box>
+    </Paper>
   );
 }
 
-const EventItem = ({ event }) => {
-  const renderEventDetails = () => {
-    switch (event.type) {
-      case "Card":
-        return (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <strong>Card</strong>: {event.detail}
-              <div>
-                <span
-                  style={{
-                    color:
-                      event.detail === "Yellow Card" ? "#FFFF00" : "FF4D4D",
-                  }}
-                >
-                  {event.player.name}
-                </span>
-                {event.comments && <small> ({event.comments})</small>}
-              </div>
-            </div>
-            <img
-              src={
-                event.detail === "Yellow Card"
-                  ? "/assets/11Votes_Yellow_Card.png"
-                  : "/assets/11Votes_Red_Card.png"
-              }
-              alt="Card Icon"
-              height={20}
-              style={{ marginRight: "20px" }}
-            />
-          </div>
-        );
+// --- SUB-COMPONENTS ---
 
-      case "Goal":
-        return (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <strong>Goal</strong>: {event.detail}
-              <div>
-                <span style={{ color: "#4CFF72" }}>{event.player.name}</span>
-                {event.assist?.name && (
-                  <>
-                    {" "}
-                    <small>assisted by</small> <span>{event.assist.name}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <img
-              src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
-              alt="Card Icon"
-              height={20}
-              style={{ marginRight: "20px" }}
-            />
-          </div>
-        );
+const EventItem = ({ event, isLast }) => {
+  const theme = useTheme();
+  let EventIcon = Flag;
+  let iconColor = theme.palette.text.secondary;
+  let iconBg = theme.palette.action.selected;
 
-      case "subst":
-        return (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <strong>Substitution</strong>
-              <div>
-                <span style={{ color: "#42A5F5" }}>{event.player.name}</span>
-                {event.assist?.name && (
-                  <>
-                    {" "}
-                    <small>replaced by</small>{" "}
-                    <span style={{ color: "#FFB74D" }}>
-                      {event.assist.name}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-            <img
-              src="/assets\Sub_Icon.png"
-              alt="Sub Icon"
-              height={20}
-              style={{ marginRight: "20px" }}
-            />
-          </div>
-        );
-
-      default:
-        return (
-          <>
-            <strong>{event.type}</strong>: {event.detail}
-            <div>
-              <span style={{ color: "#4EFF4E" }}>{event.player.name}</span>
-              {event.comments && <small> ({event.comments})</small>}
-            </div>
-          </>
-        );
-    }
-  };
+  switch (event.type) {
+    case "Goal":
+      EventIcon = SportsSoccer;
+      iconColor = "#000";
+      iconBg = theme.palette.primary.main;
+      break;
+    case "Card":
+      EventIcon = Style;
+      if (event.detail === "Yellow Card") {
+        iconColor = "#000";
+        iconBg = "#FFD600";
+      } else {
+        iconColor = "#fff";
+        iconBg = "#D50000";
+      }
+      break;
+    case "subst":
+      EventIcon = SwapHoriz;
+      iconColor = theme.palette.primary.contrastText;
+      iconBg = theme.palette.text.secondary;
+      break;
+    default:
+      break;
+  }
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
+        position: "relative",
         display: "flex",
-        alignItems: "center",
-        marginBottom: "10px",
-        padding: "10px",
-        borderRadius: "5px",
+        gap: 2,
+        p: 2,
+        width: "100%",
+        boxSizing: "border-box",
+        "&:hover": { bgcolor: theme.palette.action.hover },
       }}
     >
-      {/* Team Logo */}
-      <div
-        style={{
-          width: "30px",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src={event.team.logo}
-          alt={event.team.name}
-          style={{
-            height: "30px",
-            objectFit: "cover",
+      {!isLast && (
+        <Box
+          sx={{
+            position: "absolute",
+            left: 36,
+            top: 48,
+            bottom: 0,
+            width: 1,
+            bgcolor: theme.palette.divider,
           }}
         />
-      </div>
+      )}
 
-      {/* Event Details */}
-      <div style={{ flex: "1", paddingLeft: "10px" }}>
-        {renderEventDetails()}
-      </div>
+      {/* Time Column (Fixed Width) */}
+      <Stack
+        alignItems="center"
+        spacing={1}
+        sx={{ minWidth: 40, width: 40, flexShrink: 0 }}
+      >
+        <Typography
+          variant="caption"
+          sx={{ fontFamily: "Space Mono", fontWeight: "bold" }}
+        >
+          {event.time.elapsed}'
+        </Typography>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            bgcolor: iconBg,
+            color: iconColor,
+            display: "grid",
+            placeItems: "center",
+            boxShadow: `0 2px 8px ${iconBg}40`,
+            zIndex: 1,
+          }}
+        >
+          <EventIcon sx={{ fontSize: 18 }} />
+        </Box>
+      </Stack>
 
-      {/* Event Time */}
-      <div style={{ marginLeft: "auto", color: "#888" }}>
-        {event.time.elapsed}'{event.time.extra ? `+${event.time.extra}` : ""}
-      </div>
-    </div>
+      {/* Details Column (Flexible) */}
+      <Box
+        sx={{
+          flex: 1,
+          pt: 0.5,
+          minWidth: 0 /* CRITICAL FIX: Allows text wrapping in flex child */,
+        }}
+      >
+        <EventDetailsContent event={event} />
+      </Box>
+
+      {/* Logo Column (Fixed Width) */}
+      <Box sx={{ pt: 1, width: 24, flexShrink: 0 }}>
+        <Avatar
+          src={event.team.logo}
+          sx={{ width: 24, height: 24, opacity: 0.8 }}
+        />
+      </Box>
+    </Box>
   );
 };
 
-// const EventsDisplay = ({ events }) => {
-//   return (
-//     <ContentContainer className="events-container">
-//       {events.map((event, index) => (
-//         <EventItem key={index} event={event} />
-//       ))}
-//     </ContentContainer>
-//   );
-// };
+const EventDetailsContent = ({ event }) => {
+  const theme = useTheme();
+
+  // Typography helper to force wrapping
+  const wrapStyle = {
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    display: "block",
+  };
+
+  if (event.type === "subst") {
+    return (
+      <>
+        <Typography variant="body2" fontWeight="bold">
+          Substitution
+        </Typography>
+        <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: theme.palette.primary.main,
+              ...wrapStyle,
+            }}
+          >
+            <Box
+              component="span"
+              sx={{ color: "success.main", fontWeight: "bold" }}
+            >
+              IN:
+            </Box>{" "}
+            {event.assist.name}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: "text.secondary",
+              ...wrapStyle,
+            }}
+          >
+            <Box
+              component="span"
+              sx={{ color: "error.main", fontWeight: "bold" }}
+            >
+              OUT:
+            </Box>{" "}
+            {event.player.name}
+          </Typography>
+        </Stack>
+      </>
+    );
+  }
+  if (event.type === "Goal") {
+    return (
+      <>
+        <Typography
+          variant="body2"
+          fontWeight="bold"
+          sx={{ color: theme.palette.primary.main }}
+        >
+          GOAL!
+        </Typography>
+        <Typography variant="body2" sx={wrapStyle}>
+          {event.player.name}
+        </Typography>
+        {event.assist.name && (
+          <Typography variant="caption" color="text.secondary" sx={wrapStyle}>
+            Assist: {event.assist.name}
+          </Typography>
+        )}
+      </>
+    );
+  }
+  if (event.type === "Card") {
+    return (
+      <>
+        <Typography variant="body2" fontWeight="bold">
+          {event.detail}
+        </Typography>
+        <Typography variant="body2" sx={wrapStyle}>
+          {event.player.name}
+        </Typography>
+        {event.comments && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={wrapStyle}
+          >
+            {event.comments}
+          </Typography>
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      <Typography variant="body2" fontWeight="bold">
+        {event.detail}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={wrapStyle}>
+        {event.player.name}
+      </Typography>
+    </>
+  );
+};

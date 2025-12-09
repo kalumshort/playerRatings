@@ -1,105 +1,247 @@
 import React from "react";
+import {
+  Box,
+  Paper,
+  Typography,
+  Stack,
+  Avatar,
+  Divider,
+  useTheme,
+} from "@mui/material";
+import { BarChart, Equalizer } from "@mui/icons-material";
 
-import { ContentContainer } from "../../../Containers/GlobalContainer";
+// --- HELPERS ---
+const parseValue = (val) => {
+  if (typeof val === "string" && val.includes("%")) {
+    return parseFloat(val);
+  }
+  return val ?? 0;
+};
 
 export default function Statistics({ fixture }) {
-  if (!fixture.statistics) {
+  const theme = useTheme();
+
+  // --- EMPTY STATE ---
+  if (!fixture.statistics || fixture.statistics.length !== 2) {
     return (
-      <ContentContainer
-        className="statistics-container"
-        style={{
-          minHeight: "200px",
+      <Paper
+        sx={{
+          p: 4,
+          minHeight: 200,
           display: "flex",
+          flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "0px",
+          borderStyle: "dashed",
+          borderColor: "divider",
+          bgcolor: "transparent",
         }}
+        elevation={0}
+        className="containerMargin"
       >
-        <h2 className="heading2" style={{ margin: "10px" }}>
-          No Statistics
-        </h2>
-      </ContentContainer>
+        <Equalizer sx={{ fontSize: 40, color: "text.disabled", mb: 2 }} />
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ fontFamily: "Space Mono" }}
+        >
+          No match statistics available yet.
+        </Typography>
+      </Paper>
     );
   }
 
-  const [team1, team2] = fixture?.statistics;
-  if (!team1 || !team2) {
-    return;
-  }
+  const [team1, team2] = fixture.statistics;
 
   return (
-    <ContentContainer className="statistics-container containerMargin">
-      <div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            margin: "20px 0px",
-          }}
+    <Paper
+      sx={{
+        p: 0,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+      elevation={0}
+      className="containerMargin"
+    >
+      {/* --- HEADER (Fixed) --- */}
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.action.hover,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <BarChart color="primary" fontSize="small" />
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: "Space Mono",
+              fontWeight: "bold",
+              letterSpacing: 1,
+            }}
+          >
+            MATCH STATS
+          </Typography>
+        </Stack>
+      </Box>
+
+      {/* --- TEAM LEGEND (Fixed) --- */}
+      <Box sx={{ p: 2, pb: 0 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
         >
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <img
-              src={team1.team.logo}
-              alt={team1.team.name}
-              style={{ width: "50px" }}
-            />
-          </div>
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <h2 className="heading2">Statistics</h2>
-          </div>
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <img
-              src={team2.team.logo}
-              alt={team2.team.name}
-              style={{ width: "50px" }}
-            />
-          </div>
-        </div>
-        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+          {/* Home Team */}
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar src={team1.team.logo} sx={{ width: 24, height: 24 }} />
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ fontFamily: "Space Mono" }}
+            >
+              {team1.team.name}
+            </Typography>
+          </Stack>
+
+          {/* Away Team */}
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{ fontFamily: "Space Mono" }}
+            >
+              {team2.team.name}
+            </Typography>
+            <Avatar src={team2.team.logo} sx={{ width: 24, height: 24 }} />
+          </Stack>
+        </Stack>
+      </Box>
+
+      <Divider sx={{ my: 2 }} />
+
+      {/* --- SCROLLABLE STATS LIST --- */}
+      <Box
+        sx={{
+          maxHeight: 400, // <--- FIXED HEIGHT
+          overflowY: "auto", // <--- ENABLE SCROLL
+          px: 3,
+          pb: 4,
+        }}
+      >
+        <Stack spacing={3}>
           {team1.statistics.map((stat, index) => {
             const team2Stat = team2.statistics.find(
               (s) => s.type === stat.type
             );
-
-            const team1Value = stat.value ?? 0;
-            const team2Value = team2Stat?.value ?? 0;
-            const total = team1Value + team2Value;
-
-            // Calculate percentage
-            const team1Percentage = total > 0 ? (team1Value / total) * 100 : 50;
+            const val1 = parseValue(stat.value);
+            const val2 = parseValue(team2Stat?.value);
+            const total = val1 + val2;
+            const percent1 = total > 0 ? (val1 / total) * 100 : 50;
 
             return (
-              <li
+              <StatRow
                 key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  margin: "8px 0",
-                  padding: "6px",
-                  background: `linear-gradient(
-            to right,
-            rgba(65, 65, 65, 0.6) ${team1Percentage}%,
-            rgba(0, 0, 0, 0.22) ${team1Percentage}%
-          )`,
-                }}
-              >
-                <div
-                  style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}
-                >
-                  {team1Value}
-                </div>
-                <div style={{ flex: 1, textAlign: "center" }}>{stat.type}</div>
-                <div
-                  style={{ flex: 1, textAlign: "center", fontWeight: "bold" }}
-                >
-                  {team2Value}
-                </div>
-              </li>
+                label={stat.type}
+                value1={stat.value ?? 0}
+                value2={team2Stat?.value ?? 0}
+                percent1={percent1}
+              />
             );
           })}
-        </ul>
-      </div>
-    </ContentContainer>
+        </Stack>
+      </Box>
+    </Paper>
   );
 }
+
+// ... StatRow component remains the same ...
+const StatRow = ({ label, value1, value2, percent1 }) => {
+  const theme = useTheme();
+  const val1Num = parseValue(value1);
+  const val2Num = parseValue(value2);
+  const isHomeWinner = val1Num > val2Num;
+  const isAwayWinner = val2Num > val1Num;
+
+  return (
+    <Box>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        sx={{ mb: 0.5 }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            fontFamily: "VT323",
+            lineHeight: 0.8,
+            color: isHomeWinner ? "primary.main" : "text.secondary",
+          }}
+        >
+          {value1}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            fontFamily: "Space Mono",
+            fontSize: "0.65rem",
+            textTransform: "uppercase",
+            opacity: 0.7,
+            mb: 0.5,
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          variant="h5"
+          sx={{
+            fontFamily: "VT323",
+            lineHeight: 0.8,
+            color: isAwayWinner ? "text.primary" : "text.secondary",
+          }}
+        >
+          {value2}
+        </Typography>
+      </Stack>
+      <Box
+        sx={{
+          height: 6,
+          width: "100%",
+          bgcolor: theme.palette.divider,
+          borderRadius: 4,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${percent1}%`,
+            bgcolor: "primary.main",
+            borderRight: `2px solid ${theme.palette.background.paper}`,
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            bottom: 0,
+            left: `${percent1}%`,
+            bgcolor: "text.disabled",
+            opacity: 0.3,
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};

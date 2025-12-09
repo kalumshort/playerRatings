@@ -30,7 +30,7 @@ export const selectSquadDataObject = (state) => {
 export const selectSeasonSquadDataObject = (state) => {
   const squad = selectSeasonSquadData(state);
 
-  return squad.reduce((acc, player) => {
+  return squad?.reduce((acc, player) => {
     acc[player.id] = player;
     return acc;
   }, {});

@@ -1,10 +1,20 @@
 import React from "react";
-import { ContentContainer } from "../../../../Containers/GlobalContainer";
-import { Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  Stack,
+  Avatar,
+  useTheme,
+  Fade,
+} from "@mui/material";
+import { CheckCircle, EmojiEvents } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { motion } from "framer-motion";
+
+// --- HOOKS & FIREBASE ---
 import { handlePredictWinningTeam } from "../../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
-import { useDispatch, useSelector } from "react-redux";
-
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { useAuth } from "../../../../Providers/AuthContext";
@@ -12,17 +22,20 @@ import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 
 export default function WinnerPredict({ fixture }) {
+  const theme = useTheme();
   const dispatch = useDispatch();
+
+  // Data Selectors
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
-
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
-
-  const storedUsersPredictedResult = usersMatchData?.result;
-
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
+  // FIXED: Ensure we are using this variable consistently
+  const storedUsersPredictedResult = usersMatchData?.result;
+
+  // --- HANDLER ---
   const handleWinningTeamPredict = async (choice) => {
     await handlePredictWinningTeam({
       matchId: fixture.id,
@@ -40,88 +53,227 @@ export default function WinnerPredict({ fixture }) {
     );
   };
 
+  // --- CALCULATE STATS ---
   const { totalVotes, draw, away, home } = matchPredictions.result || {};
-
   const percentages = {
-    home: (home / totalVotes) * 100,
-    draw: (draw / totalVotes) * 100,
-    away: (away / totalVotes) * 100,
+    home: totalVotes ? (home / totalVotes) * 100 : 0,
+    draw: totalVotes ? (draw / totalVotes) * 100 : 0,
+    away: totalVotes ? (away / totalVotes) * 100 : 0,
   };
 
-  // const maxPercentage = Math.max(
-  //   percentages.home,
-  //   percentages.draw,
-  //   percentages.away
-  // );
+  // --- STYLES ---
+ const glassCardStyles = {
+  // Layout & Spacing only
+  p: 3,
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "220px", 
+  
+  // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
+  // These are now inherited automatically from your Global Theme!
+};
+
+  const optionCardStyles = (isSelected) => ({
+    flex: 1,
+    p: 1.5,
+    borderRadius: 2,
+    border: `1px solid ${
+      isSelected ? theme.palette.primary.main : theme.palette.divider
+    }`,
+    bgcolor: isSelected
+      ? `${theme.palette.primary.main}15`
+      : "background.paper",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: storedUsersPredictedResult ? "default" : "pointer",
+    transition: "all 0.2s",
+    minHeight: 110,
+    position: "relative",
+    "&:hover": !storedUsersPredictedResult && {
+      transform: "translateY(-2px)",
+      borderColor: theme.palette.primary.main,
+      boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
+    },
+  });
 
   return (
-    <ContentContainer className="scorePredictionContainer">
-      <h1 className="smallHeading">Who will win?</h1>
-      {!storedUsersPredictedResult ? (
-        <div className="winnerPredictButtonGroup">
-          <Button
-            onClick={() => handleWinningTeamPredict("home")}
-            className="team-button"
+    <Paper sx={glassCardStyles} elevation={0}>
+      {/* Header */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        gap={1}
+        sx={{ mb: 2, opacity: 0.7 }}
+      >
+        <EmojiEvents sx={{ fontSize: "1rem" }} color="primary" />
+        <Typography
+          variant="caption"
+          sx={{
+            fontFamily: "Space Mono",
+            letterSpacing: 1,
+            fontSize: "0.7rem",
+          }}
+        >
+          WHO WILL WIN?
+        </Typography>
+      </Stack>
+
+      {/* 3-Column Layout */}
+      <Stack direction="row" spacing={1.5} sx={{ width: "100%" }}>
+        {/* HOME OPTION */}
+        <Box
+          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
+          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
+          onClick={() =>
+            !storedUsersPredictedResult && handleWinningTeamPredict("home")
+          }
+          sx={optionCardStyles(storedUsersPredictedResult === "home")}
+        >
+          <Avatar
+            src={fixture.teams.home.logo}
+            sx={{ width: 32, height: 32, mb: 1 }}
+          />
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{
+              fontFamily: "Space Mono",
+              fontWeight: "bold",
+              fontSize: "0.7rem",
+              opacity: 0.8,
+            }}
           >
-            <img
-              src={fixture.teams.home.logo}
-              alt={`${fixture.teams.home.name} logo`}
-              className="team-logo-small"
-            />
-            {/* {fixture.teams.home.name} */}
-          </Button>
-          <Button
-            onClick={() => handleWinningTeamPredict("draw")}
-            className="draw-button"
+            HOME
+          </Typography>
+
+          {/* Result Overlay */}
+          {storedUsersPredictedResult && (
+            <ResultPercentage value={percentages.home} />
+          )}
+        </Box>
+
+        {/* DRAW OPTION */}
+        <Box
+          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
+          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
+          onClick={() =>
+            !storedUsersPredictedResult && handleWinningTeamPredict("draw")
+          }
+          sx={optionCardStyles(storedUsersPredictedResult === "draw")}
+        >
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              mb: 1,
+              borderRadius: "50%",
+              border: `2px solid ${theme.palette.divider}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "0.8rem",
+              fontWeight: "bold",
+              fontFamily: "Space Mono",
+            }}
           >
-            Draw
-          </Button>
-          <Button
-            onClick={() => handleWinningTeamPredict("away")}
-            className="team-button"
+            X
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: "Space Mono",
+              fontWeight: "bold",
+              fontSize: "0.7rem",
+              opacity: 0.8,
+            }}
           >
-            <img
-              src={fixture.teams.away.logo}
-              alt={`${fixture.teams.away.name} logo`}
-              className="team-logo-small"
-            />
-            {/* {fixture.teams.away.name} */}
-          </Button>
-        </div>
-      ) : (
-        <div className="predictionResultContainer">
-          <div className="WinnerPredictTeamContainer">
-            <img
-              src={fixture.teams.home.logo}
-              alt={`${fixture.teams.home.name} logo`}
-              className="team-logo-small"
-            />
-            <div className="percentage">
-              <span>
-                {isNaN(percentages?.home) ? 0 : percentages.home.toFixed(0)}%
-              </span>
-            </div>
-          </div>
-          <div className="WinnerPredictTeamContainer draw">
-            <span className="draw-text">X</span>
-            <span className="percentage">
-              {isNaN(percentages?.draw) ? 0 : percentages.draw.toFixed(0)}%
-            </span>
-          </div>
-          <div className="WinnerPredictTeamContainer">
-            <img
-              src={fixture.teams.away.logo}
-              alt={`${fixture.teams.away.name} logo`}
-              className="team-logo-small"
-            />
-            <div className="percentage">
-              <span>
-                {isNaN(percentages?.away) ? 0 : percentages.away.toFixed(0)}%
-              </span>
-            </div>
-          </div>
-        </div>
+            DRAW
+          </Typography>
+
+          {/* Result Overlay */}
+          {storedUsersPredictedResult && (
+            <ResultPercentage value={percentages.draw} />
+          )}
+        </Box>
+
+        {/* AWAY OPTION */}
+        <Box
+          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
+          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
+          onClick={() =>
+            !storedUsersPredictedResult && handleWinningTeamPredict("away")
+          }
+          sx={optionCardStyles(storedUsersPredictedResult === "away")}
+        >
+          <Avatar
+            src={fixture.teams.away.logo}
+            sx={{ width: 32, height: 32, mb: 1 }}
+          />
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{
+              fontFamily: "Space Mono",
+              fontWeight: "bold",
+              fontSize: "0.7rem",
+              opacity: 0.8,
+            }}
+          >
+            AWAY
+          </Typography>
+
+          {/* Result Overlay */}
+          {storedUsersPredictedResult && (
+            <ResultPercentage value={percentages.away} />
+          )}
+        </Box>
+      </Stack>
+
+      {/* Voted Confirmation Text */}
+      {storedUsersPredictedResult && (
+        <Fade in={true}>
+          <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+            <CheckCircle fontSize="small" color="primary" sx={{ width: 16 }} />
+            <Typography
+              variant="caption"
+              color="primary"
+              sx={{ fontFamily: "Space Mono", fontWeight: "bold" }}
+            >
+              YOU PICKED {storedUsersPredictedResult.toUpperCase()}
+            </Typography>
+          </Box>
+        </Fade>
       )}
-    </ContentContainer>
+    </Paper>
   );
 }
+
+// --- SUB-COMPONENT: PERCENTAGE DISPLAY ---
+const ResultPercentage = ({ value }) => {
+  const theme = useTheme();
+  return (
+    <Box
+      component={motion.div}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 10 }}
+      sx={{ mt: 1, textAlign: "center" }}
+    >
+      <Typography
+        variant="h5"
+        sx={{
+          fontFamily: "VT323",
+          lineHeight: 1,
+          color: theme.palette.mode === "dark" ? "#fff" : "#000",
+        }}
+      >
+        {value.toFixed(0)}%
+      </Typography>
+    </Box>
+  );
+};

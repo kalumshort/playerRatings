@@ -1,178 +1,258 @@
-import React from "react";
-import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
+import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import Tooltip from "@mui/material/Tooltip";
-import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Box,
+  Typography,
+  Avatar,
+  Stack,
+  Tooltip,
+  IconButton,
+  useTheme,
+  Zoom,
+  Paper,
+} from "@mui/material";
+import { SportsSoccer, SwapVert, Delete, Rectangle } from "@mui/icons-material";
+
+// --- HOOKS & SELECTORS ---
+import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 import useGroupData from "../../../Hooks/useGroupsData";
-import { Paper } from "@mui/material";
 
 export default function LineupPlayer({
   player,
   fixture,
-  className,
   onDelete,
-  draggable,
-  onDragStart,
-  onDrop,
   percentage,
   showPlayerName = true,
+  // Drag & Drop props passed through
+  ...props
 }) {
+  const theme = useTheme();
   const playerData = useSelector(selectSquadPlayerById(player?.id));
-
   const { activeGroup } = useGroupData();
-
   const groupColour = activeGroup?.accentColor || "#DA291C";
 
-  // Filter: Goals scored by the player
-  const goals = fixture?.events.filter(
-    (event) =>
-      event.player?.id === player.id &&
-      (event.detail === "Normal Goal" ||
-        (event.detail === "Penalty" && event.comments !== "Penalty Shootout"))
-  );
+  // --- EVENT LOGIC (Memoized for performance) ---
+  const events = useMemo(() => {
+    if (!fixture?.events || !player?.id)
+      return { goals: [], cards: [], sub: null };
 
-  // Filter: Assists for goals by the player
-  // const assists = fixture?.events.filter(
-  //   (event) => event.type === "Goal" && event.assist?.id === player.id
-  // );
+    const pId = player.id;
 
-  // Filter: Cards received by the player
-  const cards = fixture?.events.filter(
-    (event) => event.type === "Card" && event.player?.id === player.id
-  );
+    // 1. Goals
+    const goals = fixture.events.filter(
+      (e) =>
+        e.player?.id === pId &&
+        (e.detail === "Normal Goal" ||
+          (e.detail === "Penalty" && e.comments !== "Penalty Shootout"))
+    );
 
-  // Filter: Substitutions involving the player (either as the assisted or substituted player)
-  const substitution = fixture?.events.filter(
-    (event) =>
-      event.type === "subst" &&
-      (event.player?.id === player.id || event.assist?.id === player.id)
-  )[0];
+    // 2. Cards
+    const cards = fixture.events.filter(
+      (e) => e.type === "Card" && e.player?.id === pId
+    );
 
-  const yellowCards = cards?.filter(
-    (card) => card.detail === "Yellow Card"
-  ).length;
-  const redCards = cards?.filter((card) => card.detail === "Red Card").length;
-  // let cardIcon = null;
-  let cardClassName = "";
+    // 3. Subs (In or Out)
+    const sub = fixture.events.find(
+      (e) =>
+        e.type === "subst" && (e.player?.id === pId || e.assist?.id === pId)
+    );
 
-  if (yellowCards === 2 && redCards === 1) {
-    // cardIcon =
-    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
-    cardClassName = "yellow-red-card"; // Example class name
-  } else if (yellowCards === 1 && redCards === 0) {
-    // cardIcon =
-    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
-    cardClassName = "yellow-card"; // Example class name
-  } else if (redCards === 1) {
-    // cardIcon =
-    //   "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
-    cardClassName = "red-card"; // Example class name
-  }
+    return { goals, cards, sub };
+  }, [fixture, player]);
 
-  return player ? (
+  if (!player) return null;
+
+  return (
     <Paper
-      key={player.id}
-      className={`player ${className} ${cardClassName}`}
-      style={{ order: player?.grid?.split(":")[1] }}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDrop={onDrop}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+        width: 70, // Fixed width for consistency
+        transition: "transform 0.2s",
+        cursor: props.draggable ? "grab" : "default",
+        "&:hover": { zIndex: 10, transform: "scale(1.05)" },
+        // Order for flex container (formation rows)
+        order: player?.grid?.split(":")[1],
+      }}
+      {...props} // Spread draggable props
     >
-      <img
-        src={player?.photo || playerData?.photo || missingPlayerImg}
-        className="lineup-player-img"
-        alt={player.name}
-      />
+      {/* 1. PLAYER AVATAR */}
+      <Box sx={{ position: "relative" }}>
+        <Avatar
+          src={player?.photo || playerData?.photo || missingPlayerImg}
+          alt={player.name}
+          sx={{
+            width: 50,
+            height: 50,
+            border: `2px solid ${theme.palette.background.paper}`,
+            boxShadow: `0 4px 8px rgba(0,0,0,0.3)`,
+            bgcolor: "grey.800",
+          }}
+        />
+
+        {/* Delete Button (Overlay) */}
+        {onDelete && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: -5,
+              right: -5,
+              bgcolor: "background.paper",
+              borderRadius: "50%",
+              boxShadow: 1,
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={() => onDelete(player.id)}
+              sx={{ p: 0.5 }}
+            >
+              <Delete fontSize="inherit" color="error" />
+            </IconButton>
+          </Box>
+        )}
+      </Box>
+
+      {/* 2. PLAYER NAME */}
       {showPlayerName && (
-        <span className="lineup-player-name">
+        <Typography
+          variant="caption"
+          noWrap
+          sx={{
+            mt: 0.5,
+            fontFamily: "Space Mono",
+            fontSize: "0.65rem",
+            fontWeight: "bold",
+            textAlign: "center",
+            width: "100%",
+            bgcolor: "rgba(0,0,0,0.6)", // Dark pill background for readability on pitch
+            color: "#fff",
+            borderRadius: 4,
+            px: 1,
+            py: 0.2,
+          }}
+        >
           {playerData?.name || player.name}
-        </span>
+        </Typography>
       )}
-      {/* <span className="lineup-player-number ">
-        {playerData?.number || player.numbner}
-      </span> */}
-      <span className="lineup-player-goals">
-        {goals?.map((goal, index) => (
-          <Tooltip
-            key={index}
-            title={` ${goal.time.elapsed}'${
-              goal.time.extra ? `+${goal.time.extra}` : ""
-            }`}
-            placement="top"
-          >
-            <img
-              key={index}
-              src={
-                goal.detail === "Own Goal"
-                  ? "https://img.icons8.com/?size=100&id=LDze7ETPiEDu&format=png&color=FA5252"
-                  : "https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
-              }
-              alt="Goal Icon"
-              width={18}
-              height={18}
-              style={{ margin: "0px -1px" }}
-            />
-          </Tooltip>
+
+      {/* 3. EVENT INDICATORS (Goals, Cards, Subs) */}
+      <Stack
+        direction="row"
+        spacing={0.5}
+        justifyContent="center"
+        sx={{ mt: 0.5, height: 16 }}
+      >
+        {/* Goals */}
+        {events.goals.map((goal, i) => (
+          <EventIcon key={`g-${i}`} type="goal" data={goal} />
         ))}
-      </span>
-      {/* <span className="lineup-player-cards">
-        {cards?.length > 0 && (
-          <Tooltip
-            title={cards
-              .map(
-                (card) =>
-                  `${card.detail} at ${card.time.elapsed}'${
-                    card.time.extra ? `+${card.time.extra}` : ""
-                  }`
-              )
-              .join(", ")}
-            placement="top"
-          >
-            <img
-              src={cardIcon}
-              alt="Card Icon"
-              height={20}
-              style={{ margin: "0px -1px" }}
-            />
-          </Tooltip>
+
+        {/* Cards */}
+        {events.cards.map((card, i) => (
+          <EventIcon key={`c-${i}`} type="card" data={card} />
+        ))}
+
+        {/* Subs */}
+        {events.sub && (
+          <EventIcon type="sub" data={events.sub} playerId={player.id} />
         )}
-      </span> */}
-      <span className="lineup-player-substitution">
-        {substitution && (
-          <Tooltip
-            title={`Substituted in at ${substitution.time.elapsed}' from ${substitution.player.name} to ${substitution.assist.name}`}
-            placement="top"
+      </Stack>
+
+      {/* 4. VOTING PERCENTAGE BAR */}
+      {percentage !== undefined && (
+        <Box sx={{ width: "100%", mt: 0.5, px: 0.5 }}>
+          <Box
+            sx={{
+              height: 4,
+              width: "100%",
+              bgcolor: "rgba(255,255,255,0.2)",
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
           >
-            <img
-              src="/assets\Sub_Icon.png"
-              height={20}
-              alt={"substitution icon"}
-              style={{ cursor: "pointer" }} // Optional, to indicate it's interactive
+            <Box
+              sx={{
+                width: `${percentage}%`,
+                height: "100%",
+                bgcolor: groupColour,
+              }}
             />
-          </Tooltip>
-        )}
-      </span>
-      {onDelete && (
-        <span className="player-lineup-delete">
-          <DeleteIcon
-            color="error"
-            fontSize="small"
-            onClick={() => onDelete(player.id)}
-          />
-        </span>
-      )}
-      {percentage && (
-        <div className="percentage-bar-container">
-          <div
-            className="percentage-bar"
-            style={{ width: `${percentage}%`, background: groupColour }}
-          ></div>
-          <span className="percentage-text">{percentage.toFixed(0)}%</span>
-        </div>
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: "0.6rem",
+              color: "#fff",
+              display: "block",
+              textAlign: "center",
+              lineHeight: 1,
+              mt: 0.2,
+              textShadow: "0 1px 2px #000",
+            }}
+          >
+            {percentage.toFixed(0)}%
+          </Typography>
+        </Box>
       )}
     </Paper>
-  ) : (
-    <></>
   );
 }
+
+// --- SUB-COMPONENT: EVENT ICONS ---
+const EventIcon = ({ type, data, playerId }) => {
+  let content = null;
+  let tooltip = "";
+
+  if (type === "goal") {
+    tooltip = `Goal: ${data.time.elapsed}'`;
+    content = (
+      <SportsSoccer
+        sx={{
+          fontSize: 14,
+          color: "#4EFF4E",
+          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
+        }}
+      />
+    );
+  } else if (type === "card") {
+    const isYellow = data.detail === "Yellow Card";
+    tooltip = `${data.detail}: ${data.time.elapsed}'`;
+    content = (
+      <Rectangle
+        sx={{
+          fontSize: 14,
+          color: isYellow ? "#FFD700" : "#FF4500",
+          transform: "rotate(90deg)", // Vertical card look
+          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
+        }}
+      />
+    );
+  } else if (type === "sub") {
+    const isOut = data.player?.id === playerId;
+    tooltip = isOut
+      ? `Subbed OFF for ${data.assist.name} (${data.time.elapsed}')`
+      : `Subbed IN for ${data.player.name} (${data.time.elapsed}')`;
+
+    content = (
+      <SwapVert
+        sx={{
+          fontSize: 16,
+          color: isOut ? "#FF4500" : "#4EFF4E", // Red arrow for out, Green for in
+          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
+        }}
+      />
+    );
+  }
+
+  return (
+    <Tooltip title={tooltip} placement="top" TransitionComponent={Zoom}>
+      <Box sx={{ cursor: "help", display: "flex", alignItems: "center" }}>
+        {content}
+      </Box>
+    </Tooltip>
+  );
+};

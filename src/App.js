@@ -121,7 +121,7 @@ function App() {
   // }
 
   return (
-    <ThemeProvider accentColor={activeGroup?.accentColor || "#DA291C"}>
+    <ThemeProvider accentColor={activeGroup?.accentColor || "#7FD880"}>
       <GlobalContainer>
         <Router>
           {user && <UserDataListener userId={user.uid} />}

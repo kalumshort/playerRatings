@@ -1,39 +1,50 @@
 import React, { useState } from "react";
-
-import { Button } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-
+import {
+  Box,
+  Button,
+  IconButton,
+  Typography,
+  Paper,
+  Stack,
+  Avatar,
+  useTheme,
+  Fade,
+} from "@mui/material";
+import { Add, Remove, SportsSoccer, CheckCircle } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
+import { motion } from "framer-motion";
+
+// --- HOOKS & FIREBASE (Kept exactly as is) ---
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import { handlePredictTeamScore } from "../../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
-import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import ScorePredictionResults from "../ScorePredictionResults";
 
 export default function ScorePrediction({ fixture }) {
+  const theme = useTheme();
   const dispatch = useDispatch();
+
+  // Data Selectors
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
-
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
-
-  const [homeTeamScore, setHomeTeamScore] = useState(0);
-  const [homeAwayScore, setAwayTeamScore] = useState(0);
-
   const storedUsersPredictedScore = usersMatchData?.ScorePrediction;
 
+  // Local State
+  const [homeScore, setHomeScore] = useState(0);
+  const [awayScore, setAwayScore] = useState(0);
+
+  // --- HANDLERS ---
   const handleTeamScoreSubmit = async () => {
     await handlePredictTeamScore({
       matchId: fixture.id,
-      score: `${homeTeamScore}-${homeAwayScore}`,
-      homeGoals: homeTeamScore,
-      awayGoals: homeAwayScore,
+      score: `${homeScore}-${awayScore}`,
+      homeGoals: homeScore,
+      awayGoals: awayScore,
       groupId: activeGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
@@ -47,73 +58,226 @@ export default function ScorePrediction({ fixture }) {
       })
     );
   };
-  return storedUsersPredictedScore ? (
-    <ScorePredictionResults
-      fixture={fixture}
-      storedUsersPredictedScore={storedUsersPredictedScore}
-    />
-  ) : (
-    <ContentContainer className="scorePredictionContainer">
-      <h1 className="smallHeading">Match Score</h1>
 
-      <div className="scorePredictionTeams">
-        <img
-          src={fixture.teams.home.logo}
-          className="team-logo-small"
-          alt={fixture.teams.home.name}
-        />
-        <div className="scorePredictButtons">
-          <IconButton
-            onClick={() => setHomeTeamScore((prev) => prev + 1)}
-            className="muiButton"
-            variant="outlined"
-          >
-            <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
-          </IconButton>
-          <span className="predictionScore">{homeTeamScore}</span>
-          <IconButton
-            onClick={() => setHomeTeamScore((prev) => Math.max(0, prev - 1))}
-            className="muiButton"
-            disabled={homeTeamScore === 0}
-            variant="contained"
-          >
-            <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
-          </IconButton>
-        </div>
+  // --- STYLES ---
+  const glassCardStyles = {
+    // Layout & Spacing only
+    p: 3,
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "220px",
 
-        <Button
-          onClick={() => handleTeamScoreSubmit()}
-          style={{
-            padding: "0px",
-            margin: "0px",
+    // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
+    // These are now inherited automatically from your Global Theme!
+  };
+
+  if (storedUsersPredictedScore) {
+    return (
+      <ScorePredictionResults
+        fixture={fixture}
+        storedUsersPredictedScore={storedUsersPredictedScore}
+      />
+    );
+  }
+
+  // --- RENDER: COMPACT PREDICTION UI ---
+  return (
+    <Paper sx={glassCardStyles} elevation={0}>
+      {/* Compact Header */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        gap={1}
+        sx={{ mb: 2, opacity: 0.7 }}
+      >
+        <SportsSoccer sx={{ fontSize: "1rem" }} color="primary" />
+        <Typography
+          variant="caption"
+          sx={{
+            fontFamily: "Space Mono",
+            letterSpacing: 1,
+            fontSize: "0.7rem",
           }}
-          variant="text"
         >
-          Submit
-        </Button>
+          SCORE PREDICTOR
+        </Typography>
+      </Stack>
 
-        <div className="scorePredictButtons">
-          <IconButton
-            onClick={() => setAwayTeamScore((prev) => prev + 1)}
-            className="muiButton"
-          >
-            <ArrowUpwardIcon fontSize="small" className="muiIconSmall" />
-          </IconButton>
-          <span className="predictionScore">{homeAwayScore}</span>
-          <IconButton
-            onClick={() => setAwayTeamScore((prev) => Math.max(0, prev - 1))}
-            className="muiButton"
-            disabled={homeAwayScore === 0}
-          >
-            <ArrowDownwardIcon fontSize="small" className="muiIconSmall" />
-          </IconButton>
-        </div>
-        <img
-          src={fixture.teams.away.logo}
-          className="team-logo-small"
-          alt={fixture.teams.away.name}
+      {/* Main Scoreboard Area */}
+      <Stack
+        direction="row"
+        justifyContent="center"
+        alignItems="center"
+        spacing={1}
+        sx={{ width: "100%", mb: 3 }}
+      >
+        {/* HOME TEAM */}
+        <TeamScoreInputCompact
+          team={fixture.teams.home}
+          score={homeScore}
+          setScore={setHomeScore}
         />
-      </div>
-    </ContentContainer>
+
+        {/* VS Divider (Smaller) */}
+        <Typography
+          variant="h5"
+          sx={{
+            fontFamily: "VT323",
+            color: "text.disabled",
+            px: 1,
+            pb: 4, // Align with numbers
+          }}
+        >
+          :
+        </Typography>
+
+        {/* AWAY TEAM */}
+        <TeamScoreInputCompact
+          team={fixture.teams.away}
+          score={awayScore}
+          setScore={setAwayScore}
+        />
+      </Stack>
+
+      {/* Submit Button (Compact) */}
+      <Fade in={true}>
+        <Button
+          onClick={handleTeamScoreSubmit}
+          variant="contained"
+          size="small" // Smaller button
+          startIcon={<CheckCircle sx={{ fontSize: "1rem !important" }} />}
+          sx={{
+            width: "100%",
+            maxWidth: 220,
+            py: 1, // Less padding
+            borderRadius: 6,
+            fontFamily: "Space Mono",
+            fontWeight: "bold",
+            fontSize: "0.8rem",
+            boxShadow: `0 4px 15px -4px ${theme.palette.primary.main}40`,
+          }}
+        >
+          CONFIRM {homeScore}-{awayScore}
+        </Button>
+      </Fade>
+    </Paper>
   );
 }
+
+// --- SUB-COMPONENT: COMPACT TEAM INPUT ---
+const TeamScoreInputCompact = ({ team, score, setScore }) => {
+  const theme = useTheme();
+  const btnSize = "32px"; // Fixed small size for buttons
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      {/* Avatar & Name Stacked tightly */}
+      <Avatar
+        src={team.logo}
+        alt={team.name}
+        sx={{
+          width: 40, // Smaller avatar
+          height: 40,
+          mb: 0.5,
+          filter:
+            theme.palette.mode === "dark"
+              ? "drop-shadow(0 0 8px rgba(255,255,255,0.1))"
+              : "none",
+        }}
+      />
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{
+          fontFamily: "Space Mono",
+          fontWeight: "bold",
+          fontSize: "0.7rem",
+          maxWidth: "80px",
+          mb: 1.5,
+          opacity: 0.7,
+        }}
+      >
+        {team.code || team.name.substring(0, 3).toUpperCase()}
+      </Typography>
+
+      {/* Horizontal Score Controls */}
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        sx={{
+          bgcolor: theme.palette.background.paper,
+          p: 0.5,
+          borderRadius: 3,
+          border: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        {/* Minus Button */}
+        <IconButton
+          onClick={() => setScore((prev) => Math.max(0, prev - 1))}
+          disabled={score === 0}
+          sx={{
+            width: btnSize,
+            height: btnSize,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            opacity: score === 0 ? 0.3 : 1,
+            p: 0.5,
+          }}
+        >
+          <Remove fontSize="small" />
+        </IconButton>
+
+        {/* Digital Number Display (Smaller) */}
+        <Box
+          component={motion.div}
+          key={score}
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          sx={{
+            fontFamily: "VT323",
+            fontSize: "2.5rem", // Reduced from 3.5rem
+            lineHeight: 1,
+            minWidth: "40px",
+            textAlign: "center",
+            color: score > 0 ? "text.primary" : "text.disabled",
+            textShadow:
+              score > 0 && theme.palette.mode === "dark"
+                ? `0 0 15px ${theme.palette.primary.main}60`
+                : "none",
+          }}
+        >
+          {score}
+        </Box>
+
+        {/* Plus Button */}
+        <IconButton
+          onClick={() => setScore((prev) => prev + 1)}
+          sx={{
+            width: btnSize,
+            height: btnSize,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            p: 0.5,
+            "&:hover": {
+              bgcolor: theme.palette.primary.main,
+              color: "#000",
+              borderColor: "transparent",
+            },
+          }}
+        >
+          <Add fontSize="small" />
+        </IconButton>
+      </Stack>
+    </Box>
+  );
+};

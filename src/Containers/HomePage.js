@@ -1,319 +1,320 @@
-import React, { useEffect, useRef } from "react";
-// import { Link } from "react-router-dom";
-import "./HomePage.css"; // Make sure to import the new CSS
+import React from "react";
 import {
   Box,
-  // Button,
-  // Card,
-  // CardContent,
   Container,
+  Typography,
+  Button,
   Grid,
   Paper,
   Stack,
-  Typography,
+  useTheme,
+  Chip,
 } from "@mui/material";
+import {
+  TrendingUp,
+  Poll,
+  Groups,
+  ArrowForward,
+  Bolt,
+} from "@mui/icons-material";
+import LivePulseGraph from "./HomePageComponants/LivePulseGraph";
 
-// import GroupsIcon from "@mui/icons-material/Groups";
-// import HowToVoteIcon from "@mui/icons-material/HowToVote";
-// import BarChartIcon from "@mui/icons-material/BarChart";
-import Login from "../Components/Auth/Login";
+// We import your custom hook if you want to add a toggle button,
+// otherwise we just need the standard MUI hook for palette access.
+// import { useTheme as useCustomTheme } from './YourThemePath';
 
-export default function HomePage() {
-  const videoRef1 = useRef(null);
-  const videoRef2 = useRef(null);
-  const videoRef3 = useRef(null);
-  const videoRef4 = useRef(null);
-
-  const videos = [
-    {
-      src: "https://firebasestorage.googleapis.com/v0/b/player-ratings-ef06c.firebasestorage.app/o/site-assets%2Fscreenshot-videos%2Fpredict-lineup-capture.mp4?alt=media&token=955091b8-d859-438c-8f4d-7d4eb3cc09dc",
-      alt: "Predict Lineup",
-    },
-    {
-      src: "https://firebasestorage.googleapis.com/v0/b/player-ratings-ef06c.firebasestorage.app/o/site-assets%2Fscreenshot-videos%2Fplayer-ratings-capture.mp4?alt=media&token=770d3346-af9e-44d2-abb4-02f4a4d522b7",
-      alt: "Player Ratings",
-    },
-    {
-      src: "https://firebasestorage.googleapis.com/v0/b/player-ratings-ef06c.firebasestorage.app/o/site-assets%2Fscreenshot-videos%2FUntitled.mp4?alt=media&token=d60270d0-fd85-452a-961f-f50c7552edec",
-      alt: "Players Season Stats",
-    },
-    {
-      src: "https://firebasestorage.googleapis.com/v0/b/player-ratings-ef06c.firebasestorage.app/o/site-assets%2Fscreenshot-videos%2Fpredictions-capture.mp4?alt=media&token=f8fb57fe-f9c9-4aa6-9c56-25383a92d143",
-      alt: "Predictions",
-    },
-  ];
-  useEffect(() => {
-    const videos = [videoRef1, videoRef2, videoRef3, videoRef4];
-
-    const handleCanPlayThrough = (videoRef) => {
-      if (videoRef.current) {
-        videoRef.current.muted = true; // Ensure the video is muted for autoplay
-        videoRef.current.play().catch((error) => {
-          console.error("Autoplay failed:", error);
-        });
-      }
-    };
-
-    videos.forEach((videoRef) => {
-      if (videoRef.current) {
-        videoRef.current.addEventListener("canplaythrough", () =>
-          handleCanPlayThrough(videoRef)
-        );
-      }
-    });
-
-    // Cleanup the event listeners
-    return () => {
-      videos.forEach((videoRef) => {
-        if (videoRef.current) {
-          videoRef.current.removeEventListener(
-            "canplaythrough",
-            handleCanPlayThrough
-          );
-        }
-      });
-    };
-  }, []);
+const HomePage = () => {
+  const theme = useTheme(); // Access the active theme variables (colors, spacing)
 
   return (
-    <div className="home-page">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default", // Uses your "Rich black-gray" or "Soft clean gray-blue"
+        color: "text.primary",
+        transition: "background-color 0.3s ease",
+      }}
+    >
+      {/* --- HERO SECTION --- */}
+      {/* We use the gradient defined in your theme object */}
       <Box
-        component="section"
         sx={{
-          pt: { xs: 14, md: 18 },
+          pt: { xs: 12, md: 20 },
           pb: { xs: 8, md: 12 },
+          background: theme.palette.background.gradient,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
+          <Stack spacing={4} alignItems="center" textAlign="center">
+            {/* Pill Badge */}
+            <Chip
+              icon={<Bolt />}
+              label="Live Fan Intelligence"
+              color="primary"
+              variant="outlined"
+              sx={{
+                fontFamily: "Space Mono",
+                fontWeight: "bold",
+                borderWidth: 2,
+              }}
+            />
+
+            {/* Main Heading (Triggers VT323 Font) */}
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: "3.5rem", md: "6rem" },
+                textShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 0 20px rgba(255,255,255,0.1)"
+                    : "none",
+              }}
+            >
+              YOUR TEAM. <br />
+              YOUR{" "}
+              <Box component="span" sx={{ color: "primary.main" }}>
+                VOICE.
+              </Box>
+            </Typography>
+
+            {/* Subtitle (Triggers Space Mono) */}
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{ maxWidth: "700px", lineHeight: 1.6 }}
+            >
+              The first app that quantifies the passion of the stands. Predict
+              lineups, rate players, and track the{" "}
+              <strong>Live Fan Pulse</strong> in real-time.
+            </Typography>
+
+            {/* CTA Buttons */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={3}
+              sx={{ mt: 4, width: { xs: "100%", sm: "auto" } }}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                endIcon={<ArrowForward />}
+                fullWidth
+              >
+                Find My Club
+              </Button>
+              <Button variant="outlined" color="inherit" size="large" fullWidth>
+                See Live Demo
+              </Button>
+            </Stack>
+          </Stack>
+        </Container>
+
+        {/* Abstract Background Element (Matches your accent color) */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "60vw",
+            height: "60vw",
+            bgcolor: "primary.main",
+            opacity: 0.05,
+            filter: "blur(100px)",
+            borderRadius: "50%",
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        />
+      </Box>
+
+      {/* --- FEATURES GRID --- */}
+      <Container maxWidth="lg" sx={{ py: 10 }}>
+        <Grid container spacing={4}>
+          {/* Card 1: Pre-Match */}
+          <Grid item xs={12} md={4}>
+            <FeatureCard
+              icon={<Groups fontSize="inherit" />}
+              title="The Manager"
+              subtitle="Pre-Match"
+              desc="Build your predicted Starting XI. Compare your tactical choices with the community consensus before the team sheet drops."
+            />
+          </Grid>
+
+          {/* Card 2: In-Play (Highlighted) */}
+          <Grid item xs={12} md={4}>
+            <FeatureCard
+              icon={<TrendingUp fontSize="inherit" />}
+              title="The Atmosphere"
+              subtitle="In-Play"
+              desc="Log your mood instantly. Watch the 'Fan Pulse' graph shift from Optimism to Despair in real-time as the match unfolds."
+              highlight
+            />
+          </Grid>
+
+          {/* Card 3: Post-Match */}
+          <Grid item xs={12} md={4}>
+            <FeatureCard
+              icon={<Poll fontSize="inherit" />}
+              title="The Verdict"
+              subtitle="Post-Match"
+              desc="Rate every player out of 10. Decide who was Man of the Match and who went missing when it mattered most."
+            />
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* --- DEEP DIVE SECTION --- */}
+      <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, py: 10 }}>
         <Container maxWidth="lg">
-          <Grid container spacing={6} alignItems="center">
-            <Grid item xs={12} md={7}>
+          <Grid container spacing={8} alignItems="center">
+            {/* Text Side */}
+            <Grid item xs={12} md={6}>
               <Typography
                 variant="overline"
+                color="primary"
+                sx={{ fontWeight: "bold", letterSpacing: 2 }}
+              >
+                Data Visualization
+              </Typography>
+              <Typography variant="h2" gutterBottom sx={{ mt: 1 }}>
+                FEEL THE PULSE
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                Football isn't just about stats; it's about feelings. We
+                aggregate thousands of live reactions to generate a real-time
+                "Mood Graph" for your club.
+              </Typography>
+
+              <Stack spacing={2} sx={{ mt: 4 }}>
+                <ListItem text="Track confidence levels minute-by-minute." />
+                <ListItem text="Compare your mood vs the global fanbase." />
+                <ListItem text="React to VAR decisions instantly." />
+              </Stack>
+            </Grid>
+
+            {/* Visual Side (Uses your Glass Paper) */}
+            <Grid item xs={12} md={6}>
+              <Paper
                 sx={{
-                  letterSpacing: 1.5,
-                  fontWeight: 700,
+                  height: 350, // Slightly taller to fit the graph nicely
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  // We remove the padding here so the graph touches the edges
+                  p: 0,
+                  border: `1px solid ${theme.palette.divider}`,
+                  overflow: "hidden",
                 }}
               >
-                Premier League
-              </Typography>
-              <Typography
-                variant="h2"
-                sx={{ fontWeight: 900, lineHeight: 1.1, mt: 1 }}
-              >
-                Your team. Your votes. Your voice.
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{ mt: 2, color: "text.secondary", maxWidth: 600 }}
-              >
-                Predict. Rate. React. Do it all with your club’s supporters —
-                and watch the whole fanbase’s decisions come together as one
-                powerful consensus.
-              </Typography>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                sx={{ mt: 4 }}
-              ></Stack>
-            </Grid>
-            <Grid item xs={12} md={5}>
-              <Paper elevation={3} sx={{ padding: 3 }}>
-                <Login />
+                {/* IMPORT THE COMPONENT HERE */}
+                <LivePulseGraph />
               </Paper>
             </Grid>
           </Grid>
         </Container>
       </Box>
-      {/* <HowItWorks /> */}
-      <section className="video-features">
-        <div className="video-features-content">
-          {/* <h2 className="section-title">Features</h2> */}
 
-          <div className="video-item">
-            <div className="video-info">
-              <div className="video-text">
-                <h3 className="video-title">Predict Your Lineup</h3>
-                <p className="video-description">
-                  Pick your preferred lineup, and see the percent each player
-                  was chosen.
-                </p>
-              </div>
-
-              <video
-                ref={videoRef1}
-                autoplay
-                loop
-                muted
-                playsInline
-                className="video-player-capture"
-                preload="auto"
-              >
-                <source src={videos[0].src} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-
-          <div className="video-item">
-            <div className="video-info-reverse">
-              <div className="video-text-reverse">
-                <h3 className="video-title">Player Ratings</h3>
-                <p className="video-description">
-                  Rate players after each match and see how your ratings compare
-                  to the community's.
-                </p>
-              </div>
-
-              <video
-                ref={videoRef2}
-                autoplay
-                loop
-                muted
-                playsInline
-                className="video-player-capture"
-                preload="auto"
-              >
-                <source src={videos[1].src} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-
-          <div className="video-item">
-            <div className="video-info">
-              <div className="video-text">
-                <h3 className="video-title">Season Stats</h3>
-                <p className="video-description">
-                  Look at all the players ratings across the whole season.
-                </p>
-              </div>
-
-              <video
-                ref={videoRef3}
-                autoplay
-                loop
-                muted
-                playsInline
-                className="video-player-capture"
-                preload="auto"
-              >
-                <source src={videos[2].src} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-
-          <div className="video-item">
-            <div className="video-info-reverse">
-              <div className="video-text-reverse">
-                <h3 className="video-title">Predictions</h3>
-                <p className="video-description">
-                  Predict the outcome of matches and see how your predictions
-                  stack up against the community's.
-                </p>
-              </div>
-
-              <video
-                ref={videoRef4}
-                autoplay
-                loop
-                muted
-                playsInline
-                className="video-player-capture"
-                preload="auto"
-              >
-                <source src={videos[3].src} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* <section className="features">
-        <div className="features-content">
-          <h2 className="section-title">Why Create a Community on 11Votes?</h2>
-          <div className="feature-item">
-            <div className="feature-icon">⚽</div>
-            <h3 className="feature-title">Fan-Powered Voting</h3>
-            <p className="feature-description">
-              Empower your community to vote on team lineups, match predictions,
-              and player ratings. Every fan's voice counts!
-            </p>
-          </div>
-          <div className="feature-item">
-            <div className="feature-icon">💬</div>
-            <h3 className="feature-title">
-              Build a Thriving Football Community
-            </h3>
-            <p className="feature-description">
-              Create a space for passionate fans to discuss, predict, and share
-              their insights about football in real-time.
-            </p>
-          </div>
-          <div className="feature-item">
-            <div className="feature-icon">📊</div>
-            <h3 className="feature-title">Real-Time Match Insights</h3>
-            <p className="feature-description">
-              After every match, gain instant statistics, analysis, and results
-              from your community’s votes to stay in the know.
-            </p>
-          </div>
-        </div>
-      </section> */}
-    </div>
+      {/* --- FOOTER SIMPLIFIED --- */}
+      <Box
+        sx={{
+          borderTop: `1px solid ${theme.palette.divider}`,
+          py: 6,
+          textAlign: "center",
+        }}
+      >
+        <Typography variant="h4" sx={{ mb: 1 }}>
+          11VOTES
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          © {new Date().getFullYear()} BUILT FOR THE FANS
+        </Typography>
+      </Box>
+    </Box>
   );
-}
-// function HowItWorks() {
-//   const steps = [
-//     {
-//       title: "Join your club",
-//       desc: "Pick your Premier League team and become part of its fan group community.",
-//       icon: <GroupsIcon fontSize="large" />,
-//     },
-//     {
-//       title: "Make your picks",
-//       desc: "Predict scores, rate players, and share your matchday reactions.",
-//       icon: <HowToVoteIcon fontSize="large" />,
-//     },
-//     {
-//       title: "See the consensus",
-//       desc: "Watch live averages of ratings, predictions, and mood from fans like you.",
-//       icon: <BarChartIcon fontSize="large" />,
-//     },
-//   ];
+};
 
-//   return (
-//     <Box id="how-it-works" component="section" sx={{ py: { xs: 10, md: 14 } }}>
-//       <Container maxWidth="lg">
-//         <Typography
-//           variant="h3"
-//           sx={{ fontWeight: 900, textAlign: "center", mb: 6 }}
-//         >
-//           How It Works
-//         </Typography>
-//         <Grid container spacing={4}>
-//           {steps.map((step, index) => (
-//             <Grid item xs={12} md={4} key={index}>
-//               <Card sx={{ height: "100%", textAlign: "center", p: 3 }}>
-//                 <CardContent>
-//                   <Box
-//                     sx={{ display: "flex", justifyContent: "center", mb: 2 }}
-//                   >
-//                     {step.icon}
-//                   </Box>
-//                   <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-//                     {step.title}
-//                   </Typography>
-//                   <Typography variant="body1" color="text.secondary">
-//                     {step.desc}
-//                   </Typography>
-//                 </CardContent>
-//               </Card>
-//             </Grid>
-//           ))}
-//         </Grid>
-//       </Container>
-//     </Box>
-//   );
-// }
+// --- SUB-COMPONENTS ---
+
+// A reusable card that strictly follows your ThemeProvider's overrides
+const FeatureCard = ({ icon, title, subtitle, desc, highlight }) => {
+  const theme = useTheme();
+
+  return (
+    <Paper
+      sx={{
+        p: 4,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        // If highlighted, we add a subtle glow using the primary color
+        ...(highlight && {
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 0 20px -5px ${theme.palette.primary.main}40`,
+        }),
+      }}
+    >
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="start"
+        sx={{ mb: 3 }}
+      >
+        <Box
+          sx={{
+            color: highlight ? "primary.main" : "text.primary",
+            fontSize: 40,
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            border: `1px solid ${theme.palette.divider}`,
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+            fontFamily: "Space Mono",
+            textTransform: "uppercase",
+          }}
+        >
+          {subtitle}
+        </Typography>
+      </Stack>
+
+      <Typography variant="h4" gutterBottom>
+        {title}
+      </Typography>
+
+      <Typography variant="body1" color="text.secondary" sx={{ flexGrow: 1 }}>
+        {desc}
+      </Typography>
+
+      <Box sx={{ mt: 4 }}>
+        <Button
+          variant={highlight ? "contained" : "text"}
+          color={highlight ? "primary" : "inherit"}
+          size="small"
+          endIcon={<ArrowForward />}
+        >
+          Try It
+        </Button>
+      </Box>
+    </Paper>
+  );
+};
+
+const ListItem = ({ text }) => (
+  <Stack direction="row" alignItems="center" spacing={2}>
+    <Box
+      sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "primary.main" }}
+    />
+    <Typography variant="body1">{text}</Typography>
+  </Stack>
+);
+
+export default HomePage;

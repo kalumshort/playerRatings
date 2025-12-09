@@ -35,7 +35,11 @@ export default function Lineup({ fixture, showRating }) {
               }, [])
               .reverse() // Reverse the order of rows
               .map((rowPlayers, rowIndex) => (
-                <div key={rowIndex} className="row">
+                <div
+                  key={rowIndex}
+                  className="row"
+                  style={{ gap: "15px", marginBottom: "5px" }}
+                >
                   {rowPlayers.map((player) => (
                     <LineupPlayer
                       key={player.id} // Unique key based on player ID
@@ -52,7 +56,7 @@ export default function Lineup({ fixture, showRating }) {
           >
             Substitutes
           </h2>
-          <div className="subs-container">
+          <div className="subs-container" style={{ gap: "10px" }}>
             {subs.map((substitute) => (
               <LineupPlayer
                 key={substitute.player.id} // Add unique key based on player ID

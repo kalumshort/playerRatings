@@ -20,7 +20,6 @@ export default function LineupAndPlayerRatings({ fixture }) {
           variant="fullWidth"
           scrollButtons="auto"
           aria-label="Player Position Tabs"
-          className="DraggableSquadTabs"
         >
           <Tab label="Lineup" value="lineup" />
           <Tab label="Ratings" value="ratings" />
