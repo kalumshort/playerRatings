@@ -4,12 +4,10 @@ import {
   Box,
   Typography,
   Avatar,
-  Stack,
   Tooltip,
   IconButton,
   useTheme,
   Zoom,
-  Paper,
 } from "@mui/material";
 import { SportsSoccer, SwapVert, Delete, Rectangle } from "@mui/icons-material";
 
@@ -24,7 +22,6 @@ export default function LineupPlayer({
   onDelete,
   percentage,
   showPlayerName = true,
-  // Drag & Drop props passed through
   ...props
 }) {
   const theme = useTheme();
@@ -32,91 +29,107 @@ export default function LineupPlayer({
   const { activeGroup } = useGroupData();
   const groupColour = activeGroup?.accentColor || "#DA291C";
 
-  // --- EVENT LOGIC (Memoized for performance) ---
+  // --- EVENT LOGIC ---
   const events = useMemo(() => {
     if (!fixture?.events || !player?.id)
       return { goals: [], cards: [], sub: null };
-
     const pId = player.id;
 
-    // 1. Goals
-    const goals = fixture.events.filter(
-      (e) =>
-        e.player?.id === pId &&
-        (e.detail === "Normal Goal" ||
-          (e.detail === "Penalty" && e.comments !== "Penalty Shootout"))
-    );
-
-    // 2. Cards
-    const cards = fixture.events.filter(
-      (e) => e.type === "Card" && e.player?.id === pId
-    );
-
-    // 3. Subs (In or Out)
-    const sub = fixture.events.find(
-      (e) =>
-        e.type === "subst" && (e.player?.id === pId || e.assist?.id === pId)
-    );
-
-    return { goals, cards, sub };
+    return {
+      goals: fixture.events.filter(
+        (e) =>
+          e.player?.id === pId &&
+          (e.detail === "Normal Goal" ||
+            (e.detail === "Penalty" && e.comments !== "Penalty Shootout"))
+      ),
+      cards: fixture.events.filter(
+        (e) => e.type === "Card" && e.player?.id === pId
+      ),
+      sub: fixture.events.find(
+        (e) =>
+          e.type === "subst" && (e.player?.id === pId || e.assist?.id === pId)
+      ),
+    };
   }, [fixture, player]);
 
   if (!player) return null;
 
   return (
-    <Paper
+    <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         position: "relative",
-        width: 70, // Fixed width for consistency
-        transition: "transform 0.2s",
+        width: 70,
         cursor: props.draggable ? "grab" : "default",
-        "&:hover": { zIndex: 10, transform: "scale(1.05)" },
-        // Order for flex container (formation rows)
+        transition: "transform 0.2s",
+        "&:hover": { zIndex: 10, transform: "scale(1.1)" },
         order: player?.grid?.split(":")[1],
       }}
-      {...props} // Spread draggable props
+      {...props}
     >
-      {/* 1. PLAYER AVATAR */}
-      <Box sx={{ position: "relative" }}>
+      {/* --- AVATAR CONTAINER WITH ABSOLUTE BADGES --- */}
+      <Box sx={{ position: "relative", width: 50, height: 50 }}>
         <Avatar
           src={player?.photo || playerData?.photo || missingPlayerImg}
           alt={player.name}
           sx={{
-            width: 50,
-            height: 50,
+            width: "100%",
+            height: "100%",
             border: `2px solid ${theme.palette.background.paper}`,
-            boxShadow: `0 4px 8px rgba(0,0,0,0.3)`,
+            boxShadow: `0 4px 8px rgba(0,0,0,0.4)`,
             bgcolor: "grey.800",
           }}
         />
 
-        {/* Delete Button (Overlay) */}
+        {/* 1. GOALS (Top Right) */}
+        {events.goals.length > 0 && (
+          <Box sx={{ position: "absolute", top: -5, right: -5, zIndex: 2 }}>
+            <EventIcon
+              type="goal"
+              count={events.goals.length}
+              data={events.goals}
+            />
+          </Box>
+        )}
+
+        {/* 2. CARDS (Top Left) */}
+        {events.cards.length > 0 && (
+          <Box sx={{ position: "absolute", top: -5, left: -5, zIndex: 2 }}>
+            {events.cards.map((card, i) => (
+              <EventIcon key={i} type="card" data={card} />
+            ))}
+          </Box>
+        )}
+
+        {/* 3. SUBS (Bottom Right) */}
+        {events.sub && (
+          <Box sx={{ position: "absolute", bottom: -2, right: -2, zIndex: 2 }}>
+            <EventIcon type="sub" data={events.sub} playerId={player.id} />
+          </Box>
+        )}
+
+        {/* 4. DELETE (Bottom Left - Only if dragging allowed) */}
         {onDelete && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: -5,
-              right: -5,
-              bgcolor: "background.paper",
-              borderRadius: "50%",
-              boxShadow: 1,
-            }}
-          >
+          <Box sx={{ position: "absolute", bottom: -5, left: -5, zIndex: 3 }}>
             <IconButton
               size="small"
               onClick={() => onDelete(player.id)}
-              sx={{ p: 0.5 }}
+              sx={{
+                bgcolor: "background.paper",
+                p: 0.2,
+                boxShadow: 2,
+                "&:hover": { bgcolor: "error.main", color: "white" },
+              }}
             >
-              <Delete fontSize="inherit" color="error" />
+              <Delete sx={{ fontSize: 12 }} color="error" />
             </IconButton>
           </Box>
         )}
       </Box>
 
-      {/* 2. PLAYER NAME */}
+      {/* --- PLAYER NAME --- */}
       {showPlayerName && (
         <Typography
           variant="caption"
@@ -124,54 +137,32 @@ export default function LineupPlayer({
           sx={{
             mt: 0.5,
             fontFamily: "Space Mono",
-            fontSize: "0.65rem",
+            fontSize: "0.6rem",
             fontWeight: "bold",
             textAlign: "center",
             width: "100%",
-            bgcolor: "rgba(0,0,0,0.6)", // Dark pill background for readability on pitch
+            maxWidth: 68,
+            bgcolor: "rgba(0,0,0,0.6)",
             color: "#fff",
             borderRadius: 4,
-            px: 1,
-            py: 0.2,
+            px: 0.5,
+            py: 0.1,
+            lineHeight: 1.1,
           }}
         >
           {playerData?.name || player.name}
         </Typography>
       )}
 
-      {/* 3. EVENT INDICATORS (Goals, Cards, Subs) */}
-      <Stack
-        direction="row"
-        spacing={0.5}
-        justifyContent="center"
-        sx={{ mt: 0.5, height: 16 }}
-      >
-        {/* Goals */}
-        {events.goals.map((goal, i) => (
-          <EventIcon key={`g-${i}`} type="goal" data={goal} />
-        ))}
-
-        {/* Cards */}
-        {events.cards.map((card, i) => (
-          <EventIcon key={`c-${i}`} type="card" data={card} />
-        ))}
-
-        {/* Subs */}
-        {events.sub && (
-          <EventIcon type="sub" data={events.sub} playerId={player.id} />
-        )}
-      </Stack>
-
-      {/* 4. VOTING PERCENTAGE BAR */}
+      {/* --- PERCENTAGE BAR --- */}
       {percentage !== undefined && (
-        <Box sx={{ width: "100%", mt: 0.5, px: 0.5 }}>
+        <Box sx={{ width: "100%", mt: 0.2, px: 1 }}>
           <Box
             sx={{
-              height: 4,
+              height: 3,
               width: "100%",
               bgcolor: "rgba(255,255,255,0.2)",
-              borderRadius: 2,
-              overflow: "hidden",
+              borderRadius: 1,
             }}
           >
             <Box
@@ -179,54 +170,74 @@ export default function LineupPlayer({
                 width: `${percentage}%`,
                 height: "100%",
                 bgcolor: groupColour,
+                borderRadius: 1,
               }}
             />
           </Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: "0.6rem",
-              color: "#fff",
-              display: "block",
-              textAlign: "center",
-              lineHeight: 1,
-              mt: 0.2,
-              textShadow: "0 1px 2px #000",
-            }}
-          >
-            {percentage.toFixed(0)}%
-          </Typography>
         </Box>
       )}
-    </Paper>
+    </Box>
   );
 }
 
-// --- SUB-COMPONENT: EVENT ICONS ---
-const EventIcon = ({ type, data, playerId }) => {
+// --- SUB-COMPONENT: EVENT BADGES ---
+const EventIcon = ({ type, data, playerId, count }) => {
   let content = null;
   let tooltip = "";
 
+  const badgeStyle = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 16,
+    height: 16,
+    borderRadius: "50%",
+    bgcolor: "background.paper",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+  };
+
   if (type === "goal") {
-    tooltip = `Goal: ${data.time.elapsed}'`;
+    tooltip = `${count} Goal${count > 1 ? "s" : ""}`;
     content = (
-      <SportsSoccer
-        sx={{
-          fontSize: 14,
-          color: "#4EFF4E",
-          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
-        }}
-      />
+      <Box sx={{ ...badgeStyle, bgcolor: "transparent", boxShadow: "none" }}>
+        <SportsSoccer
+          sx={{
+            fontSize: 16,
+            color: "#4EFF4E",
+            filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))",
+          }}
+        />
+        {count > 1 && (
+          <Typography
+            sx={{
+              position: "absolute",
+              bottom: -4,
+              right: -4,
+              fontSize: "0.6rem",
+              fontWeight: "bold",
+              color: "white",
+              bgcolor: "black",
+              borderRadius: "50%",
+              width: 12,
+              height: 12,
+              textAlign: "center",
+              lineHeight: "12px",
+            }}
+          >
+            {count}
+          </Typography>
+        )}
+      </Box>
     );
   } else if (type === "card") {
     const isYellow = data.detail === "Yellow Card";
-    tooltip = `${data.detail}: ${data.time.elapsed}'`;
+    tooltip = `${data.detail} (${data.time.elapsed}')`;
     content = (
       <Rectangle
         sx={{
-          fontSize: 14,
+          fontSize: 12,
           color: isYellow ? "#FFD700" : "#FF4500",
-          transform: "rotate(90deg)", // Vertical card look
+          transform: "rotate(90deg)",
           filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
         }}
       />
@@ -234,25 +245,18 @@ const EventIcon = ({ type, data, playerId }) => {
   } else if (type === "sub") {
     const isOut = data.player?.id === playerId;
     tooltip = isOut
-      ? `Subbed OFF for ${data.assist.name} (${data.time.elapsed}')`
-      : `Subbed IN for ${data.player.name} (${data.time.elapsed}')`;
-
+      ? `Subbed OFF (${data.time.elapsed}')`
+      : `Subbed IN (${data.time.elapsed}')`;
     content = (
-      <SwapVert
-        sx={{
-          fontSize: 16,
-          color: isOut ? "#FF4500" : "#4EFF4E", // Red arrow for out, Green for in
-          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
-        }}
-      />
+      <Box sx={{ ...badgeStyle }}>
+        <SwapVert sx={{ fontSize: 14, color: isOut ? "#FF4500" : "#4EFF4E" }} />
+      </Box>
     );
   }
 
   return (
-    <Tooltip title={tooltip} placement="top" TransitionComponent={Zoom}>
-      <Box sx={{ cursor: "help", display: "flex", alignItems: "center" }}>
-        {content}
-      </Box>
+    <Tooltip title={tooltip} placement="top" TransitionComponent={Zoom} arrow>
+      <Box sx={{ cursor: "help" }}>{content}</Box>
     </Tooltip>
   );
 };
