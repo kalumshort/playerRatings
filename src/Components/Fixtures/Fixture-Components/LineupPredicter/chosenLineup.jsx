@@ -205,8 +205,6 @@ export default function ChosenLineup({
             <IconButton
               onClick={handleSaveImage}
               sx={{
-                bgcolor: "rgba(255,255,255,0.2)",
-                color: "white",
                 backdropFilter: "blur(4px)",
                 "&:hover": { bgcolor: "primary.main", color: "black" },
               }}

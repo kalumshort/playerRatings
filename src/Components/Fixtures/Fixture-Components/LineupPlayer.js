@@ -137,14 +137,12 @@ export default function LineupPlayer({
           sx={{
             mt: 0.5,
             fontFamily: "Space Mono",
-            fontSize: "0.6rem",
+
             fontWeight: "bold",
             textAlign: "center",
             width: "100%",
             maxWidth: 68,
-            bgcolor: "rgba(0,0,0,0.6)",
-            color: "#fff",
-            borderRadius: 4,
+
             px: 0.5,
             py: 0.1,
             lineHeight: 1.1,
