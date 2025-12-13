@@ -246,6 +246,9 @@
 }
 
 @media (max-width: 450px) {
+  .CommunityTeamStats {
+    margin-top: 20px;
+  }
   .lineupPredicClear {
     bottom: 15px !important;
     left: 30px !important;

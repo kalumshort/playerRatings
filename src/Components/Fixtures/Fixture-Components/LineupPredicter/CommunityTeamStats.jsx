@@ -46,7 +46,16 @@ export function CommunityTeamStats({ fixture }) {
   if (stats.length === 0) return null;
 
   return (
-    <Paper sx={{ p: 0, mt: 4, overflow: "hidden" }} elevation={0}>
+    <Paper
+      elevation={0}
+      sx={{
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        border: `1px solid ${theme.palette.divider}`,
+      }}
+      className="CommunityTeamStats"
+    >
       {/* HEADER */}
       <Box
         sx={{

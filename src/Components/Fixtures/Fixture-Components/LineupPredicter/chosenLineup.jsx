@@ -6,6 +6,7 @@ import {
   Stack,
   useTheme,
   Tooltip,
+  Paper,
 } from "@mui/material";
 import { Download as DownloadIcon, SportsSoccer } from "@mui/icons-material";
 import html2canvas from "html2canvas";
@@ -80,22 +81,24 @@ export default function ChosenLineup({
   const activeLayout = FORMATIONS[formation] || FORMATIONS["4-3-3"];
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mb: 3 }}>
+    <Paper
+      sx={{
+        maxWidth: 600,
+        mx: "auto",
+      }}
+    >
       {/* --- THE PITCH CONTAINER (Ref for Screenshot) --- */}
       <Box
         ref={lineupRef}
         sx={{
           position: "relative",
           // Dark Green Gradient
-
-          border: `2px solid ${theme.palette.divider}`,
           overflow: "hidden",
           boxShadow: `0 15px 40px -10px ${theme.palette.common.black}80`,
           aspectRatio: "0.85", // Matches DroppablePitch
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
-          py: 2,
         }}
       >
         {/* WATERMARK LOGO */}
@@ -118,7 +121,7 @@ export default function ChosenLineup({
           direction="row"
           alignItems="center"
           spacing={1}
-          sx={{ position: "absolute", top: 20, left: 20, opacity: 0.9 }}
+          sx={{ position: "absolute", bottom: 15, right: 15, opacity: 10 }}
         >
           <SportsSoccer sx={{ fontSize: 18 }} />
           <Typography
@@ -179,16 +182,17 @@ export default function ChosenLineup({
           sx={{
             position: "absolute",
             bottom: 10,
+            left: 10,
             width: "100%",
-            textAlign: "center",
-            opacity: 0.6,
+            textAlign: "left",
+            opacity: 1,
           }}
         >
           <Typography
             variant="caption"
             sx={{
               fontFamily: "VT323",
-              fontSize: "1.2rem",
+              fontSize: "1rem",
               letterSpacing: 2,
             }}
           >
@@ -199,7 +203,7 @@ export default function ChosenLineup({
         {/* SAVE BUTTON (Hidden from screenshot via data-nosnap) */}
         <Box
           data-nosnap="true"
-          sx={{ position: "absolute", bottom: 15, right: 15, zIndex: 10 }}
+          sx={{ position: "absolute", bottom: 55, right: 15, zIndex: 10 }}
         >
           <Tooltip title="Download Image">
             <IconButton
@@ -214,7 +218,7 @@ export default function ChosenLineup({
           </Tooltip>
         </Box>
       </Box>
-    </Box>
+    </Paper>
   );
 }
 
