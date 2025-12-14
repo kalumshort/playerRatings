@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useIsMobile } from "../Hooks/Helper_Functions";
+import { Grid, Box } from "@mui/material";
+
 import { fetchFixtures } from "../Hooks/Fixtures_Hooks";
 import LatestFixtureItem from "../Components/Fixtures/LatestFixtureItem";
 import ScheduleContainer from "./ScheduleContainer";
@@ -24,21 +26,43 @@ export default function GroupHomePage() {
 
   if (loading) return <p>Loading fixtures...</p>;
   if (error) return <p>Error: {error}</p>;
+
+  // ... inside your component return:
+
   return (
-    <div className="schedule-season-container containerMargin">
-      <div>
-        <LatestFixtureItem />
-        <ScheduleContainer
-          limitAroundLatest={isMobile ? 2 : 3}
-          showLink={true}
-          scroll={false}
-          scrollOnLoad={false}
-        />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* <SeasonPredictions /> */}
-        <LatestTeamSeasonRating />
-      </div>
+    <div className="containerMargin">
+      <Grid container spacing={3}>
+        {/* --- LEFT COLUMN: MAIN CONTENT (66% width) --- */}
+        <Grid item xs={12} md={8}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+          >
+            <LatestFixtureItem />
+            <ScheduleContainer
+              limitAroundLatest={isMobile ? 2 : 3}
+              showLink={true}
+              scroll={false}
+              scrollOnLoad={false}
+            />
+          </div>
+        </Grid>
+
+        {/* --- RIGHT COLUMN: SIDEBAR (33% width) --- */}
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              position: { md: "sticky" }, // Optional: Makes sidebar sticky on scroll
+              top: 20,
+            }}
+          >
+            {/* <SeasonPredictions /> */}
+            <LatestTeamSeasonRating />
+          </Box>
+        </Grid>
+      </Grid>
     </div>
   );
 }
