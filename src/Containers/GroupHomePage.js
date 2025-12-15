@@ -9,11 +9,14 @@ import LatestFixtureItem from "../Components/Fixtures/LatestFixtureItem";
 import ScheduleContainer from "./ScheduleContainer";
 import LatestTeamSeasonRating from "../Components/Widgets/LatestTeamSeasonRating";
 import "./HomePage.css"; // Make sure to import the new CSS
+import useGroupData from "../Hooks/useGroupsData";
+import LegacyGroupModal from "../Components/Widgets/legacyGroupModal";
 // import SeasonPredictions from "../Components/Widgets/SeasonPredictions";
 
 export default function GroupHomePage() {
   const { fixtures, loading, error } = useSelector((state) => state.fixtures);
   const isMobile = useIsMobile();
+  const { activeGroup } = useGroupData();
 
   const dispatch = useDispatch();
 
@@ -63,6 +66,7 @@ export default function GroupHomePage() {
           </Box>
         </Grid>
       </Grid>
+      {activeGroup?.groupId === "002" && <LegacyGroupModal />}
     </div>
   );
 }
