@@ -405,7 +405,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
       // 2. QUERY FIRESTORE
       // Find matches scheduled in this window
       const snapshot = await db
-        .collection("matches")
+        .collection("fixtures/2025/fixtures")
         .where("timestamp", ">=", minTime)
         .where("timestamp", "<=", maxTime)
         .get();

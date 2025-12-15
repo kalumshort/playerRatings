@@ -29,7 +29,7 @@ export const FixturesListener = ({ teamId, fixtureId }) => {
 
     const fixtureRef = doc(
       db,
-      `fixtures/${globalData.currentYear}/${teamId}`,
+      `fixtures/${globalData.currentYear}/fixtures`,
       String(fixtureId)
     );
 
