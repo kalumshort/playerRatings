@@ -7,17 +7,17 @@ import {
   Avatar,
   Chip,
   useTheme,
+  Grid,
 } from "@mui/material";
 import {
   Stadium,
   SportsSoccer,
   ArrowForward,
-  Sports, // Generic icon for Referee
+  Sports,
 } from "@mui/icons-material";
 
 // --- HOOKS & COMPONENTS ---
 import { CountdownTimer } from "../../Hooks/Helper_Functions";
-// import FixtureEventsList from "./FixtureEventsList";
 import PenaltyTimeline from "./Fixture-Components/PenaltyTimeline";
 import { useFixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 
@@ -42,8 +42,47 @@ export default function FixtureHeader({
   const isFinished = ["FT", "AET", "PEN"].includes(statusShort);
   const isScheduled = ["NS", "TBD"].includes(statusShort);
 
-  const homeEvents = fixture?.events?.filter((e) => e.team.id === homeTeamId);
-  const awayEvents = fixture?.events?.filter((e) => e.team.id === awayTeamId);
+  // --- GOAL GROUPING LOGIC ---
+  const groupGoals = (events) => {
+    if (!events) return [];
+    const grouped = [];
+
+    // Sort by time first so the list order makes sense
+    const sortedEvents = [...events].sort(
+      (a, b) => a.time.elapsed - b.time.elapsed
+    );
+
+    sortedEvents.forEach((event) => {
+      // Create a nice time string (e.g. "90+2")
+      const timeDisplay =
+        event.time.elapsed + (event.time.extra ? `+${event.time.extra}` : "");
+      const playerName = event.player.name;
+
+      // Check if player is already in our list
+      const existingPlayer = grouped.find((p) => p.name === playerName);
+
+      if (existingPlayer) {
+        existingPlayer.times.push(timeDisplay);
+      } else {
+        grouped.push({ name: playerName, times: [timeDisplay] });
+      }
+    });
+
+    return grouped;
+  };
+
+  // Get Raw Events
+  const rawHomeGoals = fixture?.events?.filter(
+    (e) => e.team.id === homeTeamId && e.type === "Goal"
+  );
+  const rawAwayGoals = fixture?.events?.filter(
+    (e) => e.team.id === awayTeamId && e.type === "Goal"
+  );
+
+  // Group them
+  const homeScorers = groupGoals(rawHomeGoals);
+  const awayScorers = groupGoals(rawAwayGoals);
+
   const penaltyEvents = fixture?.events?.filter(
     (e) => e.comments === "Penalty Shootout"
   );
@@ -203,8 +242,8 @@ export default function FixtureHeader({
           )}
         </Stack>
 
-        {/* --- SCORERS --- */}
-        {showScorers && (homeEvents?.length > 0 || awayEvents?.length > 0) && (
+        {/* --- SCORERS SECTION (Split Layout & Grouped) --- */}
+        {showScorers && (homeScorers.length > 0 || awayScorers.length > 0) && (
           <Box
             sx={{
               mt: 3,
@@ -212,41 +251,74 @@ export default function FixtureHeader({
               borderTop: `1px dashed ${theme.palette.divider}`,
             }}
           >
-            <Stack spacing={0.5} alignItems="center">
-              {[...(homeEvents || []), ...(awayEvents || [])]
-                .filter((e) => e.type === "Goal")
-                .sort((a, b) => a.time.elapsed - b.time.elapsed)
-                .map((event, index) => (
+            <Grid container>
+              {/* HOME SCORERS (Right Aligned) */}
+              <Grid item xs={5} sx={{ textAlign: "right", pr: 1 }}>
+                {homeScorers.map((scorer, index) => (
                   <Stack
                     key={index}
                     direction="row"
-                    alignItems="center"
+                    justifyContent="flex-end"
+                    alignItems="flex-start" // Align top in case of multi-line
                     spacing={1}
+                    sx={{ mb: 0.5 }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ fontFamily: "Space Mono", fontSize: "0.75rem" }}
+                    >
+                      {scorer.name}{" "}
+                      <span
+                        style={{
+                          color: theme.palette.primary.main,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {scorer.times.map((t) => t + "'").join(", ")}
+                      </span>
+                    </Typography>
+                    <SportsSoccer
+                      sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}
+                    />
+                  </Stack>
+                ))}
+              </Grid>
+
+              {/* CENTER GAP */}
+              <Grid item xs={2} />
+
+              {/* AWAY SCORERS (Left Aligned) */}
+              <Grid item xs={5} sx={{ textAlign: "left", pl: 1 }}>
+                {awayScorers.map((scorer, index) => (
+                  <Stack
+                    key={index}
+                    direction="row"
+                    justifyContent="flex-start"
+                    alignItems="flex-start"
+                    spacing={1}
+                    sx={{ mb: 0.5 }}
                   >
                     <SportsSoccer
-                      sx={{ fontSize: 12, color: "text.secondary" }}
+                      sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}
                     />
                     <Typography
                       variant="caption"
                       sx={{ fontFamily: "Space Mono", fontSize: "0.75rem" }}
                     >
-                      {event.player.name} {event.time.elapsed}'
-                      <Box
-                        component="span"
-                        sx={{
-                          ml: 0.5,
-                          fontWeight: "bold",
+                      <span
+                        style={{
                           color: theme.palette.primary.main,
+                          fontWeight: "bold",
                         }}
                       >
-                        {event.team.id === homeTeamId
-                          ? fixture.teams.home.code
-                          : fixture.teams.away.code}
-                      </Box>
+                        {scorer.times.map((t) => t + "'").join(", ")}
+                      </span>{" "}
+                      {scorer.name}
                     </Typography>
                   </Stack>
                 ))}
-            </Stack>
+              </Grid>
+            </Grid>
           </Box>
         )}
       </Box>
@@ -266,7 +338,6 @@ export default function FixtureHeader({
             </Box>
           )}
 
-          {/* DETAILS SECTION: VENUE & REFEREE */}
           {showDetails && (
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -275,7 +346,6 @@ export default function FixtureHeader({
               alignItems="center"
               sx={{ opacity: 0.7 }}
             >
-              {/* Venue */}
               <Stack direction="row" spacing={1} alignItems="center">
                 <Stadium sx={{ fontSize: 14 }} />
                 <Typography variant="caption" sx={{ fontFamily: "Space Mono" }}>
@@ -283,11 +353,9 @@ export default function FixtureHeader({
                 </Typography>
               </Stack>
 
-              {/* Referee (Added Back) */}
               {fixture.fixture.referee && (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Sports sx={{ fontSize: 14 }} />{" "}
-                  {/* Generic Sports Icon or Whistle */}
+                  <Sports sx={{ fontSize: 14 }} />
                   <Typography
                     variant="caption"
                     sx={{ fontFamily: "Space Mono" }}
