@@ -269,6 +269,7 @@ export const handlePredictTeamSubmit = async ({
   userId,
   currentYear,
   chosenTeam,
+  formation,
 }) => {
   // await firebaseAddDoc({
   //   path: `groups/${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
@@ -298,7 +299,7 @@ export const handlePredictTeamSubmit = async ({
   await firebaseUpdateOrSetDoc({
     path: `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
     docId: matchId,
-    data: { chosenTeam: chosenTeam },
+    data: { chosenTeam: chosenTeam, formation: formation },
   });
 };
 
