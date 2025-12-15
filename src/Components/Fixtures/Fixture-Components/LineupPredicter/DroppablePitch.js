@@ -137,10 +137,6 @@ export default function DroppablePitch({
           justifyContent: "space-evenly",
           py: 1,
           // Gradient
-          background:
-            theme.palette.mode === "dark"
-              ? "linear-gradient(180deg, #1b3a24 0%, #0f2415 100%)"
-              : "linear-gradient(180deg, #2e7d32 0%, #1b5e20 100%)",
         }}
       >
         <PitchLines />
@@ -203,18 +199,7 @@ function DroppableLocation({ id, player }) {
 
   if (player) {
     return (
-      <Box
-        ref={setNodeRef}
-        sx={{
-          width: 60,
-          height: 60,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <DraggablePlayer locationId={id} player={player} useAnimation={true} />
-      </Box>
+      <DraggablePlayer locationId={id} player={player} useAnimation={true} />
     );
   }
 
