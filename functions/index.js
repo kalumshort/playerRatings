@@ -15,10 +15,12 @@ const {
   FieldValue,
   Timestamp,
 } = require("firebase-admin/firestore");
-const { checkTeamsLatestFixture } = require("./helperFunctions");
+const { fetchAllMatchData } = require("./helperFunctions");
 const { onCall, HttpsError } = require("firebase-functions/https");
 
 initializeApp();
+
+const db = getFirestore(); // Initialize once
 
 exports.createUserDoc = onCall(async (request, context) => {
   const { data } = request;
@@ -112,255 +114,23 @@ exports.removeUserFromGroup = onCall(async (request, context) => {
   }
 });
 
-exports.updateFixtures = onSchedule(
-  {
-    schedule: "every day 00:00",
-    timeoutSeconds: 240, // ⏱️ 4 minutes
-    memory: "512MiB", // Optional: increase memory if needed
-  },
-  async (event) => {
-    try {
-      const SEASON = 2025;
-      const LEAGUE_ID = 39; // Premier League
+// exports.updateFixtures = onSchedule(
+//   {
+//     schedule: "every day 00:00",
+//     timeoutSeconds: 240, // ⏱️ 4 minutes
+//     memory: "512MiB", // Optional: increase memory if needed
+//   },
+//   async (event) => {
+//     try {
+//       const SEASON = 2025;
+//       const LEAGUE_ID = 39; // Premier League
 
-      // Step 1: Get all teams in the Premier League
-      const teamsResponse = await axios.get(
-        `https://api-football-v1.p.rapidapi.com/v3/teams`,
-        {
-          params: {
-            league: LEAGUE_ID,
-            season: SEASON,
-          },
-          headers: {
-            "x-rapidapi-key":
-              "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-            // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-          },
-        }
-      );
-
-      const teams = teamsResponse.data.response;
-
-      for (const teamObj of teams) {
-        const teamId = teamObj.team.id;
-        const teamName = teamObj.team.name;
-        // if (teamId !== 33) {
-        //   continue; // Skip teams that are not Manchester United
-        // }
-
-        logger.info(`Processing team: ${teamName} (${teamId})`);
-
-        // Step 2: Fetch fixtures
-        const fixturesResponse = await axios.get(
-          `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
-          {
-            params: {
-              team: teamId,
-              season: SEASON,
-            },
-            headers: {
-              "x-rapidapi-key":
-                "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-              // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-            },
-          }
-        );
-
-        const fixtures = fixturesResponse.data.response;
-
-        for (const fixtureObj of fixtures) {
-          const fixtureId = fixtureObj.fixture.id;
-
-          const fixtureData = {
-            fixture: fixtureObj.fixture,
-            league: fixtureObj.league,
-            teams: fixtureObj.teams,
-            goals: fixtureObj.goals,
-            score: fixtureObj.score,
-            matchDate: fixtureObj.fixture.timestamp,
-          };
-
-          await getFirestore()
-            .collection(`fixtures/${SEASON}/${teamId}`)
-            .doc(fixtureId.toString())
-            .set(fixtureData, { merge: true });
-        }
-
-        logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
-
-        // Step 3: Fetch squad
-        const squadResponse = await axios.get(
-          `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
-          {
-            params: { team: teamId },
-            headers: {
-              "x-rapidapi-key":
-                "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-              // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-            },
-          }
-        );
-
-        const squadPlayers = squadResponse.data.response[0]?.players;
-
-        const playerIds = squadPlayers.map((player) => player.id);
-
-        // Fetch the existing teamSquads document from Firestore
-        const teamSquadsDoc = await getFirestore()
-          .collection(`teamSquads/${teamId}/season`)
-          .doc(SEASON.toString())
-          .get();
-
-        // Get the existing seasonSquad if it exists, or initialize an empty array
-        const existingSeasonSquad = teamSquadsDoc.exists
-          ? teamSquadsDoc.data().seasonSquad || []
-          : [];
-
-        // Merge the new players with the existing seasonSquad (prevent duplicates)
-        const updatedSeasonSquad = [
-          ...existingSeasonSquad,
-          ...squadPlayers.filter(
-            (newPlayer) =>
-              !existingSeasonSquad.some(
-                (existingPlayer) => existingPlayer.id === newPlayer.id
-              )
-          ),
-        ];
-
-        // Save both squad and manager into teamSquads
-        await getFirestore()
-          .collection(`teamSquads/${teamId}/season`)
-          .doc(SEASON.toString())
-          .set(
-            {
-              activeSquad: squadPlayers,
-              playerIds: playerIds,
-              seasonSquad: updatedSeasonSquad,
-            },
-            { merge: true }
-          );
-
-        logger.info(`Saved squad and manager for ${teamName}`);
-      }
-
-      logger.info(`Finished processing all Premier League teams`);
-    } catch (error) {
-      logger.error("Error updating data:", error.message, error);
-    }
-  }
-);
-
-exports.scheduledLatestTeamDataFetch = onSchedule(
-  "every 1 minutes",
-  async () => {
-    const TEAM_IDS = [
-      42, 746, 50, 33, 35, 40, 47, 49, 52, 55, 34, 66, 51, 45, 63, 36, 44, 65,
-      48, 39,
-    ];
-
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-    // eslint-disable-next-line require-jsdoc
-    async function withRetry(fn, { retries = 2, baseMs = 500 } = {}) {
-      let attempt = 0;
-      for (;;) {
-        try {
-          return await fn();
-        } catch (err) {
-          if (attempt >= retries) throw err;
-          const backoff =
-            baseMs * 2 ** attempt + Math.floor(Math.random() * 250);
-          await sleep(backoff);
-          attempt++;
-        }
-      }
-    }
-
-    // eslint-disable-next-line require-jsdoc
-    async function mapWithConcurrency(items, limit, worker) {
-      const results = [];
-      let idx = 0;
-
-      const run = async () => {
-        while (idx < items.length) {
-          const cur = idx++;
-          const item = items[cur];
-          results[cur] = await worker(item, cur);
-        }
-      };
-
-      const runners = Array.from(
-        { length: Math.min(limit, items.length) },
-        run
-      );
-      await Promise.all(runners);
-      return results;
-    }
-
-    const started = Date.now();
-    const successes = [];
-    const failures = [];
-
-    await mapWithConcurrency(TEAM_IDS, 4, async (teamId) => {
-      try {
-        await withRetry(() => checkTeamsLatestFixture(teamId), {
-          retries: 2,
-          baseMs: 600,
-        });
-        successes.push(teamId);
-      } catch (err) {
-        failures.push({ teamId, error: String(err?.message || err) });
-        console.error("Team failed:", teamId, err);
-      }
-    });
-
-    console.log("Job done", {
-      durationMs: Date.now() - started,
-      ok: successes.length,
-      failed: failures.length,
-      failures,
-    });
-  }
-);
-
-// exports.updateFixturesonCall = onCall(async (request, context) => {
-//   try {
-//     const SEASON = 2025;
-//     const LEAGUE_ID = 39; // Premier League
-
-//     // Step 1: Get all teams in the Premier League
-//     const teamsResponse = await axios.get(
-//       `https://api-football-v1.p.rapidapi.com/v3/teams`,
-//       {
-//         params: {
-//           league: LEAGUE_ID,
-//           season: SEASON,
-//         },
-//         headers: {
-//           "x-rapidapi-key":
-//             "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//           // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//         },
-//       }
-//     );
-
-//     const teams = teamsResponse.data.response;
-
-//     for (const teamObj of teams) {
-//       const teamId = teamObj.team.id;
-//       const teamName = teamObj.team.name;
-//       if (teamId <= 65) {
-//         continue; // Skip teams that are not Manchester United
-//       }
-
-//       logger.info(`Processing team: ${teamName} (${teamId})`);
-
-//       // Step 2: Fetch fixtures
-//       const fixturesResponse = await axios.get(
-//         `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
+//       // Step 1: Get all teams in the Premier League
+//       const teamsResponse = await axios.get(
+//         `https://api-football-v1.p.rapidapi.com/v3/teams`,
 //         {
 //           params: {
-//             team: teamId,
+//             league: LEAGUE_ID,
 //             season: SEASON,
 //           },
 //           headers: {
@@ -371,93 +141,547 @@ exports.scheduledLatestTeamDataFetch = onSchedule(
 //         }
 //       );
 
-//       const fixtures = fixturesResponse.data.response;
+//       const teams = teamsResponse.data.response;
 
-//       for (const fixtureObj of fixtures) {
-//         const fixtureId = fixtureObj.fixture.id;
-//         const now = Math.floor(Date.now() / 1000);
+//       for (const teamObj of teams) {
+//         const teamId = teamObj.team.id;
+//         const teamName = teamObj.team.name;
+//         // if (teamId !== 33) {
+//         //   continue; // Skip teams that are not Manchester United
+//         // }
 
-//         if (fixtureObj.fixture.timestamp < now) {
-//           await fetchAllMatchData({ fixtureId: fixtureId, teamId: teamId });
+//         logger.info(`Processing team: ${teamName} (${teamId})`);
+
+//         // Step 2: Fetch fixtures
+//         const fixturesResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
+//           {
+//             params: {
+//               team: teamId,
+//               season: SEASON,
+//             },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const fixtures = fixturesResponse.data.response;
+
+//         for (const fixtureObj of fixtures) {
+//           const fixtureId = fixtureObj.fixture.id;
+
+//           const fixtureData = {
+//             fixture: fixtureObj.fixture,
+//             league: fixtureObj.league,
+//             teams: fixtureObj.teams,
+//             goals: fixtureObj.goals,
+//             score: fixtureObj.score,
+//             matchDate: fixtureObj.fixture.timestamp,
+//           };
+
+//           await getFirestore()
+//             .collection(`fixtures/${SEASON}/fixtures`)
+//             .doc(fixtureId.toString())
+//             .set(fixtureData, { merge: true });
 //         }
 
-//         // const fixtureData = {
-//         //   fixture: fixtureObj.fixture,
-//         //   league: fixtureObj.league,
-//         //   teams: fixtureObj.teams,
-//         //   goals: fixtureObj.goals,
-//         //   score: fixtureObj.score,
-//         //   matchDate: fixtureObj.fixture.timestamp,
-//         // };
+//         logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
 
-//         // await getFirestore()
-//         //   .collection(`fixtures/${SEASON}/${teamId}`)
-//         //   .doc(fixtureId.toString())
-//         //   .set(fixtureData, { merge: true });
+//         // Step 3: Fetch squad
+//         const squadResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
+//           {
+//             params: { team: teamId },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const squadPlayers = squadResponse.data.response[0]?.players;
+
+//         const playerIds = squadPlayers.map((player) => player.id);
+
+//         // Fetch the existing teamSquads document from Firestore
+//         const teamSquadsDoc = await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .get();
+
+//         // Get the existing seasonSquad if it exists, or initialize an empty array
+//         const existingSeasonSquad = teamSquadsDoc.exists
+//           ? teamSquadsDoc.data().seasonSquad || []
+//           : [];
+
+//         // Merge the new players with the existing seasonSquad (prevent duplicates)
+//         const updatedSeasonSquad = [
+//           ...existingSeasonSquad,
+//           ...squadPlayers.filter(
+//             (newPlayer) =>
+//               !existingSeasonSquad.some(
+//                 (existingPlayer) => existingPlayer.id === newPlayer.id
+//               )
+//           ),
+//         ];
+
+//         // Save both squad and manager into teamSquads
+//         await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .set(
+//             {
+//               activeSquad: squadPlayers,
+//               playerIds: playerIds,
+//               seasonSquad: updatedSeasonSquad,
+//             },
+//             { merge: true }
+//           );
+
+//         logger.info(`Saved squad and manager for ${teamName}`);
 //       }
 
-//       logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
+//       logger.info(`Finished processing all Premier League teams`);
+//     } catch (error) {
+//       logger.error("Error updating data:", error.message, error);
+//     }
+//   }
+// );
 
-//       // // Step 3: Fetch squad
-//       // const squadResponse = await axios.get(
-//       //   `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
-//       //   {
-//       //     params: { team: teamId },
-//       //     headers: {
-//       //       "x-rapidapi-key":
-//       //         "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//       //       // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//       //     },
-//       //   }
-//       // );
+exports.updateFixtures = onSchedule(
+  {
+    schedule: "every day 00:00",
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async (event) => {
+    try {
+      const SEASON = 2025;
+      const LEAGUE_ID = 39;
+      const API_KEY = "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6";
+      const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
 
-//       // const squadPlayers = squadResponse.data.response[0]?.players;
+      // ======================================================
+      // PART 1: GET THE LIST OF TEAMS
+      // ======================================================
+      logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
 
-//       // const playerIds = squadPlayers.map((player) => player.id);
+      const teamsResponse = await axios.get(`${BASE_URL}/teams`, {
+        params: { league: LEAGUE_ID, season: SEASON },
+        headers: { "x-rapidapi-key": API_KEY },
+      });
 
-//       // // Fetch the existing teamSquads document from Firestore
-//       // const teamSquadsDoc = await getFirestore()
-//       //   .collection(`teamSquads/${teamId}/season`)
-//       //   .doc(SEASON.toString())
-//       //   .get();
+      const teams = teamsResponse.data.response;
+      const uniqueMatchesMap = {};
 
-//       // // Get the existing seasonSquad if it exists, or initialize an empty array
-//       // const existingSeasonSquad = teamSquadsDoc.exists
-//       //   ? teamSquadsDoc.data().seasonSquad || []
-//       //   : [];
+      logger.info(`Processing ${teams.length} teams...`);
 
-//       // // Merge the new players with the existing seasonSquad (prevent duplicates)
-//       // const updatedSeasonSquad = [
-//       //   ...existingSeasonSquad,
-//       //   ...squadPlayers.filter(
-//       //     (newPlayer) =>
-//       //       !existingSeasonSquad.some(
-//       //         (existingPlayer) => existingPlayer.id === newPlayer.id
-//       //       )
-//       //   ),
-//       // ];
+      // ======================================================
+      // PART 2: LOOP TEAMS (Fixtures + Squads)
+      // ======================================================
+      for (const teamObj of teams) {
+        const teamId = teamObj.team.id;
+        const teamName = teamObj.team.name;
 
-//       // // Save both squad and manager into teamSquads
-//       // await getFirestore()
-//       //   .collection(`teamSquads/${teamId}/season`)
-//       //   .doc(SEASON.toString())
-//       //   .set(
-//       //     {
-//       //       activeSquad: squadPlayers,
-//       //       playerIds: playerIds,
-//       //       seasonSquad: updatedSeasonSquad,
-//       //     },
-//       //     { merge: true }
-//       //   );
+        // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
+        try {
+          // --- A. FETCH FIXTURES ---
+          const fixturesResponse = await axios.get(`${BASE_URL}/fixtures`, {
+            params: { team: teamId, season: SEASON },
+            headers: { "x-rapidapi-key": API_KEY },
+          });
 
-//       // logger.info(`Saved squad and manager for ${teamName}`);
+          const teamFixtures = fixturesResponse.data.response || [];
+
+          // Add to map (Deduplication happens here automatically)
+          teamFixtures.forEach((fixtureObj) => {
+            const matchId = fixtureObj.fixture.id;
+            uniqueMatchesMap[matchId] = {
+              matchId: matchId.toString(),
+              homeTeamId: fixtureObj.teams.home.id,
+              awayTeamId: fixtureObj.teams.away.id,
+              status: fixtureObj.fixture.status.short,
+              kickoffTime: fixtureObj.fixture.date,
+              timestamp: fixtureObj.fixture.timestamp,
+              leagueId: fixtureObj.league.id,
+              leagueName: fixtureObj.league.name,
+              fixture: fixtureObj.fixture,
+              league: fixtureObj.league,
+              teams: fixtureObj.teams,
+              goals: fixtureObj.goals,
+              score: fixtureObj.score,
+            };
+          });
+
+          // --- B. FETCH SQUADS ---
+          const squadResponse = await axios.get(`${BASE_URL}/players/squads`, {
+            params: { team: teamId },
+            headers: { "x-rapidapi-key": API_KEY },
+          });
+
+          // 🛡️ Safety: Default to empty array if undefined
+          const squadPlayers = squadResponse.data.response[0]?.players || [];
+          const playerIds = squadPlayers.map((player) => player.id);
+
+          const teamSquadsRef = db
+            .collection(`teamSquads/${teamId}/season`)
+            .doc(SEASON.toString());
+          const teamSquadsDoc = await teamSquadsRef.get();
+
+          const existingSeasonSquad = teamSquadsDoc.exists
+            ? teamSquadsDoc.data().seasonSquad || []
+            : [];
+
+          const updatedSeasonSquad = [
+            ...existingSeasonSquad,
+            ...squadPlayers.filter(
+              (newPlayer) =>
+                !existingSeasonSquad.some((p) => p.id === newPlayer.id)
+            ),
+          ];
+
+          await teamSquadsRef.set(
+            {
+              activeSquad: squadPlayers,
+              playerIds: playerIds,
+              seasonSquad: updatedSeasonSquad,
+              lastUpdated: new Date(),
+            },
+            { merge: true }
+          );
+
+          logger.info(`Processed ${teamName} (Fixtures & Squad)`);
+        } catch (teamError) {
+          logger.error(`Error processing team ${teamName}:`, teamError.message);
+          // Loop continues!
+        }
+      }
+
+      // ======================================================
+      // PART 3: BATCH WRITE MATCHES
+      // ======================================================
+      const uniqueMatchesArray = Object.values(uniqueMatchesMap);
+      logger.info(
+        `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`
+      );
+
+      const writePromises = uniqueMatchesArray.map((matchData) => {
+        return db
+          .collection(`fixtures/${SEASON}/fixtures`)
+          .doc(matchData.matchId)
+          .set(matchData, { merge: true });
+      });
+
+      await Promise.all(writePromises);
+      logger.info(`Done. Matches and Squads updated.`);
+    } catch (error) {
+      logger.error("Critical error in daily update:", error.message, error);
+    }
+  }
+);
+
+exports.scheduledLiveMatchUpdate = onSchedule(
+  {
+    schedule: "every 1 minutes",
+    timeoutSeconds: 60,
+    memory: "256MiB", // Low memory needed, we are only processing active games
+  },
+  async (event) => {
+    try {
+      const now = Math.floor(Date.now() / 1000); // Current Unix Timestamp
+
+      // 1. DEFINE THE "HOT ZONE"
+      // We look back 4 hours (active games/just finished) and ahead 1 hour (lineups)
+      const LOOKBACK_SECONDS = 4 * 60 * 60;
+      const LOOKAHEAD_SECONDS = 60 * 60;
+
+      const minTime = now - LOOKBACK_SECONDS;
+      const maxTime = now + LOOKAHEAD_SECONDS;
+
+      // 2. QUERY FIRESTORE
+      // Find matches scheduled in this window
+      const snapshot = await db
+        .collection("matches")
+        .where("timestamp", ">=", minTime)
+        .where("timestamp", "<=", maxTime)
+        .get();
+
+      if (snapshot.empty) {
+        logger.info("No active matches found in the Hot Zone.");
+        return;
+      }
+
+      const matchesToUpdate = [];
+
+      // 3. FILTER LOGIC (Decide what actually needs an API call)
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const status = data.fixture.status.short; // e.g., 'NS', 'FT', '1H', '2H'
+        const matchTime = data.timestamp;
+
+        // A. Is the match already marked as FINISHED in our DB?
+        // If yes, we don't need to check it again every minute.
+        if (["FT"].includes(status)) {
+          return; // Skip it
+        }
+
+        // B. Is it NOT STARTED yet?
+        if (status === "NS") {
+          // Only update if it starts within 60 mins (for Lineups)
+          const timeUntilKickoff = matchTime - now;
+          if (timeUntilKickoff <= 3600) {
+            matchesToUpdate.push(doc.id);
+          }
+          return;
+        }
+
+        // C. If we are here, the status is likely LIVE (1H, 2H, HT, ET, etc.)
+        // OR the status is 'NS' but the time has passed (Kickoff just happened)
+        matchesToUpdate.push(doc.id);
+      });
+
+      if (matchesToUpdate.length === 0) {
+        logger.info(
+          "Matches found in window, but none require updates (all finished or too early)."
+        );
+        return;
+      }
+
+      logger.info(
+        `Updating ${
+          matchesToUpdate.length
+        } active/upcoming matches: ${matchesToUpdate.join(", ")}`
+      );
+
+      // 4. FETCH DATA (Parallel Execution)
+      // We run fetchAllMatchData for all valid matches
+      const updatePromises = matchesToUpdate.map(async (fixtureId) => {
+        try {
+          await fetchAllMatchData({ fixtureId });
+        } catch (err) {
+          logger.error(`Failed to update fixture ${fixtureId}`, err);
+        }
+      });
+
+      await Promise.all(updatePromises);
+      logger.info("Live update cycle completed.");
+    } catch (error) {
+      logger.error("Error in scheduledLiveMatchUpdate:", error);
+    }
+  }
+);
+
+// exports.updateFixturesonCall = onRequest(async (req, res) => {
+//   try {
+//     const SEASON = 2025;
+//     const LEAGUE_ID = 39;
+//     const API_KEY = "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6";
+//     const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
+
+//     // ======================================================
+//     // PART 1: GET THE LIST OF TEAMS
+//     // ======================================================
+//     logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
+
+//     const teamsResponse = await axios.get(`${BASE_URL}/teams`, {
+//       params: { league: LEAGUE_ID, season: SEASON },
+//       headers: { "x-rapidapi-key": API_KEY },
+//     });
+
+//     const teams = teamsResponse.data.response;
+//     const uniqueMatchesMap = {};
+
+//     logger.info(`Processing ${teams.length} teams...`);
+
+//     // ======================================================
+//     // PART 2: LOOP TEAMS (Fixtures + Squads)
+//     // ======================================================
+//     for (const teamObj of teams) {
+//       const teamId = teamObj.team.id;
+//       const teamName = teamObj.team.name;
+
+//       // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
+//       try {
+//         // --- A. FETCH FIXTURES ---
+//         const fixturesResponse = await axios.get(`${BASE_URL}/fixtures`, {
+//           params: { team: teamId, season: SEASON },
+//           headers: { "x-rapidapi-key": API_KEY },
+//         });
+
+//         const teamFixtures = fixturesResponse.data.response || [];
+
+//         // Add to map (Deduplication happens here automatically)
+//         teamFixtures.forEach((fixtureObj) => {
+//           const matchId = fixtureObj.fixture.id;
+//           uniqueMatchesMap[matchId] = {
+//             matchId: matchId.toString(),
+//             homeTeamId: fixtureObj.teams.home.id,
+//             awayTeamId: fixtureObj.teams.away.id,
+//             status: fixtureObj.fixture.status.short,
+//             kickoffTime: fixtureObj.fixture.date,
+//             timestamp: fixtureObj.fixture.timestamp,
+//             leagueId: fixtureObj.league.id,
+//             leagueName: fixtureObj.league.name,
+//             fixture: fixtureObj.fixture,
+//             league: fixtureObj.league,
+//             teams: fixtureObj.teams,
+//             goals: fixtureObj.goals,
+//             score: fixtureObj.score,
+//           };
+//         });
+
+//         // --- B. FETCH SQUADS ---
+//         const squadResponse = await axios.get(`${BASE_URL}/players/squads`, {
+//           params: { team: teamId },
+//           headers: { "x-rapidapi-key": API_KEY },
+//         });
+
+//         // 🛡️ Safety: Default to empty array if undefined
+//         const squadPlayers = squadResponse.data.response[0]?.players || [];
+//         const playerIds = squadPlayers.map((player) => player.id);
+
+//         const teamSquadsRef = db
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString());
+//         const teamSquadsDoc = await teamSquadsRef.get();
+
+//         const existingSeasonSquad = teamSquadsDoc.exists
+//           ? teamSquadsDoc.data().seasonSquad || []
+//           : [];
+
+//         const updatedSeasonSquad = [
+//           ...existingSeasonSquad,
+//           ...squadPlayers.filter(
+//             (newPlayer) =>
+//               !existingSeasonSquad.some((p) => p.id === newPlayer.id)
+//           ),
+//         ];
+
+//         await teamSquadsRef.set(
+//           {
+//             activeSquad: squadPlayers,
+//             playerIds: playerIds,
+//             seasonSquad: updatedSeasonSquad,
+//             lastUpdated: new Date(),
+//           },
+//           { merge: true }
+//         );
+
+//         logger.info(`Processed ${teamName} (Fixtures & Squad)`);
+//       } catch (teamError) {
+//         logger.error(`Error processing team ${teamName}:`, teamError.message);
+//         // Loop continues!
+//       }
 //     }
 
-//     logger.info(`Finished processing all Premier League teams`);
+//     // ======================================================
+//     // PART 3: BATCH WRITE MATCHES
+//     // ======================================================
+//     const uniqueMatchesArray = Object.values(uniqueMatchesMap);
+//     logger.info(
+//       `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`
+//     );
+
+//     const writePromises = uniqueMatchesArray.map((matchData) => {
+//       return db
+//         .collection(`fixtures/${SEASON}/fixtures`)
+//         .doc(matchData.matchId)
+//         .set(matchData, { merge: true });
+//     });
+
+//     await Promise.all(writePromises);
+//     logger.info(`Done. Matches and Squads updated.`);
+//     res.status(200).send("Successful");
 //   } catch (error) {
-//     logger.error("Error updating data:", error.message, error);
+//     logger.error("Critical error in daily update:", error.message, error);
+//     res.status(500).send("Successful");
 //   }
 // });
+// exports.fixtureDataConversion = onRequest(
+//   {
+//     timeoutSeconds: 540, // ⏱️ 9 minutes
+//     memory: "512MiB",
+//   },
+//   async (req, res) => {
+//     try {
+//       logger.info("Starting conversion: Fetching matches from Firestore...");
+
+//       // 1. Get ALL matches
+//       const snapshot = await db.collection("fixtures/2025/fixtures").get();
+
+//       if (snapshot.empty) {
+//         res.status(404).send("No matches found to process.");
+//         return;
+//       }
+
+//       const totalMatches = snapshot.size;
+//       const now = Math.floor(Date.now() / 1000); // Current time in UNIX seconds
+
+//       logger.info(`Found ${totalMatches} matches. Filtering...`);
+
+//       let processedCount = 0;
+//       let futureSkippedCount = 0;
+//       let alreadyDoneCount = 0;
+
+//       // 2. Loop through the documents
+//       for (const doc of snapshot.docs) {
+//         const fixtureId = doc.id;
+//         const data = doc.data();
+
+//         // 🛑 CHECK 1: DATA EXISTENCE
+//         // If 'events' field exists, we assume we already ran the detailed fetch.
+//         // We skip this to save API calls.
+//         if (data.events) {
+//           alreadyDoneCount++;
+//           continue;
+//         }
+
+//         // 🕒 CHECK 2: TIME (Past matches only)
+//         const matchTime = data.timestamp || data.matchDate;
+
+//         // If no timestamp, or if match is in the future (> now), skip it.
+//         if (!matchTime || matchTime > now) {
+//           futureSkippedCount++;
+//           continue;
+//         }
+
+//         try {
+//           // If we reach here: Match is in the past AND has no events data.
+//           // Fetch the data!
+//           await fetchAllMatchData({ fixtureId });
+//           processedCount++;
+
+//           // Log progress periodically
+//           if (processedCount % 20 === 0) {
+//             logger.info(
+//               `Processed ${processedCount} new matches... (Skipped ${alreadyDoneCount} existing)`
+//             );
+//           }
+//         } catch (matchError) {
+//           logger.error(
+//             `Error processing match ${fixtureId}:`,
+//             matchError.message
+//           );
+//         }
+//       }
+
+//       const summary = `Finished. Processed: ${processedCount} | Already Done: ${alreadyDoneCount} | Future Skipped: ${futureSkippedCount}`;
+//       logger.info(summary);
+//       res.status(200).send(summary);
+//     } catch (error) {
+//       logger.error(
+//         "Critical error in fixture conversion:",
+//         error.message,
+//         error
+//       );
+//       res.status(500).send("Internal Server Error");
+//     }
+//   }
+// );
 
 // exports.fetchLatestMatchStats = onRequest(async (req, res) => {
 //   try {

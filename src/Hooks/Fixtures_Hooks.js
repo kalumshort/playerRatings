@@ -38,6 +38,15 @@ import { getAuth } from "firebase/auth";
 import { fetchUserMatchData } from "../redux/Reducers/userDataReducer";
 
 import unitedPlayers from "../redux/unitedPlayers.json"; // adjust if JSON is in another file
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  or,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 
 // export const fetchFixturess = () => async (dispatch) => {
 //   try {
@@ -50,25 +59,74 @@ import unitedPlayers from "../redux/unitedPlayers.json"; // adjust if JSON is in
 //     dispatch(fetchFixturesFailure(error.message));
 //   }
 // };
+// export const fetchFixtures =
+//   ({ clubId, currentYear }) =>
+//   async (dispatch) => {
+//     try {
+//       dispatch(fetchFixturesStart()); // Start loading
+
+//       const fixturesData = await firebaseGetCollecion(
+//         `fixtures/${currentYear}/${clubId}`
+//       );
+
+//       const fixtures = Object.entries(fixturesData)
+//         .filter(([id]) => !["1371777", "1402829"].includes(id)) // exclude unwanted IDs preseason matches with no data
+//         .map(([id, fixture]) => ({ id, ...fixture }))
+//         .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
+
+//       dispatch(fixturesReducer(fixtures));
+//       dispatch(fetchFixturesSuccess());
+//     } catch (error) {
+//       console.error("Error getting fixtures:", error);
+//       dispatch(fetchFixturesFailure(error.message));
+//     }
+//   };
+
+// ... existing imports ...
+
 export const fetchFixtures =
   ({ clubId, currentYear }) =>
   async (dispatch) => {
     try {
-      dispatch(fetchFixturesStart()); // Start loading
+      dispatch(fetchFixturesStart());
 
-      const fixturesData = await firebaseGetCollecion(
-        `fixtures/${currentYear}/${clubId}`
+      const db = getFirestore();
+      const matchesRef = collection(db, `fixtures/${currentYear}/fixtures`);
+
+      // ⚠️ IMPORTANT: The API saves IDs as Numbers (e.g., 33).
+      // URL params are usually Strings (e.g., "33"). We must convert it.
+      const teamIdNumber = Number(clubId);
+
+      // Create the query: Team is Home OR Away, sorted by newest date
+      const q = query(
+        matchesRef,
+        or(
+          where("homeTeamId", "==", teamIdNumber),
+          where("awayTeamId", "==", teamIdNumber)
+        ),
+        orderBy("timestamp", "desc") // 'desc' = Newest first (like your previous sort)
       );
 
-      const fixtures = Object.entries(fixturesData)
-        .filter(([id]) => !["1371777", "1402829"].includes(id)) // exclude unwanted IDs preseason matches with no data
-        .map(([id, fixture]) => ({ id, ...fixture }))
-        .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
+      const querySnapshot = await getDocs(q);
+
+      // Process the results
+      const fixtures = querySnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        // Keep your specific exclude filter
+        .filter((fixture) => !["1371777", "1402829"].includes(fixture.id));
 
       dispatch(fixturesReducer(fixtures));
       dispatch(fetchFixturesSuccess());
     } catch (error) {
       console.error("Error getting fixtures:", error);
+
+      // If the error mentions "requires an index", check the console link!
+      if (error.message.includes("index")) {
+        console.error(
+          "⚠️ YOU NEED TO CREATE A FIRESTORE INDEX. CLICK THE LINK IN THE CONSOLE."
+        );
+      }
+
       dispatch(fetchFixturesFailure(error.message));
     }
   };

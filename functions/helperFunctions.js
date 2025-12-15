@@ -3,7 +3,6 @@ const axios = require("axios");
 const { getFirestore } = require("firebase-admin/firestore");
 
 const fetchFixtureData = async (fixtureId) => {
-  console.log(`Fetching fixture data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures?id=${fixtureId}`,
@@ -39,7 +38,6 @@ const fetchFixtureData = async (fixtureId) => {
   }
 };
 const fetchStatisticsData = async (fixtureId) => {
-  console.log(`Fetching statistics data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/statistics?fixture=${fixtureId}`,
@@ -61,14 +59,13 @@ const fetchStatisticsData = async (fixtureId) => {
     return statisticsObj;
   } catch (error) {
     console.error(
-      `Error fetching data for fixture ${fixtureId}:`,
+      `Error fetchStatisticsData  for fixture ${fixtureId}:`,
       error.message
     );
     throw error; // Re-throw the error to handle it in the calling function
   }
 };
 const fetchEventsData = async (fixtureId) => {
-  console.log(`Fetching events data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
@@ -90,14 +87,13 @@ const fetchEventsData = async (fixtureId) => {
     return eventsObj;
   } catch (error) {
     console.error(
-      `Error fetching data for fixture ${fixtureId}:`,
+      `Error fetchEventsData for fixture ${fixtureId}:`,
       error.message
     );
     throw error; // Re-throw the error to handle it in the calling function
   }
 };
 const fetchLineupData = async (fixtureId) => {
-  console.log(`Fetching lineup data for fixture: ${fixtureId}`);
   try {
     const response = await axios.get(
       `https://api-football-v1.p.rapidapi.com/v3/fixtures/lineups?fixture=${fixtureId}`,
@@ -119,15 +115,15 @@ const fetchLineupData = async (fixtureId) => {
     return lineupObj;
   } catch (error) {
     console.error(
-      `Error fetching data for fixture ${fixtureId}:`,
+      `Error fetchLineupData for fixture ${fixtureId}:`,
       error.message
     );
     throw error; // Re-throw the error to handle it in the calling function
   }
 };
 
-const fetchAllMatchData = async ({ fixtureId, teamId }) => {
-  console.log(`Fetching all data for fixture: ${fixtureId}, team: ${teamId}`);
+const fetchAllMatchData = async ({ fixtureId }) => {
+  console.log(`Fetching all data for fixture: ${fixtureId}`);
   try {
     const fixtureData = await fetchFixtureData(fixtureId);
 
@@ -153,10 +149,10 @@ const fetchAllMatchData = async ({ fixtureId, teamId }) => {
     await getFirestore()
       .collection("fixtures")
       .doc(year.toString())
-      .collection(teamId.toString())
+      .collection("fixtures")
       .doc(fixtureId.toString())
       .set(combinedFixtureData, { merge: true });
-
+    console.log(`Successfully saved data for fixture ${fixtureId}`);
     return;
   } catch (error) {
     console.error(
