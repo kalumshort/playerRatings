@@ -1,13 +1,55 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  MenuItem,
+  Select,
+  FormControl,
+  Typography,
+  Box,
+  Paper,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 import {
   selectFixturesState,
   selectLatestFixture,
 } from "../Selectors/fixturesSelectors";
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
-import { Link, useNavigate } from "react-router-dom";
-import { ContentContainer } from "./GlobalContainer";
-import { MenuItem, Select } from "@mui/material";
+
+const HeaderContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "10px 8px",
+  borderBottom: "1px solid rgba(0,0,0,0.05)",
+  marginBottom: "8px",
+}));
+
+const ScrollContainer = styled("div")(({ scroll }) => ({
+  maxHeight: "70vh",
+  overflowY: scroll ? "auto" : "hidden",
+  scrollBehavior: "smooth",
+  paddingBottom: "20px",
+  position: "relative", // <--- IMPORTANT: Needed for offsetTop calculation to work
+  "&::-webkit-scrollbar": {
+    display: "none",
+  },
+  "-ms-overflow-style": "none",
+  "scrollbar-width": "none",
+}));
+
+const StyledLink = styled(Link)({
+  fontSize: "0.875rem",
+  textDecoration: "none",
+  fontWeight: 600,
+  color: "inherit",
+});
 
 export default function ScheduleContainer({
   limitAroundLatest = 0,
@@ -17,149 +59,159 @@ export default function ScheduleContainer({
 }) {
   const navigate = useNavigate();
 
-  const allFixtures = useSelector(selectFixturesState).fixtures;
+  const { fixtures: allFixtures } = useSelector(selectFixturesState);
   const latestFixture = useSelector(selectLatestFixture);
 
   const [selectedLeague, setSelectedLeague] = useState("");
 
-  const handleChange = (event) => {
-    setSelectedLeague(event.target.value);
-  };
-
-  const fixtureRefs = useRef([]);
   const containerRef = useRef(null);
+  const itemsRef = useRef(new Map());
 
-  const leagueOptions = useMemo(() => {
-    return [...new Set(allFixtures?.map((item) => item.league.name))];
-  }, [allFixtures]);
+  const displayFixtures = useMemo(() => {
+    if (!allFixtures) return [];
 
-  const filteredFixures = selectedLeague
-    ? allFixtures.filter((item) => item.league.name === selectedLeague)
-    : allFixtures;
+    let processed = selectedLeague
+      ? allFixtures.filter((item) => item.league.name === selectedLeague)
+      : [...allFixtures];
 
-  const latestFixtureIndex = filteredFixures.findIndex(
-    (fixture) => fixture.id === latestFixture?.id
-  );
+    processed.reverse();
 
-  const limitedFixtures = useMemo(() => {
-    if (limitAroundLatest === 0 || latestFixtureIndex === -1) {
-      return filteredFixures;
-    }
-
-    const startIndex = Math.max(0, latestFixtureIndex - limitAroundLatest);
-    const endIndex = Math.min(
-      filteredFixures.length,
-      latestFixtureIndex + limitAroundLatest + 1
-    );
-
-    return filteredFixures.slice(startIndex, endIndex);
-  }, [filteredFixures, latestFixtureIndex, limitAroundLatest]);
-
-  useEffect(() => {
-    if (latestFixture && scrollOnLoad && containerRef.current) {
-      const index = [...limitedFixtures]
-        .reverse()
-        .findIndex((fixture) => fixture.id === latestFixture.id);
-
-      const container = containerRef.current;
-      const target = fixtureRefs.current[index];
-
-      if (index !== -1 && target) {
-        const containerRect = container.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-
-        const offset = targetRect.top - containerRect.top;
-
-        container.scrollTo({
-          top:
-            container.scrollTop +
-            offset -
-            container.clientHeight / 2 +
-            target.clientHeight / 2,
-        });
+    if (limitAroundLatest > 0 && latestFixture) {
+      const targetIndex = processed.findIndex((f) => f.id === latestFixture.id);
+      if (targetIndex !== -1) {
+        const start = Math.max(0, targetIndex - limitAroundLatest);
+        const end = Math.min(
+          processed.length,
+          targetIndex + limitAroundLatest + 1
+        );
+        return processed.slice(start, end);
       }
     }
-  }, [latestFixture, limitedFixtures, scrollOnLoad]);
 
-  const handleFixtureClick = (matchId) => {
-    navigate(`/fixture/${matchId}`);
-  };
+    return processed;
+  }, [allFixtures, selectedLeague, latestFixture, limitAroundLatest]);
+
+  const leagueOptions = useMemo(() => {
+    if (!allFixtures) return [];
+    return [...new Set(allFixtures.map((item) => item.league.name))];
+  }, [allFixtures]);
+
+  const handleChange = useCallback((event) => {
+    setSelectedLeague(event.target.value);
+  }, []);
+
+  const handleFixtureClick = useCallback(
+    (matchId) => {
+      navigate(`/fixture/${matchId}`);
+    },
+    [navigate]
+  );
+
+  // --- UPDATED SCROLL LOGIC ---
+  useLayoutEffect(() => {
+    if (latestFixture && scrollOnLoad && containerRef.current) {
+      const node = itemsRef.current.get(latestFixture.id);
+      const container = containerRef.current;
+
+      if (node && container) {
+        // We calculate where the item is inside the container
+        // offsetTop gives the distance from the top of the container (because container is relative)
+        const itemTop = node.offsetTop;
+        const itemHeight = node.clientHeight;
+        const containerHeight = container.clientHeight;
+
+        // Calculate the scroll position to center the item
+        // Position - (Half Container) + (Half Item)
+        const scrollTo = itemTop - containerHeight / 2 + itemHeight / 2;
+
+        // Set the scroll position manually.
+        // This ONLY affects the container, never the window.
+        container.scrollTop = scrollTo;
+      }
+    }
+  }, [latestFixture, displayFixtures, scrollOnLoad]);
 
   return (
-    <ContentContainer>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "10px 5px",
-        }}
-      >
-        <h2 className="globalHeading">Schedule</h2>
-        {!showLink && (
-          <Select
-            value={selectedLeague}
-            onChange={handleChange}
-            size="small"
-            variant="standard"
-            displayEmpty
-            renderValue={(selected) => (selected ? selected : "All")}
-          >
-            <MenuItem key="" value="">
-              All
-            </MenuItem>
-            {leagueOptions.map((league) => (
-              <MenuItem key={league} value={league}>
-                {league}
-              </MenuItem>
-            ))}
-          </Select>
-        )}
-        {showLink && (
-          <Link to="/schedule">
-            <p
-              style={{
-                fontSize: "14px",
-                padding: "0px",
-                margin: "0px",
-                color: "grey",
-                textDecoration: "underline",
-              }}
-            >
-              See All
-            </p>
-          </Link>
-        )}
-      </div>
-      <div>
-        <div
-          ref={containerRef}
-          style={{ maxHeight: "70vh", overflowY: scroll ? "scroll" : "hidden" }}
-        >
-          {(fixtureRefs.current = []) &&
-            [...limitedFixtures].reverse().map((fixture, index) => {
-              const matchTime = new Date(
-                fixture.fixture.timestamp * 1000
-              ).toLocaleDateString("en-GB", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              });
+    <Paper elevation={0} sx={{ bgcolor: "background.paper" }}>
+      <HeaderContainer>
+        <Typography variant="h6" fontWeight="bold" className="globalHeading">
+          Match Schedule
+        </Typography>
 
-              return (
-                <div
-                  key={fixture.id || index}
-                  ref={(el) => (fixtureRefs.current[index] = el)}
-                >
-                  <FixtureListItem
-                    fixture={fixture}
-                    matchTime={matchTime}
-                    handleFixtureClick={handleFixtureClick}
-                  />
-                </div>
-              );
-            })}
-        </div>
-      </div>
-    </ContentContainer>
+        {!showLink ? (
+          <FormControl variant="standard" size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={selectedLeague}
+              onChange={handleChange}
+              displayEmpty
+              disableUnderline
+              renderValue={(selected) => (
+                <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                  {selected || "All Competitions"}
+                </span>
+              )}
+            >
+              <MenuItem value="">
+                <em>All Competitions</em>
+              </MenuItem>
+              {leagueOptions.map((league) => (
+                <MenuItem key={league} value={league}>
+                  {league}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : (
+          <StyledLink to="/schedule">View All</StyledLink>
+        )}
+      </HeaderContainer>
+
+      <ScrollContainer ref={containerRef} scroll={scroll}>
+        {displayFixtures.length === 0 ? (
+          <Box p={3} textAlign="center" color="text.secondary">
+            <Typography variant="body2">No fixtures found.</Typography>
+          </Box>
+        ) : (
+          displayFixtures.map((fixture) => {
+            const isLatest = latestFixture?.id === fixture.id;
+            const matchTime = new Date(
+              fixture.fixture.timestamp * 1000
+            ).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+
+            return (
+              <div
+                key={fixture.id}
+                ref={(node) => {
+                  if (node) {
+                    itemsRef.current.set(fixture.id, node);
+                  } else {
+                    itemsRef.current.delete(fixture.id);
+                  }
+                }}
+                style={{
+                  opacity: isLatest ? 1 : 0.8,
+                  // Scale effect removed? Sometimes safer to remove
+                  // scale during scroll calculations, but usually fine.
+                  transform: isLatest ? "scale(1.02)" : "scale(1)",
+                  transition: "all 0.2s ease",
+                  marginBottom: "8px",
+                }}
+              >
+                <FixtureListItem
+                  fixture={fixture}
+                  matchTime={matchTime}
+                  handleFixtureClick={handleFixtureClick}
+                  highlight={isLatest}
+                />
+              </div>
+            );
+          })
+        )}
+      </ScrollContainer>
+    </Paper>
   );
 }
