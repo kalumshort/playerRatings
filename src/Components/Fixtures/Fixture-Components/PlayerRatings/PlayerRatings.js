@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { Button, Paper } from "@mui/material";
 
 import {
@@ -48,48 +47,45 @@ export default function PlayerRatings({ fixture }) {
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
 
-  const lineup =
-    fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI || [];
-  // Get the substituted players who are not in the lineup already
-  // Get the substituted players who are not in the lineup already
-  const substitutedPlayerIds = fixture?.events
-    .filter(
-      (item) =>
-        item.type === "subst" && // Ensure it's a substitution event
-        item.team?.id === groupClubId // Check if the substitution is for the specified team
-    )
-    .map((item) => {
-      // If assist is not in the lineup, the assist player is the new player
-      const newPlayer =
-        item.assist &&
-        !lineup.some(
-          (lineupPlayer) => lineupPlayer.player.id === item.assist.id
-        )
-          ? item.assist // Player coming in is in assist
-          : item.player; // Otherwise, fallback to the player field (substituted player)
+  // === PERFORMANCE FIX: MEMOIZE PLAYER CALCULATIONS ===
+  // This ensures 'combinedPlayers' stays the same array unless fixture data actually changes.
+  const { lineup, combinedPlayers } = useMemo(() => {
+    const _lineup =
+      fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI ||
+      [];
 
-      return {
-        id: newPlayer.id,
-        name: newPlayer.name,
-      };
-    });
+    const substitutedPlayerIds = fixture?.events
+      .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
+      .map((item) => {
+        const newPlayer =
+          item.assist &&
+          !_lineup.some(
+            (lineupPlayer) => lineupPlayer.player.id === item.assist.id
+          )
+            ? item.assist
+            : item.player;
 
-  // Get players from the lineup (existing players on the field)
-  const players = lineup.map(({ player }) => ({
-    id: player.id,
-    name: player.name,
-    grid: player.grid,
-  }));
-  const coach = fixture.lineups.find(
-    (team) => team.team.id === Number(activeGroup.groupClubId)
-  )?.coach;
+        return {
+          id: newPlayer.id,
+          name: newPlayer.name,
+        };
+      });
 
-  // Combine the players already in the lineup with the new substituted players
-  const combinedPlayers = [
-    ...players,
-    ...substitutedPlayerIds,
-    coach, // Add new substituted players
-  ];
+    const _players = _lineup.map(({ player }) => ({
+      id: player.id,
+      name: player.name,
+      grid: player.grid,
+    }));
+
+    const _coach = fixture.lineups.find(
+      (team) => team.team.id === Number(groupClubId)
+    )?.coach;
+
+    const _combined = [..._players, ...substitutedPlayerIds, _coach];
+
+    return { lineup: _lineup, combinedPlayers: _combined };
+  }, [fixture.lineups, fixture.events, groupClubId]);
+  // =======================================================
 
   const allPlayersRated =
     usersMatchData?.players &&
@@ -100,14 +96,11 @@ export default function PlayerRatings({ fixture }) {
   const handleRatingsSubmit = async () => {
     if (!allPlayersRated) {
       showAlert("Missing Some Ratings", "error");
-
       return;
     }
 
     if (!storedUsersMatchMOTM) {
       showAlert("Missing your MOTM");
-
-      console.log("Missing Your MOTM");
       return;
     }
     if (isSubmittable) {
@@ -144,8 +137,8 @@ export default function PlayerRatings({ fixture }) {
     ) : isMatchRatingsSubmitted ? (
       <SubmittedPlayerRatings
         motmPercentages={motmPercentages}
+        fixture={fixture} // Added fixture prop here as it was missing in your original code
         combinedPlayers={combinedPlayers}
-        fixture={fixture}
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
         usersMatchPlayerRatings={usersMatchData?.players}
@@ -192,7 +185,6 @@ const PlayerRatingsItems = ({
   storedUsersMatchMOTM,
 }) => {
   const isMobile = useIsMobile();
-
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
 
   if (!combinedPlayers) {
@@ -201,18 +193,6 @@ const PlayerRatingsItems = ({
 
   return (
     <div className="PlayerRatingsItemsContainer">
-      {/* <PlayerRatingsCards
-        combinedPlayers={combinedPlayers}
-        fixture={fixture}
-        isMobile={isMobile}
-        matchRatings={matchRatings}
-        readOnly={readOnly}
-        groupId={groupId}
-        userId={userId}
-        currentYear={currentYear}
-        usersMatchPlayerRatings={usersMatchPlayerRatings}
-      /> */}
-
       <PlayerRatingsCardStack
         combinedPlayers={combinedPlayers}
         fixture={fixture}
@@ -225,19 +205,6 @@ const PlayerRatingsItems = ({
         usersMatchPlayerRatings={usersMatchPlayerRatings}
         storedUsersMatchMOTM={storedUsersMatchMOTM}
       />
-      {/* {combinedPlayers.map((player, rowIndex) => (
-        <PlayerRatingItem
-          player={player}
-          fixture={fixture}
-          isMobile={isMobile}
-          matchRatings={matchRatings}
-          readOnly={readOnly}
-          groupId={groupId}
-          userId={userId}
-          usersMatchPlayerRating={usersMatchPlayerRatings?.[player.id]}
-          currentYear={currentYear}
-        />
-      ))} */}
 
       {!isMatchRatingsSubmitted && (
         <div style={{ textAlign: "center", width: "100%" }}>
@@ -256,6 +223,54 @@ const PlayerRatingsItems = ({
   );
 };
 
+const SubmittedPlayerRatings = ({
+  motmPercentages,
+  fixture,
+  usersMatchPlayerRatings,
+}) => {
+  return (
+    <>
+      <Paper className="PlayerRatingItem motm">
+        <MOTMPopover motmPercentages={motmPercentages} />
+        <img
+          src={motmPercentages[0]?.img}
+          className="PlayerRatingImg"
+          alt="PlayerRatingImg"
+        />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: "1",
+            justifyContent: "space-Evenly",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "10px",
+            }}
+          >
+            <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
+              MOTM
+            </h5>
+            <h2 style={{ margin: "5px" }}>{motmPercentages[0]?.name}</h2>
+            <h2 style={{ fontSize: "30px", margin: "0px" }}>
+              {motmPercentages[0]?.percentage}%
+            </h2>
+          </div>
+        </div>
+      </Paper>
+      <RatingLineup
+        fixture={fixture}
+        usersMatchPlayerRatings={usersMatchPlayerRatings}
+      />
+    </>
+  );
+};
 // const PlayerRatingItem = ({
 //   player,
 //   fixture,
@@ -483,78 +498,6 @@ const PlayerRatingsItems = ({
 //     </div>
 //   );
 // };
-
-const SubmittedPlayerRatings = ({
-  motmPercentages,
-  fixture,
-  usersMatchPlayerRatings,
-}) => {
-  return (
-    <>
-      <Paper className="PlayerRatingItem motm">
-        <MOTMPopover motmPercentages={motmPercentages} />
-        <img
-          src={motmPercentages[0]?.img}
-          className="PlayerRatingImg"
-          alt="PlayerRatingImg"
-        />
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            flex: "1",
-            justifyContent: "space-Evenly",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              // gap: "10px",
-              padding: "10px",
-            }}
-          >
-            <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
-              MOTM
-            </h5>
-            <h2 style={{ margin: "5px" }}>{motmPercentages[0]?.name}</h2>
-            <h2
-              // className="gradient-text"
-              style={{ fontSize: "30px", margin: "0px" }}
-            >
-              {motmPercentages[0]?.percentage}%
-            </h2>
-          </div>
-        </div>
-      </Paper>
-      <RatingLineup
-        fixture={fixture}
-        usersMatchPlayerRatings={usersMatchPlayerRatings}
-      />
-
-      {/* <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
-          Squad Ratings
-        </AccordionSummary>
-        <AccordionDetails>
-          <PlayerRatingsItems
-            combinedPlayers={combinedPlayers}
-            fixture={fixture}
-            isMatchRatingsSubmitted={isMatchRatingsSubmitted}
-            handleRatingsSubmit={handleRatingsSubmit}
-            readOnly={true}
-          />
-        </AccordionDetails>
-      </Accordion> */}
-    </>
-  );
-};
 
 // <Slider
 //             className="slider-marks-top"

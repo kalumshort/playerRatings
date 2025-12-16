@@ -1,20 +1,39 @@
-import React, { useMemo, useState } from "react";
-import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
-import { useSelector } from "react-redux";
-import StarIcon from "@mui/icons-material/Star";
-import CheckIcon from "@mui/icons-material/Check";
+import React, { useMemo, useState, useCallback } from "react";
+import { useSelector, shallowEqual } from "react-redux";
+import {
+  Button,
+  IconButton,
+  Paper,
+  Box,
+  Typography,
+  Avatar,
+  Tooltip,
+  ToggleButton,
+} from "@mui/material";
 
+// Icons
+import StarIcon from "@mui/icons-material/Star";
+import StarOutlineIcon from "@mui/icons-material/StarOutline";
+
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
+import StyleIcon from "@mui/icons-material/Style";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+
+import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 import {
   getRatingClass,
   setLocalStorageItem,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
-import { useTheme } from "../../../Theme/ThemeContext";
 import { handlePlayerRatingSubmit } from "../../../../Firebase/Firebase";
-import { Button, IconButton, Paper, Slider } from "@mui/material";
 
-import StarOutlineIcon from "@mui/icons-material/StarOutline";
-
+// =========================================================
+// 1. PARENT COMPONENT
+// =========================================================
 export default function PlayerRatingsCards({
   combinedPlayers = [],
   fixture,
@@ -25,6 +44,7 @@ export default function PlayerRatingsCards({
   userId,
   currentYear,
   usersMatchPlayerRatings,
+  swiperRef,
 }) {
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),
@@ -40,7 +60,14 @@ export default function PlayerRatingsCards({
   const current = players[index];
 
   return (
-    <div style={{ margin: 20 }}>
+    <Box
+      sx={{
+        margin: 2,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <PlayerRatingCard
         player={current}
         fixture={fixture}
@@ -51,20 +78,31 @@ export default function PlayerRatingsCards({
         userId={userId}
         usersMatchPlayerRating={usersMatchPlayerRatings?.[current.id]}
         currentYear={currentYear}
+        swiperRef={swiperRef}
+        onNext={next}
+        onPrev={prev}
       />
 
-      <div
-        style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}
+      <Box
+        sx={{
+          mt: 2,
+          display: "flex",
+          gap: 1,
+          alignItems: "center",
+          color: "text.secondary",
+        }}
       >
-        <Button onClick={prev}>‹ Prev</Button>
-        <div style={{ flex: 1, textAlign: "center" }}>
+        <Typography variant="caption" fontWeight="bold">
           {index + 1} / {players.length}
-        </div>
-        <Button onClick={next}>Next ›</Button>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 }
+
+// =========================================================
+// 2. MAIN CARD COMPONENT
+// =========================================================
 export function PlayerRatingCard({
   player,
   fixture,
@@ -76,21 +114,69 @@ export function PlayerRatingCard({
   currentYear,
   usersMatchPlayerRating,
   swiperRef,
+  onNext,
+  onPrev,
 }) {
-  const playerData = useSelector(selectSquadPlayerById(player.id));
+  // 1. Performance: Memoize Selector
+  const selectPlayer = useMemo(
+    () => selectSquadPlayerById(player.id),
+    [player.id]
+  );
+  const playerData = useSelector(selectPlayer, shallowEqual);
 
-  const [sliderValue, setSliderValue] = useState(6);
+  // 2. Performance: Memoize Events Logic
+  const playerEvents = useMemo(() => {
+    if (!fixture?.events) return [];
+    const pId = player.id;
+    const events = [];
 
-  const handleSliderChange = (event, newValue) => {
-    event.preventDefault();
-    setSliderValue(newValue);
-  };
+    fixture.events.forEach((ev) => {
+      const time =
+        ev.time.elapsed + (ev.time.extra ? `+${ev.time.extra}` : "") + "'";
 
-  const { themeBackgroundImage } = useTheme();
+      if (
+        ev.type === "Goal" &&
+        ev.player.id === pId &&
+        ev.detail === "Normal Goal"
+      ) {
+        events.push({ type: "goal", label: "Goal", time });
+      }
+      if (
+        ev.type === "Goal" &&
+        ev.player.id === pId &&
+        ev.detail === "Penalty"
+      ) {
+        events.push({ type: "penalty", label: "Penalty", time });
+      }
+      if (ev.type === "Goal" && ev.assist.id === pId) {
+        events.push({ type: "assist", label: "Assist", time });
+      }
+      if (
+        ev.type === "Card" &&
+        ev.player.id === pId &&
+        ev.detail.includes("Yellow")
+      ) {
+        events.push({ type: "yellow", label: "Yellow Card", time });
+      }
+      if (
+        ev.type === "Card" &&
+        ev.player.id === pId &&
+        ev.detail.includes("Red")
+      ) {
+        events.push({ type: "red", label: "Red Card", time });
+      }
+      if (ev.type === "subst" && ev.player.id === pId) {
+        events.push({ type: "subOut", label: "Subbed Out", time });
+      }
+      if (ev.type === "subst" && ev.assist.id === pId) {
+        events.push({ type: "subIn", label: "Subbed In", time });
+      }
+    });
+    return events;
+  }, [fixture?.events, player.id]);
 
   const storedUsersPlayerRating = usersMatchPlayerRating;
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
-
   const isMOTM = storedUsersMatchMOTM === String(player?.id);
 
   const playerRatingAverage = matchRatings?.[player.id]?.totalRating
@@ -100,223 +186,500 @@ export function PlayerRatingCard({
       ).toFixed(1)
     : storedUsersPlayerRating;
 
-  const onRatingClick = async () => {
-    await handlePlayerRatingSubmit({
-      matchId: fixture.id,
-      playerId: String(player.id),
-      rating: sliderValue,
-      userId: userId,
-      groupId: groupId,
-      currentYear,
-    });
-  };
+  // Memoize submit handler to prevent re-renders
+  const onRatingSubmit = useCallback(
+    async (ratingValue) => {
+      await handlePlayerRatingSubmit({
+        matchId: fixture.id,
+        playerId: String(player.id),
+        rating: ratingValue,
+        userId,
+        groupId,
+        currentYear,
+      });
+    },
+    [fixture.id, player.id, userId, groupId, currentYear]
+  );
+
   const handleMotmClick = async () => {
-    if (readOnly) {
-      return;
-    }
-    if (isMOTM) {
-      setLocalStorageItem(`userMatchMOTM-${fixture.id}`, null);
-    } else {
-      setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
-    }
+    if (readOnly) return;
+    setLocalStorageItem(
+      `userMatchMOTM-${fixture.id}`,
+      isMOTM ? null : String(player.id)
+    );
   };
 
   return (
     <Paper
-      style={{
-        backgroundImage: `url(${themeBackgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        width: isMobile ? "90%" : "500px",
-        height: isMobile ? "400px" : "600px",
+      elevation={10}
+      sx={{
+        width: isMobile ? "95%" : "500px", // Increased width slightly for mobile
+
+        // --- FIX START ---
+        height: "auto", // Allow card to grow with content
+        minHeight: isMobile ? "500px" : "640px", // Ensure it's never too small
+        maxHeight: "85vh", // Ensure it fits within the screen height
+        pb: 2, // Add padding at bottom so content doesn't touch edge
+        // --- FIX END ---
         margin: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "space-evenly",
+        justifyContent: "space-between",
+        overflow: "hidden", // Keeps the border-radius clean
+        position: "relative",
       }}
     >
-      <div
-        style={{
-          textAlign: "center",
+      {/* --- TOP: Player Info & Events --- */}
+      <Box
+        sx={{
+          flex: 1,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          px: 6, // Padding to avoid overlap with nav buttons
         }}
       >
-        <img
+        <Avatar
           src={playerData?.photo || player.photo}
           alt={playerData?.name || player.name}
-          width={"100px"}
-          style={{ borderRadius: "50%", backgroundColor: "#00000014" }}
+          sx={{
+            width: isMobile ? 80 : 140,
+            height: isMobile ? 80 : 140,
+            mb: 1,
+            border: isMOTM ? 4 : 1,
+            borderColor: isMOTM ? "warning.main" : "divider", // Theme color
+            boxShadow: isMOTM ? 10 : 2,
+          }}
         />
-        <h2 style={{ margin: "15px 0px 5px 0px" }}>
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          textAlign="center"
+          sx={{ color: "white" }}
+        >
           {playerData?.name || player.name}
-        </h2>
+        </Typography>
+
         {playerData?.position && (
-          <h4
-            style={{
-              padding: "0px",
-              margin: "0px",
-              fontWeight: "100",
+          <Typography
+            variant="subtitle1"
+            sx={{
+              color: "rgba(255,255,255,0.7)",
+              textTransform: "uppercase",
+              letterSpacing: 2,
+              mt: 0.5,
             }}
           >
             {playerData?.position}
-          </h4>
+          </Typography>
         )}
-      </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)",
-          gap: "10px",
-          width: "90%",
-        }}
-      >
-        {/* {Array.from({ length: 10 }, (_, i) => (
-          <ButtonGroup
-            key={i}
-            aria-label="PlayerRatingsButtonGroup"
-            orientation="horizontal"
-            size="large"
-            style={{ width: "100%" }} // make group fill its grid cell
-          >
-            <Button
-              variant="contained"
-              onClick={() => onRatingClick(i + 1)}
-              style={{ flex: 1 }} // make button stretch
-            >
-              {i + 1}
-            </Button>
-
-            {i !== 9 && (
-              <Button
-                variant="outlined"
-                onClick={() => onRatingClick(i + 1.5)}
-                style={{ flex: 1 }} // make .5 stretch
-              >
-                .5
-              </Button>
-            )}
-          </ButtonGroup>
-        ))} */}
-      </div>
-
-      {storedUsersPlayerRating ? (
-        <div className="PlayerRatingsResults">
-          <div className="PlayerRatingsCommunityContainer">
-            <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                storedUsersPlayerRating
-              )}`}
-            >
-              <h4 className="PlayerRatingsCommunityScore textShadow">
-                {storedUsersPlayerRating}
-              </h4>
-            </div>
-          </div>
-
-          <div className="PlayerRatingsCommunityContainer">
-            <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                playerRatingAverage
-              )}`}
-            >
-              <h4 className="PlayerRatingsCommunityScore textShadow">
-                {playerRatingAverage}
-              </h4>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div
-          className="no-swipe"
-          style={{
-            width: "80%",
-            marginBottom: 10,
-            marginTop: -10,
-            gap: 10,
+        {/* Events Row */}
+        <Box
+          sx={{
             display: "flex",
-            alignItems: "center",
+            gap: 1,
+            mt: 2,
+            flexWrap: "wrap",
             justifyContent: "center",
-            flexDirection: "column",
+            minHeight: 32,
           }}
         >
-          <h4 className="PlayerRatingsCommunityScore textShadow">
-            {sliderValue}
-          </h4>
-          <Slider
-            value={sliderValue}
-            onChange={handleSliderChange}
-            step={0.5}
-            min={1}
-            max={10}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              if (swiperRef?.current) swiperRef.current.allowTouchMove = false;
-            }}
-            onPointerUp={(e) => {
-              e.stopPropagation();
-              if (swiperRef?.current) swiperRef.current.allowTouchMove = true;
-            }}
-            onPointerCancel={() => {
-              if (swiperRef?.current) swiperRef.current.allowTouchMove = true;
-            }}
-            onMouseDown={(e) => e.stopPropagation()} // desktop fallback
-            onTouchStart={(e) => e.stopPropagation()} // iOS/Android fallback
-            sx={{
-              height: 8,
-              "& .MuiSlider-rail": {
-                background:
-                  "linear-gradient(to right, #ff6b6b, #ffb56b, #6bff95, #6bbfff)",
-                opacity: 1,
-              },
-              "& .MuiSlider-track": {
-                background: "transparent",
-                border: "none",
-              },
-              "& .MuiSlider-thumb": {
-                width: 20,
-                height: 20,
-                backgroundColor: "#fff",
-                border: "2px solid #333",
-              },
-            }}
-          />
-          <IconButton
-            aria-label="confirm"
-            size="large"
-            variant="outlined"
-            onClick={() => onRatingClick()}
-          >
-            <CheckIcon />
-          </IconButton>
-        </div>
-      )}
+          {playerEvents.length > 0 &&
+            playerEvents.map((ev, i) => (
+              <EventBadge
+                key={i}
+                type={ev.type}
+                label={ev.label}
+                time={ev.time}
+              />
+            ))}
+        </Box>
+      </Box>
 
-      <div
-        style={{
-          cursor: readOnly ? "default" : "pointer",
-          pointerEvents: readOnly ? "none" : "auto",
-          position: "absolute",
-          top: "5%",
-          right: "15%",
+      {/* --- BOTTOM: Controls Box --- */}
+      <Box
+        sx={{
+          width: "100%",
+          position: "relative",
+          backdropFilter: "blur(15px)",
+          background: "rgba(255, 255, 255, 0.05)",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 2,
         }}
       >
-        {isMOTM ? (
-          <StarIcon
-            fontSize="large"
-            onClick={handleMotmClick}
-            color="primary"
+        {storedUsersPlayerRating ? (
+          /* RESULTS VIEW */
+          <Box
+            className="PlayerRatingsResults"
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "space-evenly",
+              alignItems: "center",
+              py: 2, // Added padding for breathing room
+            }}
+          >
+            {/* YOUR SCORE */}
+            <Box
+              sx={{
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 700,
+                  letterSpacing: 1.2,
+                  mb: 1,
+                }}
+              >
+                YOURS
+              </Typography>
+              <Box
+                className={`globalBoxShadow ${getRatingClass(
+                  storedUsersPlayerRating
+                )}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 72, // Increased size
+                  height: 72, // Square aspect ratio
+                  borderRadius: "18px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                }}
+              >
+                <Typography
+                  variant="h4" // Larger, bolder text
+                  sx={{ color: "white", fontWeight: 900 }}
+                >
+                  {storedUsersPlayerRating}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Vertical Divider */}
+            <Box
+              sx={{
+                width: "1px",
+                height: 50,
+                bgcolor: "divider",
+                mx: 1,
+                opacity: 0.5,
+              }}
+            />
+
+            {/* AVERAGE SCORE */}
+            <Box
+              sx={{
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <Typography
+                variant="overline"
+                sx={{
+                  color: "text.secondary",
+                  fontWeight: 700,
+                  letterSpacing: 1.2,
+                  mb: 1,
+                }}
+              >
+                AVERAGE
+              </Typography>
+              <Box
+                className={`globalBoxShadow ${getRatingClass(
+                  playerRatingAverage
+                )}`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 72,
+                  height: 72,
+                  borderRadius: "18px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{ color: "white", fontWeight: 900 }}
+                >
+                  {playerRatingAverage}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        ) : (
+          /* NEW STEPPER INPUT VIEW */
+          <RatingInputSection
+            swiperRef={swiperRef}
+            onRatingSubmit={onRatingSubmit}
+            isMOTM={isMOTM}
+            readOnly={readOnly}
+            isMobile={isMobile}
           />
-        ) : !readOnly ? (
-          <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
-        ) : null}
+        )}
+      </Box>
+      <div style={{ position: "absolute", top: 16, right: 16 }}>
+        <Tooltip title={isMOTM ? "Remove MOTM" : "Award MOTM"} arrow>
+          <ToggleButton
+            value="motm"
+            selected={isMOTM}
+            onChange={handleMotmClick}
+            disabled={readOnly}
+            sx={{
+              flex: "0 0 auto",
+              width: isMobile ? 48 : 56,
+              height: isMobile ? 48 : 56,
+              borderRadius: "16px",
+              border: 1,
+              borderColor: isMOTM ? "warning.main" : "rgba(255,255,255,0.3)",
+              color: isMOTM ? "warning.main" : "rgba(255,255,255,0.5)",
+              "&.Mui-selected": {
+                bgcolor: "rgba(237, 108, 2, 0.2)",
+                color: "warning.main",
+                "&:hover": { bgcolor: "rgba(237, 108, 2, 0.3)" },
+              },
+            }}
+          >
+            {isMOTM ? (
+              <StarIcon fontSize={isMobile ? "medium" : "large"} />
+            ) : (
+              <StarOutlineIcon fontSize={isMobile ? "medium" : "large"} />
+            )}
+          </ToggleButton>
+        </Tooltip>
       </div>
     </Paper>
   );
 }
+
+// =========================================================
+// 3. ISOLATED INPUT SECTION (STEPPER)
+// =========================================================
+const RatingInputSection = React.memo(
+  ({ swiperRef, onRatingSubmit, isMOTM, onMotmToggle, readOnly, isMobile }) => {
+    const [sliderValue, setSliderValue] = useState(6);
+
+    const adjustScore = (amount) => {
+      setSliderValue((prev) => {
+        const next = prev + amount;
+        if (next > 10) return 10;
+        if (next < 1) return 1;
+        return next;
+      });
+    };
+
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: isMobile ? 1.5 : 2,
+        }}
+      >
+        {/* --- STEPPER ROW --- */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: isMobile ? 280 : 350, // Tighter width on mobile
+            mx: "auto",
+            mb: isMobile ? 0 : 1,
+          }}
+        >
+          {/* MINUS BUTTON */}
+          <IconButton
+            onClick={() => adjustScore(-0.5)}
+            disabled={sliderValue <= 1}
+            sx={{
+              border: "1px solid",
+              borderColor: "rgba(255,255,255,0.3)",
+              // Smaller buttons on mobile
+              width: isMobile ? 44 : 56,
+              height: isMobile ? 44 : 56,
+              borderRadius: "16px",
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.05)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <RemoveIcon fontSize={isMobile ? "small" : "medium"} />
+          </IconButton>
+
+          {/* CENTER SCORE DISPLAY */}
+          <Box sx={{ textAlign: "center", minWidth: isMobile ? 60 : 80 }}>
+            <Typography
+              variant={isMobile ? "h3" : "h2"} // Smaller text on mobile
+              fontWeight="900"
+              sx={{
+                lineHeight: 1,
+                color:
+                  sliderValue >= 8
+                    ? "#2ecc71"
+                    : sliderValue >= 5
+                    ? "white"
+                    : "#e74c3c",
+                textShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              }}
+            >
+              {sliderValue.toFixed(1).endsWith(".0")
+                ? sliderValue
+                : sliderValue.toFixed(1)}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                color: "rgba(255,255,255,0.5)",
+                fontSize: isMobile ? "0.65rem" : "0.75rem",
+              }}
+            >
+              Rating
+            </Typography>
+          </Box>
+
+          {/* PLUS BUTTON */}
+          <IconButton
+            onClick={() => adjustScore(0.5)}
+            disabled={sliderValue >= 10}
+            sx={{
+              border: "1px solid",
+              borderColor: "rgba(255,255,255,0.3)",
+              width: isMobile ? 44 : 56,
+              height: isMobile ? 44 : 56,
+              borderRadius: "16px",
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.05)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <AddIcon fontSize={isMobile ? "small" : "medium"} />
+          </IconButton>
+        </Box>
+
+        {/* --- ACTION ROW: MOTM + CONFIRM --- */}
+        <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            onClick={() => onRatingSubmit(sliderValue)}
+            startIcon={<CheckCircleIcon />}
+            sx={{
+              flex: 1,
+              maxWidth: 280,
+              height: isMobile ? 48 : 56, // Smaller button height
+              borderRadius: "16px",
+              fontWeight: "bold",
+              fontSize: isMobile ? "1rem" : "1.1rem",
+              textTransform: "none",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+            }}
+          >
+            Confirm
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+);
+
+// =========================================================
+// 4. HELPER: EVENT BADGE
+// =========================================================
+const EventBadge = React.memo(({ type, label, time }) => {
+  let icon = null;
+  let color = "white";
+  let bg = "rgba(255,255,255,0.1)";
+
+  switch (type) {
+    case "goal":
+    case "penalty":
+      icon = <SportsSoccerIcon fontSize="small" />;
+      color = "#2ecc71"; // Green
+      break;
+    case "assist":
+      icon = <AutoFixHighIcon fontSize="small" />;
+      color = "#3498db"; // Blue
+      break;
+    case "yellow":
+      icon = <StyleIcon fontSize="small" sx={{ transform: "rotate(90deg)" }} />;
+      color = "#f1c40f"; // Yellow
+      break;
+    case "red":
+      icon = <StyleIcon fontSize="small" sx={{ transform: "rotate(90deg)" }} />;
+      color = "#e74c3c"; // Red
+      break;
+    case "subIn":
+      icon = (
+        <CompareArrowsIcon
+          fontSize="small"
+          sx={{ transform: "rotate(90deg)" }}
+        />
+      );
+      color = "#2ecc71";
+      break;
+    case "subOut":
+      icon = (
+        <CompareArrowsIcon
+          fontSize="small"
+          sx={{ transform: "rotate(90deg)" }}
+        />
+      );
+      color = "#e74c3c";
+      break;
+    default:
+      break;
+  }
+
+  return (
+    <Tooltip title={label} arrow>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          borderRadius: "12px",
+          px: 1,
+          py: 0.5,
+          border: `1px solid ${color}40`,
+          bgcolor: bg,
+        }}
+      >
+        <Box sx={{ display: "flex", color: color }}>{icon}</Box>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: "bold", color: "white" }}
+        >
+          {time}
+        </Typography>
+      </Box>
+    </Tooltip>
+  );
+});

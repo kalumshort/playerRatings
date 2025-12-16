@@ -103,21 +103,49 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
           // 1. PAPER (Glass Effect)
           MuiPaper: {
             styleOverrides: {
-              root: ({ theme }) => ({
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(20, 20, 20, 0.6)"
-                    : "rgba(255, 255, 255, 0.6)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
-                backgroundImage: "none",
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 16,
-                boxShadow: "none",
-                transition:
-                  "background-color 0.3s ease, border-color 0.3s ease",
-                overflow: "hidden",
-              }),
+              root: ({ theme }) => {
+                const isDark = theme.palette.mode === "dark";
+
+                return {
+                  // 1. GRADIENT BACKGROUND (Simulates lighting)
+                  // Dark Mode: Deep metallic/glass gradient
+                  // Light Mode: Frosted white gradient
+                  background: isDark
+                    ? "linear-gradient(135deg, rgba(35, 35, 35, 0.9) 0%, rgba(18, 18, 18, 1) 100%)"
+                    : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 1) 100%)",
+
+                  // 2. HEAVY BLUR (Premium Feel)
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+
+                  // 3. BORDER (Subtle Outline)
+                  // Slightly brighter top-left, darker bottom-right handled by the border color usually,
+                  // but here we keep it simple semi-transparent.
+                  border: "1px solid",
+                  borderColor: isDark
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(255, 255, 255, 0.4)",
+
+                  borderRadius: 24, // More modern, larger curves
+
+                  // 4. THE "GLASS EDGE" (Inner Glow + Drop Shadow)
+                  // '0 8px 32px' lifts the card off the page (Depth).
+                  // 'inset 0 1px 0' adds a tiny white reflection on the top edge (Thickness).
+                  boxShadow: isDark
+                    ? "0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)"
+                    : "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)",
+
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  overflow: "hidden",
+
+                  // Optional: Slight hover effect to make it interactive
+                  "&:hover": {
+                    boxShadow: isDark
+                      ? "0 12px 40px 0 rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)"
+                      : "0 12px 40px 0 rgba(31, 38, 135, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)",
+                  },
+                };
+              },
             },
           },
 

@@ -55,7 +55,7 @@ export default function PlayerRatingsCardStack({
         onSlideChange={(s) => setIndex(s.activeIndex)}
         noSwiping
         noSwipingClass="no-swipe"
-        style={{ width: isMobile ? "100%" : 520, height: isMobile ? 420 : 650 }}
+        style={{ width: isMobile ? "100%" : 520 }}
       >
         {players.map((p) => (
           <SwiperSlide key={p.id}>
