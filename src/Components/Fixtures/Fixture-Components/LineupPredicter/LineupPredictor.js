@@ -76,7 +76,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
   // --- RENDER LOGIC ---
 
   // CASE A: VIEW MODE (Side-by-Side on Desktop, Stacked on Mobile)
-  if (!storedPrediction || readOnly) {
+  if (storedPrediction || readOnly) {
     return (
       <Box className="containerMargin">
         <Grid container alignItems="flex-start">
