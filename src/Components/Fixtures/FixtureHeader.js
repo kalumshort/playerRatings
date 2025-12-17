@@ -388,6 +388,7 @@ const TeamDisplay = ({ team, align }) => (
         width: { xs: 50, md: 60 },
         height: { xs: 50, md: 60 },
         filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))",
+        borderRadius: "0px",
       }}
     />
     <Typography
