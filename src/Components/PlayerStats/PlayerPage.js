@@ -1,8 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
+import { Paper, Typography, Box, Avatar, Chip } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+
+// Selectors & Hooks
 import { selectSquadPlayerById } from "../../Selectors/squadDataSelectors";
-import { Paper } from "@mui/material";
 import {
   selectPlayerRatingsById,
   selectPlayerRatingsLoad,
@@ -12,15 +16,115 @@ import {
   fetchAllPlayersSeasonOverallRating,
 } from "../../Hooks/Fixtures_Hooks";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
-import { getRatingClass } from "../../Hooks/Helper_Functions";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
 import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
+import {
+  getPlayersFixtureEvents,
+  RatingBadge,
+} from "../../Hooks/Helper_Functions";
+import { EventBadge } from "../Widgets/EventBadge";
+
+// --- STYLED COMPONENTS ---
+
+const PageContainer = styled("div")(({ theme }) => ({
+  maxWidth: "800px",
+  margin: "0 auto",
+  padding: "20px",
+  paddingBottom: "80px",
+  [theme.breakpoints.down("sm")]: {
+    padding: "10px", // Tighter page padding on mobile
+  },
+}));
+
+// 1. HERO PROFILE - OPTIMIZED FOR MOBILE
+const HeroSection = styled(Paper)(({ theme }) => ({
+  padding: "24px",
+  borderRadius: "12px",
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
+  marginBottom: "20px",
+  display: "flex",
+  alignItems: "center",
+  gap: "24px",
+
+  // Mobile Adjustments
+  [theme.breakpoints.down("sm")]: {
+    padding: "16px", // Less padding
+    gap: "16px", // Less gap
+    // Keep it ROW (horizontal) to save vertical space
+    flexDirection: "row",
+    alignItems: "flex-start", // Align top
+    marginBottom: "16px",
+  },
+}));
+
+const HeroAvatar = styled(Avatar)(({ theme }) => ({
+  width: 80,
+  height: 80,
+  border: "2px solid #fff",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+  [theme.breakpoints.down("sm")]: {
+    width: 60, // Smaller avatar on mobile
+    height: 60,
+  },
+}));
+
+// 2. GRAPH CONTAINER
+const GraphSection = styled(Paper)(({ theme }) => ({
+  padding: "20px",
+  borderRadius: "12px",
+  backgroundColor: theme.palette.background.paper,
+  border: `1px solid ${theme.palette.divider}`,
+  marginBottom: "24px",
+  [theme.breakpoints.down("sm")]: {
+    padding: "10px",
+    marginBottom: "16px",
+  },
+}));
+
+// 3. MATCH ROW - OPTIMIZED FOR MOBILE CROWDING
+const MatchItem = styled(Paper)(({ theme, result }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "16px",
+  marginBottom: "10px",
+  borderRadius: "10px",
+  border: `1px solid ${theme.palette.divider}`,
+  borderLeft: `6px solid ${
+    result === "W"
+      ? theme.palette.success.main
+      : result === "D"
+      ? theme.palette.warning.main
+      : theme.palette.error.main
+  }`,
+  transition: "transform 0.2s ease",
+  cursor: "pointer",
+  "&:hover": {
+    transform: "translateX(4px)",
+    backgroundColor: theme.palette.action.hover,
+  },
+  [theme.breakpoints.down("sm")]: {
+    padding: "12px", // Compact padding
+    marginBottom: "8px",
+  },
+}));
+
+const SectionHeader = styled(Typography)(({ theme }) => ({
+  fontWeight: 900,
+  fontSize: "1.2rem",
+  marginBottom: "12px",
+  color: theme.palette.text.primary,
+}));
+
+// --- MAIN COMPONENT ---
 
 export default function PlayerPage() {
   const { playerId } = useParams();
   const { activeGroup } = useGroupData();
   const globalData = useGlobalData();
+  const dispatch = useDispatch();
 
   const playerData = useSelector(selectSquadPlayerById(playerId));
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
@@ -28,12 +132,10 @@ export default function PlayerPage() {
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
     useSelector(selectPlayerRatingsLoad);
 
-  const dispatch = useDispatch();
-
   useEffect(() => {
     dispatch(
       fetchPlayerRatingsAllMatches({
-        playerId: playerId,
+        playerId,
         groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
       })
@@ -56,133 +158,236 @@ export default function PlayerPage() {
     globalData.currentYear,
   ]);
 
-  if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded) {
-    return <></>;
-  }
+  if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded)
+    return <div className="spinner"></div>;
+
   const seasonAverageRating =
     allPlayerRatings?.seasonOverall?.totalRating /
-    allPlayerRatings?.seasonOverall?.totalSubmits;
+      allPlayerRatings?.seasonOverall?.totalSubmits || 0;
 
   return (
-    <div className="PlayerPageContainer">
-      <div>
-        <Paper className="containerMargin PlayerPageHeader">
-          <img
-            src={playerData?.photo}
-            className="PlayerPageImg"
-            alt={`${playerData.name}`}
-          />
-          <h2 className="globalHeading">{playerData.name}</h2>
-          <h3 className="PlayerPageNumber">{playerData.number}</h3>
-        </Paper>
-        <Paper className="containerMargin">
-          <div className="SeasonRatingContainer">
-            <h4 className="subHeadingGlobal">Avg. Rating</h4>
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-                seasonAverageRating
-              )}`}
+    <PageContainer>
+      {/* 1. HERO PROFILE */}
+      <HeroSection elevation={0}>
+        <HeroAvatar src={playerData?.photo} />
+
+        <Box flexGrow={1}>
+          <Typography
+            variant="h4"
+            fontWeight={900}
+            sx={{ fontSize: { xs: "1.5rem", sm: "2.125rem" } }}
+          >
+            {playerData?.name}
+          </Typography>
+
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            mt={0.5}
+            flexWrap="wrap"
+          >
+            <Chip
+              label={playerData?.position}
+              size="small"
+              variant="outlined"
+            />
+            <Typography variant="body2" color="text.secondary">
+              #{playerData?.number}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Rating Box - Keeps fixed width to prevent squashing */}
+        <Box textAlign="center" minWidth="70px">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={700}
+            sx={{ fontSize: "0.65rem" }}
+          >
+            SEASON AVG
+          </Typography>
+          <Box display="flex" justifyContent="center">
+            <RatingBadge
+              score={seasonAverageRating}
+              style={{ width: "60px", padding: "8px 0", fontSize: "1.2rem" }}
             >
-              <h4 className="PlayerStatsListItemScore">
-                {seasonAverageRating.toFixed(1)}
-              </h4>
+              {seasonAverageRating.toFixed(1)}
+            </RatingBadge>
+          </Box>
+        </Box>
+      </HeroSection>
+
+      {/* 2. GRAPH */}
+      {allPlayerRatings?.matches && (
+        <Box mb={4}>
+          <SectionHeader>Performance History</SectionHeader>
+          <GraphSection elevation={0}>
+            <div style={{ width: "100%", height: "250px" }}>
+              <PlayerRatingsLineGraph allPlayerRatings={allPlayerRatings} />
             </div>
-          </div>
-        </Paper>
-      </div>
-
-      {!allPlayerRatings?.matches && <div className="spinner"></div>}
-      {allPlayerRatings?.matches && previousFixtures && (
-        <div style={{ width: "100%" }}>
-          <Paper className="containerMargin " style={{ padding: "10px" }}>
-            <PlayerRatingsLineGraph allPlayerRatings={allPlayerRatings} />
-          </Paper>
-
-          <Paper className="containerMargin PlayerMatchList">
-            {previousFixtures?.map((fixture, index) => {
-              const matchTime = new Date(
-                fixture.fixture.timestamp * 1000
-              ).toLocaleDateString("en-GB", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              });
-              return (
-                <PlayerMatchitem
-                  key={fixture.id || index}
-                  getRatingClass={getRatingClass}
-                  fixture={fixture}
-                  matchTime={matchTime}
-                  matchPlayerStats={Object.values(
-                    allPlayerRatings?.matches
-                  ).find((match) => match.id === fixture.id)}
-                />
-              );
-            })}
-          </Paper>
-        </div>
+          </GraphSection>
+        </Box>
       )}
-    </div>
+
+      {/* 3. MATCH LIST */}
+      {previousFixtures && allPlayerRatings?.matches && (
+        <Box>
+          <SectionHeader>Matches</SectionHeader>
+          {previousFixtures.map((fixture, index) => {
+            const matchStats = Object.values(allPlayerRatings.matches).find(
+              (m) => m.id === fixture.id
+            );
+            if (!matchStats) return null;
+
+            const matchTime = new Date(
+              fixture.fixture.timestamp * 1000
+            ).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+
+            return (
+              <PlayerMatchRow
+                key={fixture.id || index}
+                fixture={fixture}
+                matchTime={matchTime}
+                matchStats={matchStats}
+                clubId={activeGroup.groupClubId}
+                playerId={playerId}
+              />
+            );
+          })}
+        </Box>
+      )}
+    </PageContainer>
   );
 }
 
-const PlayerMatchitem = ({
+// --- SUB COMPONENT ---
+const PlayerMatchRow = ({
   fixture,
   matchTime,
-  getRatingClass,
-  matchPlayerStats,
+  matchStats,
+  clubId,
+  playerId,
 }) => {
-  const { activeGroup } = useGroupData();
+  const clubIdNum = Number(clubId);
+  const pIdNum = Number(playerId);
 
-  const groupClubId = Number(activeGroup.groupClubId);
-  const oponent = Object.values(fixture?.teams).find(
-    (team) => team.id !== groupClubId
+  // 1. Determine Result
+  const isHome = fixture.teams.home.id === clubIdNum;
+  const homeWin = fixture.teams.home.winner;
+  const awayWin = fixture.teams.away.winner;
+  let result = "D";
+  if ((isHome && homeWin) || (!isHome && awayWin)) result = "W";
+  else if ((isHome && awayWin) || (!isHome && homeWin)) result = "L";
+
+  // 2. Find Opponent & Score
+  const opponent = isHome ? fixture.teams.away : fixture.teams.home;
+  const scoreStr = `${fixture.score.fulltime.home} - ${fixture.score.fulltime.away}`;
+  const rating = matchStats
+    ? matchStats.totalRating / matchStats.totalSubmits
+    : 0;
+
+  // 3. Get Player Events
+  const events = useMemo(
+    () => getPlayersFixtureEvents(fixture, pIdNum),
+    [fixture, pIdNum]
   );
 
   return (
-    <Link
-      to={`/fixture/${fixture.id}`}
-      style={{ textDecoration: "none", color: "inherit" }}
-    >
-      <div className="PlayerMatchItem">
-        <div className="PlayerMatchMeta">
-          <span>{matchTime}</span>
-          <span>{fixture.league.name}</span>
-        </div>
-        <div className="PlayerItemData">
-          <div className="PlayerItemOponentContainer">
-            <img
-              src={oponent.logo}
-              className="PlayerItemOponentLogo"
-              alt={`${oponent.name} logo`}
-            />
-            <div className="PlayerItemTeamScore">
-              <span>{oponent.name}</span>
-              <span>
-                {fixture.score.fulltime.home} - {fixture.score.fulltime.away}
-              </span>
-            </div>
-          </div>
+    <Link to={`/fixture/${fixture.id}`} style={{ textDecoration: "none" }}>
+      <MatchItem elevation={0} result={result}>
+        {/* LEFT: DATE */}
+        {/* On mobile, we reduce width to save space */}
+        <Box
+          display="flex"
+          flexDirection="column"
+          sx={{ width: { xs: "50px", sm: "80px" } }}
+        >
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            color="text.primary"
+            sx={{ fontSize: { xs: "0.8rem", sm: "1rem" } }}
+          >
+            {matchTime.split(",")[1] || matchTime}{" "}
+            {/* Fallback: shows just date part on mobile if formatted as "Mon, 12 Oct" */}
+          </Typography>
+          {/* Hide League Name on Mobile to reduce clutter */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ display: { xs: "none", sm: "block" } }}
+          >
+            {fixture.league.name}
+          </Typography>
+        </Box>
 
-          {matchPlayerStats ? (
-            <div
-              className={`globalBoxShadow PlayerStatsListItemScoreContainerSmall ${getRatingClass(
-                matchPlayerStats.totalRating / matchPlayerStats.totalSubmits
-              )}`}
+        {/* CENTER: OPPONENT & EVENTS */}
+        <Box
+          display="flex"
+          alignItems="center"
+          flex={1}
+          gap={2}
+          ml={1}
+          sx={{ overflow: "hidden" }}
+        >
+          <img
+            src={opponent.logo}
+            alt={opponent.name}
+            style={{ width: 32, height: 32, objectFit: "contain" }}
+          />
+          <Box sx={{ minWidth: 0, width: "100%" }}>
+            {/* Name & Events Container */}
+            <Box
+              display="flex"
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              flexDirection={{ xs: "column", sm: "row" }} // Stack on mobile
+              gap={{ xs: 0.5, sm: 1 }}
             >
-              <h4 className="PlayerStatsListItemScore">
-                {(
-                  matchPlayerStats.totalRating / matchPlayerStats.totalSubmits
-                ).toFixed(1)}
-              </h4>
-            </div>
-          ) : (
-            <div className={` PlayerStatsListItemScoreContainerSmall `}>
-              <h4 className="PlayerStatsListItemScore">-</h4>
-            </div>
-          )}
-        </div>
-      </div>
+              <Typography variant="body2" fontWeight={800} noWrap>
+                vs {opponent.name}
+              </Typography>
+
+              {/* Event Badges */}
+              {/* On mobile this sits BELOW the name due to column flex */}
+              <Box display="flex" gap={0.5} flexWrap="wrap">
+                {events.map((event, index) => (
+                  <EventBadge
+                    key={index}
+                    type={event.type}
+                    label={event.label}
+                    time={event.time}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Typography variant="caption" color="text.secondary" noWrap>
+              Result: {scoreStr}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* RIGHT: RATING */}
+        <Box display="flex" alignItems="center" gap={1} ml={1}>
+          <RatingBadge score={rating}>
+            {rating > 0 ? rating.toFixed(1) : "-"}
+          </RatingBadge>
+          <ArrowForwardIosIcon
+            sx={{
+              fontSize: "12px",
+              color: "text.disabled",
+              display: { xs: "none", sm: "block" },
+            }}
+          />
+        </Box>
+      </MatchItem>
     </Link>
   );
 };

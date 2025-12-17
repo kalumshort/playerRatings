@@ -1,3 +1,4 @@
+import { styled } from "@mui/material";
 import React, { createContext, useState, useContext, useEffect } from "react";
 
 export const CountdownTimer = ({ targetTime }) => {
@@ -160,7 +161,90 @@ export const footballClubsColours = {
   44: "#6C1D45", // Burnley
   63: "#FFCD00", // Leeds United
 };
+// 4. SOLID RATING BADGE (High Contrast)
+export const RatingBadge = styled("div")(({ score, theme }) => {
+  // Determine color class
+  let bgColor = theme.palette.grey[800]; // Default
+  if (score >= 8.0) bgColor = "#1b5e5aff"; // Deep Green
+  else if (score >= 7.0) bgColor = "#2e7d32"; // Green
+  else if (score >= 6.0) bgColor = "#ed6c02"; // Orange
+  else if (score > 0) bgColor = "#d32f2f"; // Red
 
+  return {
+    backgroundColor: bgColor,
+    color: "#fff",
+    padding: "6px 0",
+    width: "48px",
+    borderRadius: "6px",
+    fontWeight: 800,
+    fontSize: "1rem",
+    textAlign: "center",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+  };
+});
+
+/**
+ * Extracts all relevant events for a specific player from a fixture.
+ * Returns an array of objects: { type, label, time }
+ */
+export const getPlayersFixtureEvents = (fixture, playerId) => {
+  if (!fixture || !fixture.events || !playerId) return [];
+
+  const pId = Number(playerId);
+  const events = [];
+
+  fixture.events.forEach((event) => {
+    console.log(event);
+    const eventTime =
+      event.time.elapsed +
+      (event.time.extra ? `+${event.time.extra}` : "") +
+      "'";
+
+    // 1. GOALS & PENALTIES
+    if (event.type === "Goal") {
+      if (event.player.id === pId) {
+        if (event.detail === "Penalty") {
+          events.push({
+            type: "penalty",
+            label: "Penalty Scored",
+            time: eventTime,
+          });
+        } else if (event.detail !== "Missed Penalty") {
+          events.push({ type: "goal", label: "Goal", time: eventTime });
+        }
+      }
+      // ASSISTS
+      if (event.assist.id === pId && event.player.id !== pId) {
+        events.push({
+          type: "assist",
+          label: `Assist (to ${event.player.name})`,
+          time: eventTime,
+        });
+      }
+    }
+
+    // 2. CARDS
+    if (event.type === "Card" && event.player.id === pId) {
+      if (event.detail === "Yellow Card") {
+        events.push({ type: "yellow", label: "Yellow Card", time: eventTime });
+      } else if (event.detail === "Red Card") {
+        events.push({ type: "red", label: "Red Card", time: eventTime });
+      }
+    }
+
+    // 3. SUBSTITUTIONS
+    if (event.type === "subst") {
+      if (event.player.id === pId) {
+        events.push({ type: "subOut", label: "Subbed Out", time: eventTime });
+      }
+      if (event.assist.id === pId) {
+        events.push({ type: "subIn", label: "Subbed In", time: eventTime });
+      }
+    }
+  });
+
+  return events;
+};
 export const teamList = [
   {
     teamId: 42,
