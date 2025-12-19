@@ -99,6 +99,7 @@ export const handleAddUserToGroup = async ({ userData, groupId }) => {
 };
 
 export const handleCreateAccountGoogle = async ({ groupId }) => {
+  console.log("handleCreateAccountGoogle called with groupId:", groupId);
   const provider = new GoogleAuthProvider();
 
   try {
@@ -140,8 +141,6 @@ export const handleCreateAccountGoogle = async ({ groupId }) => {
 
       return; // You can handle the login logic here if needed
     } else {
-      // Call the Cloud Function to add the user to the group
-
       const createUserDoc = httpsCallable(functions, "createUserDoc");
 
       await createUserDoc({
@@ -151,15 +150,16 @@ export const handleCreateAccountGoogle = async ({ groupId }) => {
         photoURL: photoURL,
         providerId: providerId,
       });
-
-      await addUserToGroup({
-        groupId: groupId || "002", // The group to add the user to
-        userId: userId, // The user's UID
-        userData: {
-          email: email,
-          role: "user", // Optionally, you could pass more data like role, username, etc.
-        },
-      });
+      if (groupId) {
+        await addUserToGroup({
+          groupId: groupId, // The group to add the user to
+          userId: userId, // The user's UID
+          userData: {
+            email: email,
+            role: "user", // Optionally, you could pass more data like role, username, etc.
+          },
+        });
+      }
     }
   } catch (err) {
     console.error("Error creating account:", err);
