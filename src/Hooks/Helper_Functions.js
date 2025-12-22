@@ -1,5 +1,20 @@
-import { styled } from "@mui/material";
+import { Stack, styled, Typography } from "@mui/material";
 import React, { createContext, useState, useContext, useEffect } from "react";
+
+const calculateTimeLeft = (targetTime) => {
+  const difference = +new Date(targetTime * 1000) - +new Date();
+  let timeLeft = null;
+
+  if (difference > 0) {
+    timeLeft = {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+    };
+  }
+  return timeLeft;
+};
 
 export const CountdownTimer = ({ targetTime }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
@@ -9,69 +24,76 @@ export const CountdownTimer = ({ targetTime }) => {
       setTimeLeft(calculateTimeLeft(targetTime));
     }, 1000);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, [targetTime]);
 
   if (!timeLeft) {
     return (
-      <div
-        className="countdownContianer"
-        style={{ textAlign: "center", fontSize: "12px" }}
-      >
-        Match has started!
-      </div>
+      <Typography variant="caption" color="primary" sx={{ fontWeight: "bold" }}>
+        MATCH HAS STARTED!
+      </Typography>
     );
   }
 
   const { days, hours, minutes, seconds } = timeLeft;
 
-  const displayParts = [];
-  if (days) displayParts.push(`${days}d`);
-  if (hours) displayParts.push(`${hours}h`);
-  if (minutes) displayParts.push(`${minutes}m`);
-  if (seconds || displayParts.length === 0) displayParts.push(`${seconds}s`);
-
   return (
-    <div className="countdownContianer">
-      <div className="countdownInterval">
-        <span>{days}</span>
-        <span className="countdownIntervalSmall">Days</span>
-      </div>
-      <div className="countdownInterval">
-        <span>{hours}</span>
-        <span className="countdownIntervalSmall">Hrs</span>
-      </div>
-      <div className="countdownInterval">
-        <span>{minutes}</span>
-        <span className="countdownIntervalSmall">Mins</span>
-      </div>
-      <div className="countdownInterval">
-        <span>{seconds}</span>
-        <span className="countdownIntervalSmall">Secs</span>
-      </div>
-    </div>
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="center"
+      spacing={{ xs: 1, md: 2 }}
+    >
+      <TimeUnit value={days} label="Days" />
+      <TimeSeparator />
+      <TimeUnit value={hours} label="Hrs" />
+      <TimeSeparator />
+      <TimeUnit value={minutes} label="Mins" />
+      <TimeSeparator />
+      <TimeUnit value={seconds} label="Secs" />
+    </Stack>
   );
 };
 
-export const calculateTimeLeft = (targetTime) => {
-  const now = Math.floor(Date.now() / 1000); // Current time in seconds
-  const diff = targetTime - now;
+// Internal Sub-components for clean horizontal layout
+const TimeUnit = ({ value, label }) => (
+  <Stack alignItems="center">
+    <Typography
+      variant="h5"
+      sx={{
+        lineHeight: 1,
+        minWidth: "1.5em",
+        textAlign: "center",
+      }}
+    >
+      {String(value).padStart(2, "0")}
+    </Typography>
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{
+        fontSize: "0.6rem",
+        textTransform: "uppercase",
+        opacity: 0.8,
+      }}
+    >
+      {label}
+    </Typography>
+  </Stack>
+);
 
-  if (diff <= 0) return null;
+const TimeSeparator = () => (
+  <Typography
+    variant="h5"
+    sx={{
+      opacity: 0.3,
+      pb: 1.5, // Offset to align with the center of the numbers
+    }}
+  >
+    :
+  </Typography>
+);
 
-  const days = Math.floor(diff / (24 * 60 * 60))
-    .toString()
-    .padStart(2, "0");
-  const hours = Math.floor((diff % (24 * 60 * 60)) / (60 * 60))
-    .toString()
-    .padStart(2, "0");
-  const minutes = Math.floor((diff % (60 * 60)) / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = (diff % 60).toString().padStart(2, "0");
-
-  return { days, hours, minutes, seconds };
-};
 export const generateCustomId = (string) => {
   const sanitizedGroupName = string
     .toLowerCase()

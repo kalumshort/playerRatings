@@ -8,7 +8,12 @@ import {
   Chip,
   Grid,
 } from "@mui/material";
-import { Stadium, SportsSoccer, Sports } from "@mui/icons-material";
+import {
+  Stadium,
+  SportsSoccer,
+  Sports,
+  ArrowForward,
+} from "@mui/icons-material";
 
 // --- HOOKS & COMPONENTS ---
 import { CountdownTimer } from "../../Hooks/Helper_Functions";
@@ -58,6 +63,10 @@ export default function FixtureHeader({
     hour: "2-digit",
     minute: "2-digit",
   });
+  const dateString = matchDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
 
   return (
     <Paper
@@ -67,53 +76,95 @@ export default function FixtureHeader({
       sx={{
         p: 0,
         cursor: onClick ? "pointer" : "default",
-        transition: "transform 0.2s ease",
+        position: "relative",
+        transition: "all 0.2s ease-in-out",
+        overflow: "hidden",
+        // Interaction Indicator Logic
+        ...(onClick && {
+          "&:hover": {
+            bgcolor: "action.hover",
+            "& .interaction-icon": { opacity: 1, transform: "translateX(0)" },
+          },
+        }),
       }}
     >
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
-        {/* Status Area */}
-        <Stack direction="row" justifyContent="center" sx={{ mb: 2 }}>
+      {/* Interaction Icon */}
+      {onClick && (
+        <Box
+          className="interaction-icon"
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 16,
+            opacity: 0,
+            transform: "translateX(-10px)",
+            transition: "all 0.3s ease",
+            color: "primary.main",
+          }}
+        >
+          <ArrowForward fontSize="small" />
+        </Box>
+      )}
+
+      <Box sx={{ p: { xs: 3, md: 4 } }}>
+        {/* Status Badge */}
+        <Stack
+          direction="row"
+          justifyContent="center"
+          sx={{ mb: 3 }}
+          style={{
+            position: "absolute",
+            top: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
           {inPlay ? (
             <LivePulseBadge elapsed={fixData.status.elapsed} />
           ) : (
             <Chip
-              label={statusShort === "NS" ? timeString : statusShort}
+              label={
+                isScheduled ? `${dateString}  • ${timeString}` : statusShort
+              }
               size="small"
               variant="filled"
-              sx={{ fontWeight: "bold" }}
+              sx={{ fontWeight: "bold", height: 20, fontSize: "0.65rem" }}
             />
           )}
         </Stack>
 
-        {/* Main Face-Off Grid */}
-        <Grid container spacing={1} alignItems="center" justifyContent="center">
+        {/* Main Face-Off Grid: Vertically Centered */}
+        <Grid container alignItems="center" justifyContent="center">
           {/* Home Team */}
-          <Grid item xs={4}>
+          <Grid item xs={3.5}>
             <TeamDisplay team={teams.home} />
           </Grid>
 
-          {/* Center Score/Timer Area */}
-          <Grid item xs={4} sx={{ textAlign: "center" }}>
-            {isScheduled ? (
-              <Typography color="primary" sx={{ fontWeight: "bold" }}>
+          {/* Center Score/Timer: Vertically Centered */}
+          <Grid item xs={5}>
+            <Stack alignItems="center" justifyContent="center" spacing={1}>
+              {isScheduled ? (
                 <CountdownTimer targetTime={fixData.timestamp} />
-              </Typography>
-            ) : (
-              <Stack spacing={0}>
-                <Typography variant="h2">
-                  {goals.home ?? 0} - {goals.away ?? 0}
-                </Typography>
-                {score.halftime.home !== null && !isFinished && (
-                  <Typography variant="caption" color="text.secondary">
-                    HT {score.halftime.home}-{score.halftime.away}
+              ) : (
+                <>
+                  <Typography
+                    variant="h2"
+                    sx={{ whiteSpace: "nowrap", lineHeight: 1 }}
+                  >
+                    {goals.home ?? 0} — {goals.away ?? 0}
                   </Typography>
-                )}
-              </Stack>
-            )}
+                  {score.halftime.home !== null && !isFinished && (
+                    <Typography variant="caption" color="text.secondary">
+                      HT {score.halftime.home}-{score.halftime.away}
+                    </Typography>
+                  )}
+                </>
+              )}
+            </Stack>
           </Grid>
 
           {/* Away Team */}
-          <Grid item xs={4}>
+          <Grid item xs={3.5}>
             <TeamDisplay team={teams.away} />
           </Grid>
         </Grid>
@@ -125,7 +176,7 @@ export default function FixtureHeader({
             display="block"
             textAlign="center"
             color="error"
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
           >
             PENS: {score.penalty.home}-{score.penalty.away}
           </Typography>
@@ -133,7 +184,7 @@ export default function FixtureHeader({
 
         {/* Scorers Section */}
         {showScorers && (homeScorers.length > 0 || awayScorers.length > 0) && (
-          <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
+          <Box sx={{ mt: 4, pt: 2, borderTop: 1, borderColor: "divider" }}>
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 {homeScorers.map((s, i) => (
@@ -150,7 +201,7 @@ export default function FixtureHeader({
         )}
       </Box>
 
-      {/* Footer Info */}
+      {/* Footer Details */}
       {(showPenaltys || showDetails) && (
         <Box
           sx={{
@@ -188,19 +239,30 @@ export default function FixtureHeader({
   );
 }
 
+// --- SUB-COMPONENTS ---
+
 const TeamDisplay = ({ team }) => (
-  <Stack alignItems="center" spacing={1}>
+  <Stack
+    alignItems="center"
+    justifyContent="center"
+    spacing={1.5}
+    sx={{ width: "100%" }}
+  >
     <Avatar
       src={team.logo}
       variant="square"
       sx={{
-        width: { xs: 45, md: 70 },
-        height: { xs: 45, md: 70 },
+        width: { xs: 45, md: 65 },
+        height: { xs: 45, md: 65 },
         bgcolor: "transparent",
         "& img": { objectFit: "contain" },
       }}
     />
-    <Typography variant="h6" align="center">
+    <Typography
+      variant="subtitle1"
+      align="center"
+      sx={{ width: "100%", fontWeight: "bold" }}
+    >
       {team.name}
     </Typography>
   </Stack>
@@ -224,7 +286,7 @@ const ScorerItem = ({ scorer, align }) => (
         {scorer.times.map((t) => t + "'").join(", ")}
       </Typography>
     </Typography>
-    <SportsSoccer sx={{ fontSize: 12, opacity: 0.5 }} />
+    <SportsSoccer sx={{ fontSize: 10, opacity: 0.5 }} />
   </Stack>
 );
 
@@ -243,10 +305,16 @@ const LivePulseBadge = ({ elapsed }) => (
   >
     <Box
       sx={{
-        width: 8,
-        height: 8,
+        width: 6,
+        height: 6,
         borderRadius: "50%",
         bgcolor: "error.main",
+        animation: "pulse 1.5s infinite ease-in-out",
+        "@keyframes pulse": {
+          "0%": { opacity: 1 },
+          "50%": { opacity: 0.4 },
+          "100%": { opacity: 1 },
+        },
       }}
     />
     <Typography variant="caption" color="error" sx={{ fontWeight: "bold" }}>
