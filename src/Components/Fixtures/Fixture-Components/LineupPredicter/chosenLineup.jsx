@@ -124,16 +124,7 @@ export default function ChosenLineup({
           sx={{ position: "absolute", bottom: 15, right: 15, opacity: 10 }}
         >
           <SportsSoccer sx={{ fontSize: 18 }} />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              letterSpacing: 1,
-            }}
-          >
-            {formation}
-          </Typography>
+          <Typography variant="caption">{formation}</Typography>
         </Stack>
 
         {/* VISUAL FIELD LINES */}
@@ -188,16 +179,7 @@ export default function ChosenLineup({
             opacity: 1,
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "VT323",
-              fontSize: "1rem",
-              letterSpacing: 2,
-            }}
-          >
-            11VOTES.COM
-          </Typography>
+          <Typography variant="caption">11VOTES.COM</Typography>
         </Box>
 
         {/* SAVE BUTTON (Hidden from screenshot via data-nosnap) */}

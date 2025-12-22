@@ -97,7 +97,6 @@ export default function ScorePrediction({ fixture }) {
         <Typography
           variant="caption"
           sx={{
-            fontFamily: "Space Mono",
             letterSpacing: 1,
             fontSize: "0.7rem",
           }}
@@ -125,7 +124,6 @@ export default function ScorePrediction({ fixture }) {
         <Typography
           variant="h5"
           sx={{
-            fontFamily: "VT323",
             color: "text.disabled",
             px: 1,
             pb: 4, // Align with numbers
@@ -154,8 +152,7 @@ export default function ScorePrediction({ fixture }) {
             maxWidth: 220,
             py: 1, // Less padding
             borderRadius: 6,
-            fontFamily: "Space Mono",
-            fontWeight: "bold",
+
             fontSize: "0.8rem",
             boxShadow: `0 4px 15px -4px ${theme.palette.primary.main}40`,
           }}
@@ -198,9 +195,6 @@ const TeamScoreInputCompact = ({ team, score, setScore }) => {
         variant="caption"
         noWrap
         sx={{
-          fontFamily: "Space Mono",
-          fontWeight: "bold",
-          fontSize: "0.7rem",
           maxWidth: "80px",
           mb: 1.5,
           opacity: 0.7,
@@ -244,8 +238,6 @@ const TeamScoreInputCompact = ({ team, score, setScore }) => {
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           sx={{
-            fontFamily: "VT323",
-            fontSize: "2.5rem", // Reduced from 3.5rem
             lineHeight: 1,
             minWidth: "40px",
             textAlign: "center",

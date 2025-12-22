@@ -6,9 +6,7 @@
   min-height: 350px;
   cursor: pointer;
 }
-.lineupAndRatings-Container {
-  width: calc(60%);
-}
+
 .fixture-countdown {
   font-size: 30px;
 }

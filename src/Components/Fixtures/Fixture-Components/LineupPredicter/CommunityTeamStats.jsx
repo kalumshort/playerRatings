@@ -69,22 +69,9 @@ export function CommunityTeamStats({ fixture }) {
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Groups fontSize="small" color="primary" />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              letterSpacing: 1,
-            }}
-          >
-            COMMUNITY XI SELECTION
-          </Typography>
+          <Typography variant="caption">COMMUNITY XI SELECTION</Typography>
         </Stack>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontFamily: "Space Mono" }}
-        >
+        <Typography variant="caption">
           {matchPredictions.totalTeamSubmits} SUBMISSIONS
         </Typography>
       </Box>
@@ -181,8 +168,6 @@ const PlayerStatRow = ({ rank, player, percentage, color }) => {
           <Typography
             variant="caption"
             sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
               color: isStarter ? color : "text.secondary",
             }}
           >

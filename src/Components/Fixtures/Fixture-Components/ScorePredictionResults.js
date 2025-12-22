@@ -109,12 +109,7 @@ export default function ScorePredictionResults({
       <Paper sx={glassCardStyles} elevation={0}>
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
           <SportsSoccer fontSize="small" color="primary" />
-          <Typography
-            variant="caption"
-            sx={{ fontFamily: "Space Mono", fontWeight: "bold" }}
-          >
-            RESULT COMPARISON
-          </Typography>
+          <Typography variant="caption">RESULT COMPARISON</Typography>
         </Stack>
 
         <Stack
@@ -129,10 +124,7 @@ export default function ScorePredictionResults({
             value={storedUsersPredictedScore}
             highlight={true}
           />
-          <Typography
-            variant="h6"
-            sx={{ color: "text.disabled", fontFamily: "VT323" }}
-          >
+          <Typography variant="h6" sx={{ color: "text.disabled" }}>
             VS
           </Typography>
           <BigStatCard label="GROUP" value={consensusScore} highlight={false} />
@@ -170,12 +162,7 @@ export default function ScorePredictionResults({
             >
               <Stack direction="row" spacing={1} alignItems="center">
                 <TrendingUp color="primary" />
-                <Typography
-                  variant="h6"
-                  sx={{ fontFamily: "VT323", textTransform: "uppercase" }}
-                >
-                  MATCH ANALYTICS
-                </Typography>
+                <Typography variant="h6">MATCH ANALYTICS</Typography>
               </Stack>
               <IconButton onClick={() => setOpen(false)} size="small">
                 <Close />
@@ -202,7 +189,7 @@ export default function ScorePredictionResults({
                         dataKey="score"
                         tick={{
                           fill: theme.palette.text.secondary,
-                          fontFamily: "VT323",
+
                           fontSize: 16,
                         }}
                         axisLine={false}
@@ -216,10 +203,7 @@ export default function ScorePredictionResults({
                           if (active && payload && payload.length) {
                             return (
                               <Paper sx={{ p: 1, bgcolor: "background.paper" }}>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ fontFamily: "Space Mono" }}
-                                >
+                                <Typography variant="caption">
                                   {payload[0].payload.score}:{" "}
                                   {payload[0].payload.percent}%
                                 </Typography>
@@ -325,20 +309,13 @@ const BigStatCard = ({ label, value, highlight }) => {
       <Typography
         variant="caption"
         sx={{
-          fontFamily: "Space Mono",
-          color: "text.secondary",
           display: "block",
           mb: 1,
         }}
       >
         {label}
       </Typography>
-      <Typography
-        variant="h3"
-        sx={{ fontFamily: "VT323", fontWeight: "bold", lineHeight: 0.8 }}
-      >
-        {value}
-      </Typography>
+      <Typography variant="h3">{value}</Typography>
     </Paper>
   );
 };
@@ -388,11 +365,8 @@ const SectionTitle = ({ children }) => (
   <Typography
     variant="caption"
     sx={{
-      fontFamily: "Space Mono",
-      fontWeight: "bold",
       mb: 0.5,
       display: "block",
-      color: "text.secondary",
     }}
   >
     {children}

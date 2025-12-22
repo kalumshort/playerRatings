@@ -86,7 +86,9 @@ export default function DroppablePitch({
         <FormControl variant="standard" sx={{ minWidth: 140 }}>
           <InputLabel
             id="formation-label"
-            sx={{ fontFamily: "Space Mono", fontSize: "0.8rem" }}
+            sx={{
+              fontSize: "0.8rem",
+            }}
           >
             TACTIC
           </InputLabel>
@@ -96,13 +98,12 @@ export default function DroppablePitch({
             onChange={(e) => setFormation(e.target.value)}
             label="Formation"
             sx={{
-              fontFamily: "VT323",
               fontSize: "1.5rem",
               color: theme.palette.primary.main,
             }}
           >
             {Object.keys(FORMATIONS).map((fmt) => (
-              <MenuItem key={fmt} value={fmt} sx={{ fontFamily: "Space Mono" }}>
+              <MenuItem key={fmt} value={fmt}>
                 {fmt}
               </MenuItem>
             ))}
@@ -115,7 +116,6 @@ export default function DroppablePitch({
             onClick={handleClear}
             color="error"
             size="small"
-            sx={{ fontFamily: "Space Mono" }}
           >
             CLEAR
           </Button>
@@ -174,8 +174,7 @@ export default function DroppablePitch({
             borderRadius: 8,
             px: 4,
             py: 1.5,
-            fontFamily: "Space Mono",
-            fontWeight: "bold",
+
             boxShadow: theme.shadows[4],
           }}
         >
@@ -184,7 +183,7 @@ export default function DroppablePitch({
         <Typography
           variant="caption"
           display="block"
-          sx={{ mt: 1, color: "text.secondary", fontFamily: "Space Mono" }}
+          sx={{ mt: 1, color: "text.secondary" }}
         >
           {Object.keys(chosenTeam).length} / 11 Players Selected
         </Typography>

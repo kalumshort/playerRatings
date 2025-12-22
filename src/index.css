@@ -1,231 +1,69 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Graduate&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap&rel=stylesheet");
-
-:root {
-  --font-retro: "VT323", monospace; /* For Headers */
-  --font-body: "Space Mono", monospace; /* For Text */
-  --font-jersey: "Graduate", serif; /* For Numbers/Buttons */
-}
-
+/* index.css - Essentials Only */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono&display=swap");
 body {
   margin: 0;
-  font-family: var(--font-body) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth background and text color transition */
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-retro) !important;
-  font-weight: 200 !important;
-  letter-spacing: 1.5px !important;
-}
-/* @font-face {
-  font-family: "VT323";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
-} */
-.muiIconSmall {
-  font-size: 20px !important;
-}
-.smallHeading {
-  font-size: 12px;
-  margin: 0px;
-  padding: 0px;
-  position: absolute;
-  top: 5px;
-  left: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: grey;
-}
-button {
-  font-size: 14px !important;
-  padding: 0px !important;
+  /* Smooth mode switching */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
-/* Global slim modern scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 8px; /* For horizontal scrollbars */
-}
-
-::-webkit-scrollbar-thumb {
-  background: #da291c; /* Default thumb color */
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Hover color for thumb */
-}
-
-::-webkit-scrollbar-track {
-  background: #313131; /* Background of the scrollbar track */
-  border-radius: 4px;
-}
-
+/* Logic for Charts and Spinners that MUI doesn't touch */
 .spinner-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: rgb(0, 0, 0); /* Optional overlay */
 }
-.globalHeading {
-  margin: 0px;
-  padding: 0px;
-  font-size: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-.subHeadingGlobal {
-  padding: 0px;
-  margin: 0px;
-  font-size: 18px;
-  color: grey;
-}
-.globalBoxShadow {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.418);
-}
+
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #ccc;
-  border-top-color: #4eff4e; /* Accent color */
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: currentColor; /* Inherits from parent or theme */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-.muiButton {
-  padding: 0px !important;
-}
-.countdownContianer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
-  gap: 15px;
-}
-.countdownInterval {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.countdownIntervalSmall {
-  font-size: 15px;
-  font-weight: 100;
-}
-.gradient-text {
-  background: linear-gradient(to bottom right, #e01111, #970dce);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
-}
-.pieChart {
-  overflow: visible !important;
-}
-.recharts-wrapper {
-  overflow: visible !important;
-}
-.pieChartScorePredictions {
-  font-size: 15px;
-  position: relative;
-  overflow: visible;
-}
-
-.barChart {
-  font-size: 15px;
-}
-.marginBottom {
-  margin-bottom: 30px !important;
-}
-
-.containerMargin {
-  margin: 20px 20px 0;
-}
-
-.recharts-text {
-  z-index: 9999999;
-}
-
-button {
-  text-transform: none !important;
-  font-weight: 400 !important;
-  letter-spacing: 1.2px !important;
-}
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.heading2 {
-  margin: 0px;
-  padding: 0px;
-  font-weight: 500;
-  letter-spacing: 2px;
-}
-@media (max-width: 768px) {
-  .heading2 {
-    font-size: 20px;
-    margin: 0px;
-  }
-  .countdownInterval {
-    font-size: 30px;
-  }
-  .smallHeading {
-    font-size: 10px;
-  }
-  .containerMargin {
-    margin: 10px 10px 0;
-  }
+/* Recharts Overflows */
+.pieChart,
+.recharts-wrapper,
+.pieChartScorePredictions {
+  overflow: visible !important;
 }
 
+/* Results Gradients (Kept here for specialized scoreboard logic) */
 .result-scoreboard-win {
   background: radial-gradient(
     circle,
-    transparent 60%,
-    #6bff95 100%
-  ); /* Red gradient around edges */
-  font-weight: bold;
+    transparent 50%,
+    rgba(107, 255, 149, 0.2) 100%
+  );
   border: 1px solid #6bff95;
 }
 
 .result-scoreboard-loss {
   background: radial-gradient(
     circle,
-    transparent 60%,
-    #ff0101 100%
-  ); /* Red gradient around edges */
-  font-weight: bold;
-  border: solid 1px #ff0101;
+    transparent 50%,
+    rgba(255, 1, 1, 0.2) 100%
+  );
+  border: 1px solid #ff0101;
 }
 
 .result-scoreboard-draw {
   background: radial-gradient(
     circle,
-    transparent 60%,
-    #b0b0b0 100%
-  ); /* Red gradient around edges */
-  font-weight: bold;
-  border: solid 1px #b0b0b0;
-}
-
-.result-scoreboard-pending {
-  font-weight: bold;
-}
-
-.textShadow {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
+    transparent 50%,
+    rgba(176, 176, 176, 0.2) 100%
+  );
+  border: 1px solid #b0b0b0;
 }

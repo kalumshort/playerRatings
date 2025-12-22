@@ -62,19 +62,19 @@ export default function WinnerPredict({ fixture }) {
   };
 
   // --- STYLES ---
- const glassCardStyles = {
-  // Layout & Spacing only
-  p: 3,
-  position: "relative",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: "220px", 
-  
-  // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
-  // These are now inherited automatically from your Global Theme!
-};
+  const glassCardStyles = {
+    // Layout & Spacing only
+    p: 3,
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "220px",
+
+    // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
+    // These are now inherited automatically from your Global Theme!
+  };
 
   const optionCardStyles = (isSelected) => ({
     flex: 1,
@@ -111,16 +111,7 @@ export default function WinnerPredict({ fixture }) {
         sx={{ mb: 2, opacity: 0.7 }}
       >
         <EmojiEvents sx={{ fontSize: "1rem" }} color="primary" />
-        <Typography
-          variant="caption"
-          sx={{
-            fontFamily: "Space Mono",
-            letterSpacing: 1,
-            fontSize: "0.7rem",
-          }}
-        >
-          WHO WILL WIN?
-        </Typography>
+        <Typography variant="caption">WHO WILL WIN?</Typography>
       </Stack>
 
       {/* 3-Column Layout */}
@@ -138,16 +129,7 @@ export default function WinnerPredict({ fixture }) {
             src={fixture.teams.home.logo}
             sx={{ width: 32, height: 32, mb: 1 }}
           />
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              fontSize: "0.7rem",
-              opacity: 0.8,
-            }}
-          >
+          <Typography variant="caption" noWrap>
             HOME
           </Typography>
 
@@ -176,24 +158,11 @@ export default function WinnerPredict({ fixture }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "0.8rem",
-              fontWeight: "bold",
-              fontFamily: "Space Mono",
             }}
           >
             X
           </Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              fontSize: "0.7rem",
-              opacity: 0.8,
-            }}
-          >
-            DRAW
-          </Typography>
+          <Typography variant="caption">DRAW</Typography>
 
           {/* Result Overlay */}
           {storedUsersPredictedResult && (
@@ -218,9 +187,6 @@ export default function WinnerPredict({ fixture }) {
             variant="caption"
             noWrap
             sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              fontSize: "0.7rem",
               opacity: 0.8,
             }}
           >
@@ -239,11 +205,7 @@ export default function WinnerPredict({ fixture }) {
         <Fade in={true}>
           <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle fontSize="small" color="primary" sx={{ width: 16 }} />
-            <Typography
-              variant="caption"
-              color="primary"
-              sx={{ fontFamily: "Space Mono", fontWeight: "bold" }}
-            >
+            <Typography variant="caption" color="primary">
               YOU PICKED {storedUsersPredictedResult.toUpperCase()}
             </Typography>
           </Box>
@@ -267,7 +229,6 @@ const ResultPercentage = ({ value }) => {
       <Typography
         variant="h5"
         sx={{
-          fontFamily: "VT323",
           lineHeight: 1,
           color: theme.palette.mode === "dark" ? "#fff" : "#000",
         }}

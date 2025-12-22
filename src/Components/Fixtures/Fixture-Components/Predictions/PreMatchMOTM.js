@@ -100,8 +100,6 @@ export default function PreMatchMOTM({ fixture }) {
           label="COMMUNITY WATCH"
           size="small"
           sx={{
-            fontFamily: "Space Mono",
-            fontWeight: "bold",
             mb: 2,
             borderColor: theme.palette.primary.main,
             color: theme.palette.primary.main,
@@ -154,7 +152,10 @@ export default function PreMatchMOTM({ fixture }) {
             >
               <Typography
                 variant="caption"
-                sx={{ fontFamily: "VT323", fontSize: "1.2rem", lineHeight: 1 }}
+                sx={{
+                  fontSize: "1.2rem",
+                  lineHeight: 1,
+                }}
               >
                 #1
               </Typography>
@@ -163,20 +164,10 @@ export default function PreMatchMOTM({ fixture }) {
 
           {/* Player Stats */}
           <Box>
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: "VT323",
-                textTransform: "uppercase",
-                lineHeight: 1,
-              }}
-            >
-              {topPlayer.name}
-            </Typography>
+            <Typography variant="h5">{topPlayer.name}</Typography>
             <Typography
               variant="h3"
               sx={{
-                fontFamily: "VT323",
                 color: theme.palette.primary.main,
                 fontWeight: "bold",
                 lineHeight: 1,
@@ -184,11 +175,7 @@ export default function PreMatchMOTM({ fixture }) {
             >
               {topPlayer.percentage}%
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontFamily: "Space Mono" }}
-            >
+            <Typography variant="caption" color="text.secondary">
               OF VOTES
             </Typography>
           </Box>
@@ -215,8 +202,6 @@ export default function PreMatchMOTM({ fixture }) {
           <Typography
             variant="caption"
             sx={{
-              fontFamily: "Space Mono",
-              color: "text.secondary",
               display: "block",
               mb: 1,
             }}
@@ -242,9 +227,7 @@ export default function PreMatchMOTM({ fixture }) {
                 >
                   {index + 1}. {name}
                 </Typography>
-                <Typography variant="body2" sx={{ fontFamily: "Space Mono" }}>
-                  {percentage}%
-                </Typography>
+                <Typography variant="body2">{percentage}%</Typography>
               </Box>
             ))}
           </Stack>
@@ -258,7 +241,10 @@ export default function PreMatchMOTM({ fixture }) {
     <Paper sx={glassCardStyles} elevation={0}>
       <Typography
         variant="h6"
-        sx={{ fontFamily: "VT323", textTransform: "uppercase", mb: 2 }}
+        sx={{
+          textTransform: "uppercase",
+          mb: 2,
+        }}
       >
         PLAYER TO WATCH
       </Typography>
@@ -267,7 +253,7 @@ export default function PreMatchMOTM({ fixture }) {
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mb: 2, fontFamily: "Space Mono", fontSize: "0.8rem" }}
+          sx={{ mb: 2, fontSize: "0.8rem" }}
         >
           Who will control the game?
         </Typography>
@@ -276,9 +262,7 @@ export default function PreMatchMOTM({ fixture }) {
         <Box
           sx={{
             ".MuiInputBase-root": {
-              bgcolor: "background.paper",
               borderRadius: 2,
-              fontFamily: "Space Mono",
             },
             mb: 3,
           }}
@@ -299,8 +283,7 @@ export default function PreMatchMOTM({ fixture }) {
               sx={{
                 borderRadius: 8,
                 py: 1.5,
-                fontWeight: "bold",
-                fontFamily: "Space Mono",
+
                 letterSpacing: "-0.5px",
               }}
             >

@@ -12,7 +12,7 @@ export default function LineupAndPlayerRatings({ fixture }) {
   };
 
   return (
-    <ContentContainer className="lineupAndRatings-Container containerMargin">
+    <ContentContainer className="lineupAndRatings-Container">
       <Box>
         <Tabs
           value={selectedTab}

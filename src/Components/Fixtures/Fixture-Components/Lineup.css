@@ -208,7 +208,7 @@
     top: 10px;
   }
   .lineup-sidebar {
-    width: calc(40% - 40px);
+    width: calc(40%);
   }
   .lineup-sidebar > * {
     flex: 1; /* Stretch each child to fill available vertical space */
@@ -238,10 +238,6 @@
 
   .Prediction-lineup-container {
     flex-direction: column;
-  }
-
-  .lineupAndRatings-Container {
-    width: 100%;
   }
 }
 

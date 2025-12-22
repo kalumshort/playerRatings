@@ -8,19 +8,16 @@ import React, {
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
+  alpha,
 } from "@mui/material/styles";
-
-// Asset Imports (Keep your existing paths)
-import playerCardBgBlackBanner from "../../assets/appAssets/playerBackgroundBaseBlackBanner.png";
-import playerCardBgWhiteBanner from "../../assets/appAssets/playerBackgroundBaseWhiteBanner.png";
-import playerCardBgWhite from "../../assets/appAssets/playerBackgroundBaseWhite.png";
-import playerCardBgBlack from "../../assets/appAssets/playerBackgroundBaseBlack.png";
+import CssBaseline from "@mui/material/CssBaseline";
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
   const [themeMode, setThemeMode] = useState("dark");
 
+  // Persist theme preference
   useEffect(() => {
     const savedTheme = localStorage.getItem("themeMode");
     if (savedTheme) setThemeMode(savedTheme);
@@ -41,228 +38,201 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
           mode: themeMode,
           primary: {
             main: accentColor,
-            contrastText: "#000000",
+            dark: alpha(accentColor, 0.7),
+            light: alpha(accentColor, 0.1),
+            contrastText: themeMode === "dark" ? "#000000" : "#ffffff",
           },
           ...(themeMode === "light"
             ? {
                 background: {
-                  default: "#f0f2f5",
-                  paper: "rgba(255, 255, 255, 0.65)",
-                  gradient: "linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%)",
+                  default: "#F8FAFC", // Modern Slate-50
+                  paper: "rgba(255, 255, 255, 0.8)",
                 },
                 text: {
-                  primary: "#1a2027",
-                  secondary: "#5A6A85",
-                  disabled: "#B0B8C4",
+                  primary: "#0F172A",
+                  secondary: "#64748B",
                 },
-                divider: "rgba(0,0,0,0.06)",
               }
             : {
                 background: {
-                  default: "#09090b",
-                  paper: "rgba(20, 20, 20, 0.6)",
-                  gradient: "linear-gradient(135deg, #18181b 0%, #09090b 100%)",
+                  default: "#020617", // Deep Navy/Black
+                  paper: "rgba(15, 23, 42, 0.6)",
                 },
                 text: {
-                  primary: "#ffffff",
-                  secondary: "#A1A1AA",
-                  disabled: "#52525B",
+                  primary: "#F8FAFC",
+                  secondary: "#94A3B8",
                 },
-                divider: "rgba(255,255,255,0.08)",
               }),
         },
 
-        shape: { borderRadius: 24 },
+        shape: { borderRadius: 16 },
 
         typography: {
-          fontFamily: "'Space Mono', 'Courier New', monospace",
+          // Main UI and Body font (Rounded & Modern)
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+
+          // Heading variants (Geometric & Bold)
           h1: {
-            fontFamily: "'VT323', monospace",
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
             textTransform: "uppercase",
-            lineHeight: 1,
           },
           h2: {
-            fontFamily: "'VT323', monospace",
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
             textTransform: "uppercase",
-            lineHeight: 1.1,
           },
-          h3: { fontFamily: "'VT323', monospace", textTransform: "uppercase" },
-          h4: { fontFamily: "'VT323', monospace", textTransform: "uppercase" },
-          h5: { fontFamily: "'VT323', monospace", textTransform: "uppercase" },
-          h6: { fontFamily: "'VT323', monospace", textTransform: "uppercase" },
-          button: {
-            fontFamily: "'Graduate', serif",
-            textTransform: "uppercase",
+          h3: {
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+          },
+          h4: {
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+          },
+          h5: {
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 600,
+          },
+          h6: {
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 600,
+          },
+
+          // Subtitles & Secondary UI text
+          subtitle1: {
+            fontWeight: 600,
+            lineHeight: 1.5,
+            letterSpacing: "0.01em",
+          },
+          subtitle2: {
+            fontWeight: 600,
+            fontSize: "0.875rem",
+          },
+
+          // Standard Body Text
+          body1: {
+            fontWeight: 400,
             fontSize: "1rem",
+            lineHeight: 1.6,
           },
-          body1: { fontFamily: "'Space Mono', monospace", lineHeight: 1.6 },
-          caption: { fontFamily: "'Space Mono', monospace" },
+          body2: {
+            fontWeight: 400,
+            fontSize: "0.875rem",
+            lineHeight: 1.6,
+          },
+
+          // Technical/Stat labels (Keeping Space Mono for the 'Data' look)
+          caption: {
+            fontFamily: "'Space Mono', monospace",
+            fontWeight: 400,
+            letterSpacing: "0.02em",
+          },
+
+          // Action Elements
+          button: {
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          },
         },
 
         components: {
-          // 1. PAPER (Glass Effect)
+          MuiCssBaseline: {
+            styleOverrides: (theme) => ({
+              // Load modern font weights
+              "@import":
+                "url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap')",
+              body: {
+                backgroundColor: theme.palette.background.default,
+                color: theme.palette.text.primary,
+                transition: "background-color 0.3s ease",
+              },
+              // Dynamic Scrollbar synced to club accent color
+              "::-webkit-scrollbar": { width: "6px" },
+              "::-webkit-scrollbar-track": {
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "#020617" : "#F8FAFC",
+              },
+              "::-webkit-scrollbar-thumb": {
+                backgroundColor: alpha(accentColor, 0.4),
+                borderRadius: "10px",
+                "&:hover": { backgroundColor: accentColor },
+              },
+            }),
+          },
           MuiPaper: {
             styleOverrides: {
-              root: ({ theme }) => {
-                const isDark = theme.palette.mode === "dark";
-
-                return {
-                  // 1. GRADIENT BACKGROUND (Simulates lighting)
-                  // Dark Mode: Deep metallic/glass gradient
-                  // Light Mode: Frosted white gradient
-                  background: isDark
-                    ? "linear-gradient(135deg, rgba(35, 35, 35, 0.9) 0%, rgba(18, 18, 18, 1) 100%)"
-                    : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 1) 100%)",
-
-                  // 2. HEAVY BLUR (Premium Feel)
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-
-                  // 3. BORDER (Subtle Outline)
-                  // Slightly brighter top-left, darker bottom-right handled by the border color usually,
-                  // but here we keep it simple semi-transparent.
-                  border: "1px solid",
-                  borderColor: isDark
+              root: ({ theme }) => ({
+                backgroundImage: "none", // Remove default MUI overlay
+                backdropFilter: "blur(16px) saturate(180%)",
+                WebkitBackdropFilter: "blur(16px) saturate(180%)",
+                border: "1px solid",
+                borderColor:
+                  theme.palette.mode === "dark"
                     ? "rgba(255, 255, 255, 0.1)"
-                    : "rgba(255, 255, 255, 0.4)",
-
-                  borderRadius: 24, // More modern, larger curves
-
-                  // 4. THE "GLASS EDGE" (Inner Glow + Drop Shadow)
-                  // '0 8px 32px' lifts the card off the page (Depth).
-                  // 'inset 0 1px 0' adds a tiny white reflection on the top edge (Thickness).
-                  boxShadow: isDark
-                    ? "0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)"
-                    : "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.6)",
-
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  overflow: "hidden",
-
-                  // Optional: Slight hover effect to make it interactive
-                  "&:hover": {
-                    boxShadow: isDark
-                      ? "0 12px 40px 0 rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)"
-                      : "0 12px 40px 0 rgba(31, 38, 135, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.8)",
-                  },
-                };
-              },
+                    : "rgba(0, 0, 0, 0.08)",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 10px 30px -10px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)"
+                    : "0 10px 30px -10px rgba(0,0,0,0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              }),
             },
           },
-
-          // 2. BUTTONS
           MuiButton: {
             styleOverrides: {
               root: {
-                borderRadius: 8,
-                textTransform: "none",
-                fontWeight: 700,
-                fontSize: "1rem",
-                padding: "8px 22px",
-                boxShadow: "none",
+                borderRadius: 12,
+                padding: "8px 24px",
                 "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: `0 4px 12px ${accentColor}40`,
+                  transform: "translateY(-1px)",
+                  boxShadow: `0 8px 20px -6px ${alpha(accentColor, 0.5)}`,
                 },
               },
               containedPrimary: {
-                backgroundColor: accentColor,
-                color: "#000",
-                "&:hover": {
-                  backgroundColor: accentColor,
-                  filter: "brightness(1.05)",
-                },
-              },
-              outlined: {
-                borderWidth: "2px",
-                "&:hover": {
-                  borderWidth: "2px",
-                  borderColor: accentColor,
-                  color: accentColor,
-                  backgroundColor: "transparent",
-                },
+                // Subtle gradient for primary buttons
+                background: `linear-gradient(135deg, ${accentColor} 0%, ${alpha(
+                  accentColor,
+                  0.8
+                )} 100%)`,
               },
             },
           },
-
-          // 3. INPUTS
-          MuiOutlinedInput: {
-            styleOverrides: {
-              root: ({ theme }) => ({
-                borderRadius: 16,
-                backgroundColor:
-                  theme.palette.mode === "light"
-                    ? "rgba(255,255,255,0.4)"
-                    : "rgba(0,0,0,0.2)",
-                transition: "all 0.2s ease",
-                "& fieldset": { borderColor: theme.palette.divider },
-                "&:hover": {
-                  backgroundColor:
-                    theme.palette.mode === "light"
-                      ? "rgba(255,255,255,0.7)"
-                      : "rgba(0,0,0,0.3)",
-                },
-                "&.Mui-focused": {
-                  backgroundColor:
-                    theme.palette.mode === "light" ? "#fff" : "rgba(0,0,0,0.4)",
-                  boxShadow: `0 4px 20px -2px ${accentColor}30`,
-                  "& fieldset": { borderColor: `${accentColor} !important` },
-                },
-              }),
-            },
-          },
-
-          // 4. CARDS
-          MuiCard: {
-            styleOverrides: {
-              root: { borderRadius: 24, overflow: "hidden" },
-            },
-          },
-
-          // 5. TABS (THE NEW ADDITION)
-          MuiTabs: {
-            styleOverrides: {
-              root: ({ theme }) => ({
-                minHeight: "44px",
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(0,0,0,0.3)"
-                    : "rgba(0,0,0,0.05)",
-                borderRadius: 24,
-                padding: 4,
-                alignItems: "center",
-              }),
-              indicator: {
-                display: "none", // Hide the underline for the "Pill" look
-              },
-            },
-          },
-
           MuiTab: {
             styleOverrides: {
-              root: ({ theme }) => ({
-                textTransform: "uppercase",
-                fontFamily: "'Space Mono', monospace",
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                borderRadius: 20, // Pill shape
-                minHeight: "36px",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                color: theme.palette.text.secondary,
-                zIndex: 1,
-
-                // Hover State
-                "&:hover": {
-                  color: theme.palette.text.primary,
-                  backgroundColor: theme.palette.action.hover,
-                },
-
-                // Active/Selected State
+              root: {
+                borderRadius: 10,
+                margin: "4px",
+                minHeight: "40px",
                 "&.Mui-selected": {
-                  color: "#000000", // Black text for contrast
-                  backgroundColor: accentColor, // Neon background
-                  boxShadow: `0 4px 12px -2px ${accentColor}60`, // Glow
+                  backgroundColor: alpha(accentColor, 0.15),
+                  color: accentColor,
                 },
-              }),
+              },
+            },
+          },
+          MuiStack: {
+            defaultProps: {
+              useFlexGap: true,
+              spacing: 2, // Default 16px gap between all stacked Papers
+            },
+          },
+          MuiContainer: {
+            styleOverrides: {
+              root: {
+                paddingLeft: "16px",
+                paddingRight: "16px",
+                "@media (min-width: 600px)": {
+                  paddingLeft: "24px",
+                  paddingRight: "24px",
+                },
+              },
             },
           },
         },
@@ -270,21 +240,21 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
     [themeMode, accentColor]
   );
 
-  const themeBackgroundImageBanner =
-    themeMode === "dark" ? playerCardBgBlackBanner : playerCardBgWhiteBanner;
-  const themeBackgroundImage =
-    themeMode === "dark" ? playerCardBgBlack : playerCardBgWhite;
+  const value = useMemo(
+    () => ({
+      themeMode,
+      toggleTheme,
+      accentColor,
+    }),
+    [themeMode, accentColor]
+  );
 
   return (
-    <ThemeContext.Provider
-      value={{
-        themeBackgroundImageBanner,
-        themeBackgroundImage,
-        themeMode,
-        toggleTheme,
-      }}
-    >
-      <MUIThemeProvider theme={theme}>{children}</MUIThemeProvider>
+    <ThemeContext.Provider value={value}>
+      <MUIThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </MUIThemeProvider>
     </ThemeContext.Provider>
   );
 };

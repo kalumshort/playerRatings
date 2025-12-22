@@ -136,9 +136,6 @@ export default function LineupPlayer({
           noWrap
           sx={{
             mt: 0.5,
-            fontFamily: "Space Mono",
-
-            fontWeight: "bold",
             textAlign: "center",
             width: "100%",
             maxWidth: 68,

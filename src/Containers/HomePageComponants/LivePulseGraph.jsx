@@ -76,12 +76,7 @@ const LivePulseGraph = () => {
         }}
       >
         <Box>
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", fontFamily: "Space Mono" }}
-          >
-            LIVE SENTIMENT
-          </Typography>
+          <Typography variant="caption">LIVE SENTIMENT</Typography>
           <Fade in={true} key={status.label}>
             <Typography
               variant="h5"
@@ -97,16 +92,8 @@ const LivePulseGraph = () => {
         </Box>
 
         <Box sx={{ textAlign: "right" }}>
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", fontFamily: "Space Mono" }}
-          >
-            VOTES/MIN
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{ fontFamily: "VT323", fontSize: "1.5rem" }}
-          >
+          <Typography variant="caption">VOTES/MIN</Typography>
+          <Typography variant="h6">
             {Math.floor(Math.random() * 50) + 800}
           </Typography>
         </Box>
@@ -171,8 +158,7 @@ const ChipLabel = ({ label, color }) => (
       color: color,
       px: 1,
       borderRadius: 1,
-      fontSize: "0.7rem",
-      fontFamily: "Space Mono",
+
       fontWeight: "bold",
     }}
   >

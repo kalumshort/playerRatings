@@ -41,6 +41,7 @@ import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
 import PreMatchMOTM from "./Fixture-Components/Predictions/PreMatchMOTM";
 import MoodSelector from "./Fixture-Components/MoodSelector";
+import { Box, Stack } from "@mui/material";
 
 export default function Fixture() {
   const { matchId } = useParams();
@@ -132,12 +133,9 @@ export default function Fixture() {
   return (
     <>
       <FixtureGradientProvider
-        value={{
-          fixtureGradient: fixtureGradient,
-          homeTeamColour: homeTeamColour,
-          awayTeamColour: awayTeamColour,
-        }}
+        value={{ fixtureGradient, homeTeamColour, awayTeamColour }}
       >
+        {/* Listeners remain unchanged */}
         {String(latestFixture?.fixture.id) === matchId && (
           <FixturesListener
             teamId={activeGroup.groupClubId}
@@ -148,13 +146,18 @@ export default function Fixture() {
           groupId={activeGroup.groupId}
           matchId={matchId}
         />
-        <FixtureHeader
-          fixture={fixture}
-          showDetails={true}
-          showScorers={true}
-          addClass={"containerMargin"}
-          showPenaltys={true}
-        />
+
+        {/* 1. Header with Margin Bottom */}
+        <Box sx={{ mb: 3 }}>
+          <FixtureHeader
+            fixture={fixture}
+            showDetails={true}
+            showScorers={true}
+            addClass={"containerMargin"}
+            showPenaltys={true}
+          />
+        </Box>
+
         {isMobile ? (
           <MobileFixtureContainer
             fixture={fixture}
@@ -163,54 +166,56 @@ export default function Fixture() {
             currentYear={currentYear}
           />
         ) : (
-          <>
-            {showPredictions && (
-              <div className="ScorePredictPTWContainer containerMargin">
-                <WinnerPredict fixture={fixture} />
-                <ScorePrediction fixture={fixture} />
-                <PreMatchMOTM fixture={fixture} />
-              </div>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-              }}
-            >
-              {showPredictions && !fixture?.lineups && (
-                <LineupPredictor fixture={fixture} />
+          /* Desktop Layout with proper Gaps */
+          <Box>
+            <Stack spacing={3}>
+              {showPredictions && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 3, // Spacing between individual prediction cards
+                    "& > *": { flex: 1 }, // Ensures cards are equal width
+                  }}
+                >
+                  <WinnerPredict fixture={fixture} />
+                  <ScorePrediction fixture={fixture} />
+                  <PreMatchMOTM fixture={fixture} />
+                </Box>
               )}
+              {/* 3. Main Body Section */}
+              <Box sx={{ display: "flex", gap: 3 }}>
+                {showPredictions && !fixture?.lineups && (
+                  <Box sx={{ flex: 1 }}>
+                    <LineupPredictor fixture={fixture} />
+                  </Box>
+                )}
 
-              {fixture?.lineups && (
-                <>
-                  <LineupAndPlayerRatings fixture={fixture} />
-                  <div className="lineup-sidebar">
-                    <Statistics fixture={fixture} />
-                    <Events events={fixture?.events} />
-                  </div>
-                </>
-              )}
+                {fixture?.lineups && (
+                  <>
+                    <Box sx={{ flex: 2 }}>
+                      <LineupAndPlayerRatings fixture={fixture} />
+                    </Box>
+                    <Stack spacing={3} sx={{ flex: 1 }}>
+                      <Statistics fixture={fixture} />
+                      <Events events={fixture?.events} />
+                    </Stack>
+                  </>
+                )}
+              </Box>
+              {/* 4. Mood Selector - full width */}
               {!isPreMatch && (
-                <div style={{ width: "100%" }}>
+                <Box>
                   <MoodSelector
                     fixture={fixture}
                     groupId={activeGroup.groupId}
                     currentYear={currentYear}
                     matchId={matchId}
                   />
-                </div>
+                </Box>
               )}
-
-              {/* {!isPreMatch && (
-                <div className="lineup-sidebar">
-                  <Statistics fixture={fixture} />
-                  <Events events={fixture?.events} />
-                </div>
-              )} */}
               {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
-            </div>
-          </>
+            </Stack>
+          </Box>
         )}
       </FixtureGradientProvider>
     </>

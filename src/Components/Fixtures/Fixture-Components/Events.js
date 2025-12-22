@@ -42,11 +42,7 @@ export default function Events({ events }) {
         }}
         elevation={0}
       >
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{ fontFamily: "Space Mono" }}
-        >
+        <Typography variant="body1" color="text.secondary">
           No Match Events Yet
         </Typography>
       </Paper>
@@ -77,16 +73,7 @@ export default function Events({ events }) {
       >
         <Stack direction="row" spacing={1} alignItems="center">
           <Flag fontSize="small" color="primary" />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              letterSpacing: 1,
-            }}
-          >
-            MATCH FEED
-          </Typography>
+          <Typography variant="caption">MATCH FEED</Typography>
         </Stack>
 
         <Select
@@ -98,7 +85,6 @@ export default function Events({ events }) {
           IconComponent={FilterList}
           sx={{
             fontSize: "0.8rem",
-            fontFamily: "Space Mono",
             color: "text.secondary",
             "& .MuiSelect-select": {
               pr: 3,
@@ -112,11 +98,7 @@ export default function Events({ events }) {
           }}
         >
           {eventOptions.map((opt) => (
-            <MenuItem
-              key={opt}
-              value={opt}
-              sx={{ fontSize: "0.8rem", fontFamily: "Space Mono" }}
-            >
+            <MenuItem key={opt} value={opt}>
               {opt.toUpperCase()}
             </MenuItem>
           ))}
@@ -208,12 +190,7 @@ const EventItem = ({ event, isLast }) => {
         spacing={1}
         sx={{ minWidth: 40, width: 40, flexShrink: 0 }}
       >
-        <Typography
-          variant="caption"
-          sx={{ fontFamily: "Space Mono", fontWeight: "bold" }}
-        >
-          {event.time.elapsed}'
-        </Typography>
+        <Typography variant="caption">{event.time.elapsed}'</Typography>
         <Box
           sx={{
             width: 32,

@@ -55,8 +55,6 @@ const HomePage = () => {
               color="primary"
               variant="outlined"
               sx={{
-                fontFamily: "Space Mono",
-                fontWeight: "bold",
                 borderWidth: 2,
               }}
             />
@@ -278,7 +276,7 @@ const FeatureCard = ({ icon, title, subtitle, desc, highlight }) => {
             px: 1,
             py: 0.5,
             borderRadius: 1,
-            fontFamily: "Space Mono",
+
             textTransform: "uppercase",
           }}
         >

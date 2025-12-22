@@ -40,11 +40,7 @@ export default function Statistics({ fixture }) {
         className="containerMargin"
       >
         <Equalizer sx={{ fontSize: 40, color: "text.disabled", mb: 2 }} />
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{ fontFamily: "Space Mono" }}
-        >
+        <Typography variant="body1">
           No match statistics available yet.
         </Typography>
       </Paper>
@@ -77,16 +73,7 @@ export default function Statistics({ fixture }) {
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <BarChart color="primary" fontSize="small" />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "Space Mono",
-              fontWeight: "bold",
-              letterSpacing: 1,
-            }}
-          >
-            MATCH STATS
-          </Typography>
+          <Typography variant="caption">MATCH STATS</Typography>
         </Stack>
       </Box>
 
@@ -100,22 +87,14 @@ export default function Statistics({ fixture }) {
           {/* Home Team */}
           <Stack direction="row" alignItems="center" spacing={1}>
             <Avatar src={team1.team.logo} sx={{ width: 24, height: 24 }} />
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ fontFamily: "Space Mono" }}
-            >
+            <Typography variant="caption" fontWeight="bold">
               {team1.team.name}
             </Typography>
           </Stack>
 
           {/* Away Team */}
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              sx={{ fontFamily: "Space Mono" }}
-            >
+            <Typography variant="caption" fontWeight="bold">
               {team2.team.name}
             </Typography>
             <Avatar src={team2.team.logo} sx={{ width: 24, height: 24 }} />
@@ -179,8 +158,6 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
         <Typography
           variant="h5"
           sx={{
-            fontFamily: "VT323",
-            lineHeight: 0.8,
             color: isHomeWinner ? "primary.main" : "text.secondary",
           }}
         >
@@ -189,8 +166,6 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
         <Typography
           variant="caption"
           sx={{
-            fontFamily: "Space Mono",
-            fontSize: "0.65rem",
             textTransform: "uppercase",
             opacity: 0.7,
             mb: 0.5,
@@ -201,7 +176,6 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
         <Typography
           variant="h5"
           sx={{
-            fontFamily: "VT323",
             lineHeight: 0.8,
             color: isAwayWinner ? "text.primary" : "text.secondary",
           }}

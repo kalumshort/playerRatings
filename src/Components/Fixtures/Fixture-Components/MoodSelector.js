@@ -118,11 +118,7 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
                 justifyContent: "center",
               }}
             >
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontFamily: "Space Mono" }}
-              >
+              <Typography variant="body2" color="text.secondary">
                 Waiting for match data...
               </Typography>
             </Box>
@@ -148,8 +144,6 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
           <Typography
             variant="h6"
             sx={{
-              fontFamily: "VT323",
-              fontSize: "1.5rem",
               textTransform: "uppercase",
               textAlign: "center",
               mb: 1,
@@ -164,8 +158,7 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
                 variant="body2"
                 sx={{
                   mb: 3,
-                  color: "text.secondary",
-                  fontFamily: "Space Mono",
+
                   fontSize: "0.8rem",
                 }}
               >
@@ -210,11 +203,7 @@ const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
             </Box>
           ) : (
             <Box sx={{ textAlign: "center", p: 2 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontFamily="Space Mono"
-              >
+              <Typography variant="caption">
                 {matchNotStated ? "Match Start Pending" : "Voting Closed"}
               </Typography>
             </Box>
@@ -313,8 +302,6 @@ const MoodAreaChart = ({ matchMoods }) => {
           <Typography
             variant="caption"
             sx={{
-              color: "text.secondary",
-              fontFamily: "Space Mono",
               fontWeight: "bold",
             }}
           >
@@ -325,7 +312,7 @@ const MoodAreaChart = ({ matchMoods }) => {
               variant="h4"
               sx={{
                 color: activeColor,
-                fontFamily: "VT323",
+
                 lineHeight: 0.8,
                 textShadow: `0 0 20px ${activeColor}40`,
                 transition: "color 0.3s ease", // Smooth color transition text
@@ -336,15 +323,12 @@ const MoodAreaChart = ({ matchMoods }) => {
           </Fade>
         </Box>
         <Box sx={{ textAlign: "right" }}>
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", fontFamily: "Space Mono" }}
-          >
-            INTENSITY
-          </Typography>
+          <Typography variant="caption">INTENSITY</Typography>
           <Typography
             variant="h5"
-            sx={{ fontFamily: "VT323", lineHeight: 0.8 }}
+            sx={{
+              lineHeight: 0.8,
+            }}
           >
             {activePoint.totalVotes || 0}
           </Typography>
@@ -411,7 +395,9 @@ const CustomTooltip = ({ active, payload, label }) => {
       >
         <Typography
           variant="caption"
-          sx={{ fontFamily: "Space Mono", color: "#aaa" }}
+          sx={{
+            color: "#aaa",
+          }}
         >
           MINUTE {data.minute}
         </Typography>
