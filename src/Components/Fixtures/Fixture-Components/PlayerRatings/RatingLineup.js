@@ -4,12 +4,18 @@ import { selectMatchRatingsById } from "../../../../Selectors/selectors";
 import { useSelector } from "react-redux";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
-import {
-  getRatingLineupClass,
-  missingPlayerImg,
-} from "../../../../Hooks/Helper_Functions";
+import { missingPlayerImg } from "../../../../Hooks/Helper_Functions";
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
-import { MenuItem, Paper, Select } from "@mui/material";
+import {
+  alpha,
+  Avatar,
+  Box,
+  MenuItem,
+  Select,
+  styled,
+  Typography,
+  useTheme,
+} from "@mui/material";
 
 export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
   const { activeGroup } = useGroupData();
@@ -141,53 +147,68 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
   );
 }
 
-export const RatingLineupPlayer = ({ player, className, playerRating }) => {
+// --- STYLED COMPONENTS ---
+
+const ScoreBadge = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  bottom: -2,
+  right: -2,
+  backgroundColor: theme.palette.primary.main, // Uses your group's accent color
+  color: theme.palette.primary.contrastText,
+  padding: "2px 4px",
+  borderRadius: "6px",
+  border: `1.5px solid ${theme.palette.background.default}`,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+  zIndex: 10,
+  minWidth: "22px",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+}));
+
+// --- COMPONENT ---
+
+export const RatingLineupPlayer = ({ player, playerRating }) => {
+  const theme = useTheme();
+  // Fetch supplementary player data if not passed in props
   const playerData = useSelector(selectSquadPlayerById(player?.id));
 
-  return player ? (
-    <Paper
-      key={player.id}
-      className={`player ${getRatingLineupClass(playerRating)}`}
-      style={{
-        order: player?.grid?.split(":")[1],
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <img
+  if (!player) return null;
+
+  // Clean the rating display
+  const displayRating =
+    playerRating && playerRating !== "na" ? playerRating : "-";
+
+  return (
+    <Box sx={{ position: "relative", width: 50, height: 50 }}>
+      {/* Player Image */}
+      <Avatar
         src={player?.photo || playerData?.photo || missingPlayerImg}
-        className="lineup-player-img"
         alt={player.name}
+        sx={{
+          width: "100%",
+          height: "100%",
+          // Semi-transparent border for the glass look
+          border: `2px solid ${alpha(theme.palette.primary.main, 0.6)}`,
+          boxShadow: `0 4px 8px rgba(0,0,0,0.4)`,
+          bgcolor: "grey.800",
+        }}
       />
 
-      <span className="lineup-player-name">
-        {playerData?.name || player.name}
-      </span>
-
-      {/* Gradient overlay */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.6))",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: "20px",
-          fontWeight: "bold",
-          textShadow: "2px 2px 6px rgba(0,0,0,0.8)",
-          zIndex: 2,
-        }}
-      >
-        {playerRating !== "na" ? playerRating : "N/A"}
-      </div>
-    </Paper>
-  ) : (
-    <></>
+      {/* Consensus Score Overlay */}
+      <ScoreBadge>
+        <Typography
+          sx={{
+            fontSize: "0.7rem",
+            fontWeight: "bold",
+            // Uses the retro-style font from your ThemeProvider
+            fontFamily: theme.typography.h1.fontFamily,
+            lineHeight: 1,
+          }}
+        >
+          {displayRating}
+        </Typography>
+      </ScoreBadge>
+    </Box>
   );
 };

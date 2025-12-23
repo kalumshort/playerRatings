@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { Paper, Typography, Box, Button } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward"; // Ensure @mui/icons-material is installed
+import { Paper, Typography, Box, Button, useTheme } from "@mui/material";
+import { styled, alpha } from "@mui/material/styles";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
@@ -14,80 +14,102 @@ import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings
 // --- STYLED COMPONENTS ---
 
 const CardContainer = styled(Paper)(({ theme }) => ({
-  padding: "16px",
-  marginBottom: "16px", // Spacing between components
-  borderRadius: "12px",
-  boxShadow: "none",
-  border: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.background.paper,
+  padding: "20px",
+  marginBottom: "24px",
+  borderRadius: "24px",
+  // Applying our Glassified Standard
+  background:
+    theme.palette.mode === "dark"
+      ? "linear-gradient(135deg, rgba(35, 35, 35, 0.4) 0%, rgba(18, 18, 18, 0.6) 100%)"
+      : "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(245, 245, 245, 0.6) 100%)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  boxShadow:
+    theme.palette.mode === "dark"
+      ? "0 8px 32px 0 rgba(0, 0, 0, 0.4)"
+      : "0 8px 32px 0 rgba(31, 38, 135, 0.1)",
 }));
 
-const Header = styled(Box)({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "16px",
+const PitchContainer = styled(Box)(({ theme }) => {
+  const accent = theme.palette.primary.main;
+  return {
+    borderRadius: "16px",
+    padding: "40px 10px",
+    minHeight: "450px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
+    // Dark green "Pitch" tint that respects theme
+    background:
+      theme.palette.mode === "dark"
+        ? `linear-gradient(180deg, ${alpha("#0a2a12", 0.4)} 0%, ${alpha(
+            "#051a0b",
+            0.6
+          )} 100%)`
+        : `linear-gradient(180deg, ${alpha(accent, 0.1)} 0%, ${alpha(
+            accent,
+            0.05
+          )} 100%)`,
+    border: `1px solid ${alpha(accent, 0.2)}`,
+
+    // CSS Pitch Markings (Center Circle and Line)
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "120px",
+      height: "120px",
+      border: `1px solid ${alpha(accent, 0.3)}`,
+      borderRadius: "50%",
+      pointerEvents: "none",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      top: "50%",
+      left: 0,
+      right: 0,
+      height: "1px",
+      backgroundColor: alpha(accent, 0.3),
+      pointerEvents: "none",
+    },
+  };
 });
 
-// A CSS-only Pitch representation
-const PitchContainer = styled("div")(({ theme }) => ({
-  borderRadius: "12px",
-  padding: "20px 10px",
-  minHeight: "420px",
+const PlayerRow = styled(Box)({
   display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-around", // Distribute rows evenly
-  position: "relative",
-  overflow: "hidden",
-
-  boxShadow: "inset 0 0 20px rgba(0,0,0,0.2)", // Inner shadow for depth
-}));
-
-const PlayerRow = styled("div")({
-  display: "flex",
-  justifyContent: "space-around", // Distribute players evenly in the row
+  justifyContent: "space-around",
   alignItems: "center",
-  zIndex: 1, // Sit above pitch markings
-});
-
-const EmptyState = styled(Typography)(({ theme }) => ({
-  textAlign: "center",
-  color: theme.palette.text.secondary,
-  padding: "40px 0",
-  fontStyle: "italic",
-}));
-
-const StyledLink = styled(Link)({
-  textDecoration: "none",
+  zIndex: 2,
 });
 
 // --- COMPONENT ---
 
 export default function LatestTeamSeasonRating() {
+  const theme = useTheme();
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const { activeGroup } = useGroupData();
 
-  // 1. MEMOIZATION: Logic to find the lineup and organize rows
-  // This prevents recalculating the formation on every re-render/scroll
   const { formationRows, fixtureData } = useMemo(() => {
     if (!previousFixtures || !activeGroup)
       return { formationRows: [], fixtureData: null };
 
     const clubId = Number(activeGroup.groupClubId);
-
-    // Find fixture
     const fixture = previousFixtures.find((f) =>
       f?.lineups?.some((team) => team.team.id === clubId)
     );
 
     if (!fixture) return { formationRows: [], fixtureData: null };
 
-    // Get Lineup
     const lineup =
       fixture.lineups.find((team) => team.team.id === clubId)?.startXI || [];
 
-    // Group by Grid Row (Standard format "3:1" -> Row 3, Col 1)
     const rows = lineup.reduce((acc, { player }) => {
       const [row] = player.grid ? player.grid.split(":").map(Number) : [0];
       if (!acc[row]) acc[row] = [];
@@ -95,65 +117,69 @@ export default function LatestTeamSeasonRating() {
       return acc;
     }, {});
 
-    // Convert object to array and reverse (Usually GK is Row 1, displayed at bottom)
-    const sortedRows = Object.values(rows).reverse();
+    // Sort rows so GK (Row 1) is at the bottom, Forwards at the top
+    const sortedRows = Object.keys(rows)
+      .sort((a, b) => b - a)
+      .map((key) => rows[key]);
 
     return { formationRows: sortedRows, fixtureData: fixture };
   }, [previousFixtures, activeGroup]);
 
-  // Loading State
   if (!playerStats && !previousFixtures) {
     return (
       <CardContainer>
-        <Spinner />
+        <Spinner text="Loading Lineup..." />
       </CardContainer>
     );
   }
 
   return (
     <CardContainer elevation={0}>
-      <Header>
-        <Typography variant="h6" fontWeight="bold" className="globalHeading">
-          Previous XI Avg. Rating
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography variant="h5" sx={{ color: theme.palette.text.primary }}>
+          Latest XI{" "}
+          <span style={{ color: theme.palette.primary.main }}>Consensus</span>
         </Typography>
 
-        <StyledLink to="/season-stats">
-          <Button
-            size="small"
-            endIcon={<ArrowForwardIcon fontSize="small" />}
-            sx={{
-              textTransform: "none",
-              color: "text.secondary",
-              fontWeight: 600,
-            }}
-          >
-            Squad
-          </Button>
-        </StyledLink>
-      </Header>
+        <Button
+          component={Link}
+          to="/season-stats"
+          size="small"
+          endIcon={<ArrowForwardIcon />}
+          sx={{
+            fontFamily: theme.typography.caption.fontFamily,
+            color: "primary.main",
+            "&:hover": {
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+            },
+          }}
+        >
+          Full Squad
+        </Button>
+      </Box>
 
       <PitchContainer>
         {formationRows.length > 0 ? (
           formationRows.map((rowPlayers, rowIndex) => (
             <PlayerRow key={rowIndex}>
               {rowPlayers.map((player) => {
-                // Calculate Average Rating safely
                 const stats = playerStats?.[player.id];
                 const playerRating =
                   stats?.totalRating && stats?.totalSubmits
-                    ? stats.totalRating / stats.totalSubmits
-                    : null;
+                    ? (stats.totalRating / stats.totalSubmits).toFixed(1)
+                    : "N/A";
 
                 return (
-                  // Assuming RatingLineupPlayer handles its own internal styling
-                  // We just ensure it receives the correct data
                   <RatingLineupPlayer
                     key={player.id}
                     player={player}
                     fixture={fixtureData}
-                    playerRating={playerRating ? playerRating.toFixed(2) : "na"}
-                    // You might want to pass a prop to RatingLineupPlayer to style text white
-                    // since it is now on a green background
+                    playerRating={playerRating}
                     isPitchView={true}
                   />
                 );
@@ -161,9 +187,12 @@ export default function LatestTeamSeasonRating() {
             </PlayerRow>
           ))
         ) : (
-          <EmptyState variant="body2">
-            No previous lineup data available yet.
-          </EmptyState>
+          <Typography
+            variant="body2"
+            sx={{ textAlign: "center", mt: 10, opacity: 0.6 }}
+          >
+            Waiting for matchday data...
+          </Typography>
         )}
       </PitchContainer>
     </CardContainer>
