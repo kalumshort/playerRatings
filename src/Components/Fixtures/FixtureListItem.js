@@ -1,96 +1,109 @@
 import React, { useMemo } from "react";
-import { styled, keyframes, useTheme } from "@mui/material/styles";
+import { styled, keyframes, useTheme, alpha } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
 import useGroupData from "../../Hooks/useGroupsData";
+
+// --- ANIMATIONS ---
+const pulse = keyframes`
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.5; }
+`;
 
 // --- STYLED COMPONENTS ---
 
-const pulseAnimation = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
-`;
-
 const ItemContainer = styled("div", {
   shouldForwardProp: (prop) => prop !== "statusColor" && prop !== "active",
-})(({ theme, statusColor }) => ({
+})(({ theme, statusColor, active }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "0 12px", // Remove vertical padding, rely on height
-  height: "50px", // Fixed minimal height
-  backgroundColor: "transparent", // Explicitly transparent
-
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  borderLeft: `4px solid ${statusColor}`, // The only color indicator
-
+  padding: "12px 16px",
+  margin: "8px 0",
+  borderRadius: "16px",
+  background: active
+    ? alpha(theme.palette.primary.main, 0.1)
+    : alpha(theme.palette.background.paper, 0.4), // Glassified Standard
+  backdropFilter: "blur(10px)",
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  borderLeft: `6px solid ${statusColor}`,
+  transition: "all 0.2s ease-in-out",
   cursor: "pointer",
+  overflow: "hidden",
 
-  // Optional: subtle text color shift on hover instead of background
-  "&:hover .team-name": {
-    color: theme.palette.text.primary,
+  "&:hover": {
+    background: alpha(theme.palette.background.paper, 0.6),
+    transform: "translateX(4px)",
+  },
+
+  [theme.breakpoints.down("sm")]: {
+    padding: "10px 12px",
   },
 }));
 
-const TeamBox = styled("div")(({ align }) => ({
+const TeamBox = styled("div")(({ theme, align }) => ({
   display: "flex",
   alignItems: "center",
   flex: 1,
-  gap: "10px", // Slightly more breathing room
+  gap: "12px",
   flexDirection: align === "right" ? "row-reverse" : "row",
-  overflow: "hidden",
+  minWidth: 0,
+  [theme.breakpoints.down("sm")]: {
+    gap: "8px",
+  },
 }));
 
-const TeamName = styled("span", {
-  shouldForwardProp: (prop) => prop !== "isMyTeam",
-})(({ theme, isMyTeam }) => ({
-  className: "team-name", // For hover targeting
+const TeamName = styled(Typography)(({ theme }) => ({
   fontSize: "0.85rem",
-  fontWeight: isMyTeam ? 700 : 400,
-  color: isMyTeam ? theme.palette.text.primary : theme.palette.text.secondary,
+  fontWeight: 600, // Uniform weight for both teams
+  color: theme.palette.text.primary,
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  maxWidth: "110px",
-  transition: "color 0.2s ease",
+  fontFamily: theme.typography.body1.fontFamily, // Space Mono
+
+  [theme.breakpoints.down("sm")]: {
+    fontSize: "0.75rem",
+  },
 }));
 
-const Logo = styled("img")({
-  width: "24px",
-  height: "24px",
+const Logo = styled("img")(({ theme }) => ({
+  width: "32px",
+  height: "32px",
   objectFit: "contain",
-});
+  [theme.breakpoints.down("sm")]: {
+    width: "24px",
+    height: "24px",
+  },
+}));
 
 const CenterInfo = styled("div")({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  width: "60px",
+  width: "90px", // Increased width for date + time
   flexShrink: 0,
 });
 
 const ScoreText = styled("div", {
   shouldForwardProp: (prop) => prop !== "isLive",
 })(({ theme, isLive }) => ({
-  fontSize: "1rem",
-  fontWeight: 800,
-  color: isLive ? theme.palette.error.main : theme.palette.text.primary,
+  fontSize: "1.2rem",
+  fontWeight: 900,
+  fontFamily: theme.typography.h1.fontFamily, // VT323
+  color: isLive ? theme.palette.primary.main : theme.palette.text.primary,
   lineHeight: 1,
-  marginBottom: "2px",
 }));
 
-const PendingTimeText = styled("div")(({ theme }) => ({
-  fontSize: "0.85rem",
-  fontWeight: 600,
-  color: theme.palette.text.primary,
-}));
-
-// This uses the pulseAnimation now
-const LiveStatusContainer = styled("div")(({ theme }) => ({
+const LiveBadge = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   gap: "4px",
-  color: theme.palette.error.main,
+  backgroundColor: alpha(theme.palette.error.main, 0.15),
+  padding: "2px 6px",
+  borderRadius: "4px",
+  marginTop: "4px",
 }));
 
 const LiveDot = styled("span")(({ theme }) => ({
@@ -98,119 +111,127 @@ const LiveDot = styled("span")(({ theme }) => ({
   height: "6px",
   backgroundColor: theme.palette.error.main,
   borderRadius: "50%",
-  display: "block",
-  animation: `${pulseAnimation} 1.5s infinite`, // Animation applied here
-}));
-
-const MetaText = styled("span")(({ theme }) => ({
-  fontSize: "0.65rem",
-  color: theme.palette.error.main,
-  fontWeight: 700,
-}));
-
-const FinishedText = styled("span")(({ theme }) => ({
-  fontSize: "0.65rem",
-  color: theme.palette.text.secondary,
-  textTransform: "uppercase",
-  fontWeight: 600,
+  animation: `${pulse} 1.5s ease-in-out infinite`,
 }));
 
 // --- COMPONENT ---
 
 export default function FixtureListItem({
   fixture,
-  matchTime,
   handleFixtureClick,
   highlight = false,
 }) {
   const theme = useTheme();
   const { activeGroup } = useGroupData();
-  const groupClubId = Number(activeGroup.groupClubId);
+  const groupClubId = Number(activeGroup?.groupClubId); //
 
-  // 1. Determine State
-  const statusShort = fixture.fixture.status.short;
-  const isPending = ["NS", "TBD", "PST"].includes(statusShort);
-  const isLive = ["1H", "2H", "HT", "ET", "P", "BT"].includes(statusShort);
-  const isFinished = ["FT", "AET", "PEN"].includes(statusShort);
+  const status = fixture.fixture.status.short;
+  const isPending = ["NS", "TBD", "PST"].includes(status);
+  const isLive = ["1H", "2H", "HT", "ET", "P", "BT"].includes(status);
+  const isFinished = ["FT", "AET", "PEN"].includes(status);
 
-  // 2. Logic for Border Color
+  // Formatting Date/Time for Pending Games
+  const formattedDate = useMemo(() => {
+    if (!fixture.fixture.timestamp) return "";
+    const date = new Date(fixture.fixture.timestamp * 1000);
+    const dayMonth = `${date.getDate()}/${date.getMonth() + 1}`;
+    const time = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return { dayMonth, time };
+  }, [fixture.fixture.timestamp]);
+
   const statusColor = useMemo(() => {
     if (isPending) return theme.palette.divider;
-    if (isLive) return theme.palette.info.main;
+    if (isLive) return theme.palette.primary.main; // App Neon
 
-    // Draw
-    if (!fixture.teams.home.winner && !fixture.teams.away.winner) {
-      return theme.palette.warning.main;
-    }
-
-    // Win/Loss check
-    const homeWin = fixture.teams.home.winner;
     const isHome = fixture.teams.home.id === groupClubId;
+    const teamWon = isHome
+      ? fixture.teams.home.winner
+      : fixture.teams.away.winner;
+    const isDraw =
+      fixture.teams.home.winner === null && fixture.teams.away.winner === null;
 
-    if ((isHome && homeWin) || (!isHome && !homeWin)) {
-      return theme.palette.success.main;
-    }
-
-    return theme.palette.error.main;
-  }, [fixture.teams, groupClubId, isPending, isLive, theme]);
-
-  // 3. Render Center Content
-  const renderCenter = () => {
-    if (isPending) {
-      return (
-        <CenterInfo>
-          <PendingTimeText>
-            {matchTime.includes(":") ? matchTime.split(" ").pop() : matchTime}
-          </PendingTimeText>
-        </CenterInfo>
-      );
-    }
-
-    return (
-      <CenterInfo>
-        <ScoreText isLive={isLive}>
-          {fixture.goals.home} - {fixture.goals.away}
-        </ScoreText>
-
-        {isLive && (
-          <LiveStatusContainer>
-            <LiveDot />
-            <MetaText>{fixture.fixture.status.elapsed}'</MetaText>
-          </LiveStatusContainer>
-        )}
-
-        {isFinished && <FinishedText>FT</FinishedText>}
-      </CenterInfo>
-    );
-  };
+    if (isDraw) return theme.palette.warning.main;
+    return teamWon ? theme.palette.success.main : theme.palette.error.main;
+  }, [fixture, groupClubId, isPending, isLive, theme]);
 
   return (
     <ItemContainer
       statusColor={statusColor}
       active={highlight}
-      onClick={() => handleFixtureClick(fixture.id)}
+      onClick={() => handleFixtureClick(fixture.fixture.id)}
     >
-      {/* Home Team (Left) */}
+      {/* Home Team */}
       <TeamBox align="left">
-        {fixture.teams.home.logo && (
-          <Logo src={fixture.teams.home.logo} alt="home" />
-        )}
-        <TeamName isMyTeam={fixture.teams.home.id === groupClubId}>
-          {fixture.teams.home.name}
-        </TeamName>
+        <Logo src={fixture.teams.home.logo} alt="home" />
+        <TeamName>{fixture.teams.home.name}</TeamName>
       </TeamBox>
 
-      {/* Center Score/Time */}
-      {renderCenter()}
-
-      {/* Away Team (Right) */}
-      <TeamBox align="right">
-        {fixture.teams.away.logo && (
-          <Logo src={fixture.teams.away.logo} alt="away" />
+      {/* Center Center Info */}
+      <CenterInfo>
+        {isPending ? (
+          <Box sx={{ textAlign: "center" }}>
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                color: "primary.main",
+              }}
+            >
+              {formattedDate.dayMonth}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                fontFamily: theme.typography.h1.fontFamily,
+              }}
+            >
+              {formattedDate.time}
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <ScoreText isLive={isLive}>
+              {fixture.goals.home} - {fixture.goals.away}
+            </ScoreText>
+            {isLive && (
+              <LiveBadge>
+                <LiveDot />
+                <Typography
+                  sx={{
+                    fontSize: "0.6rem",
+                    fontWeight: 900,
+                    color: "error.main",
+                  }}
+                >
+                  {fixture.fixture.status.elapsed}'
+                </Typography>
+              </LiveBadge>
+            )}
+            {isFinished && (
+              <Typography
+                sx={{
+                  fontSize: "0.65rem",
+                  opacity: 0.6,
+                  fontWeight: 700,
+                  mt: 0.5,
+                }}
+              >
+                FT
+              </Typography>
+            )}
+          </>
         )}
-        <TeamName isMyTeam={fixture.teams.away.id === groupClubId}>
-          {fixture.teams.away.name}
-        </TeamName>
+      </CenterInfo>
+
+      {/* Away Team */}
+      <TeamBox align="right">
+        <Logo src={fixture.teams.away.logo} alt="away" />
+        <TeamName>{fixture.teams.away.name}</TeamName>
       </TeamBox>
     </ItemContainer>
   );
