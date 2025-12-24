@@ -199,7 +199,7 @@ export const RatingLineupPlayer = ({ player, playerRating }) => {
       <ScoreBadge>
         <Typography
           sx={{
-            fontSize: "0.7rem",
+            fontSize: "0.8rem",
             fontWeight: "bold",
             // Uses the retro-style font from your ThemeProvider
             fontFamily: theme.typography.h1.fontFamily,

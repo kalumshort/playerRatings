@@ -15,20 +15,8 @@ import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings
 
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: "20px",
-  marginBottom: "24px",
-  borderRadius: "24px",
+
   // Applying our Glassified Standard
-  background:
-    theme.palette.mode === "dark"
-      ? "linear-gradient(135deg, rgba(35, 35, 35, 0.4) 0%, rgba(18, 18, 18, 0.6) 100%)"
-      : "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(245, 245, 245, 0.6) 100%)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  boxShadow:
-    theme.palette.mode === "dark"
-      ? "0 8px 32px 0 rgba(0, 0, 0, 0.4)"
-      : "0 8px 32px 0 rgba(31, 38, 135, 0.1)",
 }));
 
 const PitchContainer = styled(Box)(({ theme }) => {
