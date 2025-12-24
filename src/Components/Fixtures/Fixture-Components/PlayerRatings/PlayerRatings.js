@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Paper } from "@mui/material";
+import { Button } from "@mui/material";
 
 import {
   setLocalStorageItem,
@@ -21,7 +21,6 @@ import { useAlert } from "../../../HelpfulComponents";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import RatingLineup from "./RatingLineup";
 
-import MOTMPopover from "./MotmPlayerPopper";
 import { useAuth } from "../../../../Providers/AuthContext";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
@@ -230,43 +229,10 @@ const SubmittedPlayerRatings = ({
 }) => {
   return (
     <>
-      <Paper className="PlayerRatingItem motm">
-        <MOTMPopover motmPercentages={motmPercentages} />
-        <img
-          src={motmPercentages[0]?.img}
-          className="PlayerRatingImg"
-          alt="PlayerRatingImg"
-        />
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            flex: "1",
-            justifyContent: "space-Evenly",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              padding: "10px",
-            }}
-          >
-            <h5 style={{ margin: "0px", color: "grey", fontStyle: "italic" }}>
-              MOTM
-            </h5>
-            <h2 style={{ margin: "5px" }}>{motmPercentages[0]?.name}</h2>
-            <h2 style={{ fontSize: "30px", margin: "0px" }}>
-              {motmPercentages[0]?.percentage}%
-            </h2>
-          </div>
-        </div>
-      </Paper>
       <RatingLineup
         fixture={fixture}
         usersMatchPlayerRatings={usersMatchPlayerRatings}
+        motmPercentages={motmPercentages}
       />
     </>
   );

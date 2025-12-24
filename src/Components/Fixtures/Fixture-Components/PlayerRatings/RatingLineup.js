@@ -11,13 +11,19 @@ import {
   Avatar,
   Box,
   MenuItem,
+  Paper,
   Select,
   styled,
   Typography,
   useTheme,
 } from "@mui/material";
+import FanMOTMHighlight from "./MotmHighlight";
 
-export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
+export default function RatingLineup({
+  fixture,
+  usersMatchPlayerRatings,
+  motmPercentages,
+}) {
   const { activeGroup } = useGroupData();
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
 
@@ -46,7 +52,8 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
   }
 
   return (
-    <div className="containerMargin">
+    <Paper>
+      <FanMOTMHighlight motmPercentages={motmPercentages} />
       <ContentContainer
         className="lineup-container"
         style={{ padding: "15px 5px", position: "relative" }}
@@ -143,7 +150,7 @@ export default function RatingLineup({ fixture, usersMatchPlayerRatings }) {
           </div>
         </div>
       </ContentContainer>
-    </div>
+    </Paper>
   );
 }
 
@@ -180,7 +187,7 @@ export const RatingLineupPlayer = ({ player, playerRating }) => {
     playerRating && playerRating !== "na" ? playerRating : "-";
 
   return (
-    <Box sx={{ position: "relative", width: 50, height: 50 }}>
+    <Box sx={{ position: "relative", width: 50, height: 50, margin: 1 }}>
       {/* Player Image */}
       <Avatar
         src={player?.photo || playerData?.photo || missingPlayerImg}
