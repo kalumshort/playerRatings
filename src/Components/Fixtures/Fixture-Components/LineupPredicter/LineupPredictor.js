@@ -1,12 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
-import { DndContext } from "@dnd-kit/core";
-import { Box, Grid } from "@mui/material"; // Added Grid
 
-// --- COMPONENTS ---
-import { ContentContainer } from "../../../../Containers/GlobalContainer";
-import DroppablePitch from "./DroppablePitch";
-import DraggableSquad from "./DraggableSquad";
+import { Box, Grid } from "@mui/material"; // Added Grid
 
 import { CommunityTeamStats } from "./CommunityTeamStats";
 
@@ -14,6 +9,7 @@ import { CommunityTeamStats } from "./CommunityTeamStats";
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import ChosenLineup from "./chosenLineup";
+import EnhancedLineupPredictor from "./EnhancedLineupPredictor";
 
 export default function LineupPredictor({ fixture, readOnly }) {
   const squadData = useSelector(selectSquadDataObject);
@@ -23,55 +19,55 @@ export default function LineupPredictor({ fixture, readOnly }) {
   const storedPrediction = usersMatchData?.chosenTeam;
   const storedFormation = usersMatchData?.formation || "4-3-3";
 
-  // Local state for the prediction being built
-  const [chosenTeam, setTeam] = useState({});
+  // // Local state for the prediction being built
+  // const [chosenTeam, setTeam] = useState({});
 
-  // --- DRAG HANDLER ---
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
+  // // --- DRAG HANDLER ---
+  // const handleDragEnd = (event) => {
+  //   const { active, over } = event;
 
-    // Safety check: if dropped on nothing, or dropped on itself
-    if (!over || active.id === over.id) return;
+  //   // Safety check: if dropped on nothing, or dropped on itself
+  //   if (!over || active.id === over.id) return;
 
-    const draggingPlayerId = active.id; // The Player ID being dragged
-    const targetSlotId = over.id; // The Slot ID being dropped on
+  //   const draggingPlayerId = active.id; // The Player ID being dragged
+  //   const targetSlotId = over.id; // The Slot ID being dropped on
 
-    setTeam((prev) => {
-      const newTeam = { ...prev };
+  //   setTeam((prev) => {
+  //     const newTeam = { ...prev };
 
-      // 1. Find where the dragging player is currently sitting (Source Slot)
-      const sourceSlotId = Object.keys(newTeam).find(
-        (key) => newTeam[key] === draggingPlayerId
-      );
+  //     // 1. Find where the dragging player is currently sitting (Source Slot)
+  //     const sourceSlotId = Object.keys(newTeam).find(
+  //       (key) => newTeam[key] === draggingPlayerId
+  //     );
 
-      // 2. Check if there is already a player at the target slot
-      const existingPlayerId = newTeam[targetSlotId];
+  //     // 2. Check if there is already a player at the target slot
+  //     const existingPlayerId = newTeam[targetSlotId];
 
-      // --- LOGIC ---
+  //     // --- LOGIC ---
 
-      // A. Player is moving from one Pitch Slot to another (SWAP Logic)
-      if (sourceSlotId) {
-        // Place dragging player in new slot
-        newTeam[targetSlotId] = draggingPlayerId;
+  //     // A. Player is moving from one Pitch Slot to another (SWAP Logic)
+  //     if (sourceSlotId) {
+  //       // Place dragging player in new slot
+  //       newTeam[targetSlotId] = draggingPlayerId;
 
-        if (existingPlayerId) {
-          // SWAP: Move the existing player to the dragging player's old slot
-          newTeam[sourceSlotId] = existingPlayerId;
-        } else {
-          // MOVE: Just empty the old slot
-          delete newTeam[sourceSlotId];
-        }
-      }
+  //       if (existingPlayerId) {
+  //         // SWAP: Move the existing player to the dragging player's old slot
+  //         newTeam[sourceSlotId] = existingPlayerId;
+  //       } else {
+  //         // MOVE: Just empty the old slot
+  //         delete newTeam[sourceSlotId];
+  //       }
+  //     }
 
-      // B. Player is coming from the Bench/List (REPLACE Logic)
-      else {
-        // Place them in the slot. (Overwrites anyone currently there)
-        newTeam[targetSlotId] = draggingPlayerId;
-      }
+  //     // B. Player is coming from the Bench/List (REPLACE Logic)
+  //     else {
+  //       // Place them in the slot. (Overwrites anyone currently there)
+  //       newTeam[targetSlotId] = draggingPlayerId;
+  //     }
 
-      return newTeam;
-    });
-  };
+  //     return newTeam;
+  //   });
+  // };
 
   // --- RENDER LOGIC ---
 
@@ -100,22 +96,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
   }
 
   // CASE B: PREDICT MODE
-  return (
-    <ContentContainer className="Prediction-lineup-container containerMargin">
-      <DndContext onDragEnd={handleDragEnd}>
-        <DroppablePitch
-          fixture={fixture}
-          chosenTeam={chosenTeam}
-          setTeam={setTeam}
-        />
-        <DraggableSquad
-          fixture={fixture}
-          squad={squadData}
-          chosenTeam={chosenTeam}
-        />
-      </DndContext>
-    </ContentContainer>
-  );
+  return <EnhancedLineupPredictor fixture={fixture} />;
 }
 
 export const FORMATIONS = {
@@ -251,3 +232,18 @@ export const FORMATIONS = {
     { rowId: "gk", slots: [1] },
   ],
 };
+
+/* <ContentContainer className="Prediction-lineup-container containerMargin">
+      <DndContext onDragEnd={handleDragEnd}>
+        <DroppablePitch
+          fixture={fixture}
+          chosenTeam={chosenTeam}
+          setTeam={setTeam}
+        />
+        <DraggableSquad
+          fixture={fixture}
+          squad={squadData}
+          chosenTeam={chosenTeam}
+        />
+      </DndContext>
+    </ContentContainer> */

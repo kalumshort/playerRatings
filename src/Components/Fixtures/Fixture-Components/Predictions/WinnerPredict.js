@@ -121,7 +121,6 @@ export default function WinnerPredict({ fixture }) {
       elevation={0}
       sx={{
         p: 3,
-        width: "100%",
         textAlign: "center",
       }}
     >
