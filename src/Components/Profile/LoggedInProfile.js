@@ -1,218 +1,278 @@
 import React, { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
   Typography,
   Box,
   Paper,
   TextField,
   Button,
+  Stack,
+  styled,
+  useTheme as useMuiTheme,
+  Divider,
+  Switch,
 } from "@mui/material";
+import {
+  User,
+  Save,
+  Hash,
+  PlusCircle,
+  Layout,
+  Sun,
+  Moon,
+  Palette,
+} from "lucide-react";
+import { useDispatch } from "react-redux";
 
-import { SettingRow } from "../../Containers/Header";
+// Logic & Context Imports
 import { updateUserField } from "../../Firebase/Auth_Functions";
 import useUserData from "../../Hooks/useUserData";
 import useGroupData from "../../Hooks/useGroupsData";
-
-import UploadAvatar from "./AvatarWithUpload";
-import CustomSelect from "../Inputs/CustomSelect";
-import Logout from "../Auth/Logout";
-import { useDispatch } from "react-redux";
+import { useTheme } from "../../Components/Theme/ThemeContext"; // Import your custom theme hook
 import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
 import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
 import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
 
+// Component Imports
+
+import CustomSelect from "../Inputs/CustomSelect";
+import Logout from "../Auth/Logout";
+
+// --- Styled Components ---
+const ProfileHeader = styled(Box)(({ theme }) => ({
+  background:
+    theme.palette.mode === "dark"
+      ? "rgba(255, 255, 255, 0.03)"
+      : "rgba(0, 0, 0, 0.02)",
+  padding: theme.spacing(4, 2),
+  borderRadius: "24px",
+  border: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(3),
+  backdropFilter: "blur(10px)",
+}));
+
+const GlassSection = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  borderRadius: "24px",
+}));
+
+const InputLabel = styled(Typography)(({ theme }) => ({
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  color: theme.palette.text.secondary,
+  marginBottom: theme.spacing(1),
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+}));
+
 export default function LoggedInProfile() {
   const dispatch = useDispatch();
+  const muiTheme = useMuiTheme();
+  const { themeMode, toggleTheme } = useTheme(); // Access the global theme toggle
 
   const { userData } = useUserData();
   const { groupData, activeGroup } = useGroupData();
+  const accentColor = activeGroup?.accentColor || muiTheme.palette.primary.main;
 
-  const options = convertToSelectOptions(groupData);
+  const [formData, setFormData] = useState({
+    displayName: userData?.displayName || "",
+  });
+
+  const [groupCodeInput] = useState("");
+  const [changedFields, setChangedFields] = useState({ displayName: false });
+
+  useEffect(() => {
+    if (userData) {
+      setChangedFields({
+        displayName: formData.displayName !== userData.displayName,
+      });
+    }
+  }, [formData, userData]);
+
+  const handleFieldChange = (field) => (e) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleUpdate = async () => {
+    if (!changedFields.displayName) return;
+    await updateUserField(userData.uid, "displayName", formData.displayName);
+  };
 
   const handleSelectChange = async (event) => {
-    await updateUserField(userData.uid, "activeGroup", event.target.value);
+    const newGroupId = event.target.value;
+    await updateUserField(userData.uid, "activeGroup", newGroupId);
     dispatch(clearTeamSquads());
     dispatch(clearRatings());
     dispatch(clearFixtures());
   };
 
-  // Initialize state for all fields
-  const [formData, setFormData] = useState({
-    displayName: userData.displayName,
+  if (!userData) return null;
 
-    // Add other fields here in the future
-  });
-
-  // Track which fields have been changed
-  const [changedFields, setChangedFields] = useState({
-    displayName: false,
-
-    // Add other fields here in the future
-  });
-
-  const [groupCodeInput, setGroupCodeInput] = useState("");
-
-  useEffect(() => {
-    // Update changed fields dynamically based on form data changes
-    setChangedFields({
-      displayName: formData.displayName !== userData.displayName,
-
-      // Add logic for new fields here in the future
-    });
-  }, [formData, userData]);
-
-  const handleFieldChange = (field) => (e) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [field]: e.target.value,
-    }));
-  };
-
-  const handleUpdate = async () => {
-    const updatedFields = [];
-    // Loop through formData and check for fields that have changed
-    for (let field in formData) {
-      if (formData[field] !== userData[field]) {
-        await updateUserField(userData.uid, field, formData[field]);
-        updatedFields.push(field);
-      }
-    }
-
-    if (updatedFields.length > 0) {
-      console.log("Updated fields:", updatedFields);
-    }
-  };
-
-  const handleGroupJoin = () => {
-    console.log(groupCodeInput);
-  };
-
-  if (!userData) {
-    return (
-      <Typography variant="h6" align="center">
-        Please sign in to view your profile.
-      </Typography>
-    );
-  }
+  const options = Object.values(groupData || {}).map((group) => ({
+    label: group.name,
+    value: group.groupId,
+    imageURL: group.imageURL,
+  }));
 
   return (
-    <div style={{ maxWidth: "800px", margin: "auto" }}>
-      <Card
-        className="containerMargin"
-        variant="outlined"
-        sx={{ textAlign: "center" }}
-      >
-        <CardContent>
-          <UploadAvatar userData={userData} />
-
-          {/* <Avatar
-            src={userData.photoURL}
-            alt="Profile"
+    <Box sx={{ maxWidth: "600px", margin: "auto", px: 2, py: 4 }}>
+      {/* 1. Identity Header */}
+      <ProfileHeader>
+        <Stack alignItems="center" spacing={2}>
+          {/* <UploadAvatar userData={userData} /> */}
+          <Box sx={{ textAlign: "center" }}>
+            <Typography variant="h4" sx={{ fontFamily: "'VT323', monospace" }}>
+              {userData.displayName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userData.email}
+            </Typography>
+          </Box>
+          <Box
             sx={{
-              width: 100,
-              height: 100,
-              margin: "0 auto 20px",
-              border: "4px solid rgb(78, 84, 255)",
+              px: 2,
+              py: 0.5,
+              borderRadius: "20px",
+              backgroundColor: `${accentColor}20`,
+              border: `1px solid ${accentColor}`,
+              color: accentColor,
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
             }}
-          /> */}
-          <Typography variant="h4" sx={{ marginBottom: 2 }}>
-            {userData.displayName}
-          </Typography>
-          <Typography variant="body1" sx={{ marginBottom: 2 }}>
-            <strong>{userData.email}</strong>
-          </Typography>
-        </CardContent>
-      </Card>
-      <Paper className="containerMargin" style={{ padding: "15px" }}>
-        <h5
-          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
-          className=""
-        >
-          Profile Settings
-        </h5>
-        <SettingRow>
-          <Box>Display Name</Box>
-          <TextField
-            value={formData.displayName}
-            onChange={handleFieldChange("displayName")}
-            variant="outlined"
-            size="small"
-            sx={{ marginLeft: "10px", width: "150px" }}
-          />
-        </SettingRow>
+          >
+            {activeGroup?.name || "Free Agent"}
+          </Box>
+        </Stack>
+      </ProfileHeader>
 
-        {/* Add more fields as needed here in the future */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
+      {/* 3. Personal Settings Section */}
+      <GlassSection>
+        <Stack spacing={3}>
+          <Box>
+            <InputLabel>
+              <User size={14} /> Display Name
+            </InputLabel>
+            <TextField
+              fullWidth
+              value={formData.displayName}
+              onChange={handleFieldChange("displayName")}
+              variant="outlined"
+              size="small"
+              placeholder="Enter your name"
+            />
+          </Box>
+
           <Button
-            variant="text"
-            color="primary"
+            fullWidth
+            variant="contained"
+            startIcon={<Save size={18} />}
             onClick={handleUpdate}
-            disabled={Object.values(changedFields).every((field) => !field)} // Disable button if no field changed
+            disabled={!changedFields.displayName}
+            sx={{ borderRadius: "12px", py: 1.2 }}
           >
-            Update
+            Save Account Changes
           </Button>
-        </Box>
-      </Paper>
-      <Paper className="containerMargin" style={{ padding: "15px" }}>
-        <h5
-          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
-          className=""
-        >
-          Group Settings
-        </h5>
-        <SettingRow>
-          <Box>Change Group</Box>
-          <CustomSelect
-            options={options}
-            label="Choose an Option"
-            value={activeGroup.groupId}
-            onChange={handleSelectChange}
-          />
-        </SettingRow>
-        <SettingRow>
-          <Box>Group Code </Box>
+        </Stack>
+      </GlassSection>
 
-          <TextField
-            value={groupCodeInput}
-            onChange={(e) => setGroupCodeInput(e)}
-            variant="outlined"
-            size="small"
-            sx={{ marginLeft: "10px", width: "100px" }}
-            disabled
-          />
-          <Button
-            variant="text"
-            color="primary"
-            onClick={handleGroupJoin}
-            // disabled={!groupCodeInput}
-            disabled
-          >
-            Join
-          </Button>
-        </SettingRow>
-        <SettingRow>
-          <Box>Create Group </Box>
+      {/* 4. Club Ecosystem Section */}
+      <GlassSection>
+        <Stack spacing={4}>
+          <Box>
+            <InputLabel>
+              <Layout size={14} /> Active Club View
+            </InputLabel>
+            <CustomSelect
+              options={options}
+              value={activeGroup?.groupId}
+              onChange={handleSelectChange}
+            />
+          </Box>
 
-          <Button variant="text" color="primary" disabled>
-            Coming Soon
-          </Button>
-        </SettingRow>
-      </Paper>
-      <div className="containerMargin" style={{ padding: "15px" }}>
-        <SettingRow>
-          <Box></Box>
-          <Logout />
-        </SettingRow>
-      </div>
-    </div>
+          <Divider sx={{ opacity: 0.1 }} />
+
+          <Box>
+            <InputLabel sx={{ color: muiTheme.palette.text.disabled }}>
+              <Hash size={14} /> Private Group Access
+            </InputLabel>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                fullWidth
+                value={groupCodeInput}
+                placeholder="Enter Invite Code"
+                variant="outlined"
+                size="small"
+                disabled
+              />
+              <Button variant="outlined" disabled sx={{ borderRadius: "8px" }}>
+                Join
+              </Button>
+            </Stack>
+          </Box>
+
+          <Box sx={{ opacity: 0.6 }}>
+            <InputLabel sx={{ color: muiTheme.palette.text.disabled }}>
+              <PlusCircle size={14} /> Community Creation
+            </InputLabel>
+            <Button
+              fullWidth
+              variant="outlined"
+              disabled
+              sx={{ borderStyle: "dashed" }}
+            >
+              Create Your Own Group (Coming Soon)
+            </Button>
+          </Box>
+        </Stack>
+      </GlassSection>
+
+      {/* 2. Visual Experience Section (NEW) */}
+      <GlassSection>
+        <Stack spacing={2}>
+          <Box>
+            <InputLabel>
+              <Palette size={14} /> Visual Experience
+            </InputLabel>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor:
+                  muiTheme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.03)"
+                    : "rgba(0,0,0,0.03)",
+                p: 2,
+                borderRadius: "16px",
+              }}
+            >
+              <Stack direction="row" spacing={2} alignItems="center">
+                {themeMode === "dark" ? (
+                  <Moon size={20} color={accentColor} />
+                ) : (
+                  <Sun size={20} color={accentColor} />
+                )}
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {themeMode === "dark" ? "Dark Mode" : "Light Mode"}
+                </Typography>
+              </Stack>
+              <Switch
+                checked={themeMode === "dark"}
+                onChange={toggleTheme}
+                color="primary"
+              />
+            </Box>
+          </Box>
+        </Stack>
+      </GlassSection>
+
+      {/* 5. Logout Action */}
+      <Box sx={{ mt: 2, textAlign: "center" }}>
+        <Logout />
+      </Box>
+    </Box>
   );
-}
-
-function convertToSelectOptions(data) {
-  return Object.keys(data).map((key) => ({
-    label: data[key].name, // the label will be the 'name' field
-    value: data[key].groupId, // the value will be the 'groupId' field
-    imageURL: data[key].imageURL, // you can also include the imageURL if needed
-  }));
 }
