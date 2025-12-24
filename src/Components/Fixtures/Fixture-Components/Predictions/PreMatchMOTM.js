@@ -10,12 +10,18 @@ import {
   Avatar,
   useTheme,
   Chip,
+  alpha,
 } from "@mui/material";
-import { InfoOutlined, Visibility, CheckCircle } from "@mui/icons-material";
+import {
+  InfoOutlined,
+  Visibility,
+  CheckCircle,
+  Star,
+} from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-// --- SELECTORS & HOOKS (Kept exactly as is) ---
+// --- SELECTORS & HOOKS ---
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
 import useGroupData from "../../../../Hooks/useGroupsData";
@@ -30,7 +36,6 @@ export default function PreMatchMOTM({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Data Selectors
   const squadData = useSelector(selectSquadDataObject);
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
@@ -39,14 +44,11 @@ export default function PreMatchMOTM({ fixture }) {
   const { user } = useAuth();
   const globalData = useGlobalData();
 
-  // Local State
   const [selectedPlayer, setSelectedPlayer] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
 
-  // --- HANDLERS ---
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
-
   const handleChange = (event) => setSelectedPlayer(event.target.value);
 
   const handlePlayerToWatchSubmit = async () => {
@@ -76,112 +78,113 @@ export default function PreMatchMOTM({ fixture }) {
   const open = Boolean(anchorEl);
   const topPlayer = result[0];
 
-  // --- STYLES ---
-  const glassCardStyles = {
-    // Layout & Spacing only
-    p: 3,
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "220px",
-
-    // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
-    // These are now inherited automatically from your Global Theme!
-  };
   // --- RENDER: VIEW RESULTS STATE ---
   if (storedUsersPlayerToWatch && topPlayer) {
     return (
-      <Paper sx={glassCardStyles} elevation={0}>
-        {/* Header Badge */}
-        <Chip
-          icon={<Visibility sx={{ fontSize: "1rem !important" }} />}
-          label="COMMUNITY WATCH"
-          size="small"
-          sx={{
-            mb: 2,
-            borderColor: theme.palette.primary.main,
-            color: theme.palette.primary.main,
-          }}
-          variant="outlined"
-        />
-
-        {/* Info Button */}
-        <IconButton
-          onClick={handleClick}
-          size="small"
-          sx={{
-            position: "absolute",
-            right: 10,
-            top: 10,
-            color: "text.secondary",
-          }}
+      <Paper
+        sx={{ p: 3, position: "relative", minHeight: "240px" }}
+        elevation={0}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 3 }}
         >
-          <InfoOutlined />
-        </IconButton>
+          <Chip
+            icon={<Visibility sx={{ fontSize: "1rem !important" }} />}
+            label="COMMUNITY WATCH"
+            size="small"
+            sx={{
+              fontWeight: 900,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              borderColor: alpha(theme.palette.primary.main, 0.3),
+              color: theme.palette.primary.main,
+            }}
+            variant="outlined"
+          />
+          <IconButton
+            onClick={handleClick}
+            size="small"
+            sx={{ color: "text.secondary" }}
+          >
+            <InfoOutlined fontSize="small" />
+          </IconButton>
+        </Stack>
 
         <Stack
           direction="row"
-          alignItems="center"
           spacing={3}
-          sx={{ width: "100%", justifyContent: "center" }}
+          alignItems="center"
+          justifyContent="center"
         >
-          {/* Player Image with Glow */}
+          {/* Spotlight Avatar */}
           <Box sx={{ position: "relative" }}>
-            <Avatar
-              src={squadData[topPlayer.playerId]?.photo}
-              alt={topPlayer.name}
-              sx={{
-                width: 80,
-                height: 80,
-                border: `2px solid ${theme.palette.primary.main}`,
-                boxShadow: `0 0 20px ${theme.palette.primary.main}40`,
-              }}
-            />
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: -5,
-                right: -5,
-                bgcolor: theme.palette.background.paper,
-                borderRadius: "50%",
-                p: 0.5,
-                border: `1px solid ${theme.palette.divider}`,
-              }}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 100 }}
             >
-              <Typography
-                variant="caption"
+              <Avatar
+                src={squadData[topPlayer.playerId]?.photo}
                 sx={{
-                  fontSize: "1.2rem",
-                  lineHeight: 1,
+                  width: 90,
+                  height: 90,
+                  border: `3px solid ${theme.palette.primary.main}`,
+                  boxShadow: `0 0 30px ${alpha(
+                    theme.palette.primary.main,
+                    0.3
+                  )}`,
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: -8,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  bgcolor: "primary.main",
+                  color: "black",
+                  px: 1.5,
+                  borderRadius: 1,
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
                 }}
               >
-                #1
-              </Typography>
-            </Box>
+                <Typography variant="caption" sx={{ fontWeight: 900 }}>
+                  #1
+                </Typography>
+              </Box>
+            </motion.div>
           </Box>
 
-          {/* Player Stats */}
           <Box>
-            <Typography variant="h5">{topPlayer.name}</Typography>
             <Typography
-              variant="h3"
-              sx={{
-                color: theme.palette.primary.main,
-                fontWeight: "bold",
-                lineHeight: 1,
-              }}
+              variant="caption"
+              sx={{ opacity: 0.6, letterSpacing: 1, fontWeight: 700 }}
             >
-              {topPlayer.percentage}%
+              KEY PROTAGONIST
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              OF VOTES
+            <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
+              {topPlayer.name.toUpperCase()}
             </Typography>
+            <Stack direction="row" alignItems="baseline" spacing={0.5}>
+              <Typography
+                variant="h3"
+                sx={{ color: "primary.main", fontWeight: 900 }}
+              >
+                {topPlayer.percentage}%
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ opacity: 0.5, fontWeight: 700 }}
+              >
+                CONSENSUS
+              </Typography>
+            </Stack>
           </Box>
         </Stack>
 
-        {/* Breakdown Popover */}
+        {/* Vote Breakdown Popover */}
         <Popover
           open={open}
           anchorEl={anchorEl}
@@ -190,45 +193,49 @@ export default function PreMatchMOTM({ fixture }) {
           transformOrigin={{ vertical: "top", horizontal: "right" }}
           PaperProps={{
             sx: {
-              bgcolor: "background.paper",
-              backgroundImage: "none",
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 2,
+              mt: 1.5,
               p: 2,
-              minWidth: 200,
+              minWidth: 220,
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.default, 0.95),
+              backdropFilter: "blur(10px)",
+              border: `1px solid ${theme.palette.divider}`,
+              boxShadow: theme.shadows[10],
             },
           }}
         >
           <Typography
-            variant="caption"
+            variant="overline"
             sx={{
               display: "block",
               mb: 1,
+              color: "primary.main",
+              fontWeight: 900,
             }}
           >
-            VOTE BREAKDOWN
+            Vote Breakdown
           </Typography>
-          <Stack spacing={1}>
-            {result.map(({ playerId, name, percentage }, index) => (
-              <Box
+          <Stack spacing={1.5}>
+            {result.slice(0, 5).map(({ playerId, name, percentage }, index) => (
+              <Stack
                 key={playerId}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
               >
                 <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: index === 0 ? "bold" : "normal",
-                    color: index === 0 ? "primary.main" : "text.primary",
-                  }}
+                  variant="caption"
+                  sx={{ fontWeight: index === 0 ? 900 : 500 }}
                 >
                   {index + 1}. {name}
                 </Typography>
-                <Typography variant="body2">{percentage}%</Typography>
-              </Box>
+                <Typography
+                  variant="caption"
+                  sx={{ fontFamily: "'Space Mono', monospace", opacity: 0.8 }}
+                >
+                  {percentage}%
+                </Typography>
+              </Stack>
             ))}
           </Stack>
         </Popover>
@@ -238,65 +245,75 @@ export default function PreMatchMOTM({ fixture }) {
 
   // --- RENDER: VOTING STATE ---
   return (
-    <Paper sx={glassCardStyles} elevation={0}>
+    <Paper
+      sx={{
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        minHeight: "240px",
+      }}
+      elevation={0}
+    >
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
+        <Star color="primary" sx={{ fontSize: 18 }} />
+        <Typography variant="button" sx={{ letterSpacing: 2, opacity: 0.8 }}>
+          Player to Watch
+        </Typography>
+      </Stack>
+
       <Typography
-        variant="h6"
-        sx={{
-          textTransform: "uppercase",
-          mb: 2,
-        }}
+        variant="caption"
+        sx={{ mb: 3, opacity: 0.6, textAlign: "center", maxWidth: "80%" }}
       >
-        PLAYER TO WATCH
+        Identify the player most likely to influence the result.
       </Typography>
 
-      <Box sx={{ width: "100%", maxWidth: 300, textAlign: "center" }}>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2, fontSize: "0.8rem" }}
-        >
-          Who will control the game?
-        </Typography>
-
-        {/* Widget Container - assumes PlayersSelect renders an input/select */}
+      <Box sx={{ width: "100%", maxWidth: 280 }}>
         <Box
           sx={{
-            ".MuiInputBase-root": {
-              borderRadius: 2,
-            },
             mb: 3,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 3,
+              bgcolor: alpha(theme.palette.background.paper, 0.3),
+            },
           }}
         >
           <PlayersSelect onChange={(e) => handleChange(e)} showAvatar={true} />
         </Box>
 
-        {selectedPlayer && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Button
-              onClick={handlePlayerToWatchSubmit}
-              variant="contained"
-              fullWidth
-              startIcon={<CheckCircle />}
-              sx={{
-                borderRadius: 8,
-                py: 1.5,
-
-                letterSpacing: "-0.5px",
-              }}
+        <AnimatePresence>
+          {selectedPlayer && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
-              LOCK IN SELECTION
-            </Button>
-          </motion.div>
-        )}
+              <Button
+                onClick={handlePlayerToWatchSubmit}
+                variant="contained"
+                fullWidth
+                startIcon={<CheckCircle />}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 3,
+                  fontWeight: 900,
+                  boxShadow: `0 8px 20px ${alpha(
+                    theme.palette.primary.main,
+                    0.3
+                  )}`,
+                }}
+              >
+                LOCK IN WATCH
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Box>
     </Paper>
   );
 }
 
-// --- HELPER FUNCTION (Unchanged logic) ---
 const calculatePercentages = (preMatchMotm, preMatchMotmVotes, squadData) => {
   const totalVotes = parseInt(preMatchMotmVotes, 10);
   if (!totalVotes) return [];

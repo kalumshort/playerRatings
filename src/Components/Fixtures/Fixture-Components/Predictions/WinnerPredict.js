@@ -7,10 +7,11 @@ import {
   Avatar,
   useTheme,
   Fade,
+  alpha,
 } from "@mui/material";
-import { CheckCircle, EmojiEvents } from "@mui/icons-material";
+import { CheckCircle, EmojiEvents, Groups } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- HOOKS & FIREBASE ---
 import { handlePredictWinningTeam } from "../../../../Firebase/Firebase";
@@ -25,18 +26,18 @@ export default function WinnerPredict({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  // Data Selectors
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
-  // FIXED: Ensure we are using this variable consistently
-  const storedUsersPredictedResult = usersMatchData?.result;
+  const hasVoted = !!usersMatchData?.result;
+  const userChoice = usersMatchData?.result;
 
-  // --- HANDLER ---
   const handleWinningTeamPredict = async (choice) => {
+    if (hasVoted) return;
+
     await handlePredictWinningTeam({
       matchId: fixture.id,
       choice: choice,
@@ -44,6 +45,7 @@ export default function WinnerPredict({ fixture }) {
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
+
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
@@ -53,8 +55,12 @@ export default function WinnerPredict({ fixture }) {
     );
   };
 
-  // --- CALCULATE STATS ---
-  const { totalVotes, draw, away, home } = matchPredictions.result || {};
+  const {
+    totalVotes = 0,
+    draw = 0,
+    away = 0,
+    home = 0,
+  } = matchPredictions?.result || {};
   const percentages = {
     home: totalVotes ? (home / totalVotes) * 100 : 0,
     draw: totalVotes ? (draw / totalVotes) * 100 : 0,
@@ -62,179 +68,247 @@ export default function WinnerPredict({ fixture }) {
   };
 
   // --- STYLES ---
-  const glassCardStyles = {
-    // Layout & Spacing only
-    p: 3,
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "220px",
+  const optionCardStyles = (choice) => {
+    const isSelected = userChoice === choice;
+    const pct = percentages[choice];
 
-    // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
-    // These are now inherited automatically from your Global Theme!
+    return {
+      flex: 1,
+      p: 2,
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: hasVoted ? "default" : "pointer",
+      borderRadius: "8px",
+      border: "1px solid",
+      borderColor: isSelected
+        ? theme.palette.primary.main
+        : "rgba(255,255,255,0.05)",
+      backgroundColor: isSelected
+        ? alpha(theme.palette.primary.main, 0.1)
+        : alpha(theme.palette.background.paper, 0.4),
+      overflow: "hidden",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      minHeight: 120,
+
+      // The "Progress" fill behind the content
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        width: "100%",
+        height: hasVoted ? `${pct}%` : "0%",
+        bgcolor: isSelected
+          ? alpha(theme.palette.primary.main, 0.2)
+          : alpha(theme.palette.text.disabled, 0.1),
+        transition: "height 1s ease-out",
+        zIndex: 0,
+      },
+
+      "&:hover": !hasVoted && {
+        borderColor: theme.palette.primary.main,
+        transform: "translateY(-4px)",
+        boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`,
+      },
+    };
   };
 
-  const optionCardStyles = (isSelected) => ({
-    flex: 1,
-    p: 1.5,
-    borderRadius: 2,
-    border: `1px solid ${
-      isSelected ? theme.palette.primary.main : theme.palette.divider
-    }`,
-    bgcolor: isSelected
-      ? `${theme.palette.primary.main}15`
-      : "background.paper",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: storedUsersPredictedResult ? "default" : "pointer",
-    transition: "all 0.2s",
-    minHeight: 110,
-    position: "relative",
-    "&:hover": !storedUsersPredictedResult && {
-      transform: "translateY(-2px)",
-      borderColor: theme.palette.primary.main,
-      boxShadow: `0 4px 12px ${theme.palette.primary.main}20`,
-    },
-  });
-
   return (
-    <Paper sx={glassCardStyles} elevation={0}>
-      {/* Header */}
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        width: "100%",
+        textAlign: "center",
+      }}
+    >
+      {/* Top Consensus Indicator */}
       <Stack
         direction="row"
+        justifyContent="space-between"
         alignItems="center"
-        gap={1}
-        sx={{ mb: 2, opacity: 0.7 }}
+        sx={{ mb: 3 }}
       >
-        <EmojiEvents sx={{ fontSize: "1rem" }} color="primary" />
-        <Typography variant="caption">WHO WILL WIN?</Typography>
-      </Stack>
-
-      {/* 3-Column Layout */}
-      <Stack direction="row" spacing={1.5} sx={{ width: "100%" }}>
-        {/* HOME OPTION */}
-        <Box
-          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
-          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
-          onClick={() =>
-            !storedUsersPredictedResult && handleWinningTeamPredict("home")
-          }
-          sx={optionCardStyles(storedUsersPredictedResult === "home")}
-        >
-          <Avatar
-            src={fixture.teams.home.logo}
-            sx={{ width: 32, height: 32, mb: 1 }}
-          />
-          <Typography variant="caption" noWrap>
-            HOME
-          </Typography>
-
-          {/* Result Overlay */}
-          {storedUsersPredictedResult && (
-            <ResultPercentage value={percentages.home} />
-          )}
-        </Box>
-
-        {/* DRAW OPTION */}
-        <Box
-          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
-          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
-          onClick={() =>
-            !storedUsersPredictedResult && handleWinningTeamPredict("draw")
-          }
-          sx={optionCardStyles(storedUsersPredictedResult === "draw")}
-        >
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              mb: 1,
-              borderRadius: "50%",
-              border: `2px solid ${theme.palette.divider}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            X
-          </Box>
-          <Typography variant="caption">DRAW</Typography>
-
-          {/* Result Overlay */}
-          {storedUsersPredictedResult && (
-            <ResultPercentage value={percentages.draw} />
-          )}
-        </Box>
-
-        {/* AWAY OPTION */}
-        <Box
-          component={storedUsersPredictedResult ? "div" : motion.div} // FIXED HERE
-          whileTap={!storedUsersPredictedResult && { scale: 0.95 }}
-          onClick={() =>
-            !storedUsersPredictedResult && handleWinningTeamPredict("away")
-          }
-          sx={optionCardStyles(storedUsersPredictedResult === "away")}
-        >
-          <Avatar
-            src={fixture.teams.away.logo}
-            sx={{ width: 32, height: 32, mb: 1 }}
-          />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <EmojiEvents color="primary" sx={{ fontSize: 18 }} />
           <Typography
-            variant="caption"
-            noWrap
-            sx={{
-              opacity: 0.8,
-            }}
+            variant="button"
+            sx={{ letterSpacing: 2, fontSize: "0.7rem", opacity: 0.8 }}
           >
-            AWAY
+            Winner Consensus
           </Typography>
+        </Stack>
 
-          {/* Result Overlay */}
-          {storedUsersPredictedResult && (
-            <ResultPercentage value={percentages.away} />
-          )}
+        {totalVotes > 0 && (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            alignItems="center"
+            sx={{ opacity: 0.6 }}
+          >
+            <Groups sx={{ fontSize: 14 }} />
+            <Typography variant="caption">{totalVotes} VOTES</Typography>
+          </Stack>
+        )}
+      </Stack>
+
+      <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
+        {/* HOME */}
+        <Box
+          component={motion.div}
+          layout
+          onClick={() => handleWinningTeamPredict("home")}
+          sx={optionCardStyles("home")}
+        >
+          <Box sx={{ zIndex: 1, textAlign: "center" }}>
+            <Avatar
+              src={fixture.teams.home.logo}
+              sx={{
+                width: 40,
+                height: 40,
+                mb: 1,
+                mx: "auto",
+                filter: hasVoted ? "grayscale(0.5)" : "none",
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, display: "block" }}
+            >
+              HOME
+            </Typography>
+            <AnimatePresence>
+              {hasVoted && (
+                <ResultDisplay
+                  value={percentages.home}
+                  isSelected={userChoice === "home"}
+                />
+              )}
+            </AnimatePresence>
+          </Box>
+        </Box>
+
+        {/* DRAW */}
+        <Box
+          component={motion.div}
+          layout
+          onClick={() => handleWinningTeamPredict("draw")}
+          sx={optionCardStyles("draw")}
+        >
+          <Box sx={{ zIndex: 1, textAlign: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                mb: 1,
+                mx: "auto",
+                borderRadius: "50%",
+                border: `1px solid ${theme.palette.divider}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 900,
+              }}
+            >
+              X
+            </Box>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, display: "block" }}
+            >
+              DRAW
+            </Typography>
+            <AnimatePresence>
+              {hasVoted && (
+                <ResultDisplay
+                  value={percentages.draw}
+                  isSelected={userChoice === "draw"}
+                />
+              )}
+            </AnimatePresence>
+          </Box>
+        </Box>
+
+        {/* AWAY */}
+        <Box
+          component={motion.div}
+          layout
+          onClick={() => handleWinningTeamPredict("away")}
+          sx={optionCardStyles("away")}
+        >
+          <Box sx={{ zIndex: 1, textAlign: "center" }}>
+            <Avatar
+              src={fixture.teams.away.logo}
+              sx={{
+                width: 40,
+                height: 40,
+                mb: 1,
+                mx: "auto",
+                filter: hasVoted ? "grayscale(0.5)" : "none",
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, display: "block" }}
+            >
+              AWAY
+            </Typography>
+            <AnimatePresence>
+              {hasVoted && (
+                <ResultDisplay
+                  value={percentages.away}
+                  isSelected={userChoice === "away"}
+                />
+              )}
+            </AnimatePresence>
+          </Box>
         </Box>
       </Stack>
 
-      {/* Voted Confirmation Text */}
-      {storedUsersPredictedResult && (
-        <Fade in={true}>
-          <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircle fontSize="small" color="primary" sx={{ width: 16 }} />
-            <Typography variant="caption" color="primary">
-              YOU PICKED {storedUsersPredictedResult.toUpperCase()}
+      {/* Post-Vote Feedback */}
+      {hasVoted && (
+        <Fade in timeout={800}>
+          <Stack
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+            spacing={1}
+            sx={{ mt: 3 }}
+          >
+            <CheckCircle color="primary" sx={{ fontSize: 16 }} />
+            <Typography
+              variant="caption"
+              color="primary"
+              sx={{ fontWeight: 700, textTransform: "uppercase" }}
+            >
+              Prediction Locked: {userChoice}
             </Typography>
-          </Box>
+          </Stack>
         </Fade>
       )}
     </Paper>
   );
 }
 
-// --- SUB-COMPONENT: PERCENTAGE DISPLAY ---
-const ResultPercentage = ({ value }) => {
-  const theme = useTheme();
-  return (
-    <Box
-      component={motion.div}
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 200, damping: 10 }}
-      sx={{ mt: 1, textAlign: "center" }}
+const ResultDisplay = ({ value, isSelected }) => (
+  <Box
+    component={motion.div}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    sx={{ mt: 0.5 }}
+  >
+    <Typography
+      variant="h4"
+      sx={{
+        fontSize: "1.4rem",
+        fontWeight: 900,
+        color: isSelected ? "primary.main" : "text.primary",
+      }}
     >
-      <Typography
-        variant="h5"
-        sx={{
-          lineHeight: 1,
-          color: theme.palette.mode === "dark" ? "#fff" : "#000",
-        }}
-      >
-        {value.toFixed(0)}%
-      </Typography>
-    </Box>
-  );
-};
+      {Math.round(value)}%
+    </Typography>
+  </Box>
+);
