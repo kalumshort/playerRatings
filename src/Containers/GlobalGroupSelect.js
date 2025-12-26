@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Card,
@@ -6,18 +6,17 @@ import {
   CardContent,
   Typography,
   Box,
+  Container,
+  alpha,
 } from "@mui/material";
 import { useAuth } from "../Providers/AuthContext";
 import { handleAddUserToGroup } from "../Firebase/Auth_Functions";
 import { footballClubsColours, teamList } from "../Hooks/Helper_Functions";
 
 export default function GlobalGroupSelect() {
-  const footballClubsColors = footballClubsColours;
   const { user } = useAuth();
 
-  const imgRefs = useRef({});
   const [overlay, setOverlay] = useState(null);
-  // { imgSrc, color, rect, phase: 'start'|'enter'|'exit' }
 
   useEffect(() => {
     if (overlay?.phase === "start") {
@@ -29,9 +28,8 @@ export default function GlobalGroupSelect() {
   }, [overlay?.phase]);
 
   const handleTeamClick = async (team) => {
-    const color = footballClubsColors[team.teamId] || "#121212";
+    const color = footballClubsColours[team.teamId] || "#00FF87";
 
-    // Start overlay
     setOverlay({
       imgSrc: team.logo,
       color,
@@ -45,109 +43,119 @@ export default function GlobalGroupSelect() {
       });
     } catch (e) {
       console.error(e);
-
-      // Show exit animation, but DO NOT kill the overlay instantly
       setOverlay((o) => (o ? { ...o, phase: "exit" } : o));
-
-      alert(
-        "Failed to join the team. Please try again. If the issue persists, contact support."
-      );
+      alert("Failed to join the team. Please try again.");
     } finally {
-      // Normal exit animation
       setOverlay((o) => (o ? { ...o, phase: "exit" } : o));
-
-      // Remove ONLY after falling animation ends
-      setTimeout(() => {
-        setOverlay(null);
-      }, 5200); // match the longest falling logo duration
+      setTimeout(() => setOverlay(null), 5200);
     }
   };
 
-  const getContrastColor = (hex) => {
-    const c = hex?.startsWith("#") ? hex.substring(1) : hex || "212121";
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 140 ? "#000" : "#fff";
-  };
-
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, position: "relative" }}>
-      <Typography
-        variant="h6"
-        sx={{
-          mb: { xs: 1.5, sm: 2 },
-          fontWeight: 700,
-          color: "#fff",
-          textAlign: "center",
-        }}
-      >
-        Choose Your Club
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 6, position: "relative" }}>
+      <Box sx={{ textAlign: "center", mb: 6 }}>
+        <Typography
+          variant="h2"
+          sx={{
+            mb: 1,
+            fontWeight: 900,
+            letterSpacing: 2,
+            background: "linear-gradient(to bottom, #fff, #888)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          Select Your Club
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ color: "text.secondary", maxWidth: 500, mx: "auto" }}
+        >
+          Your selection determines your community consensus and club-specific
+          content.
+        </Typography>
+      </Box>
 
-      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+      <Grid container spacing={2.5}>
         {teamList.map((team) => {
-          const bg = footballClubsColors[team.teamId] || "#212121";
-          const textColor = getContrastColor(bg);
+          const clubColor = footballClubsColours[team.teamId] || "#212121";
 
           return (
-            <Grid item xs={4} sm={3} md={2} lg={2} key={team.teamId}>
+            <Grid item xs={4} sm={3} md={2.4} key={team.teamId}>
               <Card
                 sx={{
-                  backgroundColor: bg,
-                  borderRadius: 2,
-                  textAlign: "center",
-                  height: { xs: 110, sm: 130, md: 150 },
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  transition: "transform 0.2s",
-                  "&:hover": { transform: "scale(1.05)" },
+                  background: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255, 255, 255, 0.03)"
+                      : "rgba(255, 255, 255, 0.6)",
+                  backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 4,
+                  height: "100%",
+                  position: "relative",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  overflow: "hidden",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    borderColor: alpha(clubColor, 0.5),
+                    boxShadow: `0 12px 24px -10px ${alpha(clubColor, 0.4)}`,
+                    "& .club-glow": { opacity: 0.6 },
+                    "& .club-logo": { transform: "scale(1.1) rotate(5deg)" },
+                  },
                 }}
               >
+                {/* Visual Accent: Bottom glow of club color */}
+                <Box
+                  className="club-glow"
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "4px",
+                    backgroundColor: clubColor,
+                    opacity: 0.2,
+                    transition: "opacity 0.3s",
+                    boxShadow: `0 -10px 20px ${clubColor}`,
+                  }}
+                />
+
                 <CardActionArea
                   onClick={() => handleTeamClick(team)}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
+                  sx={{ height: "100%", p: 3 }}
                 >
                   <CardContent
                     sx={{
-                      p: { xs: 1, sm: 2 },
+                      p: 0,
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
+                      gap: 2,
                     }}
                   >
                     <Box
                       component="img"
                       src={team.logo}
                       alt={team.name}
-                      ref={(el) => (imgRefs.current[team.teamId] = el)}
+                      className="club-logo"
                       sx={{
-                        width: { xs: 40, sm: 55, md: 60 },
-                        height: { xs: 40, sm: 55, md: 60 },
+                        width: { xs: 50, sm: 60, md: 70 },
+                        height: { xs: 50, sm: 60, md: 70 },
                         objectFit: "contain",
-                        mb: { xs: 0.5, sm: 1 },
-                        filter: "drop-shadow(0 0 4px rgba(0,0,0,1))",
+                        filter: "drop-shadow(0 8px 12px rgba(0,0,0,0.2))",
+                        transition:
+                          "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                       }}
                     />
                     <Typography
-                      variant="body2"
+                      variant="caption"
                       sx={{
-                        color: textColor,
-                        fontWeight: 600,
-                        fontSize: { xs: "0.7rem", sm: "0.8rem" },
-                        textShadow:
-                          textColor === "#fff"
-                            ? "0 1px 3px rgba(0,0,0,0.4)"
-                            : "0 1px 3px rgba(255,255,255,0.5)",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                        textAlign: "center",
+                        textTransform: "uppercase",
+                        letterSpacing: 1,
+                        color: "text.primary",
                       }}
                     >
                       {team.name}
@@ -160,7 +168,7 @@ export default function GlobalGroupSelect() {
         })}
       </Grid>
 
-      {/* FULL-PAGE CLUB COLOR + CENTERED LOGO */}
+      {/* REFINED FULL-PAGE CELEBRATION */}
       {overlay && (
         <Box
           sx={{
@@ -169,57 +177,56 @@ export default function GlobalGroupSelect() {
             zIndex: 2000,
             pointerEvents: "none",
             overflow: "hidden",
-            background:
-              overlay.phase === "start" ? "transparent" : `${overlay.color}40`,
-            transition: "background 400ms ease",
+            backgroundColor:
+              overlay.phase === "start"
+                ? "transparent"
+                : alpha(overlay.color, 0.15),
+            backdropFilter: overlay.phase === "start" ? "none" : "blur(4px)",
+            transition: "all 600ms ease",
           }}
         >
-          {Array.from({ length: 18 }).map((_, i) => {
-            const startX = Math.random() * 100; // 0–100 vw
-            const delay = Math.random() * 0.8; // stagger
-            const duration = 3.5 + Math.random() * 2.5; // 3.5–6s
+          {Array.from({ length: 22 }).map((_, i) => {
+            const startX = Math.random() * 100;
+            const delay = Math.random() * 1.2;
+            const duration = 3 + Math.random() * 3;
             return (
               <Box
                 key={i}
                 component="img"
                 src={overlay.imgSrc}
-                alt=""
                 sx={{
                   position: "absolute",
-                  top: "-10vh", // just above view
+                  top: "-10vh",
                   left: `${startX}vw`,
-                  width: `${28 + Math.random() * 30}px`,
-                  opacity: 1,
-                  filter: "drop-shadow(0 14px 30px rgba(0,0,0,.5))",
-                  animation: `fall-${i} ${duration}s linear ${delay}s forwards`,
+                  width: `${24 + Math.random() * 40}px`,
+                  filter: `drop-shadow(0 10px 20px ${alpha(
+                    overlay.color,
+                    0.4
+                  )})`,
+                  animation: `fall-${i} ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s forwards`,
                 }}
               />
             );
           })}
 
-          {/* keyframes for the falling logos */}
           <style>
-            {Array.from({ length: 18 })
+            {Array.from({ length: 22 })
               .map((_, i) => {
-                const driftX = (Math.random() - 0.5) * 80; // side drift
-                const rotate = (Math.random() - 0.5) * 160; // rotation
+                const driftX = (Math.random() - 0.5) * 150;
+                const rotate = (Math.random() - 0.5) * 360;
                 return `
-            @keyframes fall-${i} {
-              0% {
-                transform: translate(0, 0) rotate(0deg);
-                opacity: 1;
-              }
-              100% {
-                transform: translate(${driftX}px, 120vh) rotate(${rotate}deg);
-                opacity: 0;
-              }
-            }
-          `;
+                  @keyframes fall-${i} {
+                    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { opacity: 1; }
+                    100% { transform: translate(${driftX}px, 110vh) rotate(${rotate}deg); opacity: 0; }
+                  }
+                `;
               })
               .join("")}
           </style>
         </Box>
       )}
-    </Box>
+    </Container>
   );
 }
