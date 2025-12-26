@@ -233,7 +233,6 @@ export default function FixtureHeader({
 // --- SUB-COMPONENTS ---
 
 const TeamColumn = ({ team }) => {
-  const theme = useTheme();
   return (
     <Stack alignItems="center" spacing={1.5}>
       <Avatar

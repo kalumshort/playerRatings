@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Stack, alpha, useTheme } from "@mui/material";
+import { Box, Typography, Stack, alpha } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 // --- STYLED COMPONENTS ---
@@ -58,7 +58,6 @@ const calculateTimeLeft = (targetTime) => {
 // --- COMPONENT ---
 
 export const CountdownTimer = ({ targetTime }) => {
-  const theme = useTheme();
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
 
   useEffect(() => {
