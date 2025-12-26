@@ -40,8 +40,9 @@ import { selectPlayerRatingsLoad } from "../../Selectors/selectors";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
 import PreMatchMOTM from "./Fixture-Components/Predictions/PreMatchMOTM";
-import MoodSelector from "./Fixture-Components/MoodSelector";
+
 import { Box, Stack } from "@mui/material";
+import { MoodSelector } from "./Fixture-Components/MoodSelector";
 
 export default function Fixture() {
   const { matchId } = useParams();

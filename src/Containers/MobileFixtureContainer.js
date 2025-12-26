@@ -11,7 +11,7 @@ import Lineup from "../Components/Fixtures/Fixture-Components/Lineup";
 import PlayerRatings from "../Components/Fixtures/Fixture-Components/PlayerRatings/PlayerRatings";
 import WinnerPredict from "../Components/Fixtures/Fixture-Components/Predictions/WinnerPredict";
 import PreMatchMOTM from "../Components/Fixtures/Fixture-Components/Predictions/PreMatchMOTM";
-import MoodSelector from "../Components/Fixtures/Fixture-Components/MoodSelector";
+import { MoodSelector } from "../Components/Fixtures/Fixture-Components/MoodSelector";
 
 export default function MobileFixtureContainer({
   fixture,
