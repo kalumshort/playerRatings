@@ -11,7 +11,7 @@ import { ThemeProvider } from "./Components/Theme/ThemeContext";
 
 // --- Hooks & Context ---
 import { useAuth } from "./Providers/AuthContext";
-import { useIsMobile } from "./Hooks/Helper_Functions";
+
 import useGroupData from "./Hooks/useGroupsData";
 import useGlobalData from "./Hooks/useGlobalData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
@@ -30,7 +30,7 @@ import {
 import { GlobalContainer } from "./Containers/GlobalContainer";
 import { Spinner } from "./Containers/Helpers";
 import Header from "./Containers/Header";
-import MobileHeader from "./Containers/MobileHeader";
+
 import HomePage from "./Containers/HomePage";
 
 // --- Lazy Load Pages ---
@@ -87,10 +87,9 @@ const useAppDataLoader = (user, activeGroup, currentYear) => {
 
 // --- 2. Main Layout (Header Always Visible) ---
 const MainLayout = () => {
-  const isMobile = useIsMobile();
   return (
     <>
-      {!isMobile ? <Header /> : <MobileHeader />}
+      <Header />
       <div style={{ maxWidth: "1400px", margin: "auto" }}>
         <Suspense
           fallback={

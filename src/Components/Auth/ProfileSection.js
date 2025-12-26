@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Avatar, Card, CardContent } from "@mui/material";
+import { Typography, Card, CardContent } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
@@ -22,7 +22,7 @@ const ProfileSection = ({ setDrawerOpen }) => {
         style={{ position: "relative", cursor: "pointer" }}
       >
         <CardContent>
-          <Avatar
+          {/* <Avatar
             src={userData.photoURL || "https://via.placeholder.com/150"}
             alt="Profile"
             sx={{
@@ -31,7 +31,7 @@ const ProfileSection = ({ setDrawerOpen }) => {
               margin: "0 auto 20px",
               border: "4px solid rgb(78, 84, 255)",
             }}
-          />
+          /> */}
           <Typography variant="h5" sx={{ marginBottom: 2 }}>
             {userData.displayName}
           </Typography>

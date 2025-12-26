@@ -1,222 +1,303 @@
 import React, { useState } from "react";
-
 import {
-  Drawer,
-  IconButton,
+  AppBar,
   Toolbar,
+  IconButton,
+  Drawer,
   Box,
-  Container,
+  Typography,
+  styled,
+  useTheme,
+  useMediaQuery,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
   Paper,
 } from "@mui/material";
-
-import MenuIcon from "@mui/icons-material/Menu";
-// import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
-// import blackLogo from "../assets/logo/11votes-logo-clear-nobg-black.png";
-import SiteIconText from "../assets/logo/11Votes_Text_Logo.png";
-
-import { styled } from "@mui/system";
-import ThemeToggle from "../Components/Theme/ThemeToggle";
-
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-
-import { useAuth } from "../Providers/AuthContext";
-
-import ProfileSection from "../Components/Auth/ProfileSection";
-
-import Login from "../Components/Auth/Login";
 import { useNavigate } from "react-router-dom";
+import {
+  Menu as MenuIcon,
+  X,
+  Home,
+  Calendar,
+  Trophy,
+  User,
+  LogOut,
+  LayoutDashboard,
+  ChevronRight,
+} from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "../Firebase/Firebase";
+
+// Hooks & Assets
 import useGroupData from "../Hooks/useGroupsData";
 import useUserData from "../Hooks/useUserData";
-// import { getFunctions, httpsCallable } from "firebase/functions";
+import { useAuth } from "../Providers/AuthContext";
+import SiteIconText from "../assets/logo/11Votes_Text_Logo.png";
+import SiteIconOnly from "../assets/logo/11Votes_Icon_Logo.png";
 
-const HeaderContainer = styled("div")(({ theme }) => ({
+// Components
+import ThemeToggle from "../Components/Theme/ThemeToggle";
+import Login from "../Components/Auth/Login";
+import ProfileSection from "../Components/Auth/ProfileSection";
+
+// --- Styled Components (Glassmorphism) ---
+const GlassAppBar = styled(AppBar)(({ theme }) => ({
   position: "fixed",
   top: 0,
   left: 0,
   right: 0,
-  zIndex: 1000,
-  backgroundColor: theme.palette.background.paper,
+  width: "100%",
+  background: theme.palette.background.paper, // Using the glass paper from ThemeContext
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  zIndex: theme.zIndex.appBar + 1,
 }));
+
+const NavContainer = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  maxWidth: "1300px",
+  margin: "0 auto",
+});
 
 export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { activeGroup } = useGroupData();
+  const { isGroupAdmin } = useUserData();
 
-  const toggleDrawer = (open) => {
-    setDrawerOpen(open);
+  const accentColor = activeGroup?.accentColor || theme.palette.primary.main;
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setDrawerOpen(false);
+      navigate("/");
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
-  // const functions = getFunctions();
 
-  // const updateFixtures = httpsCallable(functions, "updateFixturesonCall");
-  // const handleClick = async () => {
-  //   try {
-  //     const result = await updateFixtures(); // optional: pass data like {foo: "bar"}
-  //     console.log("Function result:", result.data);
-  //   } catch (error) {
-  //     console.error("Error calling function:", error);
-  //   }
-  // };
+  const navItems = [
+    { text: "Home", icon: <Home size={20} />, path: "/" },
+    { text: "Schedule", icon: <Calendar size={20} />, path: "/schedule" },
+    { text: "Season Stats", icon: <Trophy size={20} />, path: "/season-stats" },
+    { text: "Settings", icon: <User size={20} />, path: "/profile" },
+  ];
 
   return (
-    <HeaderContainer>
-      <Toolbar style={{ height: 90 }}>
-        {/* <button onClick={handleClick}>Update Fixtures</button> */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            maxWidth: "1300px",
-            width: "100%",
-            margin: "auto",
-          }}
-        >
-          <img
-            src={SiteIconText}
-            alt="Logo"
-            style={{ width: "150px", cursor: "pointer" }}
-            onClick={() => {
-              window.history.pushState({}, "", "/");
-              window.dispatchEvent(new PopStateEvent("popstate"));
-            }}
-          />
+    <>
+      <GlassAppBar elevation={0}>
+        <Toolbar sx={{ height: isMobile ? 64 : 80, px: 2 }}>
+          <NavContainer>
+            {/* Logo Logic */}
+            <Box
+              component="img"
+              src={isMobile ? SiteIconOnly : SiteIconText}
+              alt="11Votes"
+              sx={{
+                height: isMobile ? "40px" : "50px",
+                cursor: "pointer",
+                transition: "transform 0.2s",
+                "&:hover": { transform: "scale(1.02)" },
+              }}
+              onClick={() => navigate("/")}
+            />
 
-          <IconButton
-            color="inherit"
-            aria-label="settings"
-            onClick={() => toggleDrawer(true)}
-            size="large"
-          >
-            <MenuIcon />
-          </IconButton>
-        </Box>
-      </Toolbar>
+            {/* Desktop Actions vs Mobile Menu */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {!isMobile && user && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontWeight: 700 }}
+                >
+                  {activeGroup?.name}
+                </Typography>
+              )}
+
+              <IconButton
+                onClick={() => setDrawerOpen(true)}
+                sx={{
+                  color: "text.primary",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  borderRadius: "12px",
+                }}
+              >
+                <MenuIcon size={isMobile ? 24 : 28} />
+              </IconButton>
+            </Box>
+          </NavContainer>
+        </Toolbar>
+      </GlassAppBar>
+
+      {/* spacer to prevent content from going under fixed header */}
+      <Box sx={{ height: isMobile ? 64 : 0 }} />
 
       <Drawer
         anchor="right"
         open={drawerOpen}
-        onClose={() => toggleDrawer(false)}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: isMobile ? "280px" : "320px",
+            background:
+              theme.palette.background.gradient ||
+              theme.palette.background.default,
+            backdropFilter: "blur(20px)",
+            borderLeft: `1px solid ${theme.palette.divider}`,
+          },
+        }}
       >
-        <DrawerContentComponent setDrawerOpen={setDrawerOpen} />
-      </Drawer>
-    </HeaderContainer>
-  );
-}
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+          }}
+        >
+          {/* Header of Drawer */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 4,
+            }}
+          >
+            {user && activeGroup ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                {/* <Avatar
+                  src={activeGroup.clubBadge}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: `2px solid ${accentColor}`,
+                  }}
+                /> */}
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                  {activeGroup.name}
+                </Typography>
+              </Box>
+            ) : (
+              <Typography variant="h6" sx={{ color: accentColor }}>
+                11VOTES
+              </Typography>
+            )}
+            <IconButton onClick={() => setDrawerOpen(false)}>
+              <X size={20} />
+            </IconButton>
+          </Box>
 
-export const DrawerContent = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  height: "100%", // Make the drawer take the full height
-  justifyContent: "space-between", // Pushes content to the top and bottom
-  padding: theme.spacing(2),
-}));
+          {/* Auth State */}
+          {!user ? (
+            <Login />
+          ) : (
+            <Box sx={{ flexGrow: 1 }}>
+              <ProfileSection setDrawerOpen={setDrawerOpen} />
 
-export const SettingsContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  marginTop: "auto", // Ensures the content stays at the bottom of the drawer
-}));
+              <List sx={{ mt: 2 }}>
+                {/* Admin Section */}
+                {isGroupAdmin && (
+                  <Paper
+                    sx={{ mb: 2, p: 0.5, backgroundColor: "rgba(0,0,0,0.1)" }}
+                  >
+                    <ListItemButton
+                      onClick={() => {
+                        navigate("/group-dashboard");
+                        setDrawerOpen(false);
+                      }}
+                      sx={{ borderRadius: "12px" }}
+                    >
+                      <ListItemIcon sx={{ color: accentColor }}>
+                        <LayoutDashboard size={20} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Admin Dashboard"
+                        primaryTypographyProps={{
+                          variant: "body2",
+                          fontWeight: 700,
+                        }}
+                      />
+                    </ListItemButton>
+                  </Paper>
+                )}
 
-export const SettingRow = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center", // Centers the content vertically in the row
-  backgroundColor: "background.paper",
-  margin: "10px 0px 5px 0px",
-}));
-
-export function DrawerContentComponent({ setDrawerOpen }) {
-  const { user } = useAuth();
-  const { isGroupAdmin } = useUserData();
-
-  return (
-    <DrawerContent
-      sx={{ width: "300px", backgroundColor: "background.default" }}
-    >
-      {!user && (
-        <Container maxWidth="xs">
-          <Login />
-        </Container>
-      )}
-      {user && (
-        <>
-          <ProfileSection setDrawerOpen={setDrawerOpen} />
-          {isGroupAdmin && (
-            <DrawerGroupAdminContainer setDrawerOpen={setDrawerOpen} />
+                {/* Standard Nav */}
+                {navItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => {
+                        navigate(item.path);
+                        setDrawerOpen(false);
+                      }}
+                      sx={{
+                        borderRadius: "12px",
+                        "&:hover": { backgroundColor: `${accentColor}15` },
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40, color: accentColor }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{ variant: "body2" }}
+                      />
+                      <ChevronRight size={16} style={{ opacity: 0.3 }} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
           )}
-          <DrawerGroupContainer setDrawerOpen={setDrawerOpen} />
-        </>
-      )}
 
-      <SettingsContainer>
-        <SettingRow>
-          <Box></Box>
-          <ThemeToggle />
-        </SettingRow>
-        {/* {user && (
-          <SettingRow>
-            <Box></Box>
-            <Logout />
-          </SettingRow>
-        )} */}
-      </SettingsContainer>
-    </DrawerContent>
-  );
-}
+          {/* Bottom Settings */}
+          <Box sx={{ mt: "auto", pt: 2 }}>
+            <Divider sx={{ mb: 2, opacity: 0.1 }} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                Theme
+              </Typography>
+              <ThemeToggle />
+            </Box>
 
-function DrawerGroupContainer({ setDrawerOpen }) {
-  const navigate = useNavigate();
-  const { activeGroup } = useGroupData();
-
-  const handleSeasonStatsClick = () => {
-    setDrawerOpen(false);
-    navigate("/season-stats");
-  };
-  return (
-    <Paper style={{ marginTop: "30px", padding: "10px" }}>
-      <SettingRow
-        style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
-      >
-        <h5
-          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
-          className=""
-        >
-          Active Group
-        </h5>
-        <Box style={{ fontSize: "15px" }}>{activeGroup?.name}</Box>
-      </SettingRow>
-      <SettingRow
-        onClick={handleSeasonStatsClick}
-        style={{ cursor: "pointer" }}
-      >
-        <Box>Player Stats</Box>
-        <ArrowForwardIosIcon fontSize="small" />
-      </SettingRow>
-    </Paper>
-  );
-}
-function DrawerGroupAdminContainer({ setDrawerOpen }) {
-  const navigate = useNavigate();
-
-  const handleNavLink = () => {
-    setDrawerOpen(false);
-    navigate("/group-dashboard");
-  };
-  return (
-    <Paper style={{ marginTop: "30px", padding: "10px" }}>
-      <SettingRow
-        style={{ borderBottom: "1px solid grey", paddingBottom: "10px" }}
-      >
-        <h5
-          style={{ padding: "0px", margin: "5px 0px", color: "grey" }}
-          className=""
-        >
-          Group Admin
-        </h5>
-      </SettingRow>
-      <SettingRow onClick={handleNavLink} style={{ cursor: "pointer" }}>
-        <Box>Dashboard</Box>
-        <ArrowForwardIosIcon fontSize="small" />
-      </SettingRow>
-    </Paper>
+            {user && (
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{ borderRadius: "12px", color: "error.main", mt: 1 }}
+              >
+                <ListItemIcon sx={{ minWidth: 40, color: "error.main" }}>
+                  <LogOut size={20} />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Sign Out"
+                  primaryTypographyProps={{ fontWeight: 700 }}
+                />
+              </ListItemButton>
+            )}
+          </Box>
+        </Box>
+      </Drawer>
+    </>
   );
 }
