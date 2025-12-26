@@ -6,7 +6,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { handleCreateAccountGoogle } from "../../../Firebase/Auth_Functions";
 import { useNavigate } from "react-router-dom";
 
-const GoogleSignInButton = ({ groupId }) => {
+const GoogleSignInButton = ({ groupId, text = "Sign In with Google" }) => {
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
@@ -27,16 +27,13 @@ const GoogleSignInButton = ({ groupId }) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          backgroundColor: "#4285F4",
-          color: "white",
-          borderRadius: "8px",
-          padding: "20px 30px",
+
           textTransform: "none",
         }}
         fullWidth
       >
         <GoogleIcon sx={{ marginRight: 1 }} />
-        Sign In with Google
+        {text}
       </Button>
     </Box>
   );
