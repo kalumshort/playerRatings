@@ -123,9 +123,7 @@ export default function LoggedInProfile() {
         <Stack alignItems="center" spacing={2}>
           {/* <UploadAvatar userData={userData} /> */}
           <Box sx={{ textAlign: "center" }}>
-            <Typography variant="h4" sx={{ fontFamily: "'VT323', monospace" }}>
-              {userData.displayName}
-            </Typography>
+            <Typography variant="h4">{userData.displayName}</Typography>
             <Typography variant="body2" color="text.secondary">
               {userData.email}
             </Typography>

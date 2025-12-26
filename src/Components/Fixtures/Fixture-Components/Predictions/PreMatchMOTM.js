@@ -229,12 +229,7 @@ export default function PreMatchMOTM({ fixture }) {
                 >
                   {index + 1}. {name}
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ fontFamily: "'Space Mono', monospace", opacity: 0.8 }}
-                >
-                  {percentage}%
-                </Typography>
+                <Typography variant="caption">{percentage}%</Typography>
               </Stack>
             ))}
           </Stack>

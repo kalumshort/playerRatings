@@ -20,7 +20,6 @@ const DigitBox = styled(Box)(({ theme }) => ({
 }));
 
 const DigitValue = styled(Typography)(({ theme }) => ({
-  fontFamily: theme.typography.h1.fontFamily, // VT323
   fontSize: "1.5rem",
   lineHeight: 1,
   color: theme.palette.text.primary,
@@ -34,11 +33,9 @@ const DigitLabel = styled(Typography)(({ theme }) => ({
   textTransform: "uppercase",
   fontWeight: 800,
   opacity: 0.6,
-  fontFamily: theme.typography.caption.fontFamily, // Space Mono
 }));
 
 const Separator = styled(Typography)(({ theme }) => ({
-  fontFamily: theme.typography.h1.fontFamily, // VT323
   fontSize: "1.2rem",
   opacity: 0.4,
   paddingBottom: "12px", // Visual alignment with digits
@@ -79,7 +76,6 @@ export const CountdownTimer = ({ targetTime }) => {
           fontWeight: 900,
           fontSize: "0.75rem",
           color: "primary.main",
-          fontFamily: theme.typography.button.fontFamily, // Graduate
         }}
       >
         MATCH IN PROGRESS

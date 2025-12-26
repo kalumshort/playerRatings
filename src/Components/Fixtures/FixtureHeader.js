@@ -99,7 +99,6 @@ export default function FixtureHeader({
               height: 20,
               fontSize: "0.65rem",
               fontWeight: 800,
-              fontFamily: theme.typography.caption.fontFamily,
             }}
           />
         )}
@@ -123,7 +122,6 @@ export default function FixtureHeader({
                     variant="h2"
                     sx={{
                       fontSize: { xs: "2.4rem", md: "3.8rem" },
-                      fontFamily: theme.typography.h1.fontFamily,
                       lineHeight: 1,
                       letterSpacing: -1,
                     }}
@@ -255,7 +253,6 @@ const TeamColumn = ({ team }) => {
         sx={{
           fontWeight: 800,
           fontSize: { xs: "0.65rem", md: "0.9rem" },
-          fontFamily: theme.typography.body1.fontFamily,
           textTransform: "uppercase",
           letterSpacing: 0.5,
           lineHeight: 1.2,

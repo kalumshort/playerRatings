@@ -60,7 +60,6 @@ const TeamName = styled(Typography)(({ theme }) => ({
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  fontFamily: theme.typography.body1.fontFamily, // Space Mono
 
   [theme.breakpoints.down("sm")]: {
     fontSize: "0.75rem",
@@ -91,7 +90,7 @@ const ScoreText = styled("div", {
 })(({ theme, isLive }) => ({
   fontSize: "1.2rem",
   fontWeight: 900,
-  fontFamily: theme.typography.h1.fontFamily, // VT323
+
   color: isLive ? theme.palette.primary.main : theme.palette.text.primary,
   lineHeight: 1,
 }));
@@ -187,7 +186,6 @@ export default function FixtureListItem({
               sx={{
                 fontSize: "0.9rem",
                 fontWeight: 700,
-                fontFamily: theme.typography.h1.fontFamily,
               }}
             >
               {formattedDate.time}

@@ -209,7 +209,7 @@ export const RatingLineupPlayer = ({ player, playerRating }) => {
             fontSize: "0.8rem",
             fontWeight: "bold",
             // Uses the retro-style font from your ThemeProvider
-            fontFamily: theme.typography.h1.fontFamily,
+
             lineHeight: 1,
           }}
         >

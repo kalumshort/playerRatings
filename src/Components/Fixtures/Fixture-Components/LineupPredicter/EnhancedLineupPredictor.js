@@ -328,7 +328,7 @@ export default function SmartLineupPredictor({ fixture }) {
           alignItems="center"
           sx={{ mb: 2 }}
         >
-          <Typography variant="h6" sx={{ fontFamily: "VT323" }}>
+          <Typography variant="h6">
             SELECT {getPositionBySlot(activeSlot).toUpperCase()}
           </Typography>
           <IconButton onClick={() => setIsDrawerOpen(false)}>

@@ -66,7 +66,7 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
         },
 
         shape: { borderRadius: 16 },
-
+        //Courier Prime
         typography: {
           // Main UI and Body font (Rounded & Modern)
           fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -128,7 +128,6 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
 
           // Technical/Stat labels (Keeping Space Mono for the 'Data' look)
           caption: {
-            fontFamily: "'Space Mono', monospace",
             fontWeight: 400,
             letterSpacing: "0.02em",
           },

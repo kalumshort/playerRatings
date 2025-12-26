@@ -140,7 +140,6 @@ export default function LatestTeamSeasonRating() {
           size="small"
           endIcon={<ArrowForwardIcon />}
           sx={{
-            fontFamily: theme.typography.caption.fontFamily,
             color: "primary.main",
             "&:hover": {
               backgroundColor: alpha(theme.palette.primary.main, 0.1),
