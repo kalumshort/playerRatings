@@ -56,6 +56,7 @@ const GlassAppBar = styled(AppBar)(({ theme }) => ({
   WebkitBackdropFilter: "blur(20px)",
   borderBottom: `1px solid ${theme.palette.divider}`,
   zIndex: theme.zIndex.appBar + 1,
+  margin: "0!important",
 }));
 
 const NavContainer = styled(Box)({
