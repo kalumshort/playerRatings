@@ -14,6 +14,7 @@ import useGlobalData from "../Hooks/useGlobalData";
 import { useSelector } from "react-redux";
 import { selectSquadDataObject } from "../Selectors/squadDataSelectors";
 import { Spinner } from "./Helpers";
+import { useParams } from "react-router-dom";
 
 // OPTIONS
 const selectOptions = {
@@ -568,8 +569,10 @@ const SelectPercentBar = ({ question, data }) => {
 
 // This takes the Firestore data object for the question (e.g., results["topScorer"])
 const PlayerPodium = ({ question, data }) => {
-  const squadData = useSelector(selectSquadDataObject);
-
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   // Remove non-player fields (e.g., totalSubmits, id) and build array
   const playerCounts = Object.entries(data || {})
     .filter(([playerId]) => playerId !== "id" && playerId !== "totalSubmits")

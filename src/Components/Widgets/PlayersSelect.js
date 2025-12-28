@@ -19,12 +19,16 @@ import {
 } from "@mui/material";
 import { Close, KeyboardArrowDown } from "@mui/icons-material";
 import { selectSquadDataObject } from "../../Selectors/squadDataSelectors";
+import { useParams } from "react-router-dom";
 
 const POSITION_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"];
 
 export default function PlayersSelect({ onChange, showAvatar = true }) {
   const theme = useTheme();
-  const squadData = useSelector(selectSquadDataObject);
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const [open, setOpen] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState(null);
 

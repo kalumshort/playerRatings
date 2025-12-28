@@ -10,9 +10,13 @@ import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors"
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import ChosenLineup from "./chosenLineup";
 import EnhancedLineupPredictor from "./EnhancedLineupPredictor";
+import { useParams } from "react-router-dom";
 
 export default function LineupPredictor({ fixture, readOnly }) {
-  const squadData = useSelector(selectSquadDataObject);
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   // Load existing prediction if available

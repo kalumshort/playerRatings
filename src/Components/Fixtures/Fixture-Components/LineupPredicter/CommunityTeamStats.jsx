@@ -16,13 +16,17 @@ import { Groups } from "@mui/icons-material";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import useGroupData from "../../../../Hooks/useGroupsData";
+import { useParams } from "react-router-dom";
 
 export function CommunityTeamStats({ fixture }) {
   const theme = useTheme();
 
   // Data Selectors
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
-  const squadData = useSelector(selectSquadDataObject);
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const { activeGroup } = useGroupData();
   const groupColour = activeGroup?.accentColor || "#DA291C";
 

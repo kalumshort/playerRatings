@@ -31,12 +31,15 @@ import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import { handlePredictPreMatchMotm } from "../../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 import PlayersSelect from "../../../Widgets/PlayersSelect";
+import { useParams } from "react-router-dom";
 
 export default function PreMatchMOTM({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
-
-  const squadData = useSelector(selectSquadDataObject);
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const storedUsersPlayerToWatch = usersMatchData?.preMatchMotm;

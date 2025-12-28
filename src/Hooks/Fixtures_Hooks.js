@@ -258,7 +258,7 @@ export const fetchTeamSquad =
       console.log("fetchTeamSquad with no squadId");
       return;
     }
-
+    console.log("fetchTeamSquad called with squadId:", squadId);
     try {
       dispatch(fetchTeamSquadStart());
 

@@ -23,6 +23,7 @@ import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 import "../../../../retro-patterns.css";
 import { FORMATIONS } from "./LineupPredictor";
+import { useParams } from "react-router-dom";
 
 export default function DroppablePitch({
   fixture,
@@ -35,8 +36,10 @@ export default function DroppablePitch({
   const { user } = useAuth();
   const globalData = useGlobalData();
   const { activeGroup } = useGroupData();
-  const squadData = useSelector(selectSquadDataObject);
-
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const [formation, setFormation] = useState(initialFormation);
 
   const handleClear = () => setTeam({});

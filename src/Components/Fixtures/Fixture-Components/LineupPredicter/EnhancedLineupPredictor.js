@@ -33,6 +33,7 @@ import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 import { FORMATIONS } from "./LineupPredictor";
 import LineupPlayer from "../LineupPlayer";
+import { useParams } from "react-router-dom";
 
 // --- CONSTANTS (From your files) ---
 
@@ -101,7 +102,10 @@ export default function SmartLineupPredictor({ fixture }) {
   const globalData = useGlobalData();
   const { activeGroup } = useGroupData();
 
-  const squadData = useSelector(selectSquadDataObject);
+  const { clubSlug } = useParams(); // e.g., "man-united"
+  const squadData = useSelector((state) =>
+    selectSquadDataObject(state, clubSlug)
+  );
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   // --- STATE ---
