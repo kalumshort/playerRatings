@@ -1,8 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { slugToClub } from "../Hooks/Helper_Functions";
 
-// Helper to get current teamId
-// 1. Improved Helper: Now handles slugs for guests
+// 1. Core Helper: Prioritizes URL slug, falls back to User state
 const getActiveTeamId = (state, clubSlug = null) => {
   // Priority 1: URL Context (Public/Guest view)
   if (clubSlug && slugToClub[clubSlug]) {
@@ -16,23 +15,23 @@ const getActiveTeamId = (state, clubSlug = null) => {
   return groupClubId || null;
 };
 
-// Selector for full squad array
+// 2. Full Squad Array (Active)
 export const selectSquadData = (state, clubSlug = null) => {
   const teamId = getActiveTeamId(state, clubSlug);
-
   if (!teamId) return [];
   return state.teamSquads?.squads?.[teamId]?.activeSquad || [];
 };
-export const selectSeasonSquadData = (state) => {
-  const teamId = getActiveTeamId(state);
 
-  return state.teamSquads?.squads?.[teamId]?.seasonSquad;
+// 3. Full Season Squad Array (Historical/All Players)
+export const selectSeasonSquadData = (state, clubSlug = null) => {
+  const teamId = getActiveTeamId(state, clubSlug); // Updated to use clubSlug
+  if (!teamId) return [];
+  return state.teamSquads?.squads?.[teamId]?.seasonSquad || [];
 };
 
-// Selector for squad as object keyed by player ID
+// 4. Squad Object (Active)
 export const selectSquadDataObject = (state, clubSlug = null) => {
   const squad = selectSquadData(state, clubSlug);
-
   if (!squad || squad.length === 0) return {};
 
   return squad.reduce((acc, player) => {
@@ -40,20 +39,29 @@ export const selectSquadDataObject = (state, clubSlug = null) => {
     return acc;
   }, {});
 };
-export const selectSeasonSquadDataObject = (state) => {
-  const squad = selectSeasonSquadData(state);
 
-  return squad?.reduce((acc, player) => {
+// 5. Season Squad Object (All Players)
+export const selectSeasonSquadDataObject = (state, clubSlug = null) => {
+  const squad = selectSeasonSquadData(state, clubSlug); // Pass slug context
+  if (!squad || squad.length === 0) return {};
+
+  return squad.reduce((acc, player) => {
     acc[player.id] = player;
     return acc;
   }, {});
 };
 
+// 6. Metadata Selectors (Remain Global)
 export const selectSquadLoad = (state) => ({
   squadLoaded: state.teamSquads.loaded,
   squadError: state.teamSquads.error,
   squadLoading: state.teamSquads.loading,
 });
 
-export const selectSquadPlayerById = (id) =>
-  createSelector([selectSeasonSquadDataObject], (squadState) => squadState[id]);
+// 7. Factory Selector for Individual Players
+// This now requires both the playerId and the optional clubSlug
+export const selectSquadPlayerById = (id, clubSlug = null) =>
+  createSelector(
+    [(state) => selectSeasonSquadDataObject(state, clubSlug)],
+    (squadState) => squadState[id] || null
+  );

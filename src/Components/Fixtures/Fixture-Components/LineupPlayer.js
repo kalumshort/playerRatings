@@ -15,6 +15,7 @@ import { SportsSoccer, SwapVert, Delete, Rectangle } from "@mui/icons-material";
 import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 import useGroupData from "../../../Hooks/useGroupsData";
+import { useParams } from "react-router-dom";
 
 export default function LineupPlayer({
   player,
@@ -25,7 +26,10 @@ export default function LineupPlayer({
   ...props
 }) {
   const theme = useTheme();
-  const playerData = useSelector(selectSquadPlayerById(player?.id));
+  const { clubSlug } = useParams();
+  const playerData = useSelector((state) =>
+    selectSquadPlayerById(player?.id, clubSlug)(state)
+  );
   const { activeGroup } = useGroupData();
   const groupColour = activeGroup?.accentColor || "#DA291C";
 

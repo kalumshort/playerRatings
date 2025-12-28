@@ -18,6 +18,7 @@ import {
   useTheme,
 } from "@mui/material";
 import FanMOTMHighlight from "./MotmHighlight";
+import { useParams } from "react-router-dom";
 
 export default function RatingLineup({
   fixture,
@@ -178,7 +179,11 @@ const ScoreBadge = styled(Box)(({ theme }) => ({
 export const RatingLineupPlayer = ({ player, playerRating }) => {
   const theme = useTheme();
   // Fetch supplementary player data if not passed in props
-  const playerData = useSelector(selectSquadPlayerById(player?.id));
+
+  const { clubSlug } = useParams();
+  const playerData = useSelector((state) =>
+    selectSquadPlayerById(player?.id, clubSlug)(state)
+  );
 
   if (!player) return null;
 

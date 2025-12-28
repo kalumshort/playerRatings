@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom"; // Added useParams
 import { Paper, Typography, Box, Button, useTheme } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -8,16 +8,13 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
 import { Spinner } from "../../Containers/Helpers";
-import useGroupData from "../../Hooks/useGroupsData";
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
 import { useAppPaths } from "../../Hooks/Helper_Functions";
+import { slugToClub } from "../../Hooks/Helper_Functions"; // Import mapping utility
 
 // --- STYLED COMPONENTS ---
-
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: "20px",
-
-  // Applying our Glassified Standard
 }));
 
 const PitchContainer = styled(Box)(({ theme }) => {
@@ -31,7 +28,6 @@ const PitchContainer = styled(Box)(({ theme }) => {
     justifyContent: "space-between",
     position: "relative",
     overflow: "hidden",
-    // Dark green "Pitch" tint that respects theme
     background:
       theme.palette.mode === "dark"
         ? `linear-gradient(180deg, ${alpha("#0a2a12", 0.4)} 0%, ${alpha(
@@ -43,8 +39,6 @@ const PitchContainer = styled(Box)(({ theme }) => {
             0.05
           )} 100%)`,
     border: `1px solid ${alpha(accent, 0.2)}`,
-
-    // CSS Pitch Markings (Center Circle and Line)
     "&::before": {
       content: '""',
       position: "absolute",
@@ -77,21 +71,25 @@ const PlayerRow = styled(Box)({
   zIndex: 2,
 });
 
-// --- COMPONENT ---
-
 export default function LatestTeamSeasonRating() {
   const theme = useTheme();
+  const { clubSlug } = useParams(); // URL Context
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
-  const { activeGroup } = useGroupData();
-
   const { getPath } = useAppPaths();
 
+  // 1. Identify current club from Slug
+  const clubConfig = slugToClub[clubSlug];
+  const currentClubId = clubConfig?.teamId;
+
   const { formationRows, fixtureData } = useMemo(() => {
-    if (!previousFixtures || !activeGroup)
+    // Rely on URL context rather than activeGroup state
+    if (!previousFixtures || !currentClubId)
       return { formationRows: [], fixtureData: null };
 
-    const clubId = Number(activeGroup.groupClubId);
+    const clubId = Number(currentClubId);
+
+    // Find the most recent fixture where this club had a lineup recorded
     const fixture = previousFixtures.find((f) =>
       f?.lineups?.some((team) => team.team.id === clubId)
     );
@@ -108,13 +106,12 @@ export default function LatestTeamSeasonRating() {
       return acc;
     }, {});
 
-    // Sort rows so GK (Row 1) is at the bottom, Forwards at the top
     const sortedRows = Object.keys(rows)
       .sort((a, b) => b - a)
       .map((key) => rows[key]);
 
     return { formationRows: sortedRows, fixtureData: fixture };
-  }, [previousFixtures, activeGroup]);
+  }, [previousFixtures, currentClubId]);
 
   if (!playerStats && !previousFixtures) {
     return (
@@ -139,7 +136,7 @@ export default function LatestTeamSeasonRating() {
 
         <Button
           component={Link}
-          to={getPath(`/season-stats`)}
+          to={getPath(`/season-stats`)} // Context-aware link
           size="small"
           endIcon={<ArrowForwardIcon />}
           sx={{

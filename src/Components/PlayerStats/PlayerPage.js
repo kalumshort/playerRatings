@@ -122,12 +122,14 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
 // --- MAIN COMPONENT ---
 
 export default function PlayerPage() {
-  const { playerId } = useParams();
   const { activeGroup } = useGroupData();
   const globalData = useGlobalData();
   const dispatch = useDispatch();
 
-  const playerData = useSelector(selectSquadPlayerById(playerId));
+  const { clubSlug, playerId } = useParams();
+  const playerData = useSelector((state) =>
+    selectSquadPlayerById(playerId, clubSlug)(state)
+  );
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =

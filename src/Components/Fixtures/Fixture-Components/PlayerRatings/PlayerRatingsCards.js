@@ -30,6 +30,7 @@ import {
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
 import { handlePlayerRatingSubmit } from "../../../../Firebase/Firebase";
+import { useParams } from "react-router-dom";
 
 // =========================================================
 // 1. PARENT COMPONENT
@@ -118,10 +119,17 @@ export function PlayerRatingCard({
   onPrev,
 }) {
   // 1. Performance: Memoize Selector
+  // 1. Extract clubSlug from the URL context
+  const { clubSlug } = useParams();
+
+  // 2. Performance: Memoize Selector including the clubSlug context
   const selectPlayer = useMemo(
-    () => selectSquadPlayerById(player.id),
-    [player.id]
+    // Pass clubSlug to the factory to look in the correct team's data
+    () => selectSquadPlayerById(player.id, clubSlug),
+    [player.id, clubSlug] // Re-memoize if player ID or club changes
   );
+
+  // 3. Select player data using the context-aware selector
   const playerData = useSelector(selectPlayer, shallowEqual);
 
   // 2. Performance: Memoize Events Logic

@@ -4,6 +4,7 @@ import { useSelector, shallowEqual } from "react-redux"; // 1. Import shallowEqu
 import { Box, Avatar, Tooltip } from "@mui/material";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
+import { useParams } from "react-router-dom";
 
 const ACCENT = "#4EFF4E";
 
@@ -15,20 +16,14 @@ function PlayerThumbnail({
   usersMatchPlayerRatings,
   storedUsersMatchMOTM,
 }) {
-  // === PERFORMANCE FIX STARTS HERE ===
+  const { clubSlug } = useParams();
 
-  // 1. Memoize the selector creator so it stays the same function instance
-  // unless the player ID actually changes.
   const selectPlayer = useMemo(
-    () => selectSquadPlayerById(player.id),
-    [player.id]
+    () => selectSquadPlayerById(player.id, clubSlug),
+    [player.id, clubSlug] // Re-memoize if player ID or club changes
   );
 
-  // 2. Use the memoized selector with shallowEqual.
-  // This prevents re-renders if the data object is technically new but has the same values.
   const playerData = useSelector(selectPlayer, shallowEqual);
-
-  // === PERFORMANCE FIX ENDS HERE ===
 
   const rated = Boolean(usersMatchPlayerRatings?.[player.id]);
   const isMOTM = storedUsersMatchMOTM === String(player.id);
