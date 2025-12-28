@@ -20,7 +20,7 @@ import { idToClub, slugToClub } from "./Hooks/Helper_Functions";
 // --- Redux Selectors & Actions ---
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
 import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
-import { selectPlayerRatingsLoad } from "./Selectors/selectors";
+
 import { fetchFixtures, fetchTeamSquad } from "./Hooks/Fixtures_Hooks";
 
 // --- UI Components ---
