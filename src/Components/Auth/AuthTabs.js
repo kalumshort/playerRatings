@@ -15,14 +15,15 @@ import {
 } from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
 import { handleCreateAccount } from "../../Firebase/Auth_Functions";
-import { useNavigate } from "react-router-dom";
+import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
 const AuthTabs = ({ groupId }) => {
   const [value, setValue] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+
+  const appNavigate = useAppNavigate();
 
   const handleTabChange = (event, newValue) => {
     setValue(newValue);
@@ -50,7 +51,7 @@ const AuthTabs = ({ groupId }) => {
     try {
       if (value === 0) {
         await handleCreateAccount({ email, password, groupId });
-        navigate("/"); // Redirect to the home page after successful sign-up
+        appNavigate("/"); // Redirect to the home page after successful sign-up
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }

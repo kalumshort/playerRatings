@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+
 import {
   Paper,
   Typography,
@@ -23,6 +23,7 @@ import { selectSeasonSquadDataObject } from "../../Selectors/squadDataSelectors"
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 
 import useGroupData from "../../Hooks/useGroupsData";
+import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
 // --- STYLED COMPONENTS ---
 
@@ -193,7 +194,7 @@ const StatusBadge = styled(Box)(({ theme, type }) => ({
 }));
 
 export default function AllPlayerStats() {
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
   const { activeGroup } = useGroupData();
   const clubId = Number(activeGroup?.groupClubId);
 
@@ -307,7 +308,7 @@ export default function AllPlayerStats() {
   }, [previousFixtures, clubId, squadData, allPlayers]);
 
   // --- HANDLERS ---
-  const handleNavigate = (id) => navigate(`/players/${id}`);
+  const handleNavigate = (id) => appNavigate(`/players/${id}`);
   const handleFilterClick = (e) => setAnchorEl(e.currentTarget);
   const handleFilterClose = (val) => {
     if (val !== undefined) setPositionFilter(val);

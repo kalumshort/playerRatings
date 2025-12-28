@@ -22,6 +22,7 @@ import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
 import {
   getPlayersFixtureEvents,
   RatingBadge,
+  useAppPaths,
 } from "../../Hooks/Helper_Functions";
 import { EventBadge } from "../Widgets/EventBadge";
 
@@ -274,6 +275,8 @@ const PlayerMatchRow = ({
   clubId,
   playerId,
 }) => {
+  const { getPath } = useAppPaths();
+
   const clubIdNum = Number(clubId);
   const pIdNum = Number(playerId);
 
@@ -299,7 +302,10 @@ const PlayerMatchRow = ({
   );
 
   return (
-    <Link to={`/fixture/${fixture.id}`} style={{ textDecoration: "none" }}>
+    <Link
+      to={getPath(`/fixture/${fixture.id}`)}
+      style={{ textDecoration: "none" }}
+    >
       <MatchItem elevation={0} result={result}>
         {/* LEFT: DATE */}
         {/* On mobile, we reduce width to save space */}

@@ -10,6 +10,7 @@ import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
 import { Spinner } from "../../Containers/Helpers";
 import useGroupData from "../../Hooks/useGroupsData";
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
+import { useAppPaths } from "../../Hooks/Helper_Functions";
 
 // --- STYLED COMPONENTS ---
 
@@ -84,6 +85,8 @@ export default function LatestTeamSeasonRating() {
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const { activeGroup } = useGroupData();
 
+  const { getPath } = useAppPaths();
+
   const { formationRows, fixtureData } = useMemo(() => {
     if (!previousFixtures || !activeGroup)
       return { formationRows: [], fixtureData: null };
@@ -136,7 +139,7 @@ export default function LatestTeamSeasonRating() {
 
         <Button
           component={Link}
-          to="/season-stats"
+          to={getPath(`/season-stats`)}
           size="small"
           endIcon={<ArrowForwardIcon />}
           sx={{

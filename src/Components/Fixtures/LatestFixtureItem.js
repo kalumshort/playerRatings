@@ -3,19 +3,18 @@ import { useSelector } from "react-redux";
 import { selectLatestFixture } from "../../Selectors/fixturesSelectors";
 import "./fixtures.css";
 
-import { useNavigate } from "react-router-dom";
-
 import FixtureHeader from "./FixtureHeader";
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import { footballClubsColours } from "../../Hooks/Helper_Functions";
 import { ContentContainer } from "../../Containers/GlobalContainer";
+import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
 export default function LatestFixtureItem() {
   const footballClubsColors = footballClubsColours;
 
   const latestFixture = useSelector(selectLatestFixture);
 
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
   if (!latestFixture) {
     return (
       <div
@@ -37,7 +36,7 @@ export default function LatestFixtureItem() {
   const fixtureGradient = `linear-gradient(95deg, ${homeTeamColour} 40%, ${awayTeamColour} 60%)`;
 
   const handleFixtureClick = (matchId) => {
-    navigate(`/fixture/${matchId}`);
+    appNavigate(`/fixture/${matchId}`);
   };
 
   return (

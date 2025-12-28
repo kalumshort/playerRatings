@@ -43,6 +43,7 @@ import SiteIconOnly from "../assets/logo/11Votes_Icon_Logo.png";
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import Login from "../Components/Auth/Login";
 import ProfileSection from "../Components/Auth/ProfileSection";
+import { useAppNavigate } from "../Hooks/useAppNavigate";
 
 // --- Styled Components (Glassmorphism) ---
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
@@ -72,7 +73,7 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
   const { user } = useAuth();
   const { activeGroup } = useGroupData();
   const { isGroupAdmin } = useUserData();
@@ -83,7 +84,7 @@ export default function Header() {
     try {
       await signOut(auth);
       setDrawerOpen(false);
-      navigate("/");
+      appNavigate("/");
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -112,7 +113,7 @@ export default function Header() {
                 transition: "transform 0.2s",
                 "&:hover": { transform: "scale(1.02)" },
               }}
-              onClick={() => navigate("/")}
+              onClick={() => appNavigate("/")}
             />
 
             {/* Desktop Actions vs Mobile Menu */}
@@ -218,7 +219,7 @@ export default function Header() {
                   >
                     <ListItemButton
                       onClick={() => {
-                        navigate("/group-dashboard");
+                        appNavigate("/group-dashboard");
                         setDrawerOpen(false);
                       }}
                       sx={{ borderRadius: "12px" }}
@@ -242,7 +243,7 @@ export default function Header() {
                   <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
                     <ListItemButton
                       onClick={() => {
-                        navigate(item.path);
+                        appNavigate(item.path);
                         setDrawerOpen(false);
                       }}
                       sx={{

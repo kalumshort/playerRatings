@@ -16,7 +16,6 @@ import {
   styled,
   useTheme as useMuiTheme,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 
 import {
   Menu as MenuIcon,
@@ -31,6 +30,7 @@ import { auth } from "../Firebase/Firebase";
 import { signOut } from "firebase/auth";
 import SiteIcon from "../assets/logo/11Votes_Icon_Logo.png";
 import useGroupData from "../Hooks/useGroupsData";
+import { useAppNavigate } from "../Hooks/useAppNavigate";
 
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
   position: "sticky",
@@ -52,7 +52,7 @@ const Logo = styled("img")({
 
 export default function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
   const theme = useMuiTheme();
   const { activeGroup } = useGroupData();
 
@@ -61,7 +61,7 @@ export default function MobileHeader() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/");
+      appNavigate("/");
       setDrawerOpen(false);
     } catch (error) {
       console.error("Logout Error:", error);
@@ -88,7 +88,7 @@ export default function MobileHeader() {
             width: "100%",
           }}
         >
-          <Logo src={SiteIcon} alt="11Votes" onClick={() => navigate("/")} />
+          <Logo src={SiteIcon} alt="11Votes" onClick={() => appNavigate("/")} />
 
           <IconButton
             onClick={() => setDrawerOpen(true)}
@@ -158,7 +158,7 @@ export default function MobileHeader() {
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton
                   onClick={() => {
-                    navigate(item.path);
+                    appNavigate(item.path);
                     setDrawerOpen(false);
                   }}
                   sx={{

@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   MenuItem,
   Select,
@@ -21,6 +21,8 @@ import {
   selectLatestFixture,
 } from "../Selectors/fixturesSelectors";
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
+import { useAppNavigate } from "../Hooks/useAppNavigate";
+import { useAppPaths } from "../Hooks/Helper_Functions";
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -57,7 +59,9 @@ export default function ScheduleContainer({
   scroll = true,
   scrollOnLoad = true,
 }) {
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
+
+  const { getPath } = useAppPaths();
 
   const { fixtures: allFixtures } = useSelector(selectFixturesState);
   const latestFixture = useSelector(selectLatestFixture);
@@ -102,9 +106,9 @@ export default function ScheduleContainer({
 
   const handleFixtureClick = useCallback(
     (matchId) => {
-      navigate(`/fixture/${matchId}`);
+      appNavigate(`/fixture/${matchId}`);
     },
-    [navigate]
+    [appNavigate]
   );
 
   // --- UPDATED SCROLL LOGIC ---
@@ -162,7 +166,7 @@ export default function ScheduleContainer({
             </Select>
           </FormControl>
         ) : (
-          <StyledLink to="/schedule">View All</StyledLink>
+          <StyledLink to={getPath(`/schedule`)}>View All</StyledLink>
         )}
       </HeaderContainer>
 

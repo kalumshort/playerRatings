@@ -1,17 +1,18 @@
 import React from "react";
 import { Typography, Card, CardContent } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
 import useUserData from "../../Hooks/useUserData";
+import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
 const ProfileSection = ({ setDrawerOpen }) => {
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
 
   const { userData } = useUserData();
   const handleClick = () => {
     setDrawerOpen(false);
-    navigate("/profile");
+    appNavigate("/profile");
   };
   return (
     <>

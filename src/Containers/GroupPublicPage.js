@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { firebaseGetDocument } from "../Firebase/Firebase";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import useUserData from "../Hooks/useUserData";
 import { Button, Paper, Typography, Box } from "@mui/material";
 import { Spinner } from "./Helpers";
@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { clearTeamSquads } from "../redux/Reducers/teamSquads";
 import { clearRatings } from "../redux/Reducers/playerRatingsReducer";
 import { clearFixtures } from "../redux/Reducers/fixturesReducer";
+import { useAppNavigate } from "../Hooks/useAppNavigate";
 
 export default function GroupPublicPage() {
   const { userData } = useUserData();
@@ -21,7 +22,7 @@ export default function GroupPublicPage() {
   const showAlert = useAlert();
   const dispatch = useDispatch();
 
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
 
   useEffect(() => {
     const fetchInviteLinkForGroup = async () => {
@@ -54,8 +55,6 @@ export default function GroupPublicPage() {
       dispatch(clearFixtures());
       dispatch(clearRatings());
       dispatch(clearTeamSquads());
-
-      //   navigate("/");
     } else {
       showAlert(result.message); // Error message
     }
@@ -66,7 +65,7 @@ export default function GroupPublicPage() {
   }
 
   if (userData?.groups?.includes(inviteLinkDoc.groupId)) {
-    navigate("/");
+    appNavigate("/");
   }
 
   return (

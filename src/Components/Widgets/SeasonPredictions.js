@@ -3,8 +3,11 @@ import { ContentContainer } from "../../Containers/GlobalContainer";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
+import { useAppPaths } from "../../Hooks/Helper_Functions";
 
 export default function SeasonPredictions() {
+  const { getPath } = useAppPaths();
+
   return (
     <ContentContainer style={{ padding: "10px" }}>
       <div>
@@ -19,7 +22,7 @@ export default function SeasonPredictions() {
           justifyContent: "flex-end",
         }}
       >
-        <Link to="/season-predictions">
+        <Link to={getPath("/season-predictions")}>
           <Button variant="contained">
             <ArrowForwardIcon fontSize="small" />
           </Button>

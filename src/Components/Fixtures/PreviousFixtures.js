@@ -2,18 +2,20 @@ import React, { useMemo, useState } from "react";
 import { ContentContainer } from "../../Containers/GlobalContainer";
 import { useSelector } from "react-redux";
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import FixtureListItem from "./FixtureListItem";
 import { MenuItem, Select } from "@mui/material";
-import { useIsMobile } from "../../Hooks/Helper_Functions";
+import { useAppPaths, useIsMobile } from "../../Hooks/Helper_Functions";
+import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
 export default function PreviousFixtures() {
   const isMobile = useIsMobile();
+  const { getPath } = useAppPaths();
   const previousFixtures = useSelector(selectPreviousFixtures);
-  const navigate = useNavigate();
+  const appNavigate = useAppNavigate();
   const [selectedLeague, setSelectedLeague] = useState("");
   const handleFixtureClick = (matchId) => {
-    navigate(`/fixture/${matchId}`);
+    appNavigate(`/fixture/${matchId}`);
   };
   const handleChange = (event) => {
     setSelectedLeague(event.target.value);
@@ -57,7 +59,7 @@ export default function PreviousFixtures() {
           </Select>
         )}
         {isMobile && (
-          <Link to="/schedule">
+          <Link to={getPath("/schedule")}>
             <p
               style={{
                 fontSize: "14px",
