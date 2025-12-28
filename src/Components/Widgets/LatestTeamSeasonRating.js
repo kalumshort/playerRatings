@@ -1,16 +1,21 @@
-import React, { useMemo } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom"; // Added useParams
 import { Paper, Typography, Box, Button, useTheme } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
-import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
+import {
+  selectAllPlayersSeasonOverallRating,
+  selectPlayerRatingsLoad,
+} from "../../Selectors/selectors";
 import { Spinner } from "../../Containers/Helpers";
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
 import { useAppPaths } from "../../Hooks/Helper_Functions";
 import { slugToClub } from "../../Hooks/Helper_Functions"; // Import mapping utility
+import useGlobalData from "../../Hooks/useGlobalData";
+import { fetchAllPlayersSeasonOverallRating } from "../../Hooks/Fixtures_Hooks";
 
 // --- STYLED COMPONENTS ---
 const CardContainer = styled(Paper)(({ theme }) => ({
@@ -77,17 +82,41 @@ export default function LatestTeamSeasonRating() {
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const { getPath } = useAppPaths();
+  const dispatch = useDispatch();
 
+  // 1. Derive Group Context from the URL Slug instead of activeGroup
+
+  const globalData = useGlobalData();
   // 1. Identify current club from Slug
   const clubConfig = slugToClub[clubSlug];
-  const currentClubId = clubConfig?.teamId;
+  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+
+  const { playerSeasonOverallRatingsLoaded } = useSelector(
+    selectPlayerRatingsLoad
+  );
+
+  useEffect(() => {
+    if (!playerSeasonOverallRatingsLoaded) {
+      dispatch(
+        fetchAllPlayersSeasonOverallRating({
+          groupId: groupId,
+          currentYear: globalData.currentYear,
+        })
+      );
+    }
+  }, [
+    dispatch,
+    playerSeasonOverallRatingsLoaded,
+    groupId,
+    globalData.currentYear,
+  ]);
 
   const { formationRows, fixtureData } = useMemo(() => {
     // Rely on URL context rather than activeGroup state
-    if (!previousFixtures || !currentClubId)
+    if (!previousFixtures || !groupId)
       return { formationRows: [], fixtureData: null };
 
-    const clubId = Number(currentClubId);
+    const clubId = Number(groupId);
 
     // Find the most recent fixture where this club had a lineup recorded
     const fixture = previousFixtures.find((f) =>
@@ -111,7 +140,7 @@ export default function LatestTeamSeasonRating() {
       .map((key) => rows[key]);
 
     return { formationRows: sortedRows, fixtureData: fixture };
-  }, [previousFixtures, currentClubId]);
+  }, [previousFixtures, groupId]);
 
   if (!playerStats && !previousFixtures) {
     return (

@@ -170,13 +170,6 @@ export const fetchAllPlayersSeasonOverallRating =
   ({ groupId, currentYear }) =>
   async (dispatch) => {
     dispatch(fetchPlayerOverallSeasonRatingsStart());
-    const auth = getAuth();
-
-    const user = auth.currentUser;
-    if (!user) {
-      console.error("User is not authenticated");
-      return;
-    }
 
     try {
       const playerRatings = await firebaseGetCollecion(
@@ -187,7 +180,7 @@ export const fetchAllPlayersSeasonOverallRating =
         fetchAllPlayersSeasonOverallRatingAction({ players: playerRatings })
       );
     } catch (error) {
-      console.log(error);
+      console.log("Failed to fetch all players season overall ratings", error);
       dispatch(fetchRatingsFailure());
     }
   };
@@ -197,14 +190,6 @@ export const fetchMatchPlayerRatings =
   async (dispatch) => {
     if (!matchId || !groupId || !currentYear) {
       console.log("fetchMatchPlayerRatings called with missing parameters");
-      return;
-    }
-
-    const auth = getAuth();
-    const user = auth.currentUser;
-
-    if (!user) {
-      console.error("User is not authenticated");
       return;
     }
 

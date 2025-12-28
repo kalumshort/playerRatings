@@ -5,12 +5,19 @@ import AllPlayerStats from "../Components/PlayerStats/AllPlayerStats";
 import "../Components/PlayerStats/playerStats.css";
 import { selectPlayerRatingsLoad } from "../Selectors/selectors";
 import { Spinner } from "./Helpers";
-import useGroupData from "../Hooks/useGroupsData";
+
 import useGlobalData from "../Hooks/useGlobalData";
+import { useParams } from "react-router-dom";
+import { slugToClub } from "../Hooks/Helper_Functions";
 
 export default function PlayerStatsContainer() {
   const dispatch = useDispatch();
-  const { activeGroup } = useGroupData();
+
+  const { clubSlug } = useParams(); // Now capturing clubSlug from URL
+
+  // 1. Derive Group Context from the URL Slug instead of activeGroup
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
 
   const globalData = useGlobalData();
 
@@ -22,7 +29,7 @@ export default function PlayerStatsContainer() {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
-          groupId: activeGroup.groupId,
+          groupId: groupId,
           currentYear: globalData.currentYear,
         })
       );
@@ -30,7 +37,7 @@ export default function PlayerStatsContainer() {
   }, [
     dispatch,
     playerSeasonOverallRatingsLoaded,
-    activeGroup.groupId,
+    groupId,
     globalData.currentYear,
   ]);
 

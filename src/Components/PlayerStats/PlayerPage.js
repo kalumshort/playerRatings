@@ -22,6 +22,7 @@ import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
 import {
   getPlayersFixtureEvents,
   RatingBadge,
+  slugToClub,
   useAppPaths,
 } from "../../Hooks/Helper_Functions";
 import { EventBadge } from "../Widgets/EventBadge";
@@ -130,6 +131,8 @@ export default function PlayerPage() {
   const playerData = useSelector((state) =>
     selectSquadPlayerById(playerId, clubSlug)(state)
   );
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
@@ -139,17 +142,17 @@ export default function PlayerPage() {
     dispatch(
       fetchPlayerRatingsAllMatches({
         playerId,
-        groupId: activeGroup.groupId,
+        groupId: groupId,
         currentYear: globalData.currentYear,
       })
     );
-  }, [dispatch, playerId, activeGroup.groupId, globalData.currentYear]);
+  }, [dispatch, playerId, groupId, globalData.currentYear]);
 
   useEffect(() => {
     if (!playerSeasonOverallRatingsLoaded) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
-          groupId: activeGroup.groupId,
+          groupId: groupId,
           currentYear: globalData.currentYear,
         })
       );
@@ -157,7 +160,7 @@ export default function PlayerPage() {
   }, [
     dispatch,
     playerSeasonOverallRatingsLoaded,
-    activeGroup.groupId,
+    groupId,
     globalData.currentYear,
   ]);
 
