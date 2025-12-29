@@ -3,12 +3,16 @@ import React from "react";
 import "./Lineup.css"; // Importing external CSS file
 
 import LineupPlayer from "./LineupPlayer";
-import useGroupData from "../../../Hooks/useGroupsData";
+
+import { slugToClub } from "../../../Hooks/Helper_Functions";
+import { useParams } from "react-router-dom";
 
 export default function Lineup({ fixture, showRating }) {
-  const { activeGroup } = useGroupData();
+  const { clubSlug } = useParams();
 
-  const groupClubId = Number(activeGroup.groupClubId);
+  const clubConfig = slugToClub[clubSlug];
+  const groupClubId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
+
   const lineup =
     fixture?.lineups?.find((team) => team.team.id === groupClubId)?.startXI ||
     [];

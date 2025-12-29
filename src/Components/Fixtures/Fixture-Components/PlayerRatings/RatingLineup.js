@@ -4,7 +4,10 @@ import { selectMatchRatingsById } from "../../../../Selectors/selectors";
 import { useSelector } from "react-redux";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
-import { missingPlayerImg } from "../../../../Hooks/Helper_Functions";
+import {
+  missingPlayerImg,
+  slugToClub,
+} from "../../../../Hooks/Helper_Functions";
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import {
   alpha,
@@ -26,9 +29,13 @@ export default function RatingLineup({
   motmPercentages,
 }) {
   const { activeGroup } = useGroupData();
+  const { clubSlug } = useParams();
+
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
 
-  const groupClubId = Number(activeGroup.groupClubId);
+  const groupClubId = Number(activeGroup?.groupClubId) || groupId;
 
   const [ratingSrc, setRatingSrc] = useState("Group");
 

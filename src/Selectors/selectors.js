@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { selectSquadPlayerById } from "./squadDataSelectors";
+import { selectSeasonSquadDataObject } from "./squadDataSelectors";
 
 export const allRatings = (state) => state.playerRatings;
 export const allMatchRatings = (state) => state.playerRatings.matches;
@@ -53,28 +53,39 @@ export const selectMatchMotmById = (matchId) =>
 export const selectPlayerRatinsById = (playerId) =>
   createSelector([allPlayerRatings], (player) => player[playerId]);
 
-export const selectMotmPercentagesByMatchId = (matchId) =>
+export const selectMotmPercentagesByMatchId = (matchId, clubSlug) =>
   createSelector(
-    [selectMatchMotmById(matchId), (state) => state],
-    (motmData, state) => {
-      if (!motmData || !motmData.playerVotes || !motmData.motmTotalVotes) {
+    [
+      selectMatchMotmById(matchId),
+      (state) => selectSeasonSquadDataObject(state, clubSlug), // Pass the whole squad object here
+    ],
+    (motmData, squadData) => {
+      // 1. Guard Clause
+      if (
+        !motmData ||
+        !motmData.playerVotes ||
+        !motmData.motmTotalVotes ||
+        !squadData
+      ) {
         return [];
       }
 
       const { playerVotes, motmTotalVotes } = motmData;
 
+      // 2. Map and Transform
       return Object.entries(playerVotes)
         .map(([playerId, votes]) => {
-          const playerData = selectSquadPlayerById(playerId)(state);
+          const player = squadData[playerId]; // Direct lookup is O(1)
+
           return {
             playerId,
             votes,
-            percentage: ((votes / motmTotalVotes) * 100).toFixed(0), // Calculate percentage
-            name: playerData?.name || "Unknown", // Add player name or fallback
-            img: playerData?.photo || "Unknown", // Add player position or fallback
+            percentage: ((votes / motmTotalVotes) * 100).toFixed(0),
+            name: player?.name || "Unknown",
+            img: player?.photo || "",
           };
         })
-        .sort((a, b) => b.percentage - a.percentage); // Sort by percentage in descending order
+        .sort((a, b) => b.percentage - a.percentage);
     }
   );
 

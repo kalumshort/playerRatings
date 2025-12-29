@@ -36,7 +36,7 @@ export default function PlayerRatings({ fixture }) {
   const { clubSlug } = useParams();
 
   const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+  const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
   const { user } = useAuth();
   const globalData = useGlobalData();
 
@@ -45,7 +45,7 @@ export default function PlayerRatings({ fixture }) {
   const groupClubId = Number(activeGroup?.groupClubId) || groupId;
 
   const motmPercentages = useSelector(
-    selectMotmPercentagesByMatchId(fixture.id)
+    selectMotmPercentagesByMatchId(fixture.id, clubSlug)
   );
 
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
@@ -138,7 +138,7 @@ export default function PlayerRatings({ fixture }) {
   return fixture?.fixture?.status?.elapsed > 80 ? (
     lineup.length === 0 ? (
       <div style={{ textAlign: "center", padding: "10px" }}>Missing Lineup</div>
-    ) : isMatchRatingsSubmitted ? (
+    ) : isMatchRatingsSubmitted || !user ? (
       <SubmittedPlayerRatings
         motmPercentages={motmPercentages}
         fixture={fixture} // Added fixture prop here as it was missing in your original code
@@ -154,7 +154,7 @@ export default function PlayerRatings({ fixture }) {
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
         groupId={groupId}
-        userId={user.uid}
+        userId={user?.uid}
         usersMatchPlayerRatings={usersMatchData?.players}
         currentYear={globalData.currentYear}
         isSubmittable={isSubmittable}
