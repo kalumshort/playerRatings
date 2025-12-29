@@ -28,6 +28,8 @@ import { GlobalContainer } from "./Containers/GlobalContainer";
 import { Spinner } from "./Containers/Helpers";
 import Header from "./Containers/Header";
 import HomePage from "./Containers/HomePage";
+import { Box } from "@mui/material";
+import SignUpButton from "./Components/Auth/SignUpButton";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -156,7 +158,35 @@ const ClubShell = ({ user }) => {
   return (
     <>
       <DynamicListeners user={user} />
-      <Outlet />
+
+      {/* Main Content Area */}
+      <Box sx={{ position: "relative", minHeight: "100vh" }}>
+        <Outlet />
+
+        {/* Strategic Call-to-Action: 
+            Only show if user is not logged in.
+            Centered at the bottom for easy mobile thumb access.
+        */}
+        {!user && (
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 40,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 1000,
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              pointerEvents: "none", // Allows clicking through the box itself
+            }}
+          >
+            <Box sx={{ pointerEvents: "auto" }}>
+              <SignUpButton />
+            </Box>
+          </Box>
+        )}
+      </Box>
     </>
   );
 };

@@ -2,9 +2,15 @@ import React, { useState } from "react";
 import { Button, Box } from "@mui/material";
 import { UserPlus } from "lucide-react";
 import AuthModal from "./AuthModal";
+import { useParams } from "react-router-dom";
+import { slugToClub } from "../../Hooks/Helper_Functions";
 
-const CenteredSignUp = ({ groupId }) => {
+const SignUpButton = () => {
   const [open, setOpen] = useState(false);
+  const { clubSlug } = useParams();
+
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -49,4 +55,4 @@ const CenteredSignUp = ({ groupId }) => {
   );
 };
 
-export default CenteredSignUp;
+export default SignUpButton;
