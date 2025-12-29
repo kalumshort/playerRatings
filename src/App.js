@@ -15,7 +15,7 @@ import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
 import useGlobalData from "./Hooks/useGlobalData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import { idToClub, slugToClub } from "./Hooks/Helper_Functions";
+import { idToClub, slugToClub, teamList } from "./Hooks/Helper_Functions";
 
 // --- Redux Selectors & Actions ---
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
@@ -150,7 +150,19 @@ const HomeRouteController = ({
   // 5. Fallback: Logged in but has no club/group selected yet
   return <GlobalGroupSelect />;
 };
+const ClubRouteGuard = ({ children }) => {
+  const { clubSlug } = useParams();
 
+  // Method A: Check against a hardcoded list of supported IDs/Slugs
+  // This is the fastest and prevents unnecessary Firestore reads.
+  const clubConfig = teamList.find((t) => t.slug === clubSlug);
+
+  if (!clubConfig) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
 // --- 5. Club Shell ---
 const ClubShell = ({ user }) => {
   const { currentYear } = useGlobalData();
@@ -221,7 +233,14 @@ function App() {
               />
 
               {/* All club routes now handle their own group listener via ClubShell */}
-              <Route path="/:clubSlug" element={<ClubShell user={user} />}>
+              <Route
+                path="/:clubSlug"
+                element={
+                  <ClubRouteGuard>
+                    <ClubShell user={user} />
+                  </ClubRouteGuard>
+                }
+              >
                 <Route index element={<GroupHomePage />} />
                 <Route path="schedule" element={<SchedulePage />} />
                 <Route path="fixture/:matchId" element={<Fixture />} />
