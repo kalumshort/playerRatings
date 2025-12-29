@@ -4,6 +4,7 @@ import { Button } from "@mui/material";
 
 import {
   setLocalStorageItem,
+  slugToClub,
   useIsMobile,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
@@ -26,18 +27,22 @@ import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import useGlobalData from "../../../../Hooks/useGlobalData";
 
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
+import { useParams } from "react-router-dom";
 
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
   const { activeGroup } = useGroupData();
+  const { clubSlug } = useParams();
+
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
   const { user } = useAuth();
   const globalData = useGlobalData();
 
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
-  const groupClubId = Number(activeGroup.groupClubId);
-  const groupId = activeGroup.groupId;
+  const groupClubId = Number(activeGroup?.groupClubId) || groupId;
 
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id)

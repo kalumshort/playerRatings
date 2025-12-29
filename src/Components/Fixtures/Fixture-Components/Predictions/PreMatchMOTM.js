@@ -17,6 +17,7 @@ import {
   Visibility,
   CheckCircle,
   Star,
+  HourglassEmpty, // Added for empty state
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +37,7 @@ import { useParams } from "react-router-dom";
 export default function PreMatchMOTM({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { clubSlug } = useParams(); // e.g., "man-united"
+  const { clubSlug } = useParams();
   const squadData = useSelector((state) =>
     selectSquadDataObject(state, clubSlug)
   );
@@ -55,6 +56,7 @@ export default function PreMatchMOTM({ fixture }) {
   const handleChange = (event) => setSelectedPlayer(event.target.value);
 
   const handlePlayerToWatchSubmit = async () => {
+    if (!user) return;
     await handlePredictPreMatchMotm({
       matchId: fixture.id,
       playerId: selectedPlayer,
@@ -79,13 +81,21 @@ export default function PreMatchMOTM({ fixture }) {
   );
 
   const open = Boolean(anchorEl);
-  const topPlayer = result[0];
+  const topPlayer = result.length > 0 ? result[0] : null;
 
   // --- RENDER: VIEW RESULTS STATE ---
-  if (storedUsersPlayerToWatch && topPlayer) {
+  // If the user has voted OR if we are just viewing, we show the results
+  // We check for topPlayer to ensure there is data to show
+  if (storedUsersPlayerToWatch || !user) {
     return (
       <Paper
-        sx={{ p: 3, position: "relative", minHeight: "240px" }}
+        sx={{
+          p: 3,
+          position: "relative",
+          minHeight: "240px",
+          display: "flex",
+          flexDirection: "column",
+        }}
         elevation={0}
       >
         <Stack
@@ -106,86 +116,110 @@ export default function PreMatchMOTM({ fixture }) {
             }}
             variant="outlined"
           />
-          <IconButton
-            onClick={handleClick}
-            size="small"
-            sx={{ color: "text.secondary" }}
-          >
-            <InfoOutlined fontSize="small" />
-          </IconButton>
+          {topPlayer && (
+            <IconButton
+              onClick={handleClick}
+              size="small"
+              sx={{ color: "text.secondary" }}
+            >
+              <InfoOutlined fontSize="small" />
+            </IconButton>
+          )}
         </Stack>
 
-        <Stack
-          direction="row"
-          spacing={3}
-          alignItems="center"
-          justifyContent="center"
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          {/* Spotlight Avatar */}
-          <Box sx={{ position: "relative" }}>
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 100 }}
+          {topPlayer ? (
+            <Stack
+              direction="row"
+              spacing={3}
+              alignItems="center"
+              justifyContent="center"
             >
-              <Avatar
-                src={squadData[topPlayer.playerId]?.photo}
-                sx={{
-                  width: 90,
-                  height: 90,
-                  border: `3px solid ${theme.palette.primary.main}`,
-                  boxShadow: `0 0 30px ${alpha(
-                    theme.palette.primary.main,
-                    0.3
-                  )}`,
-                }}
-              />
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: -8,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  bgcolor: "primary.main",
-                  color: "black",
-                  px: 1.5,
-                  borderRadius: 1,
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-                }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 900 }}>
-                  #1
-                </Typography>
+              {/* Spotlight Avatar */}
+              <Box sx={{ position: "relative" }}>
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 100 }}
+                >
+                  <Avatar
+                    src={squadData?.[topPlayer?.playerId]?.photo}
+                    sx={{
+                      width: 90,
+                      height: 90,
+                      border: `3px solid ${theme.palette.primary.main}`,
+                      boxShadow: `0 0 30px ${alpha(
+                        theme.palette.primary.main,
+                        0.3
+                      )}`,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: -8,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      bgcolor: "primary.main",
+                      color: "black",
+                      px: 1.5,
+                      borderRadius: 1,
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 900 }}>
+                      #1
+                    </Typography>
+                  </Box>
+                </motion.div>
               </Box>
-            </motion.div>
-          </Box>
 
-          <Box>
-            <Typography
-              variant="caption"
-              sx={{ opacity: 0.6, letterSpacing: 1, fontWeight: 700 }}
-            >
-              KEY PROTAGONIST
-            </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
-              {topPlayer.name.toUpperCase()}
-            </Typography>
-            <Stack direction="row" alignItems="baseline" spacing={0.5}>
-              <Typography
-                variant="h3"
-                sx={{ color: "primary.main", fontWeight: 900 }}
-              >
-                {topPlayer.percentage}%
-              </Typography>
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.6, letterSpacing: 1, fontWeight: 700 }}
+                >
+                  KEY PROTAGONIST
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
+                  {topPlayer.name.toUpperCase()}
+                </Typography>
+                <Stack direction="row" alignItems="baseline" spacing={0.5}>
+                  <Typography
+                    variant="h3"
+                    sx={{ color: "primary.main", fontWeight: 900 }}
+                  >
+                    {topPlayer.percentage}%
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.5, fontWeight: 700 }}
+                  >
+                    CONSENSUS
+                  </Typography>
+                </Stack>
+              </Box>
+            </Stack>
+          ) : (
+            /* EMPTY STATE: RESULTS NOT READY */
+            <Stack alignItems="center" spacing={1} sx={{ opacity: 0.5 }}>
+              <HourglassEmpty sx={{ fontSize: 40 }} />
               <Typography
                 variant="caption"
-                sx={{ opacity: 0.5, fontWeight: 700 }}
+                sx={{ fontWeight: 700, letterSpacing: 1 }}
               >
-                CONSENSUS
+                AWAITING CONSENSUS...
               </Typography>
             </Stack>
-          </Box>
-        </Stack>
+          )}
+        </Box>
 
         {/* Vote Breakdown Popover */}
         <Popover
@@ -241,7 +275,7 @@ export default function PreMatchMOTM({ fixture }) {
     );
   }
 
-  // --- RENDER: VOTING STATE ---
+  // --- RENDER: VOTING STATE (User hasn't voted yet) ---
   return (
     <Paper
       sx={{
@@ -314,14 +348,15 @@ export default function PreMatchMOTM({ fixture }) {
 
 const calculatePercentages = (preMatchMotm, preMatchMotmVotes, squadData) => {
   const totalVotes = parseInt(preMatchMotmVotes, 10);
-  if (!totalVotes) return [];
+  // Ensure squadData exists and totalVotes is a valid positive number
+  if (!totalVotes || totalVotes <= 0 || !squadData) return [];
 
   return Object.entries(preMatchMotm)
     .map(([playerId, votes]) => ({
       playerId,
-      name: squadData[playerId]?.name || "Unknown",
+      name: squadData[playerId]?.name || "Unknown Player",
       votes,
       percentage: ((votes / totalVotes) * 100).toFixed(0),
     }))
-    .sort((a, b) => b.percentage - a.percentage);
+    .sort((a, b) => b.votes - a.votes); // Sort by votes (number) for accuracy
 };

@@ -122,7 +122,7 @@ export const FORMATIONS = {
   "4-3-3": [
     { rowId: "atk", slots: [11, 9, 10] }, // LW, ST, RW
     { rowId: "mid", slots: [8, 7, 6] }, // CM, CM
-    { rowId: "def", slots: [4, 3, 2] },
+    { rowId: "def", slots: [5, 4, 3, 2] },
     { rowId: "gk", slots: [1] },
   ],
   "4-3-3 False 9": [

@@ -24,6 +24,8 @@ import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 
 import useGroupData from "../../Hooks/useGroupsData";
 import { useAppNavigate } from "../../Hooks/useAppNavigate";
+import { useParams } from "react-router-dom";
+import { slugToClub } from "../../Hooks/Helper_Functions";
 
 // --- STYLED COMPONENTS ---
 
@@ -196,11 +198,18 @@ const StatusBadge = styled(Box)(({ theme, type }) => ({
 export default function AllPlayerStats() {
   const appNavigate = useAppNavigate();
   const { activeGroup } = useGroupData();
-  const clubId = Number(activeGroup?.groupClubId);
+  const { clubSlug } = useParams(); // Now capturing clubSlug from URL
+
+  // 1. Derive Group Context from the URL Slug instead of activeGroup
+  const clubConfig = slugToClub[clubSlug];
+  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+  const clubId = Number(activeGroup?.groupClubId) || groupId;
 
   // Redux Data
+  const squadData = useSelector(
+    (state) => selectSeasonSquadDataObject(state, clubSlug) //
+  );
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
-  const squadData = useSelector(selectSeasonSquadDataObject);
   const previousFixtures = useSelector(selectPreviousFixtures);
 
   // Local State

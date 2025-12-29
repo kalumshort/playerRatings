@@ -40,6 +40,7 @@ export default function ScorePrediction({ fixture }) {
 
   // --- HANDLERS ---
   const handleTeamScoreSubmit = async () => {
+    if (!user) return;
     await handlePredictTeamScore({
       matchId: fixture.id,
       score: `${homeScore}-${awayScore}`,
@@ -74,7 +75,7 @@ export default function ScorePrediction({ fixture }) {
     // These are now inherited automatically from your Global Theme!
   };
 
-  if (storedUsersPredictedScore) {
+  if (storedUsersPredictedScore || !user) {
     return (
       <ScorePredictionResults
         fixture={fixture}

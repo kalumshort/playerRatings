@@ -14,7 +14,6 @@ import {
 import { Paper, Typography, Box, useTheme } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { selectFixturesState } from "../../Selectors/fixturesSelectors";
-import useGroupData from "../../Hooks/useGroupsData";
 
 // --- STYLED TOOLTIP COMPONENT ---
 const TooltipContainer = styled(Paper)(({ theme }) => ({
@@ -45,10 +44,8 @@ const TooltipDate = styled(Typography)({
 });
 
 // --- MAIN COMPONENT ---
-export default function PlayerRatingsLineGraph({ allPlayerRatings }) {
+export default function PlayerRatingsLineGraph({ allPlayerRatings, clubId }) {
   const theme = useTheme();
-  const { activeGroup } = useGroupData();
-  const clubId = Number(activeGroup.groupClubId);
 
   // 1. Get Fixtures from Redux to Hydrate the Graph
   const { fixtures: allFixtures } = useSelector(selectFixturesState);

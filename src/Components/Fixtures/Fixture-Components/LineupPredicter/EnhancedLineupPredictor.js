@@ -34,6 +34,7 @@ import useGlobalData from "../../../../Hooks/useGlobalData";
 import { FORMATIONS } from "./LineupPredictor";
 import LineupPlayer from "../LineupPlayer";
 import { useParams } from "react-router-dom";
+import AuthModal from "../../../Auth/AuthModal";
 
 // --- CONSTANTS (From your files) ---
 
@@ -101,6 +102,7 @@ export default function SmartLineupPredictor({ fixture }) {
   const { user } = useAuth();
   const globalData = useGlobalData();
   const { activeGroup } = useGroupData();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { clubSlug } = useParams(); // e.g., "man-united"
   const squadData = useSelector((state) =>
@@ -121,7 +123,7 @@ export default function SmartLineupPredictor({ fixture }) {
   const getPositionBySlot = (slotId) => {
     if (slotId === 1) return "Goalkeeper";
     if ([2, 3, 4, 5].includes(slotId)) return "Defender";
-    if ([6, 8, 10].includes(slotId)) return "Midfielder";
+    if ([6, 8, 7].includes(slotId)) return "Midfielder";
     return "Attacker";
   };
 
@@ -153,6 +155,10 @@ export default function SmartLineupPredictor({ fixture }) {
   }, [squadData, selectedTab, chosenTeam]);
 
   const handleConfirm = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     const filteredPlayers = Object.keys(chosenTeam).reduce((res, key) => {
       if (squadData[chosenTeam[key]]) res[key] = squadData[chosenTeam[key]];
       return res;
@@ -179,6 +185,10 @@ export default function SmartLineupPredictor({ fixture }) {
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", p: 2 }}>
+      <AuthModal
+        open={showAuthModal}
+        handleClose={() => setShowAuthModal(false)}
+      />
       {/* HEADER CONTROLS */}
       <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
         <FormControl variant="standard" sx={{ minWidth: 140 }}>

@@ -11,12 +11,14 @@ import {
   Divider,
   useTheme,
   Avatar,
+  alpha,
 } from "@mui/material";
 import {
   BarChart as BarChartIcon,
   Close,
   SportsSoccer,
   TrendingUp,
+  QueryStats, // Added for empty state
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import {
@@ -43,13 +45,11 @@ export default function ScorePredictionResults({
 
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
-  if (!matchPredictions) return null;
-
   // --- DATA PROCESSING ---
 
   // 1. Score Distribution (Top 6 Scores)
   const processScoreData = (data) => {
-    if (!data) return [];
+    if (!data || Object.keys(data).length === 0) return [];
     const totalVotes = Object.values(data).reduce((a, b) => a + b, 0);
 
     return Object.entries(data)
@@ -62,30 +62,32 @@ export default function ScorePredictionResults({
       .slice(0, 6);
   };
 
-  const scoreData = processScoreData(matchPredictions.scorePredictions);
+  const scoreData = processScoreData(matchPredictions?.scorePredictions);
 
   // 2. Goal Data
   const processGoalData = (data) => {
-    if (!data) return [];
+    if (!data || Object.keys(data).length === 0) return [];
     return Object.entries(data)
       .map(([goals, count]) => ({ goals, count }))
       .sort((a, b) => parseInt(a.goals) - parseInt(b.goals));
   };
-  const homeGoalData = processGoalData(matchPredictions.homeGoals);
-  const awayGoalData = processGoalData(matchPredictions.awayGoals);
 
-  // 3. Consensus Score
-  const consensusScore = scoreData[0]?.score || "-";
+  const homeGoalData = processGoalData(matchPredictions?.homeGoals);
+  const awayGoalData = processGoalData(matchPredictions?.awayGoals);
+
+  // 3. Consensus Score & Data Availability Check
+  const hasData = scoreData.length > 0;
+  const consensusScore = hasData ? scoreData[0]?.score : "-";
 
   // --- STYLES ---
   const glassCardStyles = {
     p: 3,
-
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     border: `1px solid ${theme.palette.divider}`,
+    minHeight: "240px",
   };
 
   const modalStyle = {
@@ -97,10 +99,10 @@ export default function ScorePredictionResults({
     maxHeight: "90vh",
     overflowY: "auto",
     bgcolor: "background.default",
-
     boxShadow: 24,
     border: `1px solid ${theme.palette.divider}`,
     outline: "none",
+    borderRadius: 4,
   };
 
   return (
@@ -109,29 +111,55 @@ export default function ScorePredictionResults({
       <Paper sx={glassCardStyles} elevation={0}>
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
           <SportsSoccer fontSize="small" color="primary" />
-          <Typography variant="caption">RESULT COMPARISON</Typography>
+          <Typography
+            variant="caption"
+            sx={{ letterSpacing: 1, fontWeight: 700 }}
+          >
+            RESULT COMPARISON
+          </Typography>
         </Stack>
 
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          justifyContent="center"
-          sx={{ width: "100%" }}
-        >
-          <BigStatCard
-            label="YOU"
-            value={storedUsersPredictedScore}
-            highlight={true}
-          />
-          <Typography variant="h6" sx={{ color: "text.disabled" }}>
-            VS
-          </Typography>
-          <BigStatCard label="GROUP" value={consensusScore} highlight={false} />
-        </Stack>
+        {hasData || storedUsersPredictedScore ? (
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ width: "100%" }}
+          >
+            {storedUsersPredictedScore && (
+              <BigStatCard
+                label="YOU"
+                value={storedUsersPredictedScore}
+                highlight={true}
+              />
+            )}
+            {storedUsersPredictedScore && hasData && (
+              <Typography variant="h6" sx={{ color: "text.disabled" }}>
+                VS
+              </Typography>
+            )}
+            {hasData && (
+              <BigStatCard
+                label="GROUP"
+                value={consensusScore}
+                highlight={false}
+              />
+            )}
+          </Stack>
+        ) : (
+          /* EMPTY STATE WITHIN CARD */
+          <Stack alignItems="center" spacing={1} sx={{ py: 2, opacity: 0.5 }}>
+            <QueryStats sx={{ fontSize: 40 }} />
+            <Typography variant="caption" sx={{ textAlign: "center" }}>
+              AWAITING FIRST PREDICTIONS
+            </Typography>
+          </Stack>
+        )}
 
         <Button
           onClick={() => setOpen(true)}
+          disabled={!hasData}
           startIcon={<BarChartIcon />}
           variant="outlined"
           size="small"
@@ -139,10 +167,13 @@ export default function ScorePredictionResults({
             mt: 3,
             borderRadius: 8,
             borderColor: theme.palette.divider,
-            color: "text.primary",
+            color: hasData ? "text.primary" : "text.disabled",
+            "&:disabled": {
+              borderColor: alpha(theme.palette.divider, 0.5),
+            },
           }}
         >
-          FULL BREAKDOWN
+          {hasData ? "FULL BREAKDOWN" : "NO ANALYTICS YET"}
         </Button>
       </Paper>
 
@@ -189,7 +220,6 @@ export default function ScorePredictionResults({
                         dataKey="score"
                         tick={{
                           fill: theme.palette.text.secondary,
-
                           fontSize: 16,
                         }}
                         axisLine={false}
@@ -202,8 +232,17 @@ export default function ScorePredictionResults({
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <Paper sx={{ p: 1, bgcolor: "background.paper" }}>
-                                <Typography variant="caption">
+                              <Paper
+                                sx={{
+                                  p: 1,
+                                  bgcolor: "background.paper",
+                                  border: `1px solid ${theme.palette.divider}`,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 700 }}
+                                >
                                   {payload[0].payload.score}:{" "}
                                   {payload[0].payload.percent}%
                                 </Typography>
@@ -252,7 +291,7 @@ export default function ScorePredictionResults({
 
               <Divider />
 
-              {/* 2. GOAL EXPECTANCY (With Team Names/Logos) */}
+              {/* 2. GOAL EXPECTANCY */}
               <Box>
                 <SectionTitle>GOAL EXPECTANCY</SectionTitle>
                 <Stack
@@ -260,7 +299,6 @@ export default function ScorePredictionResults({
                   spacing={3}
                   sx={{ mt: 2 }}
                 >
-                  {/* HOME TEAM */}
                   <GoalChart
                     data={homeGoalData}
                     color={theme.palette.primary.main}
@@ -268,7 +306,6 @@ export default function ScorePredictionResults({
                     teamLogo={fixture.teams.home.logo}
                   />
 
-                  {/* AWAY TEAM */}
                   <GoalChart
                     data={awayGoalData}
                     color={theme.palette.text.disabled}
@@ -295,7 +332,9 @@ const BigStatCard = ({ label, value, highlight }) => {
         flex: 1,
         textAlign: "center",
         p: 2,
-        bgcolor: highlight ? "background.paper" : "transparent",
+        bgcolor: highlight
+          ? alpha(theme.palette.primary.main, 0.05)
+          : "transparent",
         border: `1px solid ${
           highlight ? theme.palette.primary.main : theme.palette.divider
         }`,
@@ -311,55 +350,76 @@ const BigStatCard = ({ label, value, highlight }) => {
         sx={{
           display: "block",
           mb: 1,
+          fontWeight: 700,
+          opacity: 0.7,
         }}
       >
         {label}
       </Typography>
-      <Typography variant="h3">{value}</Typography>
+      <Typography variant="h3" sx={{ fontWeight: 900 }}>
+        {value}
+      </Typography>
     </Paper>
   );
 };
 
-const GoalChart = ({ data, color, teamName, teamLogo }) => (
-  <Box sx={{ flex: 1 }}>
-    {/* Team Header */}
-    <Stack
-      direction="row"
-      alignItems="center"
-      spacing={1.5}
-      sx={{ mb: 2, pb: 1, borderBottom: `1px dashed ${color}40` }}
-    >
-      <Avatar src={teamLogo} sx={{ width: 24, height: 24 }} />
-      <Typography variant="caption" fontWeight="bold" noWrap>
-        {teamName}
-      </Typography>
-    </Stack>
+const GoalChart = ({ data, color, teamName, teamLogo }) => {
+  const hasGoalData = data && data.length > 0;
 
-    {/* Chart */}
-    <Box sx={{ height: 120, width: "100%" }}>
-      <ResponsiveContainer>
-        <BarChart data={data}>
-          <XAxis
-            dataKey="goals"
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            cursor={{ fill: "transparent" }}
-            contentStyle={{
-              borderRadius: 8,
-              border: "none",
-              backgroundColor: "#333",
-              color: "#fff",
-            }}
-          />
-          <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+  return (
+    <Box sx={{ flex: 1 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
+        sx={{ mb: 2, pb: 1, borderBottom: `1px dashed ${alpha(color, 0.4)}` }}
+      >
+        <Avatar src={teamLogo} sx={{ width: 24, height: 24 }} />
+        <Typography variant="caption" fontWeight="bold" noWrap>
+          {teamName}
+        </Typography>
+      </Stack>
+
+      <Box
+        sx={{
+          height: 120,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {hasGoalData ? (
+          <ResponsiveContainer>
+            <BarChart data={data}>
+              <XAxis
+                dataKey="goals"
+                tick={{ fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ fill: "transparent" }}
+                contentStyle={{
+                  borderRadius: 8,
+                  border: "none",
+                  backgroundColor: "#333",
+                  color: "#fff",
+                  fontSize: "10px",
+                }}
+              />
+              <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <Typography variant="caption" sx={{ opacity: 0.4 }}>
+            No Goal Data
+          </Typography>
+        )}
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 const SectionTitle = ({ children }) => (
   <Typography
@@ -367,6 +427,9 @@ const SectionTitle = ({ children }) => (
     sx={{
       mb: 0.5,
       display: "block",
+      fontWeight: 900,
+      letterSpacing: 1,
+      color: "text.secondary",
     }}
   >
     {children}
@@ -376,7 +439,7 @@ const SectionTitle = ({ children }) => (
 const LegendItem = ({ color, label }) => (
   <Stack direction="row" alignItems="center" spacing={0.5}>
     <Box sx={{ width: 10, height: 10, bgcolor: color, borderRadius: 1 }} />
-    <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+    <Typography variant="caption" sx={{ fontSize: "0.7rem", fontWeight: 600 }}>
       {label}
     </Typography>
   </Stack>

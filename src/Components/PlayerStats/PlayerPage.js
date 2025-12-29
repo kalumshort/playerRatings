@@ -231,7 +231,10 @@ export default function PlayerPage() {
           <SectionHeader>Performance History</SectionHeader>
           <GraphSection elevation={0}>
             <div style={{ width: "100%", height: "250px" }}>
-              <PlayerRatingsLineGraph allPlayerRatings={allPlayerRatings} />
+              <PlayerRatingsLineGraph
+                allPlayerRatings={allPlayerRatings}
+                clubId={activeGroup?.groupClubId || groupId}
+              />
             </div>
           </GraphSection>
         </Box>
@@ -261,7 +264,7 @@ export default function PlayerPage() {
                 fixture={fixture}
                 matchTime={matchTime}
                 matchStats={matchStats}
-                clubId={activeGroup.groupClubId}
+                clubId={activeGroup?.groupClubId || groupId}
                 playerId={playerId}
               />
             );

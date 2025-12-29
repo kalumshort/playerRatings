@@ -139,13 +139,6 @@ export const fetchPlayerRatingsAllMatches =
       if (!playerId) {
         return;
       }
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        console.error("User is not authenticated");
-        return;
-      }
 
       const fixturesData = await firebaseGetCollecion(
         `groups/${groupId}/seasons/${currentYear}/players/${playerId}/matches`

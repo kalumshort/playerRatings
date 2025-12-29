@@ -196,6 +196,7 @@ function App() {
                 <Route path="schedule" element={<SchedulePage />} />
                 <Route path="fixture/:matchId" element={<Fixture />} />
                 <Route path="players/:playerId" element={<PlayerPage />} />
+                <Route path="season-stats" element={<PlayerStatsContainer />} />
 
                 {user && (
                   <Route
@@ -207,10 +208,6 @@ function App() {
                       )
                     }
                   >
-                    <Route
-                      path="season-stats"
-                      element={<PlayerStatsContainer />}
-                    />
                     <Route path="dashboard" element={<GroupDashboard />} />
                   </Route>
                 )}
