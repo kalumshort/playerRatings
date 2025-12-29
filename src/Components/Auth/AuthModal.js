@@ -10,7 +10,7 @@ import {
 import { Close, PersonAdd } from "@mui/icons-material";
 import Login from "./Login";
 
-export default function AuthModal({ open, handleClose }) {
+export default function AuthModal({ open, handleClose, groupId }) {
   return (
     <Modal
       open={open}
@@ -64,7 +64,7 @@ export default function AuthModal({ open, handleClose }) {
           {/* Move Login inside the Box. 
              Ensure Login component doesn't have its own Modal wrapper inside it.
           */}
-          <Login />
+          <Login groupId={groupId} />
         </Box>
       </Fade>
     </Modal>

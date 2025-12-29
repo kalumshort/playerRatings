@@ -22,6 +22,8 @@ import {
 } from "@mui/material";
 import FanMOTMHighlight from "./MotmHighlight";
 import { useParams } from "react-router-dom";
+import SignUpButton from "../../../Auth/SignUpButton";
+import { useAuth } from "../../../../Providers/AuthContext";
 
 export default function RatingLineup({
   fixture,
@@ -30,6 +32,7 @@ export default function RatingLineup({
 }) {
   const { activeGroup } = useGroupData();
   const { clubSlug } = useParams();
+  const { user } = useAuth();
 
   const clubConfig = slugToClub[clubSlug];
   const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
@@ -158,6 +161,7 @@ export default function RatingLineup({
           </div>
         </div>
       </ContentContainer>
+      {!user && <SignUpButton groupId={String(clubConfig.teamId)} />}
     </Paper>
   );
 }
