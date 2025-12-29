@@ -49,7 +49,20 @@ export default function RatingLineup({
 
   const substitutedPlayerIds = fixture?.events
     .filter((item) => item.type === "subst" && item.team?.id === groupClubId)
-    .map((item) => item.player);
+    .map((item) => {
+      const newPlayer =
+        item.assist &&
+        !lineup.some(
+          (lineupPlayer) => lineupPlayer.player.id === item.assist.id
+        )
+          ? item.assist
+          : item.player;
+
+      return {
+        id: newPlayer.id,
+        name: newPlayer.name,
+      };
+    });
 
   // Ensure both lineup and substitutedPlayerIds are defined and not empty
   if (
