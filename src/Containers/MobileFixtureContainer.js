@@ -38,7 +38,7 @@ export default function MobileFixtureContainer({
     }
     // --- LIVE ---
     else if (isLive) {
-      arr.push({ label: "Pulse", value: "Moods" });
+      arr.push({ label: "Pulse", value: "Pulse" });
       arr.push({ label: "Stats", value: "Stats" });
       arr.push({ label: "Events", value: "Events" });
       arr.push({ label: "Ratings", value: "Ratings" });
@@ -47,7 +47,7 @@ export default function MobileFixtureContainer({
     else if (isFinished) {
       // Lead with the results of the community
       arr.push({ label: "Ratings", value: "Ratings" });
-      arr.push({ label: "Pulse ", value: "Pulse" }); // View the timeline of the game's energy
+      arr.push({ label: "Pulse", value: "Pulse" }); // View the timeline of the game's energy
       arr.push({ label: "The Consensus", value: "PostPredicts" });
       arr.push({ label: "Lineup", value: "Lineup" });
       arr.push({ label: "Stats", value: "Stats" });
