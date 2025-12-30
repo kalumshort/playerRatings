@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom"; // Added useParams
+import { Link } from "react-router-dom"; // Added useParams
 import { Paper, Typography, Box, Button, useTheme } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -13,9 +13,10 @@ import {
 import { Spinner } from "../../Containers/Helpers";
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
 import { useAppPaths } from "../../Hooks/Helper_Functions";
-import { slugToClub } from "../../Hooks/Helper_Functions"; // Import mapping utility
+
 import useGlobalData from "../../Hooks/useGlobalData";
 import { fetchAllPlayersSeasonOverallRating } from "../../Hooks/Fixtures_Hooks";
+import useGroupData from "../../Hooks/useGroupsData";
 
 // --- STYLED COMPONENTS ---
 const CardContainer = styled(Paper)(({ theme }) => ({
@@ -78,18 +79,20 @@ const PlayerRow = styled(Box)({
 
 export default function LatestTeamSeasonRating() {
   const theme = useTheme();
-  const { clubSlug } = useParams(); // URL Context
+
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
   const { getPath } = useAppPaths();
   const dispatch = useDispatch();
 
+  const { currentGroup } = useGroupData();
+
   // 1. Derive Group Context from the URL Slug instead of activeGroup
 
   const globalData = useGlobalData();
   // 1. Identify current club from Slug
-  const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+
+  const groupId = currentGroup?.groupClubId;
 
   const { playerSeasonOverallRatingsLoaded } = useSelector(
     selectPlayerRatingsLoad

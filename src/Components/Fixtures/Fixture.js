@@ -39,23 +39,25 @@ import {
   footballClubsColours,
   useIsMobile,
 } from "../../Hooks/Helper_Functions";
-import { slugToClub } from "../../Hooks/Helper_Functions"; // Import your new mapping utility
+
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
 import useGlobalData from "../../Hooks/useGlobalData";
 import { useAuth } from "../../Providers/AuthContext"; // Import Auth context
 import { Spinner } from "../../Containers/Helpers";
+import useGroupData from "../../Hooks/useGroupsData";
 
 export default function Fixture() {
-  const { matchId, clubSlug } = useParams(); // Now capturing clubSlug from URL
+  const { matchId } = useParams(); // Now capturing clubSlug from URL
   const { user } = useAuth(); // Check if user is logged in
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
   const { currentYear } = useGlobalData();
+  const { currentGroup } = useGroupData();
 
   // 1. Derive Group Context from the URL Slug instead of activeGroup
-  const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+
+  const groupId = currentGroup?.groupId;
 
   // 2. Redux Selectors
   const upcomingFixture = useSelector(selectUpcomingFixtures)[0];

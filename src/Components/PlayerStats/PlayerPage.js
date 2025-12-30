@@ -22,7 +22,6 @@ import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
 import {
   getPlayersFixtureEvents,
   RatingBadge,
-  slugToClub,
   useAppPaths,
 } from "../../Hooks/Helper_Functions";
 import { EventBadge } from "../Widgets/EventBadge";
@@ -123,7 +122,8 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
 // --- MAIN COMPONENT ---
 
 export default function PlayerPage() {
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
+
   const globalData = useGlobalData();
   const dispatch = useDispatch();
 
@@ -131,8 +131,8 @@ export default function PlayerPage() {
   const playerData = useSelector((state) =>
     selectSquadPlayerById(playerId, clubSlug)(state)
   );
-  const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+
+  const groupId = currentGroup?.groupId;
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
@@ -233,7 +233,7 @@ export default function PlayerPage() {
             <div style={{ width: "100%", height: "250px" }}>
               <PlayerRatingsLineGraph
                 allPlayerRatings={allPlayerRatings}
-                clubId={activeGroup?.groupClubId || groupId}
+                clubId={currentGroup?.groupClubId || groupId}
               />
             </div>
           </GraphSection>
@@ -264,7 +264,7 @@ export default function PlayerPage() {
                 fixture={fixture}
                 matchTime={matchTime}
                 matchStats={matchStats}
-                clubId={activeGroup?.groupClubId || groupId}
+                groupClubId={currentGroup?.groupClubId || groupId}
                 playerId={playerId}
               />
             );
@@ -280,12 +280,12 @@ const PlayerMatchRow = ({
   fixture,
   matchTime,
   matchStats,
-  clubId,
+  groupClubId,
   playerId,
 }) => {
   const { getPath } = useAppPaths();
 
-  const clubIdNum = Number(clubId);
+  const clubIdNum = Number(groupClubId);
   const pIdNum = Number(playerId);
 
   // 1. Determine Result

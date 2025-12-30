@@ -200,11 +200,7 @@ const ClubRouteGuard = ({ children }) => {
           dispatch(
             updateGroupData({ groupId: groupData.groupId, data: groupData })
           );
-          dispatch(
-            setCurrentGroup({
-              data: groupData,
-            })
-          );
+          dispatch(setCurrentGroup(groupData));
           setIsValid(true);
         } else if (groupData.visibility === "private") {
           // Private groups check if the user is a member

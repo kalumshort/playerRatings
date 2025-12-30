@@ -2,15 +2,12 @@ import React, { useState } from "react";
 import { Button, Box } from "@mui/material";
 import { UserPlus } from "lucide-react";
 import AuthModal from "./AuthModal";
-import { useParams } from "react-router-dom";
-import { slugToClub } from "../../Hooks/Helper_Functions";
+
+import useGroupData from "../../Hooks/useGroupsData";
 
 const SignUpButton = () => {
   const [open, setOpen] = useState(false);
-  const { clubSlug } = useParams();
-
-  const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
+  const { currentGroup } = useGroupData();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -50,7 +47,11 @@ const SignUpButton = () => {
         Join This Club
       </Button>
 
-      <AuthModal open={open} handleClose={handleClose} groupId={groupId} />
+      <AuthModal
+        open={open}
+        handleClose={handleClose}
+        groupId={currentGroup?.groupId}
+      />
     </Box>
   );
 };

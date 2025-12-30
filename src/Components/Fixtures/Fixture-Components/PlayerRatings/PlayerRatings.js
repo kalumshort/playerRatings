@@ -4,7 +4,6 @@ import { Button } from "@mui/material";
 
 import {
   setLocalStorageItem,
-  slugToClub,
   useIsMobile,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
@@ -32,17 +31,17 @@ import { useParams } from "react-router-dom";
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
-  const { activeGroup } = useGroupData();
+
+  const { currentGroup } = useGroupData();
+
   const { clubSlug } = useParams();
 
-  const clubConfig = slugToClub[clubSlug];
-  const groupId = clubConfig?.teamId ? Number(clubConfig.teamId) : null;
   const { user } = useAuth();
   const globalData = useGlobalData();
 
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
 
-  const groupClubId = Number(activeGroup?.groupClubId) || groupId;
+  const groupClubId = Number(currentGroup?.groupClubId);
 
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id, clubSlug)
@@ -112,7 +111,7 @@ export default function PlayerRatings({ fixture }) {
         matchId: fixture.id,
         playerId: String(storedUsersMatchMOTM),
         value: 1,
-        groupId: groupId,
+        groupId: currentGroup.groupId,
         userId: user.uid,
         currentYear: globalData.currentYear,
       });
@@ -121,14 +120,14 @@ export default function PlayerRatings({ fixture }) {
       dispatch(
         fetchMatchPlayerRatings({
           matchId: fixture.id,
-          groupId: activeGroup.groupId,
+          groupId: currentGroup.groupId,
           currentYear: globalData.currentYear,
         })
       );
       dispatch(
         fetchUsersMatchData({
           matchId: fixture.id,
-          groupId: activeGroup.groupId,
+          groupId: currentGroup.groupId,
           currentYear: globalData.currentYear,
         })
       );
@@ -153,7 +152,7 @@ export default function PlayerRatings({ fixture }) {
         fixture={fixture}
         isMatchRatingsSubmitted={isMatchRatingsSubmitted}
         handleRatingsSubmit={handleRatingsSubmit}
-        groupId={groupId}
+        groupId={currentGroup.groupId}
         userId={user?.uid}
         usersMatchPlayerRatings={usersMatchData?.players}
         currentYear={globalData.currentYear}
