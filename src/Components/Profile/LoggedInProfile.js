@@ -73,7 +73,7 @@ export default function LoggedInProfile() {
   const { themeMode, toggleTheme } = useTheme(); // Access the global theme toggle
 
   const { userData } = useUserData();
-  const { groupData, currentGroup } = useGroupData();
+  const { groupData, currentGroup, userHomeGroup } = useGroupData();
   const accentColor =
     currentGroup?.accentColor || muiTheme.palette.primary.main;
 
@@ -186,7 +186,7 @@ export default function LoggedInProfile() {
             </InputLabel>
             <CustomSelect
               options={options}
-              value={currentGroup?.groupId}
+              value={userHomeGroup?.groupId}
               onChange={handleSelectChange}
             />
           </Box>

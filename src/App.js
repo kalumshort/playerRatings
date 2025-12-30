@@ -15,7 +15,7 @@ import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
 import useGlobalData from "./Hooks/useGlobalData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import { idToClub, slugToClub } from "./Hooks/Helper_Functions";
+import { slugToClub } from "./Hooks/Helper_Functions";
 
 // --- Redux Selectors & Actions ---
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
@@ -116,7 +116,7 @@ const HomeRouteController = ({
   user,
   userLoading,
   groupDataLoaded,
-  activeGroup,
+  userHomeGroup,
 }) => {
   // 1. Initial Auth Check: Always the first priority
   if (userLoading) {
@@ -143,14 +143,8 @@ const HomeRouteController = ({
   }
 
   // 4. Check for Active Group
-  if (activeGroup && activeGroup.groupClubId) {
-    // Map the groupClubId (e.g., 33) to its slug (e.g., man-united)
-    const clubInfo = idToClub[activeGroup.groupClubId];
-
-    if (clubInfo?.slug) {
-      // SUCCESS: Redirect to the specific club slug
-      return <Navigate to={`/${clubInfo.slug}`} replace />;
-    }
+  if (userHomeGroup && userHomeGroup.groupClubId) {
+    return <Navigate to={`/${userHomeGroup.slug}`} replace />;
   }
 
   // 5. Fallback: Logged in but has no club/group selected yet
@@ -295,7 +289,7 @@ const ClubShell = ({ user }) => {
 
 function App() {
   const { user, userLoading } = useAuth();
-  const { activeGroup, groupDataLoaded } = useGroupData();
+  const { userHomeGroup, groupDataLoaded, currentGroup } = useGroupData();
 
   const { loaded: userDataLoaded } = useSelector((state) => state.userData);
   const { squadLoaded } = useSelector(selectSquadLoad);
@@ -304,7 +298,7 @@ function App() {
   const isGroupDataReady = !!(userDataLoaded && fixturesLoaded && squadLoaded);
 
   return (
-    <ThemeProvider accentColor={activeGroup?.accentColor || "#7FD880"}>
+    <ThemeProvider accentColor={currentGroup?.accentColor || "#7FD880"}>
       <GlobalContainer>
         {user && <UserDataListener userId={user.uid} />}
         <Router>
@@ -317,7 +311,7 @@ function App() {
                     user={user}
                     userLoading={userLoading}
                     groupDataLoaded={groupDataLoaded}
-                    activeGroup={activeGroup}
+                    userHomeGroup={userHomeGroup}
                   />
                 }
               />
