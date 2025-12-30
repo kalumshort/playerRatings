@@ -30,8 +30,8 @@ export default function LineupPlayer({
   const playerData = useSelector((state) =>
     selectSquadPlayerById(player?.id, clubSlug)(state)
   );
-  const { activeGroup } = useGroupData();
-  const groupColour = activeGroup?.accentColor || "#DA291C";
+  const { currentGroup } = useGroupData();
+  const groupColour = currentGroup?.accentColor || "#DA291C";
 
   // --- EVENT LOGIC ---
   const events = useMemo(() => {

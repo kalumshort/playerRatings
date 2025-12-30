@@ -126,9 +126,9 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 
 export default function SchedulePage() {
   const theme = useTheme();
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
 
-  const groupClubId = Number(activeGroup.groupClubId);
+  const groupClubId = Number(currentGroup.groupClubId);
   const { fixtures: allFixtures } = useSelector(selectFixturesState);
 
   // --- STATS CALCULATION ---

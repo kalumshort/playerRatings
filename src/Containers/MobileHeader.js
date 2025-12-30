@@ -54,9 +54,9 @@ export default function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const appNavigate = useAppNavigate();
   const theme = useMuiTheme();
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
 
-  const accentColor = activeGroup?.accentColor || theme.palette.primary.main;
+  const accentColor = currentGroup?.accentColor || theme.palette.primary.main;
 
   const handleLogout = async () => {
     try {
@@ -132,7 +132,7 @@ export default function MobileHeader() {
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Avatar
-                src={activeGroup?.clubBadge}
+                src={currentGroup?.clubBadge}
                 sx={{
                   width: 44,
                   height: 44,
@@ -144,7 +144,7 @@ export default function MobileHeader() {
                   variant="caption"
                   sx={{ fontWeight: 800, lineHeight: 1.2 }}
                 >
-                  {activeGroup?.name}
+                  {currentGroup?.name}
                 </Typography>
               </Box>
             </Box>

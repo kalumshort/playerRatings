@@ -28,7 +28,7 @@ export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();
 
   // Data Selectors
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
@@ -46,7 +46,7 @@ export default function ScorePrediction({ fixture }) {
       score: `${homeScore}-${awayScore}`,
       homeGoals: homeScore,
       awayGoals: awayScore,
-      groupId: activeGroup.groupId,
+      groupId: currentGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
@@ -54,7 +54,7 @@ export default function ScorePrediction({ fixture }) {
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
-        groupId: activeGroup.groupId,
+        groupId: currentGroup.groupId,
         currentYear: globalData.currentYear,
       })
     );

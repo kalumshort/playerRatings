@@ -87,8 +87,6 @@ export default function LatestTeamSeasonRating() {
 
   const { currentGroup } = useGroupData();
 
-  // 1. Derive Group Context from the URL Slug instead of activeGroup
-
   const globalData = useGlobalData();
   // 1. Identify current club from Slug
 
@@ -115,7 +113,6 @@ export default function LatestTeamSeasonRating() {
   ]);
 
   const { formationRows, fixtureData } = useMemo(() => {
-    // Rely on URL context rather than activeGroup state
     if (!previousFixtures || !groupId)
       return { formationRows: [], fixtureData: null };
 

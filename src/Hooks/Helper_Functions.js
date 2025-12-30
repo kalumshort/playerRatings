@@ -374,27 +374,38 @@ export const DragProvider = ({ children }) => {
 };
 
 export const useAppPaths = () => {
-  const { clubSlug } = useParams();
-  const { activeGroup } = useSelector((state) => state.groupData);
+  const { clubSlug } = useParams(); // Priority 1: Current URL context
 
-  // Determine the current context slug
-  let currentSlug = clubSlug;
-  if (!currentSlug && activeGroup?.groupClubId) {
-    currentSlug = idToClub[activeGroup.groupClubId]?.slug;
-  }
+  // Access both the transient silo (currentGroup) and persistent home team (userHomeGroup)
+  const { currentGroup, userHomeGroup } = useSelector(
+    (state) => state.groupData
+  );
 
   /**
-   * Generates a context-aware path
+   * Determine the current context slug.
+   * Priority 1: The slug currently in the URL (browsing context).
+   * Priority 2: The slug of the user's Home Group (persistent preference).
+   * Priority 3: The transient currentGroup (backup context).
+   */
+  const currentSlug = clubSlug || userHomeGroup?.slug || currentGroup?.slug;
+
+  /**
+   * Generates a context-aware path string
    * @param {string} path - The internal route (e.g., "/schedule")
    */
   const getPath = (path) => {
-    const globalPaths = ["/profile", "/global-select"];
+    // 1. Define paths that should never be prepended with a club slug
+    const globalPaths = ["/profile", "/global-select", "/"];
 
-    // If it's a global path, return as is
+    // 2. If it's a global path, return it exactly as requested
     if (globalPaths.includes(path)) return path;
 
-    // Otherwise, prepend the slug if we have one
-    return currentSlug ? `/${currentSlug}${path}` : path;
+    // 3. Ensure the path starts with a leading slash for clean concatenation
+    const formattedPath = path.startsWith("/") ? path : `/${path}`;
+
+    // 4. Prepend the slug if available (e.g., "/man-utd/schedule"),
+    // otherwise return the base path (e.g., "/schedule")
+    return currentSlug ? `/${currentSlug}${formattedPath}` : formattedPath;
   };
 
   return { getPath, currentSlug };

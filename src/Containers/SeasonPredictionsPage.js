@@ -674,7 +674,7 @@ const PlayerPodium = ({ question, data }) => {
 
 const SeasonPredictions = ({ setUserSubmission }) => {
   const [predictions, setPredictions] = React.useState({});
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
   const handlePredictionChange = (key, value) => {
@@ -685,7 +685,7 @@ const SeasonPredictions = ({ setUserSubmission }) => {
 
     await handleSeasonPredictions({
       predictions: predictions,
-      groupId: activeGroup.groupId,
+      groupId: currentGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
@@ -745,7 +745,7 @@ const SeasonPredictions = ({ setUserSubmission }) => {
   );
 };
 const SeasonPredictionsResults = () => {
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const globalData = useGlobalData();
 
   const [results, setResults] = useState({});
@@ -756,7 +756,7 @@ const SeasonPredictionsResults = () => {
   // achievementQuestions, goalsQuestions, funQuestions
 
   useEffect(() => {
-    if (!activeGroup?.groupId || !globalData?.currentYear) {
+    if (!currentGroup?.groupId || !globalData?.currentYear) {
       setLoading(false);
       return;
     }
@@ -764,14 +764,14 @@ const SeasonPredictionsResults = () => {
     const fetchResults = async () => {
       setLoading(true);
       const data = await firebaseGetCollecion(
-        `groups/${activeGroup.groupId}/seasons/${globalData.currentYear}/seasonPredictions`
+        `groups/${currentGroup.groupId}/seasons/${globalData.currentYear}/seasonPredictions`
       );
       setResults(data);
       setLoading(false);
     };
 
     fetchResults();
-  }, [activeGroup?.groupId, globalData?.currentYear]);
+  }, [currentGroup?.groupId, globalData?.currentYear]);
 
   if (loading) return <Spinner />;
 
@@ -814,14 +814,14 @@ const SeasonPredictionsResults = () => {
 };
 export default function SeasonPredictionsPage() {
   const { user } = useAuth();
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const globalData = useGlobalData();
 
   const [userSubmission, setUserSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !activeGroup?.groupId || !globalData?.currentYear) {
+    if (!user || !currentGroup?.groupId || !globalData?.currentYear) {
       setLoading(false);
       return;
     }
@@ -829,7 +829,7 @@ export default function SeasonPredictionsPage() {
     const fetchUserPredictions = async () => {
       setLoading(true);
       const docData = await firebaseGetDocument(
-        `users/${user.uid}/groups/${activeGroup.groupId}/seasons`,
+        `users/${user.uid}/groups/${currentGroup.groupId}/seasons`,
         globalData.currentYear.toString()
       );
       if (docData && docData.seasonPredictions) {
@@ -839,7 +839,7 @@ export default function SeasonPredictionsPage() {
     };
 
     fetchUserPredictions();
-  }, [user, activeGroup?.groupId, globalData?.currentYear]);
+  }, [user, currentGroup?.groupId, globalData?.currentYear]);
 
   if (loading) return <Spinner />;
 

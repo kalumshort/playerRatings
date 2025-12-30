@@ -73,8 +73,9 @@ export default function LoggedInProfile() {
   const { themeMode, toggleTheme } = useTheme(); // Access the global theme toggle
 
   const { userData } = useUserData();
-  const { groupData, activeGroup } = useGroupData();
-  const accentColor = activeGroup?.accentColor || muiTheme.palette.primary.main;
+  const { groupData, currentGroup } = useGroupData();
+  const accentColor =
+    currentGroup?.accentColor || muiTheme.palette.primary.main;
 
   const [formData, setFormData] = useState({
     displayName: userData?.displayName || "",
@@ -102,7 +103,7 @@ export default function LoggedInProfile() {
 
   const handleSelectChange = async (event) => {
     const newGroupId = event.target.value;
-    await updateUserField(userData.uid, "activeGroup", newGroupId);
+    await updateUserField(userData.uid, "currentGroup", newGroupId);
     dispatch(clearTeamSquads());
     dispatch(clearRatings());
     dispatch(clearFixtures());
@@ -141,7 +142,7 @@ export default function LoggedInProfile() {
               textTransform: "uppercase",
             }}
           >
-            {activeGroup?.name || "Free Agent"}
+            {currentGroup?.name || "Free Agent"}
           </Box>
         </Stack>
       </ProfileHeader>
@@ -185,7 +186,7 @@ export default function LoggedInProfile() {
             </InputLabel>
             <CustomSelect
               options={options}
-              value={activeGroup?.groupId}
+              value={currentGroup?.groupId}
               onChange={handleSelectChange}
             />
           </Box>

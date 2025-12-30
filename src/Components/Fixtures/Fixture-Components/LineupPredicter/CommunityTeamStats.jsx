@@ -27,8 +27,8 @@ export function CommunityTeamStats({ fixture }) {
   const squadData = useSelector((state) =>
     selectSquadDataObject(state, clubSlug)
   );
-  const { activeGroup } = useGroupData();
-  const groupColour = activeGroup?.accentColor || "#DA291C";
+  const { currentGroup } = useGroupData();
+  const groupColour = currentGroup?.accentColor || "#DA291C";
 
   // --- DATA PROCESSING ---
   const stats = useMemo(() => {

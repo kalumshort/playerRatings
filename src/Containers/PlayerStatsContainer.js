@@ -15,8 +15,6 @@ export default function PlayerStatsContainer() {
 
   const { currentGroup } = useGroupData();
 
-  // 1. Derive Group Context from the URL Slug instead of activeGroup
-
   const groupId = currentGroup?.groupClubId;
 
   const globalData = useGlobalData();

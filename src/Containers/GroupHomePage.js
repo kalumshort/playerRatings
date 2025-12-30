@@ -16,7 +16,7 @@ import LegacyGroupModal from "../Components/Widgets/legacyGroupModal";
 export default function GroupHomePage() {
   const { fixtures, loading, error } = useSelector((state) => state.fixtures);
   const isMobile = useIsMobile();
-  const { activeGroup } = useGroupData();
+  const { userHomeGroup } = useGroupData();
 
   const dispatch = useDispatch();
 
@@ -66,7 +66,7 @@ export default function GroupHomePage() {
           </Box>
         </Grid>
       </Grid>
-      {activeGroup?.groupId === "002" && <LegacyGroupModal />}
+      {userHomeGroup?.groupId === "002" && <LegacyGroupModal />}
     </div>
   );
 }

@@ -201,8 +201,6 @@ export default function AllPlayerStats() {
 
   const { clubSlug } = useParams(); // Now capturing clubSlug from URL
 
-  // 1. Derive Group Context from the URL Slug instead of activeGroup
-
   const groupClubId = Number(currentGroup?.groupClubId);
 
   // Redux Data

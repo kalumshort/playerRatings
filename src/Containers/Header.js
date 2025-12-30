@@ -75,10 +75,10 @@ export default function Header() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const appNavigate = useAppNavigate();
   const { user } = useAuth();
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const { isGroupAdmin } = useUserData();
 
-  const accentColor = activeGroup?.accentColor || theme.palette.primary.main;
+  const accentColor = currentGroup?.accentColor || theme.palette.primary.main;
 
   const handleLogout = async () => {
     try {
@@ -123,7 +123,7 @@ export default function Header() {
                   variant="caption"
                   sx={{ color: "text.secondary", fontWeight: 700 }}
                 >
-                  {activeGroup?.name}
+                  {currentGroup?.name}
                 </Typography>
               )}
 
@@ -180,10 +180,10 @@ export default function Header() {
               mb: 4,
             }}
           >
-            {user && activeGroup ? (
+            {user && currentGroup ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 {/* <Avatar
-                  src={activeGroup.clubBadge}
+                  src={currentGroup.clubBadge}
                   sx={{
                     width: 40,
                     height: 40,
@@ -191,7 +191,7 @@ export default function Header() {
                   }}
                 /> */}
                 <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                  {activeGroup.name}
+                  {currentGroup.name}
                 </Typography>
               </Box>
             ) : (

@@ -55,8 +55,6 @@ export default function Fixture() {
   const { currentYear } = useGlobalData();
   const { currentGroup } = useGroupData();
 
-  // 1. Derive Group Context from the URL Slug instead of activeGroup
-
   const groupId = currentGroup?.groupId;
 
   // 2. Redux Selectors

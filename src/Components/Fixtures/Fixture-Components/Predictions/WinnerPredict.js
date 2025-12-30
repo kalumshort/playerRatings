@@ -32,7 +32,7 @@ export default function WinnerPredict({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const { activeGroup } = useGroupData();
+  const { currentGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
 
@@ -65,7 +65,7 @@ export default function WinnerPredict({ fixture }) {
     await handlePredictWinningTeam({
       matchId: fixture.id,
       choice: choice,
-      groupId: activeGroup.groupId,
+      groupId: currentGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
@@ -73,7 +73,7 @@ export default function WinnerPredict({ fixture }) {
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
-        groupId: activeGroup.groupId,
+        groupId: currentGroup.groupId,
         currentYear: globalData.currentYear,
       })
     );
