@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -15,7 +15,7 @@ import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
 import useGlobalData from "./Hooks/useGlobalData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import { idToClub, slugToClub, teamList } from "./Hooks/Helper_Functions";
+import { idToClub, slugToClub } from "./Hooks/Helper_Functions";
 
 // --- Redux Selectors & Actions ---
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
@@ -30,6 +30,12 @@ import Header from "./Containers/Header";
 import HomePage from "./Containers/HomePage";
 import { Box } from "@mui/material";
 import SignUpButton from "./Components/Auth/SignUpButton";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "./Firebase/Firebase";
+import {
+  setCurrentGroup,
+  updateGroupData,
+} from "./redux/Reducers/groupReducer";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -152,12 +158,100 @@ const HomeRouteController = ({
 };
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.userData); //
 
-  // Method A: Check against a hardcoded list of supported IDs/Slugs
-  // This is the fastest and prevents unnecessary Firestore reads.
-  const clubConfig = teamList.find((t) => t.slug === clubSlug);
+  const [loading, setLoading] = useState(true);
+  const [isValid, setIsValid] = useState(false);
 
-  if (!clubConfig) {
+  useEffect(() => {
+    const fetchGroupContext = async () => {
+      console.log(`[Guard] Initiating lookup for slug: "${clubSlug}"`);
+      setLoading(true);
+
+      try {
+        // 1. Query Firestore for the group with the matching slug
+        const q = query(
+          collection(db, "groups"),
+          where("slug", "==", clubSlug)
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          console.warn(
+            `[Guard] No group found for slug: "${clubSlug}". Redirecting home.`
+          );
+          setIsValid(false);
+          setLoading(false);
+          return;
+        }
+
+        const groupDoc = querySnapshot.docs[0];
+        const groupData = { ...groupDoc.data(), groupId: groupDoc.id };
+
+        console.log(
+          `[Guard] Group Found: ${groupData.groupName} (ID: ${groupDoc.id}, Visibility: ${groupData.visibility})`
+        );
+
+        // 2. Visibility & Permission Logic
+        if (groupData.visibility === "public") {
+          console.log(`[Guard] Access Granted: Public group.`);
+
+          dispatch(
+            updateGroupData({ groupId: groupData.groupId, data: groupData })
+          );
+          dispatch(
+            setCurrentGroup({
+              data: groupData,
+            })
+          );
+          setIsValid(true);
+        } else if (groupData.visibility === "private") {
+          // Private groups check if the user is a member
+          const isMember = user?.groups?.includes(groupData.groupId);
+
+          if (isMember) {
+            console.log(
+              `[Guard] Access Granted: Private group member verified.`
+            );
+            dispatch(
+              updateGroupData({ groupId: groupData.groupId, data: groupData })
+            ); //
+            setIsValid(true);
+          } else {
+            console.warn(
+              `[Guard] Access Denied: User is not a member of private group ${groupData.groupId}.`
+            );
+            setIsValid(false);
+          }
+        } else {
+          console.error(
+            `[Guard] Unknown visibility type: ${groupData.visibility}`
+          );
+          setIsValid(false);
+        }
+      } catch (error) {
+        console.error("[Guard] Critical Error guarding club route:", error);
+        setIsValid(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clubSlug) {
+      fetchGroupContext();
+    }
+  }, [clubSlug, dispatch, user]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <Spinner text="Verifying Club Access..." />
+      </div>
+    );
+  }
+
+  if (!isValid) {
     return <Navigate to="/" replace />;
   }
 

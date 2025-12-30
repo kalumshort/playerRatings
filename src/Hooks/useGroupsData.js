@@ -12,11 +12,14 @@ const useGroupData = () => {
   const groupData = useSelector(selectGroupData);
   const { userData } = useUserData();
 
+  const currentGroup = useSelector((state) => state.groupData.currentGroup);
+
   return {
     groupData,
     groupDataLoaded,
     groupDataLoading,
-    activeGroup: groupData[userData.activeGroup],
+    userHomeGroup: groupData[userData.activeGroup],
+    currentGroup,
   };
 };
 
