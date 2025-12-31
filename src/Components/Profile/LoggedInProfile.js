@@ -103,7 +103,7 @@ export default function LoggedInProfile() {
 
   const handleSelectChange = async (event) => {
     const newGroupId = event.target.value;
-    await updateUserField(userData.uid, "currentGroup", newGroupId);
+    await updateUserField(userData.uid, "activeGroup", newGroupId);
     dispatch(clearTeamSquads());
     dispatch(clearRatings());
     dispatch(clearFixtures());

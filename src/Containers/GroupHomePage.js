@@ -11,6 +11,7 @@ import LatestTeamSeasonRating from "../Components/Widgets/LatestTeamSeasonRating
 import "./HomePage.css"; // Make sure to import the new CSS
 import useGroupData from "../Hooks/useGroupsData";
 import LegacyGroupModal from "../Components/Widgets/legacyGroupModal";
+import { Spinner } from "./Helpers";
 // import SeasonPredictions from "../Components/Widgets/SeasonPredictions";
 
 export default function GroupHomePage() {
@@ -22,12 +23,11 @@ export default function GroupHomePage() {
 
   useEffect(() => {
     if (!fixtures) {
-      console.log("Fetching fixtures... In GroupHomePage");
       dispatch(fetchFixtures());
     }
   }, [dispatch, fixtures]);
 
-  if (loading) return <p>Loading fixtures...</p>;
+  if (loading) return <Spinner text="Loading Fixtures..." />;
   if (error) return <p>Error: {error}</p>;
 
   // ... inside your component return:

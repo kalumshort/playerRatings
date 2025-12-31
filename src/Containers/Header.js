@@ -44,6 +44,7 @@ import ThemeToggle from "../Components/Theme/ThemeToggle";
 import Login from "../Components/Auth/Login";
 import ProfileSection from "../Components/Auth/ProfileSection";
 import { useAppNavigate } from "../Hooks/useAppNavigate";
+import GroupExplorer from "./Header/GroupExplorer";
 
 // --- Styled Components (Glassmorphism) ---
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
@@ -262,6 +263,8 @@ export default function Header() {
                     </ListItemButton>
                   </ListItem>
                 ))}
+
+                {user && <GroupExplorer />}
               </List>
             </Box>
           )}
