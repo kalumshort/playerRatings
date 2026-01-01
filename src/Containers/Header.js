@@ -42,7 +42,7 @@ import SiteIconOnly from "../assets/logo/11Votes_Icon_Logo.png";
 // Components
 import ThemeToggle from "../Components/Theme/ThemeToggle";
 import Login from "../Components/Auth/Login";
-import ProfileSection from "../Components/Auth/ProfileSection";
+
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import GroupExplorer from "./Header/GroupExplorer";
 
@@ -210,7 +210,7 @@ export default function Header() {
             <Login />
           ) : (
             <Box sx={{ flexGrow: 1 }}>
-              <ProfileSection setDrawerOpen={setDrawerOpen} />
+              {/* <ProfileSection setDrawerOpen={setDrawerOpen} /> */}
 
               <List sx={{ mt: 2 }}>
                 {/* Admin Section */}
