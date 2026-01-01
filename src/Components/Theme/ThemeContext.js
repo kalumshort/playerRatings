@@ -209,6 +209,13 @@ export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
               },
             },
           },
+          MuiAvatar: {
+            styleOverrides: {
+              root: ({ theme }) => ({
+                borderRadius: "8px",
+              }),
+            },
+          },
           MuiTab: {
             styleOverrides: {
               root: {
