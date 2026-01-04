@@ -18,6 +18,16 @@ const {
 const { fetchAllMatchData } = require("./helperFunctions");
 const { onCall, HttpsError } = require("firebase-functions/https");
 
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "kalum@11votes.com", // Your Workspace email
+    pass: "zqhj rrzb olyj athr", // The 16-char App Password (spaces don't matter)
+  },
+});
+
 initializeApp();
 
 const db = getFirestore(); // Initialize once
@@ -1084,8 +1094,7 @@ exports.submitContactForm = onCall(async (request) => {
   const { data, auth } = request;
   const { email, subject, message, userId } = data;
 
-  // 1. Server-Side Validation
-  // even if the frontend checks, we must check here too
+  // --- VALIDATION ---
   if (!email || !message) {
     throw new HttpsError(
       "invalid-argument",
@@ -1093,33 +1102,67 @@ exports.submitContactForm = onCall(async (request) => {
     );
   }
 
-  // 2. Prepare the Data object
+  // --- PREPARE DATA ---
   const contactEntry = {
     email: email,
     subject: subject || "No Subject",
     message: message,
-    status: "new", // distinct status for admin triage
-    createdAt: Timestamp.now(), // Server-side timestamp is safer
+    status: "new",
+    createdAt: Timestamp.now(),
     source: "web_form",
   };
 
-  // 3. Attach User ID safely
-  // We prioritize the ID from the Auth Context (if they are actually logged in)
-  // over the ID sent in the data body, to prevent spoofing.
+  // --- ATTACH USER ID ---
   if (auth && auth.uid) {
     contactEntry.userId = auth.uid;
     contactEntry.userEmail = auth.token.email || null;
   } else if (userId) {
-    // If they aren't logged in but we tracked a visitor ID (optional)
     contactEntry.reportedUserId = userId;
     contactEntry.isGuest = true;
   } else {
     contactEntry.isGuest = true;
   }
 
+  const db = getFirestore();
+
   try {
-    const db = getFirestore();
+    // 1. Save to Database (Critical Step)
     await db.collection("contact_messages").add(contactEntry);
+
+    // 2. Send Email Notification (Side Effect)
+    // We wrap this in its own try/catch so email failure doesn't crash the user response
+    try {
+      const mailOptions = {
+        from: '"11Votes Contact Form" <noreply@11votes.com>',
+        to: "kalum@11votes.com", // Where you want to receive it
+        subject: `[New Contact] ${subject || "No Subject"}`,
+        text: `
+New message from 11Votes Contact Form:
+
+From: ${email}
+User ID: ${contactEntry.userId || "Guest"}
+Subject: ${subject}
+
+Message:
+${message}
+        `,
+        html: `
+<h3>New Contact Form Submission</h3>
+<p><strong>From:</strong> ${email}</p>
+<p><strong>User ID:</strong> ${contactEntry.userId || "Guest"}</p>
+<p><strong>Subject:</strong> ${subject}</p>
+<br/>
+<p><strong>Message:</strong></p>
+<p style="padding: 10px; background-color: #f4f4f4; border-left: 4px solid #00FF87;">${message}</p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log("Notification email sent to kalum@11votes.com");
+    } catch (emailError) {
+      // Log it, but don't fail the request. Data is already safe in DB.
+      console.error("Failed to send notification email:", emailError);
+    }
 
     return {
       success: true,
