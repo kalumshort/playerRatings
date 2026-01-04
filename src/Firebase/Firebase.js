@@ -18,7 +18,7 @@ import {
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { getFunctions } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 // Load environment variables (Optional, but recommended)
 const firebaseConfig = {
@@ -473,6 +473,38 @@ export const fetchInviteLink = async (group) => {
     }
   } catch (error) {
     console.error("Error fetching invite link:", error);
+  }
+};
+
+// --- Update this function in src/Firebase/Firebase.js ---
+// Make sure to import { getFunctions, httpsCallable } from "firebase/functions";
+
+export const submitContactForm = async ({
+  email,
+  subject,
+  message,
+  userId = null,
+}) => {
+  try {
+    const functions = getFunctions();
+    const submitFunction = httpsCallable(functions, "submitContactForm");
+
+    // We pass the data object to the Cloud Function
+    const response = await submitFunction({
+      email,
+      subject,
+      message,
+      userId,
+    });
+
+    // The data returned from the Cloud Function is inside response.data
+    return response.data;
+  } catch (error) {
+    console.error("Error calling submitContactForm function:", error);
+    return {
+      success: false,
+      message: error.message || "An unexpected error occurred.",
+    };
   }
 };
 

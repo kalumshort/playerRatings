@@ -37,6 +37,10 @@ import { Box } from "@mui/material";
 import SignUpButton from "./Components/Auth/SignUpButton";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
+import Footer from "./Containers/Footer/Footer";
+import ContactForm from "./Containers/Footer/ContactForm";
+import PrivacyPolicy from "./Containers/Footer/PrivacyPolicy";
+import TermsOfService from "./Containers/Footer/TermsOfService";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -92,6 +96,14 @@ const NavigationSync = ({ activeGroup, groupDataLoaded }) => {
 
       const pathSegments = currentPath.split("/").filter(Boolean);
       const currentSlugInUrl = pathSegments[0];
+      if (
+        currentSlugInUrl === "profile" ||
+        currentSlugInUrl === "contact" ||
+        currentSlugInUrl === "privacy-policy" ||
+        currentSlugInUrl === "terms-of-service"
+      ) {
+        return;
+      }
 
       // If the URL slug doesn't match the active group, reset to the group's home page
       if (currentSlugInUrl !== targetSlug) {
@@ -115,7 +127,7 @@ const MainLayout = () => (
         <Outlet />
       </Suspense>
     </Box>
-    <Box sx={{ height: "50px" }} />
+    <Footer />
   </>
 );
 
@@ -286,6 +298,9 @@ function App() {
                 </>
               )}
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="contact" element={<ContactForm />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
             </Route>
           </Routes>
         </Router>

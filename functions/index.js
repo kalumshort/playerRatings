@@ -1077,3 +1077,56 @@ exports.scheduledLiveMatchUpdate = onSchedule(
 //   }
 //   res.status(200).send(`Successfull`);
 // });
+
+// --- Add this to functions/index.js ---
+
+exports.submitContactForm = onCall(async (request) => {
+  const { data, auth } = request;
+  const { email, subject, message, userId } = data;
+
+  // 1. Server-Side Validation
+  // even if the frontend checks, we must check here too
+  if (!email || !message) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Email and Message are required fields."
+    );
+  }
+
+  // 2. Prepare the Data object
+  const contactEntry = {
+    email: email,
+    subject: subject || "No Subject",
+    message: message,
+    status: "new", // distinct status for admin triage
+    createdAt: Timestamp.now(), // Server-side timestamp is safer
+    source: "web_form",
+  };
+
+  // 3. Attach User ID safely
+  // We prioritize the ID from the Auth Context (if they are actually logged in)
+  // over the ID sent in the data body, to prevent spoofing.
+  if (auth && auth.uid) {
+    contactEntry.userId = auth.uid;
+    contactEntry.userEmail = auth.token.email || null;
+  } else if (userId) {
+    // If they aren't logged in but we tracked a visitor ID (optional)
+    contactEntry.reportedUserId = userId;
+    contactEntry.isGuest = true;
+  } else {
+    contactEntry.isGuest = true;
+  }
+
+  try {
+    const db = getFirestore();
+    await db.collection("contact_messages").add(contactEntry);
+
+    return {
+      success: true,
+      message: "Contact form submitted successfully.",
+    };
+  } catch (error) {
+    console.error("Error submitting contact form:", error);
+    throw new HttpsError("internal", "Unable to submit message at this time.");
+  }
+});
