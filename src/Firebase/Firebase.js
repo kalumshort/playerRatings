@@ -365,7 +365,58 @@ export const handleFixtureMood = async ({
     return { success: false, message: error.message };
   }
 };
+export const handleLivePlayerStats = async ({
+  groupId,
+  currentYear,
+  matchId,
+  timeElapsed,
+  playerId,
+  statKey, // Expected values: 'hot', 'cold', 'sub'
+}) => {
+  try {
+    if (
+      !groupId ||
+      !currentYear ||
+      !matchId ||
+      !timeElapsed ||
+      !playerId ||
+      !statKey
+    ) {
+      throw new Error("Missing required parameters for Live Player Stats");
+    }
 
+    const timestampKey = String(timeElapsed);
+
+    // We update two locations in the same document:
+    // 1. The specific minute (for history/graphs)
+    // 2. The 'totals' object (for current status/leaderboards)
+    const result = await firebaseSetDoc({
+      path: `groups/${groupId}/seasons/${currentYear}/livePlayerStats`,
+      docId: matchId,
+      data: {
+        // 1. Timeline: Keeps the minute-by-minute granular data
+        [timestampKey]: {
+          [playerId]: {
+            [statKey]: increment(1),
+          },
+        },
+        // 2. Totals: Keeps the running count for the whole match
+        totals: {
+          [playerId]: {
+            [statKey]: increment(1),
+          },
+        },
+      },
+      merge: true,
+    });
+    console.log("Live player stats updated successfully:", result);
+
+    return result;
+  } catch (error) {
+    console.error("Error updating live player stats:", error);
+    return { success: false, message: error.message };
+  }
+};
 export const handlePredictWinningTeam = async (data) => {
   await firebaseSetDoc({
     path: `groups/${data.groupId}/seasons/${data.currentYear}/predictions`,
@@ -526,4 +577,98 @@ export const submitContactForm = async ({
 //   }, [dispatch, path]);
 
 //   return null;
+// };
+
+// export const populateDummyData = async ({
+//   groupId,
+//   currentYear,
+//   matchId,
+//   squad, // Array of player objects
+// }) => {
+//   if (!squad || squad.length === 0) {
+//     console.error("No squad provided for dummy data");
+//     return;
+//   }
+
+//   console.log("Generating dummy data...");
+
+//   // 1. Initialize the master document structure
+//   const matchDocData = {
+//     totals: {},
+//   };
+
+//   // 2. Config: How many simulated votes?
+//   const TOTAL_INTERACTIONS = 300;
+
+//   // 3. Helper to safely increment local object values
+//   const incrementLocal = (obj, pathArray, value = 1) => {
+//     let current = obj;
+//     for (let i = 0; i < pathArray.length - 1; i++) {
+//       const key = pathArray[i];
+//       if (!current[key]) current[key] = {};
+//       current = current[key];
+//     }
+//     const lastKey = pathArray[pathArray.length - 1];
+//     current[lastKey] = (current[lastKey] || 0) + value;
+//   };
+
+//   // 4. Simulation Loop
+//   for (let i = 0; i < TOTAL_INTERACTIONS; i++) {
+//     // A. Pick a random minute (1 - 90)
+//     // Weight it towards the end of the match for "subs"
+//     const minute = Math.floor(Math.random() * 90) + 1;
+//     const timeKey = String(minute);
+
+//     // B. Pick a random player
+//     const player = squad[Math.floor(Math.random() * squad.length)];
+//     const playerId = String(player.id);
+
+//     // C. Pick an action type (Hot, Cold, Sub)
+//     const actionRoll = Math.random();
+//     let type = "hot";
+//     if (actionRoll > 0.6) type = "cold";
+//     if (actionRoll > 0.9) type = "sub";
+
+//     // --- APPLY LOGIC ---
+
+//     if (type === "sub") {
+//       // Pick a random substitute
+//       const subInPlayer = squad[Math.floor(Math.random() * squad.length)];
+//       const subInId = String(subInPlayer.id);
+
+//       // Prevent subbing in the same player
+//       if (subInId !== playerId) {
+//         // 1. Vote Current Player OUT (Totals + Timeline)
+//         incrementLocal(matchDocData, ["totals", playerId, "sub"]);
+//         incrementLocal(matchDocData, [timeKey, playerId, "sub"]);
+
+//         // 2. Vote Substitute IN (Totals + Timeline)
+//         incrementLocal(matchDocData, ["totals", subInId, "subInRequest"]);
+//         incrementLocal(matchDocData, [timeKey, subInId, "subInRequest"]);
+//       }
+//     } else {
+//       // Handle Hot/Cold
+//       // 1. Update Totals
+//       incrementLocal(matchDocData, ["totals", playerId, type]);
+
+//       // 2. Update Timeline
+//       incrementLocal(matchDocData, [timeKey, playerId, type]);
+//     }
+//   }
+
+//   try {
+//     // 5. Write to Firestore (Overwrites existing data for this match to be clean)
+//     await setDoc(
+//       doc(
+//         db,
+//         `groups/${groupId}/seasons/${currentYear}/livePlayerStats`,
+//         matchId
+//       ),
+//       matchDocData
+//     );
+//     console.log("✅ Dummy data successfully populated!");
+//     alert("Dummy data injected. Refresh the page.");
+//   } catch (error) {
+//     console.error("Error writing dummy data:", error);
+//   }
 // };

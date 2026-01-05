@@ -9,13 +9,87 @@ import {
   useTheme,
   Zoom,
 } from "@mui/material";
-import { SportsSoccer, SwapVert, Delete, Rectangle } from "@mui/icons-material";
+import {
+  SportsSoccer,
+  Delete,
+  ArrowUpward,
+  ArrowDownward,
+} from "@mui/icons-material";
 
 // --- HOOKS & SELECTORS ---
 import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { useParams } from "react-router-dom";
+
+// --- SUB-COMPONENT: EVENT BADGES (MATCHING STATUS-ICON STYLE) ---
+const EventIcon = ({ type, data, playerId, count }) => {
+  let content = null;
+  let tooltip = "";
+  let gradient = "";
+
+  // Common Style for the Icon inside the badge
+  const iconStyle = {
+    fontSize: 14,
+    color: "white",
+    filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.2))",
+  };
+
+  if (type === "goal") {
+    tooltip = `${count} Goal${count > 1 ? "s" : ""}`;
+    gradient = "linear-gradient(135deg, #66bb6a, #2e7d32)"; // Green Gradient
+    content = (
+      <>
+        <SportsSoccer sx={iconStyle} />
+        {count > 1 && <span className="event-count-badge">{count}</span>}
+      </>
+    );
+  } else if (type === "card") {
+    const isYellow = data.detail === "Yellow Card";
+    tooltip = `${data.detail} (${data.time.elapsed}')`;
+    gradient = isYellow
+      ? "linear-gradient(135deg, #fdd835, #fbc02d)" // Yellow/Gold
+      : "linear-gradient(135deg, #ef5350, #c62828)"; // Red
+
+    // Using a simple rectangle shape using CSS or Icon
+    content = (
+      <Box
+        sx={{
+          width: 10,
+          height: 14,
+          bgcolor: "white",
+          borderRadius: "2px",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+        }}
+      />
+    );
+  } else if (type === "sub") {
+    const isOut = data.player?.id === playerId;
+    tooltip = isOut
+      ? `Subbed OFF (${data.time.elapsed}')`
+      : `Subbed IN (${data.time.elapsed}')`;
+
+    // Sub Out = Orange/Red, Sub In = Blue/Green?
+    // Let's use Grey/Blue for generic sub info to not confuse with "Hot/Cold"
+    gradient = isOut
+      ? "linear-gradient(135deg, #ff7043, #d84315)" // Deep Orange (Out)
+      : "linear-gradient(135deg, #42a5f5, #1565c0)"; // Blue (In)
+
+    content = isOut ? (
+      <ArrowDownward sx={iconStyle} />
+    ) : (
+      <ArrowUpward sx={iconStyle} />
+    );
+  }
+
+  return (
+    <Tooltip title={tooltip} placement="top" TransitionComponent={Zoom} arrow>
+      <Box className="event-badge" sx={{ background: gradient }}>
+        {content}
+      </Box>
+    </Tooltip>
+  );
+};
 
 export default function LineupPlayer({
   player,
@@ -73,7 +147,47 @@ export default function LineupPlayer({
       }}
       {...props}
     >
-      {/* --- AVATAR CONTAINER WITH ABSOLUTE BADGES --- */}
+      {/* CSS Styles injected here for encapsulation */}
+      <style>
+        {`
+          .event-badge {
+            width: 22px; /* Slightly smaller than Status Icon (26px) for hierarchy */
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          }
+
+          .event-count-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: black;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid white;
+          }
+
+          @keyframes popIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+          }
+        `}
+      </style>
+
+      {/* --- AVATAR CONTAINER --- */}
       <Box sx={{ position: "relative", width: 50, height: 50 }}>
         <Avatar
           src={player?.photo || playerData?.photo || missingPlayerImg}
@@ -89,7 +203,7 @@ export default function LineupPlayer({
 
         {/* 1. GOALS (Top Right) */}
         {events.goals.length > 0 && (
-          <Box sx={{ position: "absolute", top: -5, right: -5, zIndex: 2 }}>
+          <Box sx={{ position: "absolute", top: -8, right: -8, zIndex: 5 }}>
             <EventIcon
               type="goal"
               count={events.goals.length}
@@ -100,30 +214,36 @@ export default function LineupPlayer({
 
         {/* 2. CARDS (Top Left) */}
         {events.cards.length > 0 && (
-          <Box sx={{ position: "absolute", top: -5, left: -5, zIndex: 2 }}>
+          <Box sx={{ position: "absolute", top: -8, left: -8, zIndex: 5 }}>
             {events.cards.map((card, i) => (
-              <EventIcon key={i} type="card" data={card} />
+              <Box key={i} sx={{ mb: -1.5 }}>
+                {" "}
+                {/* Stack multiple cards slightly */}
+                <EventIcon type="card" data={card} />
+              </Box>
             ))}
           </Box>
         )}
 
         {/* 3. SUBS (Bottom Right) */}
         {events.sub && (
-          <Box sx={{ position: "absolute", bottom: -2, right: -2, zIndex: 2 }}>
+          <Box sx={{ position: "absolute", bottom: -5, right: -5, zIndex: 5 }}>
             <EventIcon type="sub" data={events.sub} playerId={player.id} />
           </Box>
         )}
 
-        {/* 4. DELETE (Bottom Left - Only if dragging allowed) */}
+        {/* 4. DELETE BUTTON (Bottom Left) */}
         {onDelete && (
-          <Box sx={{ position: "absolute", bottom: -5, left: -5, zIndex: 3 }}>
+          <Box sx={{ position: "absolute", bottom: -5, left: -5, zIndex: 6 }}>
             <IconButton
               size="small"
               onClick={() => onDelete(player.id)}
               sx={{
+                width: 22,
+                height: 22,
                 bgcolor: "background.paper",
-                p: 0.2,
                 boxShadow: 2,
+                border: "1px solid #eee",
                 "&:hover": { bgcolor: "error.main", color: "white" },
               }}
             >
@@ -139,14 +259,15 @@ export default function LineupPlayer({
           variant="caption"
           noWrap
           sx={{
-            mt: 0.5,
+            mt: 1, // Increased margin to clear badges
             textAlign: "center",
             width: "100%",
-            maxWidth: 68,
-
+            maxWidth: 72,
             px: 0.5,
-            py: 0.1,
             lineHeight: 1.1,
+            textShadow: "0 1px 2px rgba(0,0,0,0.8)", // Shadow for better visibility on pitch
+            fontWeight: 500,
+            color: "white",
           }}
         >
           {playerData?.name || player.name}
@@ -155,13 +276,14 @@ export default function LineupPlayer({
 
       {/* --- PERCENTAGE BAR --- */}
       {percentage !== undefined && (
-        <Box sx={{ width: "100%", mt: 0.2, px: 1 }}>
+        <Box sx={{ width: "100%", mt: 0.5, px: 0.5 }}>
           <Box
             sx={{
-              height: 3,
+              height: 4,
               width: "100%",
-              bgcolor: "rgba(255,255,255,0.2)",
-              borderRadius: 1,
+              bgcolor: "rgba(0,0,0,0.5)",
+              borderRadius: 2,
+              overflow: "hidden",
             }}
           >
             <Box
@@ -169,7 +291,8 @@ export default function LineupPlayer({
                 width: `${percentage}%`,
                 height: "100%",
                 bgcolor: groupColour,
-                borderRadius: 1,
+                borderRadius: 2,
+                transition: "width 0.5s ease-out",
               }}
             />
           </Box>
@@ -178,84 +301,3 @@ export default function LineupPlayer({
     </Box>
   );
 }
-
-// --- SUB-COMPONENT: EVENT BADGES ---
-const EventIcon = ({ type, data, playerId, count }) => {
-  let content = null;
-  let tooltip = "";
-
-  const badgeStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 16,
-    height: 16,
-    borderRadius: "50%",
-    bgcolor: "background.paper",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-  };
-
-  if (type === "goal") {
-    tooltip = `${count} Goal${count > 1 ? "s" : ""}`;
-    content = (
-      <Box sx={{ ...badgeStyle, bgcolor: "transparent", boxShadow: "none" }}>
-        <SportsSoccer
-          sx={{
-            fontSize: 16,
-            color: "#4EFF4E",
-            filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))",
-          }}
-        />
-        {count > 1 && (
-          <Typography
-            sx={{
-              position: "absolute",
-              bottom: -4,
-              right: -4,
-              fontSize: "0.6rem",
-              fontWeight: "bold",
-              color: "white",
-              bgcolor: "black",
-              borderRadius: "50%",
-              width: 12,
-              height: 12,
-              textAlign: "center",
-              lineHeight: "12px",
-            }}
-          >
-            {count}
-          </Typography>
-        )}
-      </Box>
-    );
-  } else if (type === "card") {
-    const isYellow = data.detail === "Yellow Card";
-    tooltip = `${data.detail} (${data.time.elapsed}')`;
-    content = (
-      <Rectangle
-        sx={{
-          fontSize: 12,
-          color: isYellow ? "#FFD700" : "#FF4500",
-          transform: "rotate(90deg)",
-          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
-        }}
-      />
-    );
-  } else if (type === "sub") {
-    const isOut = data.player?.id === playerId;
-    tooltip = isOut
-      ? `Subbed OFF (${data.time.elapsed}')`
-      : `Subbed IN (${data.time.elapsed}')`;
-    content = (
-      <Box sx={{ ...badgeStyle }}>
-        <SwapVert sx={{ fontSize: 14, color: isOut ? "#FF4500" : "#4EFF4E" }} />
-      </Box>
-    );
-  }
-
-  return (
-    <Tooltip title={tooltip} placement="top" TransitionComponent={Zoom} arrow>
-      <Box sx={{ cursor: "help" }}>{content}</Box>
-    </Tooltip>
-  );
-};
