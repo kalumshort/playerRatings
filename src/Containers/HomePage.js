@@ -26,151 +26,9 @@ import {
   FilterList,
 } from "@mui/icons-material";
 import LivePulseGraph from "./HomePageComponants/LivePulseGraph";
+import { teamList } from "../Hooks/Helper_Functions";
 
 // --- DATA SOURCE ---
-export const teamList = [
-  {
-    teamId: 42,
-    name: "Arsenal",
-    slug: "arsenal",
-    logo: "https://media.api-sports.io/football/teams/42.png",
-    accent: "#EF0107",
-  },
-  {
-    teamId: 33,
-    name: "Manchester United",
-    slug: "man-united",
-    logo: "https://media.api-sports.io/football/teams/33.png",
-    accent: "#DA291C",
-  },
-  {
-    teamId: 50,
-    name: "Manchester City",
-    slug: "man-city",
-    logo: "https://media.api-sports.io/football/teams/50.png",
-    accent: "#6CABDD",
-  },
-  {
-    teamId: 40,
-    name: "Liverpool",
-    slug: "liverpool",
-    logo: "https://media.api-sports.io/football/teams/40.png",
-    accent: "#C8102E",
-  },
-  // --- REST OF THE LIST (Hidden by default) ---
-  {
-    teamId: 746,
-    name: "Sunderland",
-    slug: "sunderland",
-    logo: "https://media.api-sports.io/football/teams/746.png",
-    accent: "#FF0000",
-  },
-  {
-    teamId: 35,
-    name: "Bournemouth",
-    slug: "bournemouth",
-    logo: "https://media.api-sports.io/football/teams/35.png",
-    accent: "#B50E12",
-  },
-  {
-    teamId: 47,
-    name: "Tottenham",
-    slug: "tottenham",
-    logo: "https://media.api-sports.io/football/teams/47.png",
-    accent: "#132257",
-  },
-  {
-    teamId: 49,
-    name: "Chelsea",
-    slug: "chelsea",
-    logo: "https://media.api-sports.io/football/teams/49.png",
-    accent: "#034694",
-  },
-  {
-    teamId: 52,
-    name: "Crystal Palace",
-    slug: "crystal-palace",
-    logo: "https://media.api-sports.io/football/teams/52.png",
-    accent: "#1B458F",
-  },
-  {
-    teamId: 55,
-    name: "Brentford",
-    slug: "brentford",
-    logo: "https://media.api-sports.io/football/teams/55.png",
-    accent: "#E30613",
-  },
-  {
-    teamId: 34,
-    name: "Newcastle",
-    slug: "newcastle",
-    logo: "https://media.api-sports.io/football/teams/34.png",
-    accent: "#241F20",
-  },
-  {
-    teamId: 66,
-    name: "Aston Villa",
-    slug: "aston-villa",
-    logo: "https://media.api-sports.io/football/teams/66.png",
-    accent: "#670E36",
-  },
-  {
-    teamId: 51,
-    name: "Brighton",
-    slug: "brighton",
-    logo: "https://media.api-sports.io/football/teams/51.png",
-    accent: "#0057B7",
-  },
-  {
-    teamId: 45,
-    name: "Everton",
-    slug: "everton",
-    logo: "https://media.api-sports.io/football/teams/45.png",
-    accent: "#003399",
-  },
-  {
-    teamId: 63,
-    name: "Leeds",
-    slug: "leeds",
-    logo: "https://media.api-sports.io/football/teams/63.png",
-    accent: "#FFCD00",
-  },
-  {
-    teamId: 36,
-    name: "Fulham",
-    slug: "fulham",
-    logo: "https://media.api-sports.io/football/teams/36.png",
-    accent: "#FFFFFF",
-  },
-  {
-    teamId: 44,
-    name: "Burnley",
-    slug: "burnley",
-    logo: "https://media.api-sports.io/football/teams/44.png",
-    accent: "#6C1D45",
-  },
-  {
-    teamId: 65,
-    name: "Nottingham Forest",
-    slug: "nottingham-forest",
-    logo: "https://media.api-sports.io/football/teams/65.png",
-    accent: "#DD0000",
-  },
-  {
-    teamId: 48,
-    name: "West Ham",
-    slug: "west-ham",
-    logo: "https://media.api-sports.io/football/teams/48.png",
-    accent: "#7A263A",
-  },
-  {
-    teamId: 39,
-    name: "Wolves",
-    slug: "wolves",
-    logo: "https://media.api-sports.io/football/teams/39.png",
-    accent: "#FDB913",
-  },
-];
 
 const HomePage = () => {
   const theme = useTheme();
@@ -237,7 +95,7 @@ const HomePage = () => {
                 textTransform: "uppercase",
               }}
             >
-              FIND YOUR <br />
+              JOIN YOUR <br />
               <Box
                 component="span"
                 sx={{
@@ -245,7 +103,7 @@ const HomePage = () => {
                   textShadow: `0 0 40px ${theme.palette.primary.main}`,
                 }}
               >
-                TRIBE
+                CLUB HUB
               </Box>
             </Typography>
 
@@ -254,8 +112,9 @@ const HomePage = () => {
               color="text.secondary"
               sx={{ maxWidth: "600px", mx: "auto", lineHeight: 1.6 }}
             >
-              The 11Votes network is siloed by club. Select your team to predict
-              scores, rate players, and define the official fan consensus.
+              The 11Votes network is grouped by club. Select your team to
+              predict scores, rate players, and define the official fan
+              consensus.
             </Typography>
           </Stack>
         </Container>
