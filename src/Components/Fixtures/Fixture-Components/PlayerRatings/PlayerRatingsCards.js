@@ -221,20 +221,27 @@ export function PlayerRatingCard({
     <Paper
       elevation={10}
       sx={{
-        width: isMobile ? "95%" : "500px", // Increased width slightly for mobile
+        // 1. Dynamic Solid Background Color logic
+        backgroundColor: (theme) =>
+          theme.palette.mode === "light"
+            ? "#F8FAFC" // Solid White (matches your light mode base)
+            : "#020617", // Solid Dark Grey (matches your dark mode rgb(20,20,20))
 
-        // --- FIX START ---
-        height: "auto", // Allow card to grow with content
-        minHeight: isMobile ? "500px" : "640px", // Ensure it's never too small
-        maxHeight: "85vh", // Ensure it fits within the screen height
-        pb: 2, // Add padding at bottom so content doesn't touch edge
-        // --- FIX END ---
-        margin: "auto",
+        // Optional: Reset backdrop filter since it's now opaque (performance boost)
+        backdropFilter: "none",
+
+        // 2. Your existing layout styles (converted to system props where applicable)
+        width: isMobile ? "95%" : "500px",
+        height: "auto",
+        minHeight: isMobile ? "500px" : "640px",
+        maxHeight: "85vh",
+        pb: 2, // 'pb' works natively in sx
+        m: "auto", // 'margin' becomes 'm'
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
-        overflow: "hidden", // Keeps the border-radius clean
+        overflow: "hidden",
         position: "relative",
       }}
     >
@@ -262,12 +269,7 @@ export function PlayerRatingCard({
             boxShadow: isMOTM ? 10 : 2,
           }}
         />
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          textAlign="center"
-          sx={{ color: "white" }}
-        >
+        <Typography variant="h4" fontWeight="bold" textAlign="center">
           {playerData?.name || player.name}
         </Typography>
 
@@ -275,7 +277,6 @@ export function PlayerRatingCard({
           <Typography
             variant="subtitle1"
             sx={{
-              color: "rgba(255,255,255,0.7)",
               textTransform: "uppercase",
               letterSpacing: 2,
               mt: 0.5,
@@ -314,8 +315,7 @@ export function PlayerRatingCard({
           width: "100%",
           position: "relative",
           backdropFilter: "blur(15px)",
-          background: "rgba(255, 255, 255, 0.05)",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
+
           p: 3,
           display: "flex",
           flexDirection: "column",
@@ -347,7 +347,6 @@ export function PlayerRatingCard({
               <Typography
                 variant="overline"
                 sx={{
-                  color: "text.secondary",
                   fontWeight: 700,
                   letterSpacing: 1.2,
                   mb: 1,
@@ -375,7 +374,6 @@ export function PlayerRatingCard({
               >
                 <Typography
                   variant="h4" // Larger, bolder text
-                  sx={{ color: "white", fontWeight: 900 }}
                 >
                   {storedUsersPlayerRating}
                 </Typography>
@@ -405,7 +403,6 @@ export function PlayerRatingCard({
               <Typography
                 variant="overline"
                 sx={{
-                  color: "text.secondary",
                   fontWeight: 700,
                   letterSpacing: 1.2,
                   mb: 1,
@@ -431,12 +428,7 @@ export function PlayerRatingCard({
                       : "rgba(0,0,0,0.05)",
                 }}
               >
-                <Typography
-                  variant="h4"
-                  sx={{ color: "white", fontWeight: 900 }}
-                >
-                  {playerRatingAverage}
-                </Typography>
+                <Typography variant="h4">{playerRatingAverage}</Typography>
               </Box>
             </Box>
           </Box>
@@ -464,13 +456,8 @@ export function PlayerRatingCard({
               height: isMobile ? 48 : 56,
               borderRadius: "16px",
               border: 1,
-              borderColor: isMOTM ? "warning.main" : "rgba(255,255,255,0.3)",
-              color: isMOTM ? "warning.main" : "rgba(255,255,255,0.5)",
-              "&.Mui-selected": {
-                bgcolor: "rgba(237, 108, 2, 0.2)",
-                color: "warning.main",
-                "&:hover": { bgcolor: "rgba(237, 108, 2, 0.3)" },
-              },
+              borderColor: isMOTM && "warning.main",
+              color: isMOTM && "warning.main",
             }}
           >
             {isMOTM ? (
@@ -528,14 +515,11 @@ const RatingInputSection = React.memo(
             disabled={sliderValue <= 1}
             sx={{
               border: "1px solid",
-              borderColor: "rgba(255,255,255,0.3)",
+
               // Smaller buttons on mobile
               width: isMobile ? 44 : 56,
               height: isMobile ? 44 : 56,
               borderRadius: "16px",
-              color: "white",
-              bgcolor: "rgba(255,255,255,0.05)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
             }}
           >
             <RemoveIcon fontSize={isMobile ? "small" : "medium"} />
@@ -552,9 +536,8 @@ const RatingInputSection = React.memo(
                   sliderValue >= 8
                     ? "#2ecc71"
                     : sliderValue >= 5
-                    ? "white"
+                    ? ""
                     : "#e74c3c",
-                textShadow: "0 4px 20px rgba(0,0,0,0.5)",
               }}
             >
               {sliderValue.toFixed(1).endsWith(".0")
@@ -566,7 +549,7 @@ const RatingInputSection = React.memo(
               sx={{
                 textTransform: "uppercase",
                 letterSpacing: 1,
-                color: "rgba(255,255,255,0.5)",
+
                 fontSize: isMobile ? "0.65rem" : "0.75rem",
               }}
             >
@@ -580,13 +563,10 @@ const RatingInputSection = React.memo(
             disabled={sliderValue >= 10}
             sx={{
               border: "1px solid",
-              borderColor: "rgba(255,255,255,0.3)",
+
               width: isMobile ? 44 : 56,
               height: isMobile ? 44 : 56,
               borderRadius: "16px",
-              color: "white",
-              bgcolor: "rgba(255,255,255,0.05)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
             }}
           >
             <AddIcon fontSize={isMobile ? "small" : "medium"} />
@@ -607,7 +587,6 @@ const RatingInputSection = React.memo(
               fontWeight: "bold",
               fontSize: isMobile ? "1rem" : "1.1rem",
               textTransform: "none",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
             }}
           >
             Confirm
@@ -681,10 +660,7 @@ const EventBadge = React.memo(({ type, label, time }) => {
         }}
       >
         <Box sx={{ display: "flex", color: color }}>{icon}</Box>
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: "bold", color: "white" }}
-        >
+        <Typography variant="caption" sx={{ fontWeight: "bold" }}>
           {time}
         </Typography>
       </Box>

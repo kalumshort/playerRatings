@@ -1,13 +1,24 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
 
 import {
   setLocalStorageItem,
   useIsMobile,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
-import { handleMatchMotmVote } from "../../../../Firebase/Firebase";
+import {
+  handleMatchMotmVote,
+  firebaseUpdateOrSetDoc,
+} from "../../../../Firebase/Firebase";
 import {
   selectMatchRatingsById,
   selectMotmPercentagesByMatchId,
@@ -31,16 +42,14 @@ import { useParams } from "react-router-dom";
 export default function PlayerRatings({ fixture }) {
   const dispatch = useDispatch();
   const showAlert = useAlert();
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const { currentGroup } = useGroupData();
-
   const { clubSlug } = useParams();
-
   const { user } = useAuth();
   const globalData = useGlobalData();
 
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
-
   const groupClubId = Number(currentGroup?.groupClubId);
 
   const motmPercentages = useSelector(
@@ -51,7 +60,6 @@ export default function PlayerRatings({ fixture }) {
   const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
 
   // === PERFORMANCE FIX: MEMOIZE PLAYER CALCULATIONS ===
-  // This ensures 'combinedPlayers' stays the same array unless fixture data actually changes.
   const { lineup, combinedPlayers } = useMemo(() => {
     const _lineup =
       fixture.lineups.find((team) => team.team.id === groupClubId)?.startXI ||
@@ -90,33 +98,46 @@ export default function PlayerRatings({ fixture }) {
   }, [fixture.lineups, fixture.events, groupClubId]);
   // =======================================================
 
-  const allPlayersRated =
-    usersMatchData?.players &&
-    combinedPlayers.every(({ id }) => id in usersMatchData?.players);
+  // 1. Calculate Missing Votes
+  const unratedPlayersCount = useMemo(() => {
+    if (!combinedPlayers) return 0;
+    const ratedIds = usersMatchData?.players
+      ? Object.keys(usersMatchData.players)
+      : [];
+    // Count how many combinedPlayers IDs are NOT in the ratedIds array
+    return combinedPlayers.filter((p) => !ratedIds.includes(String(p.id)))
+      .length;
+  }, [combinedPlayers, usersMatchData]);
 
-  const isSubmittable = allPlayersRated && storedUsersMatchMOTM;
+  const allPlayersRated = unratedPlayersCount === 0;
 
-  const handleRatingsSubmit = async () => {
-    if (!allPlayersRated) {
-      showAlert("Missing Some Ratings", "error");
-      return;
-    }
+  // Button is enabled if all players are rated. MOTM is optional (triggers popup).
+  const isSubmittable = allPlayersRated;
 
-    if (!storedUsersMatchMOTM) {
-      showAlert("Missing your MOTM");
-      return;
-    }
-    if (isSubmittable) {
-      await handleMatchMotmVote({
-        matchId: fixture.id,
-        playerId: String(storedUsersMatchMOTM),
-        value: 1,
-        groupId: currentGroup.groupId,
-        userId: user.uid,
-        currentYear: globalData.currentYear,
-      });
+  // 2. Logic to actually send data to Firebase
+  const performSubmission = async (motmId) => {
+    try {
+      if (motmId) {
+        // CASE A: With MOTM (Standard)
+        await handleMatchMotmVote({
+          matchId: fixture.id,
+          playerId: String(motmId),
+          value: 1,
+          groupId: currentGroup.groupId,
+          userId: user.uid,
+          currentYear: globalData.currentYear,
+        });
+      } else {
+        // CASE B: No MOTM (Manual Override)
+        await firebaseUpdateOrSetDoc({
+          path: `users/${user.uid}/groups/${currentGroup.groupId}/seasons/${globalData.currentYear}/matches`,
+          docId: String(fixture.id),
+          data: { ratingsSubmitted: true },
+        });
+      }
 
       setLocalStorageItem(`userMatchRatingSubmited-${fixture.id}`, true);
+
       dispatch(
         fetchMatchPlayerRatings({
           matchId: fixture.id,
@@ -131,46 +152,116 @@ export default function PlayerRatings({ fixture }) {
           currentYear: globalData.currentYear,
         })
       );
+
+      setOpenConfirmDialog(false);
+    } catch (error) {
+      console.error(error);
+      showAlert("Error submitting ratings", "error");
     }
   };
 
-  return fixture?.fixture?.status?.elapsed > 80 ? (
-    lineup.length === 0 ? (
-      <div style={{ textAlign: "center", padding: "10px" }}>Missing Lineup</div>
-    ) : isMatchRatingsSubmitted || !user ? (
-      <SubmittedPlayerRatings
-        motmPercentages={motmPercentages}
-        fixture={fixture} // Added fixture prop here as it was missing in your original code
-        combinedPlayers={combinedPlayers}
-        isMatchRatingsSubmitted={isMatchRatingsSubmitted}
-        handleRatingsSubmit={handleRatingsSubmit}
-        usersMatchPlayerRatings={usersMatchData?.players}
-      />
-    ) : (
-      <PlayerRatingsItems
-        combinedPlayers={combinedPlayers}
-        fixture={fixture}
-        isMatchRatingsSubmitted={isMatchRatingsSubmitted}
-        handleRatingsSubmit={handleRatingsSubmit}
-        groupId={currentGroup.groupId}
-        userId={user?.uid}
-        usersMatchPlayerRatings={usersMatchData?.players}
-        currentYear={globalData.currentYear}
-        isSubmittable={isSubmittable}
-        storedUsersMatchMOTM={storedUsersMatchMOTM}
-      />
-    )
-  ) : (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "200px",
-      }}
-    >
-      Ratings will open at minute 80
-    </div>
+  // 3. Handle Button Click
+  const handleRatingsSubmitClick = () => {
+    if (!allPlayersRated) {
+      showAlert(
+        `You have ${unratedPlayersCount} players left to rate!`,
+        "error"
+      );
+      return;
+    }
+
+    if (!storedUsersMatchMOTM) {
+      setOpenConfirmDialog(true);
+    } else {
+      performSubmission(storedUsersMatchMOTM);
+    }
+  };
+
+  return (
+    <>
+      {fixture?.fixture?.status?.elapsed > 80 ? (
+        lineup.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "10px" }}>
+            Missing Lineup
+          </div>
+        ) : isMatchRatingsSubmitted || !user ? (
+          <SubmittedPlayerRatings
+            motmPercentages={motmPercentages}
+            fixture={fixture}
+            combinedPlayers={combinedPlayers}
+            isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+            handleRatingsSubmit={handleRatingsSubmitClick}
+            usersMatchPlayerRatings={usersMatchData?.players}
+          />
+        ) : (
+          <PlayerRatingsItems
+            combinedPlayers={combinedPlayers}
+            fixture={fixture}
+            isMatchRatingsSubmitted={isMatchRatingsSubmitted}
+            handleRatingsSubmit={handleRatingsSubmitClick}
+            groupId={currentGroup.groupId}
+            userId={user?.uid}
+            usersMatchPlayerRatings={usersMatchData?.players}
+            currentYear={globalData.currentYear}
+            isSubmittable={isSubmittable}
+            storedUsersMatchMOTM={storedUsersMatchMOTM}
+            unratedPlayersCount={unratedPlayersCount} // Pass counts down
+          />
+        )
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "200px",
+          }}
+        >
+          Ratings will open at minute 80
+        </div>
+      )}
+
+      {/* --- CONFIRMATION DIALOG --- */}
+      <Dialog
+        open={openConfirmDialog}
+        onClose={() => setOpenConfirmDialog(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "rgba(20, 20, 20, 0.95)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "white",
+            borderRadius: "16px",
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "white" }}>
+          Submit without Man of the Match?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#aaa" }}>
+            You haven't selected a Man of the Match. Do you want to submit your
+            player ratings anyway?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenConfirmDialog(false)}
+            sx={{ color: "#aaa" }}
+          >
+            Go Back
+          </Button>
+          <Button
+            onClick={() => performSubmission(null)}
+            variant="contained"
+            color="primary"
+            autoFocus
+          >
+            Submit Anyway
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
@@ -186,6 +277,7 @@ const PlayerRatingsItems = ({
   currentYear,
   isSubmittable,
   storedUsersMatchMOTM,
+  unratedPlayersCount, // New Prop
 }) => {
   const isMobile = useIsMobile();
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
@@ -210,16 +302,48 @@ const PlayerRatingsItems = ({
       />
 
       {!isMatchRatingsSubmitted && (
-        <div style={{ textAlign: "center", width: "100%" }}>
+        <div style={{ textAlign: "center", width: "100%", marginTop: "10px" }}>
           <Button
             onClick={() => handleRatingsSubmit()}
             variant="outlined"
             fontSize="large"
             className="PlayerRatingSubmit"
             disabled={!isSubmittable}
+            sx={{
+              opacity: !isSubmittable ? 0.5 : 1,
+            }}
           >
             Submit Ratings
           </Button>
+
+          {/* --- INFO SECTION UNDER BUTTON --- */}
+          <div style={{ marginTop: "12px", minHeight: "24px" }}>
+            {unratedPlayersCount > 0 && (
+              <Typography
+                variant="caption"
+                sx={{ color: "#ff4d4d", display: "block", fontWeight: "bold" }}
+              >
+                • Missing {unratedPlayersCount} player vote
+                {unratedPlayersCount !== 1 ? "s" : ""}
+              </Typography>
+            )}
+            {!storedUsersMatchMOTM && (
+              <Typography
+                variant="caption"
+                sx={{ color: "#ffb74d", display: "block", fontWeight: "bold" }}
+              >
+                • Missing MOTM vote
+              </Typography>
+            )}
+            {unratedPlayersCount === 0 && storedUsersMatchMOTM && (
+              <Typography
+                variant="caption"
+                sx={{ color: "#4caf50", display: "block", fontWeight: "bold" }}
+              >
+                Ready to submit!
+              </Typography>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -241,247 +365,3 @@ const SubmittedPlayerRatings = ({
     </>
   );
 };
-// const PlayerRatingItem = ({
-//   player,
-//   fixture,
-//   isMobile,
-//   matchRatings,
-//   readOnly,
-//   groupId,
-//   userId,
-//   usersMatchPlayerRating,
-//   currentYear,
-// }) => {
-//   const playerData = useSelector(selectSquadPlayerById(player.id));
-
-//   const { themeBackgroundImageBanner } = useTheme();
-
-//   const storedUsersPlayerRating = usersMatchPlayerRating;
-//   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
-
-//   // const [sliderValue, setSliderValue] = useState(6);
-
-//   // const handleSliderChange = (event, newValue) => {
-//   //   setSliderValue(newValue);
-//   // };
-
-//   const isMOTM = storedUsersMatchMOTM === String(player?.id);
-
-//   // Filter: Goals scored by the player
-//   // const goals = fixture?.events.filter(
-//   //   (event) => event.type === "Goal" && event.player?.id === player.id
-//   // );
-
-//   // Filter: Assists for goals by the player
-//   // const assists = fixture?.events.filter(
-//   //   (event) => event.type === "Goal" && event.assist?.id === player.id
-//   // );
-
-//   // Filter: Cards received by the player
-//   // const cards = fixture?.events.filter(
-//   //   (event) => event.type === "Card" && event.player?.id === player.id
-//   // );
-
-//   // const yellowCards = cards?.filter(
-//   //   (card) => card.detail === "Yellow Card"
-//   // ).length;
-//   // const redCards = cards?.filter((card) => card.detail === "Red Card").length;
-
-//   // let cardIcon = null;
-//   // if (yellowCards === 2 && redCards === 1) {
-//   //   cardIcon =
-//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow-red.svg";
-//   // } else if (yellowCards === 1 && redCards === 0) {
-//   //   cardIcon =
-//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-yellow.svg";
-//   // } else if (redCards === 1) {
-//   //   cardIcon =
-//   //     "https://www.premierleague.com/resources/rebrand/v7.153.31/i/elements/icons/card-red.svg";
-//   // }
-
-//   const playerRatingAverage = matchRatings?.[player.id]?.totalRating
-//     ? (
-//         matchRatings[player.id]?.totalRating /
-//         matchRatings[player.id]?.totalSubmits
-//       ).toFixed(1)
-//     : storedUsersPlayerRating;
-
-//   const onRatingClick = async (rating) => {
-//     await handlePlayerRatingSubmit({
-//       matchId: fixture.id,
-//       playerId: String(player.id),
-//       rating: rating,
-//       userId: userId,
-//       groupId: groupId,
-//       currentYear,
-//     });
-//   };
-//   const handleMotmClick = async () => {
-//     if (readOnly) {
-//       return;
-//     }
-//     if (isMOTM) {
-//       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, null);
-//     } else {
-//       setLocalStorageItem(`userMatchMOTM-${fixture.id}`, String(player.id));
-//     }
-//   };
-
-//   return (
-//     <div
-//       className={`PlayerRatingItem ${isMOTM ? "motm" : ""}`}
-//       style={{
-//         width: "100%",
-//         backgroundImage: `url(${themeBackgroundImageBanner})`,
-//         backgroundSize: "cover",
-//         backgroundPosition: "center",
-//         backgroundRepeat: "no-repeat",
-//       }}
-//     >
-//       <div className="PlayerRatingInner">
-//         <span className="PlayerRatingsNameContainer">
-//           <div
-//             style={{
-//               display: "flex",
-//               justifyContent: "space-evenly",
-//               width: "100%",
-//               alignItems: "center",
-//             }}
-//           >
-//             <h2 className="PlayerRatingName">
-//               {playerData?.name || player.name}
-//             </h2>
-//             <div
-//               className="PlayerRatingMotm"
-//               style={{
-//                 cursor: readOnly ? "default" : "pointer",
-//                 pointerEvents: readOnly ? "none" : "auto",
-//               }}
-//             >
-//               {isMOTM ? (
-//                 <StarIcon
-//                   fontSize="large"
-//                   onClick={handleMotmClick}
-//                   color="primary"
-//                 />
-//               ) : !readOnly ? (
-//                 <StarOutlineIcon fontSize="large" onClick={handleMotmClick} />
-//               ) : null}
-//             </div>
-//           </div>
-
-//           {/* {!storedUsersPlayerRating && (
-//             <div
-//               className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-//                 sliderValue
-//               )}`}
-//               style={{ justifySelf: "end" }}
-//             >
-//               <h4 className="PlayerRatingsCommunityScore textShadow">
-//                 {sliderValue}
-//               </h4>
-//             </div>
-//           )} */}
-
-//           {/* {goals?.map((goal, index) => (
-//             <img
-//               key={index}
-//               src="https://img.icons8.com/?size=100&id=cg5jSDHEKVtO&format=png&color=000000"
-//               alt="Goal Icon"
-//               className="PlayerRatingsIcon"
-//             />
-//           ))}
-
-//           {cardIcon && (
-//             <img src={cardIcon} alt="Card Icon" className="PlayerRatingsIcon" />
-//           )} */}
-//           <div
-//             className="PlayerRatingImg"
-//             style={{
-//               backgroundImage: `url(${
-//                 playerData?.photo || player.photo || missingPlayerImg
-//               })`,
-//             }}
-//           ></div>
-//         </span>
-
-//         {!storedUsersPlayerRating ? (
-//           <div className="PlayerRatingsChoices">
-//             {Array.from({ length: 10 }, (_, i) => (
-//               <ButtonGroup
-//                 key={i}
-//                 className="PlayerRatingsButtonGroup"
-//                 aria-label="PlayerRatingsButtonGroup"
-//                 orientation={isMobile ? "horizontal" : "horizontal"}
-//                 size="large"
-//               >
-//                 <Button
-//                   variant="contained"
-//                   className="PlayerRatingsButton"
-//                   onClick={() => onRatingClick(i + 1)}
-//                 >
-//                   {i + 1}
-//                 </Button>
-
-//                 {i !== 9 && (
-//                   <Button
-//                     variant="outlined"
-//                     className="PlayerRatingsButton PlayerRatingsButton2"
-//                     onClick={() => onRatingClick(i + 1.5)}
-//                   >
-//                     .5
-//                   </Button>
-//                 )}
-//               </ButtonGroup>
-//             ))}
-//           </div>
-//         ) : (
-//           <div className="PlayerRatingsResults">
-//             <div className="PlayerRatingsCommunityContainer">
-//               <h2 className="PlayerRatingsCommunityTitle">Your Score</h2>
-//               <div
-//                 className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-//                   storedUsersPlayerRating
-//                 )}`}
-//               >
-//                 <h4 className="PlayerRatingsCommunityScore textShadow">
-//                   {storedUsersPlayerRating}
-//                 </h4>
-//               </div>
-//             </div>
-
-//             <div className="PlayerRatingsCommunityContainer">
-//               <h2 className="PlayerRatingsCommunityTitle">Community Score</h2>
-//               <div
-//                 className={`globalBoxShadow PlayerStatsListItemScoreContainer ${getRatingClass(
-//                   playerRatingAverage
-//                 )}`}
-//               >
-//                 <h4 className="PlayerRatingsCommunityScore textShadow">
-//                   {playerRatingAverage}
-//                 </h4>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// <Slider
-//             className="slider-marks-top"
-//             value={sliderValue}
-//             onChange={handleSliderChange}
-//             step={0.5}
-//             min={1}
-//             max={10}
-//           />
-//           <IconButton
-//             aria-label="confirm"
-//             size="large"
-//             variant="outlined"
-//             onClick={() => onRatingClick()}
-//           >
-//             <CheckIcon />
-//           </IconButton>

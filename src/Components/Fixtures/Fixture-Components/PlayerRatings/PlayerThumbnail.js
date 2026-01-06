@@ -70,8 +70,8 @@ function PlayerThumbnail({
             height: 38,
             mx: "auto",
             fontWeight: 800,
-            bgcolor: "#212121",
-            border: `2px solid ${isActive ? ACCENT : "#2a2a2a"}`,
+
+            border: `2px solid ${isActive && ACCENT}`,
             transition:
               "transform 160ms ease, border-color 160ms ease, filter 160ms ease",
             transform: isActive ? "scale(1.06)" : "scale(1)",

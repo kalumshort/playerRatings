@@ -46,8 +46,7 @@ export default function PlayerImageCarousel({
           left: 0,
           top: "50%",
           transform: "translateY(-50%)",
-          bgcolor: "rgba(0,0,0,0.35)",
-          "&:hover": { bgcolor: "rgba(0,0,0,0.55)" },
+
           zIndex: 1,
         }}
       >
@@ -61,7 +60,7 @@ export default function PlayerImageCarousel({
           right: 0,
           top: "50%",
           transform: "translateY(-50%)",
-          bgcolor: "rgba(0,0,0,0.35)",
+
           "&:hover": { bgcolor: "rgba(0,0,0,0.55)" },
           zIndex: 1,
         }}
