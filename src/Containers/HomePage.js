@@ -79,7 +79,6 @@ const HomePage = () => {
               variant="outlined"
               icon={<Bolt />}
               sx={{
-                fontFamily: "'Space Mono'",
                 fontWeight: 700,
                 backdropFilter: "blur(10px)",
                 bgcolor: alpha(theme.palette.background.paper, 0.5),
@@ -148,7 +147,7 @@ const HomePage = () => {
             <Search />
           </IconButton>
           <InputBase
-            sx={{ ml: 1, flex: 1, fontFamily: "'Space Mono'" }}
+            sx={{ ml: 1, flex: 1 }}
             placeholder="Search for your club..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -225,7 +224,7 @@ const HomePage = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Stack spacing={4}>
-                <Typography variant="h3" sx={{ fontFamily: "'VT323'" }}>
+                <Typography variant="h3" sx={{}}>
                   THE SECOND SCREEN EXPERIENCE
                 </Typography>
                 <FeatureRow
