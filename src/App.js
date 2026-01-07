@@ -6,9 +6,7 @@ import {
   Navigate,
   Outlet,
   useParams,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+} from "react-router-dom"; // Removed useNavigate, useLocation
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 
@@ -17,7 +15,6 @@ import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
 import useGlobalData from "./Hooks/useGlobalData";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import { slugToClub } from "./Hooks/Helper_Functions";
 
 // --- Redux Selectors & Actions ---
 import { selectSquadLoad } from "./Selectors/squadDataSelectors";
@@ -33,7 +30,7 @@ import { GlobalContainer } from "./Containers/GlobalContainer";
 import { Spinner } from "./Containers/Helpers";
 import Header from "./Containers/Header";
 import HomePage from "./Containers/HomePage";
-import { Box } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material"; // Added Typography, Button
 import SignUpButton from "./Components/Auth/SignUpButton";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
@@ -41,6 +38,7 @@ import Footer from "./Containers/Footer/Footer";
 import ContactForm from "./Containers/Footer/ContactForm";
 import PrivacyPolicy from "./Containers/Footer/PrivacyPolicy";
 import TermsOfService from "./Containers/Footer/TermsOfService";
+import useUserData from "./Hooks/useUserData";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -55,70 +53,40 @@ const SchedulePage = lazy(() => import("./Containers/SchedulePage"));
 const Fixture = lazy(() => import("./Components/Fixtures/Fixture"));
 const PlayerPage = lazy(() => import("./Components/PlayerStats/PlayerPage"));
 
-// --- 1. Custom Hook: Data Loader (URL Aware & Force Refresh) ---
+// --- 1. Custom Hook: Data Loader ---
 const useAppDataLoader = (currentYear) => {
   const dispatch = useDispatch();
-  const { clubSlug } = useParams();
+  const { currentGroup } = useGroupData();
 
   useEffect(() => {
-    const clubConfig = slugToClub[clubSlug];
-    if (clubConfig) {
-      const clubId = clubConfig.teamId;
-      // We force a fetch whenever the clubSlug changes
-      // This ensures fixtures and squad data are fresh for the new club context
+    if (currentGroup) {
+      const clubId = currentGroup.groupClubId;
       console.log(
         `[DataLoader] Fetching fixtures/squad for Club ID: ${clubId}`
       );
       dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
       dispatch(fetchFixtures({ clubId: clubId, currentYear }));
     }
-  }, [dispatch, clubSlug, currentYear]); // Dependency on clubSlug ensures refresh on group switch
+  }, [dispatch, currentGroup, currentYear]);
 };
 
 // --- 2. Dynamic Listeners Component ---
 const DynamicListeners = ({ user }) => {
-  const { clubSlug } = useParams();
-  const clubConfig = slugToClub[clubSlug];
-  const groupIdFromUrl = clubConfig?.teamId ? String(clubConfig.teamId) : null;
+  const { currentGroup } = useGroupData();
 
-  return <>{groupIdFromUrl && <GroupListener groupId={groupIdFromUrl} />}</>;
+  return (
+    <>
+      {currentGroup.groupClubId && (
+        <GroupListener groupId={currentGroup.groupClubId} />
+      )}
+    </>
+  );
 };
 
-// --- 3. Navigation Sync (Force-Home on Change) ---
-const NavigationSync = ({ activeGroup, groupDataLoaded }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+// --- REMOVED NavigationSync ---
+// It creates circular logic with the RouteGuard. Rely on standard Routes.
 
-  useEffect(() => {
-    if (groupDataLoaded && activeGroup?.slug) {
-      const currentPath = location.pathname;
-      const targetSlug = activeGroup.slug;
-
-      const pathSegments = currentPath.split("/").filter(Boolean);
-      const currentSlugInUrl = pathSegments[0];
-      if (
-        currentSlugInUrl === "profile" ||
-        currentSlugInUrl === "contact" ||
-        currentSlugInUrl === "privacy-policy" ||
-        currentSlugInUrl === "terms-of-service"
-      ) {
-        return;
-      }
-
-      // If the URL slug doesn't match the active group, reset to the group's home page
-      if (currentSlugInUrl !== targetSlug) {
-        console.log(
-          `[NavSync] Group switch detected. Resetting to /${targetSlug}`
-        );
-        navigate(`/${targetSlug}`, { replace: true });
-      }
-    }
-  }, [activeGroup, groupDataLoaded, navigate, location.pathname]);
-
-  return null;
-};
-
-// --- 4. Main Layout ---
+// --- 3. Main Layout ---
 const MainLayout = () => (
   <>
     <Header />
@@ -131,7 +99,7 @@ const MainLayout = () => (
   </>
 );
 
-// --- 5. Home Route Controller ---
+// --- 4. Home Route Controller ---
 const HomeRouteController = ({
   user,
   userLoading,
@@ -142,17 +110,20 @@ const HomeRouteController = ({
   if (!user) return <HomePage />;
   if (!groupDataLoaded) return <Spinner text="Loading club preferences..." />;
 
-  // Redirect to active group slug if available
-  if (userHomeGroup?.slug)
+  // If we have a home group, send them there.
+  // Note: If ClubRouteGuard denies access, it will handle the UI,
+  // so we won't bounce back here.
+  if (userHomeGroup?.slug) {
+    console.log("[HomeRouteController] Redirecting to:", userHomeGroup.slug);
     return <Navigate to={`/${userHomeGroup.slug}`} replace />;
+  }
 
   return <GlobalGroupSelect />;
 };
 
-// --- 6. Club Shell (Context Provider for Loader) ---
+// --- 5. Club Shell ---
 const ClubShell = ({ user }) => {
   const { currentYear } = useGlobalData();
-  // Loader lives here to access useParams() for the clubSlug
   useAppDataLoader(currentYear);
 
   return (
@@ -178,13 +149,13 @@ const ClubShell = ({ user }) => {
   );
 };
 
-// --- 7. Route Guard ---
+// --- 6. Route Guard (THE FIX) ---
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.userData);
+  const { userData } = useUserData();
   const [loading, setLoading] = useState(true);
-  const [isValid, setIsValid] = useState(false);
+  const [accessStatus, setAccessStatus] = useState("PENDING"); // PENDING, GRANTED, DENIED
 
   useEffect(() => {
     const fetchGroupContext = async () => {
@@ -197,36 +168,71 @@ const ClubRouteGuard = ({ children }) => {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          setIsValid(false);
+          console.error("Group not found for slug:", clubSlug);
+          setAccessStatus("DENIED");
+          setLoading(false);
           return;
         }
 
         const groupDoc = querySnapshot.docs[0];
-        const groupData = { ...groupDoc.data(), groupId: groupDoc.id };
+        // Ensure groupId is a string for comparison
+        const groupData = { ...groupDoc.data(), groupId: String(groupDoc.id) };
 
-        if (
-          groupData.visibility === "public" ||
-          user?.groups?.includes(groupData.groupId)
-        ) {
+        // --- STRICTER PERMISSION CHECK ---
+        const isPublic = groupData.visibility === "public";
+
+        // Ensure user.groups is an array and compare Strings
+        const hasUserAccess =
+          userData?.groups && Array.isArray(userData.groups)
+            ? userData.groups.map(String).includes(String(groupData.groupId))
+            : false;
+
+        if (isPublic || hasUserAccess) {
+          console.log("[ClubRouteGuard] Access GRANTED");
           dispatch(
             updateGroupData({ groupId: groupData.groupId, data: groupData })
           );
           dispatch(setCurrentGroup(groupData));
-          setIsValid(true);
+          setAccessStatus("GRANTED");
         } else {
-          setIsValid(false);
+          console.warn(
+            "[ClubRouteGuard] Access DENIED. User groups:",
+            userData?.groups,
+            "Target Group:",
+            groupData.groupId
+          );
+          setAccessStatus("DENIED");
         }
       } catch (error) {
-        setIsValid(false);
+        console.error("Error in Guard:", error);
+        setAccessStatus("DENIED");
       } finally {
         setLoading(false);
       }
     };
     if (clubSlug) fetchGroupContext();
-  }, [clubSlug, dispatch, user]);
+  }, [clubSlug, dispatch, userData]);
 
   if (loading) return <Spinner text="Verifying Club Access..." />;
-  return isValid ? children : <Navigate to="/" replace />;
+
+  // STOP THE BOUNCE: If denied, show a message instead of redirecting to "/"
+  if (accessStatus === "DENIED") {
+    return (
+      <Box sx={{ textAlign: "center", mt: 10, p: 4 }}>
+        <Typography variant="h4" color="error" gutterBottom>
+          Access Restricted
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 3 }}>
+          You do not have permission to view this group, or it does not exist.
+        </Typography>
+        <Button variant="outlined" href="/">
+          Return to Home
+        </Button>
+      </Box>
+    );
+  }
+
+  return children;
 };
 
 function App() {
@@ -243,11 +249,7 @@ function App() {
       <GlobalContainer>
         {user && <UserDataListener userId={user.uid} />}
         <Router>
-          {/* NavigationSync handles group-switch redirects based on activeGroup slug */}
-          <NavigationSync
-            activeGroup={userHomeGroup}
-            groupDataLoaded={groupDataLoaded}
-          />
+          {/* REMOVED NavigationSync */}
 
           <Routes>
             <Route element={<MainLayout />}>
