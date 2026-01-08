@@ -4,8 +4,6 @@ const { logger } = require("firebase-functions");
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
-const axios = require("axios");
-
 // const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 
 // The Firebase Admin SDK to access Firestore.
@@ -15,7 +13,7 @@ const {
   FieldValue,
   Timestamp,
 } = require("firebase-admin/firestore");
-const { fetchAllMatchData } = require("./helperFunctions");
+const { fetchAllMatchData, fetchFootballApi } = require("./helperFunctions");
 const { onCall, HttpsError } = require("firebase-functions/https");
 
 const nodemailer = require("nodemailer");
@@ -272,20 +270,18 @@ exports.updateFixtures = onSchedule(
     try {
       const SEASON = 2025;
       const LEAGUE_ID = 39;
-      const API_KEY = "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6";
-      const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
 
       // ======================================================
       // PART 1: GET THE LIST OF TEAMS
       // ======================================================
       logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
 
-      const teamsResponse = await axios.get(`${BASE_URL}/teams`, {
-        params: { league: LEAGUE_ID, season: SEASON },
-        headers: { "x-rapidapi-key": API_KEY },
+      // REFACTORED: Use shared helper
+      const teams = await fetchFootballApi("teams", {
+        league: LEAGUE_ID,
+        season: SEASON,
       });
 
-      const teams = teamsResponse.data.response;
       const uniqueMatchesMap = {};
 
       logger.info(`Processing ${teams.length} teams...`);
@@ -300,12 +296,12 @@ exports.updateFixtures = onSchedule(
         // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
         try {
           // --- A. FETCH FIXTURES ---
-          const fixturesResponse = await axios.get(`${BASE_URL}/fixtures`, {
-            params: { team: teamId, season: SEASON },
-            headers: { "x-rapidapi-key": API_KEY },
-          });
-
-          const teamFixtures = fixturesResponse.data.response || [];
+          // REFACTORED: Use shared helper. It returns the "response" array directly.
+          const teamFixtures =
+            (await fetchFootballApi("fixtures", {
+              team: teamId,
+              season: SEASON,
+            })) || [];
 
           // Add to map (Deduplication happens here automatically)
           teamFixtures.forEach((fixtureObj) => {
@@ -328,18 +324,19 @@ exports.updateFixtures = onSchedule(
           });
 
           // --- B. FETCH SQUADS ---
-          const squadResponse = await axios.get(`${BASE_URL}/players/squads`, {
-            params: { team: teamId },
-            headers: { "x-rapidapi-key": API_KEY },
+          // REFACTORED: Use shared helper
+          const squadData = await fetchFootballApi("players/squads", {
+            team: teamId,
           });
 
           // 🛡️ Safety: Default to empty array if undefined
-          const squadPlayers = squadResponse.data.response[0]?.players || [];
+          const squadPlayers = squadData[0]?.players || [];
           const playerIds = squadPlayers.map((player) => player.id);
 
           const teamSquadsRef = db
             .collection(`teamSquads/${teamId}/season`)
             .doc(SEASON.toString());
+
           const teamSquadsDoc = await teamSquadsRef.get();
 
           const existingSeasonSquad = teamSquadsDoc.exists
@@ -379,6 +376,8 @@ exports.updateFixtures = onSchedule(
         `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`
       );
 
+      // Note: If array is huge (>500), consider batching this properly.
+      // Promise.all is fine for smaller sets but can hit limits.
       const writePromises = uniqueMatchesArray.map((matchData) => {
         return db
           .collection(`fixtures/${SEASON}/fixtures`)
@@ -414,6 +413,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
 
       // 2. QUERY FIRESTORE
       // Find matches scheduled in this window
+      // Make sure this matches your path structure in updateFixtures
       const snapshot = await db
         .collection("fixtures/2025/fixtures")
         .where("timestamp", ">=", minTime)
@@ -435,7 +435,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
 
         // A. Is the match already marked as FINISHED in our DB?
         // If yes, we don't need to check it again every minute.
-        if (["FT"].includes(status)) {
+        if (["FT", "AET", "PEN"].includes(status)) {
           return; // Skip it
         }
 
@@ -468,7 +468,8 @@ exports.scheduledLiveMatchUpdate = onSchedule(
       );
 
       // 4. FETCH DATA (Parallel Execution)
-      // We run fetchAllMatchData for all valid matches
+      // REFACTORED: This now uses the fetchAllMatchData from the previous step
+      // which handles the centralized key and new endpoints internally.
       const updatePromises = matchesToUpdate.map(async (fixtureId) => {
         try {
           await fetchAllMatchData({ fixtureId });

@@ -1,25 +1,53 @@
 const axios = require("axios");
-
 const { getFirestore } = require("firebase-admin/firestore");
+
+// --- CONFIGURATION ---
+const API_KEY = "7074e7d716eac4f8b67251541d144aba";
+const BASE_URL = "https://v3.football.api-sports.io";
+
+/**
+ * Generic helper to fetch data from API-Football.
+ * @param {string} endpoint - The endpoint path (e.g., "fixtures", "fixtures/statistics").
+ * @param {object} params - Query parameters (e.g., { id: 123, fixture: 456 }).
+ */
+const fetchFootballApi = async (endpoint, params = {}) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/${endpoint}`, {
+      headers: {
+        "x-apisports-key": API_KEY, // Header specific to the direct URL
+      },
+      params: params, // Axios automatically serializes this to ?key=value
+    });
+
+    const data = response.data.response;
+
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      // Depending on strictness, you might want to log this but return empty,
+      // or throw an error. Currently keeping your logic of throwing.
+      throw new Error(
+        `No data found for endpoint: ${endpoint} with params: ${JSON.stringify(
+          params
+        )}`
+      );
+    }
+
+    return data;
+  } catch (error) {
+    // Enhance error logging to see API response details if available
+    const msg = error.response?.data?.message || error.message;
+    console.error(`API Error [${endpoint}]:`, msg);
+    throw error;
+  }
+};
+
+// --- SPECIFIC FETCH FUNCTIONS ---
 
 const fetchFixtureData = async (fixtureId) => {
   try {
-    const response = await axios.get(
-      `https://api-football-v1.p.rapidapi.com/v3/fixtures?id=${fixtureId}`,
-      {
-        headers: {
-          "x-rapidapi-key":
-            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-        },
-      }
-    );
-
-    const fixtureObj = response.data.response[0]; // Assuming API response structure
-
-    if (!fixtureObj) {
-      throw new Error(`No fixture found for ID ${fixtureId}`);
-    }
+    // Determine endpoint based on ID.
+    // The API returns an array, we want the first item.
+    const data = await fetchFootballApi("fixtures", { id: fixtureId });
+    const fixtureObj = data[0];
 
     return {
       fixture: fixtureObj.fixture,
@@ -30,108 +58,60 @@ const fetchFixtureData = async (fixtureId) => {
       matchDate: fixtureObj.fixture.timestamp,
     };
   } catch (error) {
-    console.error(
-      `Error fetching data for fixture ${fixtureId}:`,
-      error.message
-    );
-    throw error; // Re-throw the error to handle it in the calling function
+    console.error(`Error in fetchFixtureData for ${fixtureId}:`, error.message);
+    throw error;
   }
 };
+
 const fetchStatisticsData = async (fixtureId) => {
   try {
-    const response = await axios.get(
-      `https://api-football-v1.p.rapidapi.com/v3/fixtures/statistics?fixture=${fixtureId}`,
-      {
-        headers: {
-          "x-rapidapi-key":
-            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-        },
-      }
-    );
-
-    const statisticsObj = response.data.response; // Assuming API response structure
-
-    if (!statisticsObj) {
-      throw new Error(`No fixture found for ID ${fixtureId}`);
-    }
-
-    return statisticsObj;
+    return await fetchFootballApi("fixtures/statistics", {
+      fixture: fixtureId,
+    });
   } catch (error) {
     console.error(
-      `Error fetchStatisticsData  for fixture ${fixtureId}:`,
+      `Error in fetchStatisticsData for ${fixtureId}:`,
       error.message
     );
-    throw error; // Re-throw the error to handle it in the calling function
+    throw error;
   }
 };
+
 const fetchEventsData = async (fixtureId) => {
   try {
-    const response = await axios.get(
-      `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
-      {
-        headers: {
-          "x-rapidapi-key":
-            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-        },
-      }
-    );
-
-    const eventsObj = response.data.response; // Assuming API response structure
-
-    if (!eventsObj) {
-      throw new Error(`No fixture found for ID ${fixtureId}`);
-    }
-
-    return eventsObj;
+    return await fetchFootballApi("fixtures/events", { fixture: fixtureId });
   } catch (error) {
-    console.error(
-      `Error fetchEventsData for fixture ${fixtureId}:`,
-      error.message
-    );
-    throw error; // Re-throw the error to handle it in the calling function
+    console.error(`Error in fetchEventsData for ${fixtureId}:`, error.message);
+    throw error;
   }
 };
+
 const fetchLineupData = async (fixtureId) => {
   try {
-    const response = await axios.get(
-      `https://api-football-v1.p.rapidapi.com/v3/fixtures/lineups?fixture=${fixtureId}`,
-      {
-        headers: {
-          "x-rapidapi-key":
-            "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-          // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-        },
-      }
-    );
-
-    const lineupObj = response.data.response; // Assuming API response structure
-
-    if (!lineupObj) {
-      throw new Error(`No fixture found for ID ${fixtureId}`);
-    }
-
-    return lineupObj;
+    return await fetchFootballApi("fixtures/lineups", { fixture: fixtureId });
   } catch (error) {
-    console.error(
-      `Error fetchLineupData for fixture ${fixtureId}:`,
-      error.message
-    );
-    throw error; // Re-throw the error to handle it in the calling function
+    console.error(`Error in fetchLineupData for ${fixtureId}:`, error.message);
+    throw error;
   }
 };
+
+// --- AGGREGATION & FIRESTORE LOGIC ---
 
 const fetchAllMatchData = async ({ fixtureId }) => {
   console.log(`Fetching all data for fixture: ${fixtureId}`);
   try {
-    const fixtureData = await fetchFixtureData(fixtureId);
-
-    const fixtureStatsData = await fetchStatisticsData(fixtureId);
-
-    const fixtureLineupData = await fetchLineupData(fixtureId);
-
-    const fixtureEventsData = await fetchEventsData(fixtureId);
+    // Run fetches in parallel for better performance
+    const [
+      fixtureData,
+      fixtureStatsData,
+      fixtureLineupData,
+      fixtureEventsData,
+    ] = await Promise.all([
+      fetchFixtureData(fixtureId),
+      fetchStatisticsData(fixtureId),
+      fetchLineupData(fixtureId),
+      fetchEventsData(fixtureId),
+    ]);
 
     const combinedFixtureData = {
       ...fixtureData,
@@ -152,14 +132,13 @@ const fetchAllMatchData = async ({ fixtureId }) => {
       .collection("fixtures")
       .doc(fixtureId.toString())
       .set(combinedFixtureData, { merge: true });
+
     console.log(`Successfully saved data for fixture ${fixtureId}`);
-    return;
   } catch (error) {
     console.error(
       `Error fetching or saving data for fixture ${fixtureId}:`,
       error.stack
     );
-    return;
   }
 };
 
@@ -168,7 +147,9 @@ const checkTeamsLatestFixture = async (teamId) => {
   console.log(`Checking latest fixture for team: ${teamId}`);
   try {
     // Query the next match
+    // Note: Ensure your Firestore path `fixtures/2025/${teamId}` is correct for your DB structure
     const matchesRef = getFirestore().collection(`fixtures/2025/${teamId}`);
+
     const nextFixture = await matchesRef
       .where("matchDate", ">=", now)
       .orderBy("matchDate", "asc")
@@ -182,7 +163,7 @@ const checkTeamsLatestFixture = async (teamId) => {
       .get();
 
     if (nextFixture.empty || lastFixture.empty) {
-      console.log("Fixture was empty");
+      console.log("Fixture was empty (Next or Last fixture missing)");
       return;
     }
 
@@ -190,9 +171,10 @@ const checkTeamsLatestFixture = async (teamId) => {
     const lastFixtureData = lastFixture.docs[0].data();
 
     let latestFixture = null;
-
     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
 
+    // Logic: If the last match was over 24h ago, look at the next match.
+    // Otherwise, stick to the last match.
     if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
       latestFixture = nextFixtureData;
     } else {
@@ -210,7 +192,7 @@ const checkTeamsLatestFixture = async (teamId) => {
     // Calculate the difference in seconds
     const timeDifference = Math.abs(now - matchStartingTimestamp);
 
-    // Check if the difference is within 1 hour (3600 seconds)
+    // Check if within 1 hour OR match is currently active
     if (timeDifference <= 3600) {
       console.log("The timestamp is within an hour of the starting time.");
       await fetchAllMatchData({ fixtureId: latestFixtureId, teamId: teamId });
@@ -226,20 +208,12 @@ const checkTeamsLatestFixture = async (teamId) => {
 
     console.log("Successful");
   } catch (error) {
-    console.error("Error fetching match data:", error);
+    console.error("Error checking team latest fixture:", error);
   }
 };
 
-//  if (process.env.FIRESTORE_EMULATOR_HOST) {
-//   console.log(
-//     "Using Firestore Emulator:",
-//     process.env.FIRESTORE_EMULATOR_HOST
-//   );
-// } else {
-//   console.log("Using Firestore Production Database");
-// }
-
 module.exports = {
+  fetchFootballApi, // Exported so you can use it elsewhere
   fetchFixtureData,
   fetchStatisticsData,
   fetchLineupData,
