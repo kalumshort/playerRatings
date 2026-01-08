@@ -121,7 +121,58 @@ exports.removeUserFromGroup = onCall(async (request, context) => {
     throw new HttpsError("internal", "Unable to remove user from group");
   }
 });
+// exports.backfillFixtures = onCall(
+//   {
+//     timeoutSeconds: 540,
+//     memory: "512MiB",
+//   },
+//   async (request) => {
+//     // 1. Get arguments from the client call
+//     // We default to Jan 7th, but this allows you to pass any date from the frontend later
+//     const dateToFetch = request.data.date || "2026-01-07";
 
+//     logger.info(`Starting backfill for ${dateToFetch}...`);
+
+//     try {
+//       // 2. Fetch fixture list
+//       const fixtures = await fetchFootballApi("fixtures", {
+//         league: 39,
+//         season: 2025,
+//         date: dateToFetch,
+//       });
+
+//       if (!fixtures || fixtures.length === 0) {
+//         return { success: false, message: "No matches found for this date." };
+//       }
+
+//       // 3. Loop and fetch details
+//       const results = [];
+//       for (const game of fixtures) {
+//         const fixtureId = game.fixture.id;
+//         const matchTitle = `${game.teams.home.name} vs ${game.teams.away.name}`;
+
+//         try {
+//           await fetchAllMatchData({ fixtureId: fixtureId });
+//           results.push(`✅ Success: ${matchTitle}`);
+//         } catch (err) {
+//           logger.error(`Failed to process ${matchTitle}`, err);
+//           results.push(`❌ Failed: ${matchTitle}`);
+//         }
+//       }
+
+//       // 4. Return JSON response to client
+//       return {
+//         success: true,
+//         message: `Processed ${fixtures.length} matches.`,
+//         logs: results,
+//       };
+//     } catch (error) {
+//       logger.error("Critical error in backfillFixtures:", error);
+//       // Throwing structured error sends a clean 500 to the client SDK
+//       throw new Error(`Backfill failed: ${error.message}`);
+//     }
+//   }
+// );
 // exports.updateFixtures = onSchedule(
 //   {
 //     schedule: "every day 00:00",
