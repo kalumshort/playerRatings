@@ -6,7 +6,7 @@ import {
   Navigate,
   Outlet,
   useParams,
-} from "react-router-dom"; // Removed useNavigate, useLocation
+} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 
@@ -30,7 +30,7 @@ import { GlobalContainer } from "./Containers/GlobalContainer";
 import { Spinner } from "./Containers/Helpers";
 import Header from "./Containers/Header";
 import HomePage from "./Containers/HomePage";
-import { Box, Typography, Button } from "@mui/material"; // Added Typography, Button
+import { Box, Typography, Button } from "@mui/material";
 import SignUpButton from "./Components/Auth/SignUpButton";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
@@ -53,26 +53,54 @@ const SchedulePage = lazy(() => import("./Containers/SchedulePage"));
 const Fixture = lazy(() => import("./Components/Fixtures/Fixture"));
 const PlayerPage = lazy(() => import("./Components/PlayerStats/PlayerPage"));
 
-// --- 1. Custom Hook: Data Loader ---
+// --- 1. Custom Hook: Data Loader (OPTIMIZED) ---
 const useAppDataLoader = (currentYear) => {
   const dispatch = useDispatch();
   const { currentGroup } = useGroupData();
+
+  // Optimized: Get loading states to prevent double-fetching
+  const { squadLoaded } = useSelector(selectSquadLoad);
+  const { fixturesLoaded } = useSelector(selectFixturesLoad);
 
   useEffect(() => {
     if (currentGroup) {
       const clubId = currentGroup.groupClubId;
       console.log(
-        `[DataLoader] Fetching fixtures/squad for Club ID: ${clubId}`
+        `[DataLoader] 🔍 Check Triggered for Club ID: ${clubId} | Year: ${currentYear}`
       );
-      dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
-      dispatch(fetchFixtures({ clubId: clubId, currentYear }));
+
+      // Check Squad
+      if (!squadLoaded) {
+        console.log(`[DataLoader] 🟢 Fetching Squad...`);
+        dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
+      } else {
+        console.log(`[DataLoader] 🟡 Squad already loaded. Skipping.`);
+      }
+
+      // Check Fixtures
+      if (!fixturesLoaded) {
+        console.log(`[DataLoader] 🟢 Fetching Fixtures...`);
+        dispatch(fetchFixtures({ clubId: clubId, currentYear }));
+      } else {
+        console.log(`[DataLoader] 🟡 Fixtures already loaded. Skipping.`);
+      }
+    } else {
+      console.log(`[DataLoader] ⚪ Skipped. No currentGroup available.`);
     }
-  }, [dispatch, currentGroup, currentYear]);
+  }, [dispatch, currentGroup, currentYear, squadLoaded, fixturesLoaded]);
 };
 
 // --- 2. Dynamic Listeners Component ---
 const DynamicListeners = ({ user }) => {
   const { currentGroup } = useGroupData();
+
+  useEffect(() => {
+    console.log(
+      `[DynamicListeners] Mounted. Listening for Group: ${
+        currentGroup?.groupClubId || "None"
+      }`
+    );
+  }, [currentGroup]);
 
   return (
     <>
@@ -83,22 +111,21 @@ const DynamicListeners = ({ user }) => {
   );
 };
 
-// --- REMOVED NavigationSync ---
-// It creates circular logic with the RouteGuard. Rely on standard Routes.
-
 // --- 3. Main Layout ---
-const MainLayout = () => (
-  <>
-    <Header />
-    <Box sx={{ maxWidth: "1400px", margin: "auto" }}>
-      <Suspense fallback={<Spinner text="Loading..." />}>
-        <Outlet />
-      </Suspense>
-    </Box>
-    {/* <BackfillButton /> */}
-    <Footer />
-  </>
-);
+const MainLayout = () => {
+  // console.log("[MainLayout] Rendering Layout Wrapper");
+  return (
+    <>
+      <Header />
+      <Box sx={{ maxWidth: "1400px", margin: "auto" }}>
+        <Suspense fallback={<Spinner text="Loading..." />}>
+          <Outlet />
+        </Suspense>
+      </Box>
+      <Footer />
+    </>
+  );
+};
 
 // --- 4. Home Route Controller ---
 const HomeRouteController = ({
@@ -107,24 +134,48 @@ const HomeRouteController = ({
   groupDataLoaded,
   userHomeGroup,
 }) => {
-  if (userLoading) return <Spinner text="Verifying User..." />;
-  if (!user) return <HomePage />;
-  if (!groupDataLoaded) return <Spinner text="Loading club preferences..." />;
+  console.log("[HomeRouteController] State Check:", {
+    userExists: !!user,
+    userLoading,
+    groupDataLoaded,
+    homeGroupSlug: userHomeGroup?.slug,
+  });
+
+  if (userLoading) {
+    return <Spinner text="Verifying User..." />;
+  }
+
+  if (!user) {
+    console.log("[HomeRouteController] 🔴 No User. Showing Public Home Page.");
+    return <HomePage />;
+  }
+
+  if (!groupDataLoaded) {
+    console.log(
+      "[HomeRouteController] ⏳ Logged in, but waiting for Group Data..."
+    );
+    return <Spinner text="Loading club preferences..." />;
+  }
 
   // If we have a home group, send them there.
-  // Note: If ClubRouteGuard denies access, it will handle the UI,
-  // so we won't bounce back here.
   if (userHomeGroup?.slug) {
-    console.log("[HomeRouteController] Redirecting to:", userHomeGroup.slug);
+    console.log(
+      `[HomeRouteController] 🟢 Redirecting to Home Group: /${userHomeGroup.slug}`
+    );
     return <Navigate to={`/${userHomeGroup.slug}`} replace />;
   }
 
+  console.log(
+    "[HomeRouteController] 🟡 User has no Home Group. Showing Global Selector."
+  );
   return <GlobalGroupSelect />;
 };
 
 // --- 5. Club Shell ---
 const ClubShell = ({ user }) => {
   const { currentYear } = useGlobalData();
+
+  console.log("[ClubShell] Rendering Shell. Initializing Data Loader...");
   useAppDataLoader(currentYear);
 
   return (
@@ -150,16 +201,28 @@ const ClubShell = ({ user }) => {
   );
 };
 
-// --- 6. Route Guard (THE FIX) ---
+// --- 6. Route Guard (OPTIMIZED) ---
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
   const dispatch = useDispatch();
   const { userData } = useUserData();
+  const { currentGroup } = useGroupData(); // Hook to check if already loaded
+
   const [loading, setLoading] = useState(true);
   const [accessStatus, setAccessStatus] = useState("PENDING"); // PENDING, GRANTED, DENIED
 
   useEffect(() => {
+    // 🛑 OPTIMIZATION: If we already have the correct group loaded, stop here.
+    if (currentGroup?.slug === clubSlug && accessStatus === "GRANTED") {
+      console.log(
+        "[ClubRouteGuard] 🛑 Group already loaded & access previously granted. Skipping re-check."
+      );
+      setLoading(false);
+      return;
+    }
+
     const fetchGroupContext = async () => {
+      console.group(`[ClubRouteGuard] Checking Access for slug: "${clubSlug}"`);
       setLoading(true);
       try {
         const q = query(
@@ -169,8 +232,9 @@ const ClubRouteGuard = ({ children }) => {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          console.error("Group not found for slug:", clubSlug);
+          console.error("❌ Group not found in Firestore.");
           setAccessStatus("DENIED");
+          console.groupEnd();
           setLoading(false);
           return;
         }
@@ -178,46 +242,70 @@ const ClubRouteGuard = ({ children }) => {
         const groupDoc = querySnapshot.docs[0];
         // Ensure groupId is a string for comparison
         const groupData = { ...groupDoc.data(), groupId: String(groupDoc.id) };
+        console.log("📄 Group Data Found:", {
+          name: groupData.name,
+          id: groupData.groupId,
+          visibility: groupData.visibility,
+        });
 
         // --- STRICTER PERMISSION CHECK ---
         const isPublic = groupData.visibility === "public";
 
         // Ensure user.groups is an array and compare Strings
-        const hasUserAccess =
+        const userGroups =
           userData?.groups && Array.isArray(userData.groups)
-            ? userData.groups.map(String).includes(String(groupData.groupId))
-            : false;
+            ? userData.groups.map(String)
+            : [];
+        const targetGroupId = String(groupData.groupId);
+
+        const hasUserAccess = userGroups.includes(targetGroupId);
+
+        console.log("🔐 Permission Check Details:", {
+          isPublic,
+          userGroups,
+          targetGroupId,
+          hasUserAccess,
+        });
 
         if (isPublic || hasUserAccess) {
-          console.log("[ClubRouteGuard] Access GRANTED");
+          console.log("✅ Access GRANTED. Dispatching group data...");
           dispatch(
             updateGroupData({ groupId: groupData.groupId, data: groupData })
           );
           dispatch(setCurrentGroup(groupData));
           setAccessStatus("GRANTED");
         } else {
-          console.warn(
-            "[ClubRouteGuard] Access DENIED. User groups:",
-            userData?.groups,
-            "Target Group:",
-            groupData.groupId
-          );
+          console.warn("⛔ Access DENIED. User does not have permission.");
           setAccessStatus("DENIED");
         }
       } catch (error) {
-        console.error("Error in Guard:", error);
+        console.error("🔥 Error in Guard:", error);
         setAccessStatus("DENIED");
       } finally {
         setLoading(false);
+        console.groupEnd();
       }
     };
-    if (clubSlug) fetchGroupContext();
-  }, [clubSlug, dispatch, userData]);
 
-  if (loading) return <Spinner text="Verifying Club Access..." />;
+    // If we haven't loaded the group yet, OR if the slug changed, run the logic
+    if (currentGroup?.slug !== clubSlug) {
+      fetchGroupContext();
+    } else {
+      // If slugs match but we just mounted, we can just say "Granted" and stop loading
+      // (This handles the case where Redux persists but Component remounts)
+      setAccessStatus("GRANTED");
+      setLoading(false);
+    }
+  }, [clubSlug, dispatch, userData, currentGroup?.slug, accessStatus]);
+
+  if (loading) {
+    // console.log("[ClubRouteGuard] ⏳ UI State: Loading Spinner");
+    return <Spinner text="Verifying Club Access..." />;
+  }
 
   // STOP THE BOUNCE: If denied, show a message instead of redirecting to "/"
   if (accessStatus === "DENIED") {
+    console.log("[ClubRouteGuard] ⛔ UI State: Access Denied Screen");
     return (
       <Box sx={{ textAlign: "center", mt: 10, p: 4 }}>
         <Typography variant="h4" color="error" gutterBottom>
@@ -233,6 +321,7 @@ const ClubRouteGuard = ({ children }) => {
     );
   }
 
+  // console.log("[ClubRouteGuard] ✅ UI State: Rendering Children");
   return children;
 };
 
@@ -245,13 +334,21 @@ function App() {
 
   const isGroupDataReady = !!(userDataLoaded && fixturesLoaded && squadLoaded);
 
+  // Log top-level app state changes
+  useEffect(() => {
+    console.log("[App] 🔄 Global State Update:", {
+      userUid: user?.uid,
+      userLoading,
+      currentGroupSlug: currentGroup?.slug,
+      isGroupDataReady,
+    });
+  }, [user, userLoading, currentGroup, isGroupDataReady]);
+
   return (
     <ThemeProvider accentColor={currentGroup?.accentColor || "#7FD880"}>
       <GlobalContainer>
         {user && <UserDataListener userId={user.uid} />}
         <Router>
-          {/* REMOVED NavigationSync */}
-
           <Routes>
             <Route element={<MainLayout />}>
               <Route
@@ -285,7 +382,7 @@ function App() {
                     user && isGroupDataReady ? (
                       <GroupDashboard />
                     ) : (
-                      <Spinner text="Loading..." />
+                      <Spinner text="Loading Dashboard Data..." />
                     )
                   }
                 />
