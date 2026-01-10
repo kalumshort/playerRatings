@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { fixtureReducer } from "../redux/Reducers/fixturesReducer";
 
-import { doc, getDoc, onSnapshot, Timestamp } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 import { db } from "./Firebase";
 import {
@@ -92,56 +92,90 @@ export const UserDataListener = ({ userId }) => {
         if (snapshot.exists()) {
           const userData = { ...snapshot.data(), uid: userId };
 
-          // Convert `Timestamp` fields to a serializable format (ISO string)
-          if (userData.createdAt instanceof Timestamp) {
-            userData.createdAt = userData.createdAt.toDate().toISOString();
-          }
-
-          if (userData.lastLogin instanceof Timestamp) {
-            userData.lastLogin = userData.lastLogin.toDate().toISOString();
-          }
+          // 1. Sanitize User Data Timestamps
+          ["createdAt", "lastLogin"].forEach((field) => {
+            if (
+              userData[field] &&
+              typeof userData[field].toDate === "function"
+            ) {
+              userData[field] = userData[field].toDate().toISOString();
+            }
+          });
 
           try {
-            if (userData.groups) {
+            if (userData.groups && userData.groups.length > 0) {
               dispatch(groupDataStart());
 
-              const groupObj = {};
-              const groupPermissions = {};
+              // 2. OPTIMIZATION: Fetch all groups in parallel (Faster!)
+              const groupPromises = userData.groups.map(async (groupId) => {
+                try {
+                  const groupRef = doc(db, "groups", groupId);
+                  const groupDoc = await getDoc(groupRef);
 
-              for (let i = 0; i < userData.groups.length; i++) {
-                const groupId = userData.groups[i];
-                const groupRef = doc(db, "groups", groupId);
-                const groupDoc = await getDoc(groupRef);
+                  if (!groupDoc.exists()) return null;
 
-                if (groupDoc.exists()) {
-                  groupObj[groupId] = { ...groupDoc.data(), groupId: groupId };
+                  let groupData = groupDoc.data();
+
+                  // 3. 🛡️ SANITIZE GROUP DATA (Prevents Redux Crash)
+                  // Iterate over all fields to find and convert Timestamps
+                  Object.keys(groupData).forEach((key) => {
+                    if (
+                      groupData[key] &&
+                      typeof groupData[key].toDate === "function"
+                    ) {
+                      groupData[key] = groupData[key].toDate().toISOString();
+                    }
+                  });
+
+                  // Fetch Permissions (Optional, keeps your existing logic)
                   const groupUserRef = doc(
                     db,
                     `groupUsers/${groupId}/members`,
                     userId
                   );
                   const groupUserDoc = await getDoc(groupUserRef);
-                  if (groupUserDoc.exists()) {
-                    const groupUserData = groupUserDoc.data();
-                    groupPermissions[groupId] = groupUserData.role || {};
-                  }
-                } else {
-                  console.error(
-                    `Group ${groupId} does not exist or the user does not have permission to access it.`
-                  );
+                  const permissions = groupUserDoc.exists()
+                    ? groupUserDoc.data().role || {}
+                    : {};
+
+                  return {
+                    id: groupId,
+                    data: { ...groupData, groupId }, // The cleaned group object
+                    permissions: { [groupId]: permissions },
+                  };
+                } catch (err) {
+                  console.error(`Error loading group ${groupId}`, err);
+                  return null;
                 }
-              }
+              });
+
+              // Wait for all fetches to finish
+              const results = await Promise.all(groupPromises);
+
+              // 4. Reassemble the objects for Redux
+              const groupObj = {};
+              const groupPermissions = {};
+
+              results.forEach((res) => {
+                if (res) {
+                  groupObj[res.id] = res.data;
+                  Object.assign(groupPermissions, res.permissions);
+                }
+              });
+
+              // Dispatch clean data
               dispatch(groupDataSuccess(groupObj));
               dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
             } else {
-              dispatch(groupDataFailure("User has no groups"));
+              // User has no groups
+              // Still dispatch success with empty object so loading stops
+              dispatch(groupDataSuccess({}));
               dispatch(fetchUserDataSuccess(userData));
             }
           } catch (err) {
+            console.error("Listener Error:", err);
             dispatch(groupDataFailure(err.message));
           }
-
-          // dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
         } else {
           console.log("No user data found for userId:", userId);
         }
@@ -151,10 +185,10 @@ export const UserDataListener = ({ userId }) => {
       }
     );
 
-    return () => unsubscribe(); // Cleanup listener on unmount
+    return () => unsubscribe();
   }, [userId, dispatch]);
 
-  return null; // No UI, just listens and dispatches
+  return null;
 };
 
 export const UsersMatchDataListener = ({ matchId, groupId }) => {
