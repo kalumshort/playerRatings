@@ -1,36 +1,42 @@
-import React, { useEffect } from "react";
-
-import { useDispatch, useSelector } from "react-redux";
+import React from "react"; // Removed useEffect since we don't fetch here anymore
+import { useSelector } from "react-redux";
 import { useIsMobile } from "../Hooks/Helper_Functions";
 import { Grid, Box } from "@mui/material";
 
-import { fetchFixtures } from "../Hooks/Fixtures_Hooks";
+// ✅ UPDATED IMPORTS: Use the new selectors
+import {
+  selectActiveClubFixtures,
+  selectFixturesLoading,
+} from "../Selectors/fixturesSelectors";
+
 import LatestFixtureItem from "../Components/Fixtures/LatestFixtureItem";
 import ScheduleContainer from "./ScheduleContainer";
 import LatestTeamSeasonRating from "../Components/Widgets/LatestTeamSeasonRating";
-import "./HomePage.css"; // Make sure to import the new CSS
+import "./HomePage.css";
 import useGroupData from "../Hooks/useGroupsData";
 import LegacyGroupModal from "../Components/Widgets/legacyGroupModal";
 import { Spinner } from "./Helpers";
-// import SeasonPredictions from "../Components/Widgets/SeasonPredictions";
 
 export default function GroupHomePage() {
-  const { fixtures, loading, error } = useSelector((state) => state.fixtures);
+  // ✅ REPLACED: Fetching logic is gone. Now we just ask for the active data.
+  // The 'selectActiveClubFixtures' selector automatically finds the right array
+  // based on the user's current group ID.
+  const fixtures = useSelector(selectActiveClubFixtures);
+  const loading = useSelector(selectFixturesLoading);
+
   const isMobile = useIsMobile();
   const { userHomeGroup } = useGroupData();
 
-  const dispatch = useDispatch();
+  // Note: We don't check 'if (!fixtures)' anymore because 'useDataManager'
+  // in App.js guarantees the data is requested when the route loads.
 
-  useEffect(() => {
-    if (!fixtures) {
-      dispatch(fetchFixtures());
-    }
-  }, [dispatch, fixtures]);
+  if (loading && (!fixtures || fixtures.length === 0)) {
+    return <Spinner text="Loading Fixtures..." />;
+  }
 
-  if (loading) return <Spinner text="Loading Fixtures..." />;
-  if (error) return <p>Error: {error}</p>;
-
-  // ... inside your component return:
+  // Note: 'error' handling can be added if you export selectFixturesError
+  // const error = useSelector(selectFixturesError);
+  // if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="containerMargin">
@@ -57,7 +63,7 @@ export default function GroupHomePage() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              position: { md: "sticky" }, // Optional: Makes sidebar sticky on scroll
+              position: { md: "sticky" },
               top: 20,
             }}
           >

@@ -4,10 +4,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../../Firebase/Firebase";
 import { clearUserData } from "../../redux/Reducers/userDataReducer";
 import { useDispatch } from "react-redux";
-import { clearGroupIdData } from "../../redux/Reducers/groupReducer";
-import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
-import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
-import { clearPredictions } from "../../redux/Reducers/predictionsReducer";
+
 import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
 import { useAppNavigate } from "../../Hooks/useAppNavigate";
 
@@ -29,10 +26,7 @@ const Logout = () => {
       await signOut(auth);
 
       dispatch(clearUserData());
-      dispatch(clearGroupIdData());
-      dispatch(clearFixtures());
-      dispatch(clearRatings());
-      dispatch(clearPredictions());
+
       dispatch(clearTeamSquads());
 
       setOpen(false); // Close the popper after logout

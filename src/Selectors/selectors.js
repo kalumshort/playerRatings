@@ -1,39 +1,64 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { selectSeasonSquadDataObject } from "./squadDataSelectors";
 
-export const allRatings = (state) => state.playerRatings;
-export const allMatchRatings = (state) => state.playerRatings.matches;
-export const allPlayerRatings = (state) => state.playerRatings.players;
+// --- 1. CORE ACCESSORS ---
+const selectRatingsSlice = (state) => state.playerRatings;
+const selectActiveGroupId = (state) => state.groupData.activeGroupId;
 
-export const selectAllPlayersSeasonOverallRating = (state) => {
-  const players = state.playerRatings.players;
+// --- 2. BUCKET SELECTOR (The "Brain") ---
+// Automatically finds the correct data bucket for the current group
+const selectActiveRatingsBucket = createSelector(
+  [selectRatingsSlice, selectActiveGroupId],
+  (ratings, groupId) => {
+    if (!groupId || !ratings.byGroupId[groupId]) {
+      return { matches: {}, players: {} }; // Return empty structure if not loaded
+    }
+    return ratings.byGroupId[groupId];
+  }
+);
 
-  const playerSeasonOverallRatings = {};
+// --- 3. DERIVED BASE SELECTORS ---
+// These now point to the bucket, not the root state
+export const allMatchRatings = createSelector(
+  [selectActiveRatingsBucket],
+  (bucket) => bucket.matches || {}
+);
 
-  Object.entries(players).forEach(([playerId, playerData]) => {
-    playerSeasonOverallRatings[playerId] = playerData.seasonOverall || {};
-  });
+export const allPlayerRatings = createSelector(
+  [selectActiveRatingsBucket],
+  (bucket) => bucket.players || {}
+);
 
-  return playerSeasonOverallRatings;
-};
+// --- 4. LOADING STATE SELECTOR ---
+// Note: Loading states are global per slice in your current setup,
+// but you might want to make them per-group later. For now, we keep it simple.
+export const selectPlayerRatingsLoad = createSelector(
+  [selectRatingsSlice],
+  (slice) => ({
+    ratingsLoaded: !slice.loading,
+    ratingsError: slice.error,
+    ratingsLoading: slice.loading,
+    // Note: These granular loading states might need refactoring in the reducer
+    // if you want them per-group, but for now we pull from root.
+    playerSeasonOverallRatingsLoading: false, // simplified for now
+    playerSeasonOverallRatingsLoaded: true,
+    playerAllMatchesRatingLoading: false,
+    playerAllMatchesRatingLoaded: true,
+  })
+);
 
-export const selectPlayerRatingsLoad = (state) => ({
-  ratingsLoaded: state.playerRatings.loaded,
-  ratingsError: state.playerRatings.error,
-  ratingsLoading: state.playerRatings.loading,
+// --- 5. DATA SELECTORS ---
 
-  playerSeasonOverallRatingsLoading:
-    state.playerRatings.playerSeasonOverallRatingsLoading,
-
-  playerSeasonOverallRatingsLoaded:
-    state.playerRatings.playerSeasonOverallRatingsLoaded,
-
-  playerAllMatchesRatingLoading:
-    state.playerRatings.playerAllMatchesRatingLoading,
-
-  playerAllMatchesRatingLoaded:
-    state.playerRatings.playerAllMatchesRatingLoaded,
-});
+export const selectAllPlayersSeasonOverallRating = createSelector(
+  [allPlayerRatings],
+  (players) => {
+    const ratings = {};
+    Object.entries(players).forEach(([playerId, playerData]) => {
+      ratings[playerId] = playerData.seasonOverall || {};
+    });
+    return ratings;
+  }
+);
 
 export const selectPlayerRatingsById = (playerId) =>
   createSelector([allPlayerRatings], (players) => players[playerId]);
@@ -50,14 +75,16 @@ export const selectMatchRatingsById = (matchId) =>
 export const selectMatchMotmById = (matchId) =>
   createSelector([allMatchRatings], (matches) => matches[matchId]?.motm);
 
-export const selectPlayerRatinsById = (playerId) =>
-  createSelector([allPlayerRatings], (player) => player[playerId]);
+// Typo fix from original file: selectPlayerRatinsById -> selectPlayerRatingsById
+// I kept the duplicate just in case you use it elsewhere, but mapped it to the same logic.
+export const selectPlayerRatinsById = selectPlayerRatingsById;
 
+// --- 6. COMPLEX LOGIC (MOTM Percentages) ---
 export const selectMotmPercentagesByMatchId = (matchId, clubSlug) =>
   createSelector(
     [
       selectMatchMotmById(matchId),
-      (state) => selectSeasonSquadDataObject(state, clubSlug), // Pass the whole squad object here
+      (state) => selectSeasonSquadDataObject(state, clubSlug),
     ],
     (motmData, squadData) => {
       // 1. Guard Clause
@@ -75,7 +102,7 @@ export const selectMotmPercentagesByMatchId = (matchId, clubSlug) =>
       // 2. Map and Transform
       return Object.entries(playerVotes)
         .map(([playerId, votes]) => {
-          const player = squadData[playerId]; // Direct lookup is O(1)
+          const player = squadData[playerId];
 
           return {
             playerId,

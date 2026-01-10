@@ -2,29 +2,44 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const predictionsSlice = createSlice({
   name: "predictions",
-  initialState: { matches: {}, loading: false, error: null, loaded: false },
+  initialState: {
+    byGroupId: {}, // Structure: { "group_A": { "match_123": { ...data } } }
+    loading: false,
+    error: null,
+  },
   reducers: {
     fetchPredictionsStart(state) {
       state.loading = true;
       state.error = null;
     },
+
     fetchPredictionsFailure(state, action) {
       state.error = action.payload;
       state.loading = false;
     },
+
     fetchPredictionsSuccess(state) {
       state.loading = false;
-      state.loaded = true;
     },
+
+    // UPDATED: Stores prediction in the specific group's bucket
     fetchMatchPrediction(state, action) {
-      const { matchId, data } = action.payload;
-      state.matches[matchId] = data;
+      const { groupId, matchId, data } = action.payload;
+
+      // 1. Create the Group Bucket if it doesn't exist
+      if (!state.byGroupId[groupId]) {
+        state.byGroupId[groupId] = {};
+      }
+
+      // 2. Store the match data inside that group
+      state.byGroupId[groupId][matchId] = data;
     },
-    clearPredictions(state) {
-      state.matches = {}; // Clear all match predictions
-      state.loading = false; // Reset loading state
-      state.error = null; // Reset error state
-      state.loaded = false; // Reset loaded flag
+
+    // Optional: Only used on Logout now
+    resetPredictions(state) {
+      state.byGroupId = {};
+      state.loading = false;
+      state.error = null;
     },
   },
 });
@@ -34,7 +49,7 @@ export const {
   fetchPredictionsFailure,
   fetchPredictionsSuccess,
   fetchMatchPrediction,
-  clearPredictions, // Export the clearPredictions action
+  resetPredictions,
 } = predictionsSlice.actions;
 
 export default predictionsSlice.reducer;

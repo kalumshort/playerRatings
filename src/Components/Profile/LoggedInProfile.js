@@ -29,8 +29,6 @@ import useUserData from "../../Hooks/useUserData";
 import useGroupData from "../../Hooks/useGroupsData";
 import { useTheme } from "../../Components/Theme/ThemeContext"; // Import your custom theme hook
 import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
-import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
-import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
 
 // Component Imports
 
@@ -73,9 +71,8 @@ export default function LoggedInProfile() {
   const { themeMode, toggleTheme } = useTheme(); // Access the global theme toggle
 
   const { userData } = useUserData();
-  const { groupData, currentGroup, userHomeGroup } = useGroupData();
-  const accentColor =
-    currentGroup?.accentColor || muiTheme.palette.primary.main;
+  const { groupData, activeGroup, userHomeGroup } = useGroupData();
+  const accentColor = activeGroup?.accentColor || muiTheme.palette.primary.main;
 
   const [formData, setFormData] = useState({
     displayName: userData?.displayName || "",
@@ -105,8 +102,6 @@ export default function LoggedInProfile() {
     const newGroupId = event.target.value;
     await updateUserField(userData.uid, "activeGroup", newGroupId);
     dispatch(clearTeamSquads());
-    dispatch(clearRatings());
-    dispatch(clearFixtures());
   };
 
   if (!userData) return null;
@@ -142,7 +137,7 @@ export default function LoggedInProfile() {
               textTransform: "uppercase",
             }}
           >
-            {currentGroup?.name || "Free Agent"}
+            {activeGroup?.name || "Free Agent"}
           </Box>
         </Stack>
       </ProfileHeader>

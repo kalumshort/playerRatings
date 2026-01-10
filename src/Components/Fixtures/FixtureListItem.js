@@ -121,8 +121,8 @@ export default function FixtureListItem({
   highlight = false,
 }) {
   const theme = useTheme();
-  const { currentGroup } = useGroupData();
-  const groupClubId = Number(currentGroup?.groupClubId); //
+  const { activeGroup } = useGroupData();
+  const groupClubId = Number(activeGroup?.groupClubId); //
 
   const status = fixture.fixture.status.short;
   const isPending = ["NS", "TBD", "PST"].includes(status);

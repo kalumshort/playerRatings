@@ -5,16 +5,16 @@ import useGroupData from "./useGroupsData";
 import useGlobalData from "./useGlobalData";
 
 export default function useLiveMatchStats(fixtureId, elapsedTime) {
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
   const { currentYear } = useGlobalData();
   const [liveStats, setLiveStats] = useState({ totals: {}, timeline: {} });
 
   useEffect(() => {
-    if (!fixtureId || !currentGroup?.groupId) return;
+    if (!fixtureId || !activeGroup?.groupId) return;
 
     const statsRef = doc(
       db,
-      `groups/${currentGroup.groupId}/seasons/${currentYear}/livePlayerStats`,
+      `groups/${activeGroup.groupId}/seasons/${currentYear}/livePlayerStats`,
       String(fixtureId)
     );
 
@@ -27,7 +27,7 @@ export default function useLiveMatchStats(fixtureId, elapsedTime) {
     });
 
     return () => unsubscribe();
-  }, [fixtureId, currentGroup?.groupId, currentYear]);
+  }, [fixtureId, activeGroup?.groupId, currentYear]);
 
   // --- DERIVED DATA CALCULATIONS ---
   const stats = useMemo(() => {

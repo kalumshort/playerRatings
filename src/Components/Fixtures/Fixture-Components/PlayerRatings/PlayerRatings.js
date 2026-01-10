@@ -44,13 +44,13 @@ export default function PlayerRatings({ fixture }) {
   const showAlert = useAlert();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
   const { clubSlug } = useParams();
   const { user } = useAuth();
   const globalData = useGlobalData();
 
   const storedUsersMatchMOTM = useLocalStorage(`userMatchMOTM-${fixture.id}`);
-  const groupClubId = Number(currentGroup?.groupClubId);
+  const groupClubId = Number(activeGroup?.groupClubId);
 
   const motmPercentages = useSelector(
     selectMotmPercentagesByMatchId(fixture.id, clubSlug)
@@ -123,14 +123,14 @@ export default function PlayerRatings({ fixture }) {
           matchId: fixture.id,
           playerId: String(motmId),
           value: 1,
-          groupId: currentGroup.groupId,
+          groupId: activeGroup.groupId,
           userId: user.uid,
           currentYear: globalData.currentYear,
         });
       } else {
         // CASE B: No MOTM (Manual Override)
         await firebaseUpdateOrSetDoc({
-          path: `users/${user.uid}/groups/${currentGroup.groupId}/seasons/${globalData.currentYear}/matches`,
+          path: `users/${user.uid}/groups/${activeGroup.groupId}/seasons/${globalData.currentYear}/matches`,
           docId: String(fixture.id),
           data: { ratingsSubmitted: true },
         });
@@ -141,14 +141,14 @@ export default function PlayerRatings({ fixture }) {
       dispatch(
         fetchMatchPlayerRatings({
           matchId: fixture.id,
-          groupId: currentGroup.groupId,
+          groupId: activeGroup.groupId,
           currentYear: globalData.currentYear,
         })
       );
       dispatch(
         fetchUsersMatchData({
           matchId: fixture.id,
-          groupId: currentGroup.groupId,
+          groupId: activeGroup.groupId,
           currentYear: globalData.currentYear,
         })
       );
@@ -199,7 +199,7 @@ export default function PlayerRatings({ fixture }) {
             fixture={fixture}
             isMatchRatingsSubmitted={isMatchRatingsSubmitted}
             handleRatingsSubmit={handleRatingsSubmitClick}
-            groupId={currentGroup.groupId}
+            groupId={activeGroup.groupId}
             userId={user?.uid}
             usersMatchPlayerRatings={usersMatchData?.players}
             currentYear={globalData.currentYear}

@@ -44,7 +44,7 @@ export default function PreMatchMOTM({ fixture }) {
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const storedUsersPlayerToWatch = usersMatchData?.preMatchMotm;
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
 
@@ -60,7 +60,7 @@ export default function PreMatchMOTM({ fixture }) {
     await handlePredictPreMatchMotm({
       matchId: fixture.id,
       playerId: selectedPlayer,
-      groupId: currentGroup.groupId,
+      groupId: activeGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
     });
@@ -68,7 +68,7 @@ export default function PreMatchMOTM({ fixture }) {
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
-        groupId: currentGroup.groupId,
+        groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
       })
     );

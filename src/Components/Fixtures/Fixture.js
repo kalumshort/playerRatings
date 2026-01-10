@@ -53,9 +53,9 @@ export default function Fixture() {
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
   const { currentYear } = useGlobalData();
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
-  const groupId = currentGroup?.groupId;
+  const groupId = activeGroup?.groupId;
 
   // 2. Redux Selectors
   const upcomingFixture = useSelector(selectUpcomingFixtures)[0];

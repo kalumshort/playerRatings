@@ -13,9 +13,9 @@ import useGroupData from "../Hooks/useGroupsData";
 export default function PlayerStatsContainer() {
   const dispatch = useDispatch();
 
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
-  const groupId = currentGroup?.groupClubId;
+  const groupId = activeGroup?.groupClubId;
 
   const globalData = useGlobalData();
 

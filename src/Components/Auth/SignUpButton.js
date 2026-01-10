@@ -7,7 +7,7 @@ import useGroupData from "../../Hooks/useGroupsData";
 
 const SignUpButton = () => {
   const [open, setOpen] = useState(false);
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -50,7 +50,7 @@ const SignUpButton = () => {
       <AuthModal
         open={open}
         handleClose={handleClose}
-        groupId={currentGroup?.groupId}
+        groupId={activeGroup?.groupId}
       />
     </Box>
   );

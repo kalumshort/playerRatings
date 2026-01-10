@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Paper, Typography, Box, useTheme } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { selectFixturesState } from "../../Selectors/fixturesSelectors";
+import { selectActiveClubFixtures } from "../../Selectors/fixturesSelectors";
 
 // --- STYLED TOOLTIP COMPONENT ---
 const TooltipContainer = styled(Paper)(({ theme }) => ({
@@ -48,7 +48,7 @@ export default function PlayerRatingsLineGraph({ allPlayerRatings, clubId }) {
   const theme = useTheme();
 
   // 1. Get Fixtures from Redux to Hydrate the Graph
-  const { fixtures: allFixtures } = useSelector(selectFixturesState);
+  const allFixtures = useSelector(selectActiveClubFixtures);
 
   // 2. Prepare Data (Memoized for performance)
   const { graphData, seasonAverage } = useMemo(() => {

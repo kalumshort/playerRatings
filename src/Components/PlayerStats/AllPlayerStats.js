@@ -197,11 +197,11 @@ const StatusBadge = styled(Box)(({ theme, type }) => ({
 export default function AllPlayerStats() {
   const appNavigate = useAppNavigate();
 
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const { clubSlug } = useParams(); // Now capturing clubSlug from URL
 
-  const groupClubId = Number(currentGroup?.groupClubId);
+  const groupClubId = Number(activeGroup?.groupClubId);
 
   // Redux Data
   const squadData = useSelector(

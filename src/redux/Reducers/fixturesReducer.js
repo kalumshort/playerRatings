@@ -3,42 +3,50 @@ import { createSlice } from "@reduxjs/toolkit";
 const fixturesSlice = createSlice({
   name: "fixtures",
   initialState: {
-    fixtures: [],
-    loading: false, // Added loading state
+    byClubId: {}, // Structure: { "33": { "2025": [ ...fixtures ] } }
+    loading: false,
     error: null,
-    loaded: false,
   },
   reducers: {
     fetchFixturesStart(state) {
       state.loading = true;
       state.error = null;
     },
+
     fetchFixturesFailure(state, action) {
       state.error = action.payload;
-      state.loading = false; // Set loading to false on failure
+      state.loading = false;
     },
-    fetchFixturesSuccess(state) {
-      state.loading = false; // Set loading to false on success
-      state.loaded = true;
+
+    // REPLACED: fixturesReducer -> fetchFixturesSuccess
+    // We now expect payload: { clubId, year, fixtures }
+    // This allows us to store multiple clubs' data simultaneously.
+    fetchFixturesSuccess(state, action) {
+      const { clubId, year, fixtures } = action.payload;
+
+      if (!state.byClubId[clubId]) {
+        state.byClubId[clubId] = {};
+      }
+
+      state.byClubId[clubId][year] = fixtures;
+      state.loading = false;
     },
-    fixturesReducer(state, action) {
-      state.fixtures = action.payload;
-    },
-    clearFixtures(state) {
-      state.fixtures = []; // Clear the fixtures array
-      state.loading = false; // Reset loading state
-      state.error = null; // Reset error state
-      state.loaded = false; // Reset loaded state
-    },
+
+    // UPDATED: Single Fixture Update (from Listener)
+    // Payload needs context: { clubId, year, id, data }
     fixtureReducer(state, action) {
-      const index = state.fixtures.findIndex(
-        (fixture) => fixture.id === action.payload.id
-      );
-      if (index !== -1) {
-        state.fixtures[index] = {
-          ...state.fixtures[index],
-          ...action.payload.data,
-        };
+      const { clubId, year, id, data } = action.payload;
+
+      // Access the specific bucket for this club and year
+      const clubFixtures = state.byClubId[clubId]?.[year];
+
+      if (clubFixtures) {
+        const index = clubFixtures.findIndex(
+          (f) => String(f.id) === String(id)
+        );
+        if (index !== -1) {
+          clubFixtures[index] = { ...clubFixtures[index], ...data };
+        }
       }
     },
   },
@@ -48,9 +56,7 @@ export const {
   fetchFixturesStart,
   fetchFixturesSuccess,
   fetchFixturesFailure,
-  fixturesReducer,
   fixtureReducer,
-  clearFixtures,
 } = fixturesSlice.actions;
 
 export default fixturesSlice.reducer;

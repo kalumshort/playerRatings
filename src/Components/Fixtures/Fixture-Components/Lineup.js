@@ -23,8 +23,8 @@ import {
 } from "@mui/material";
 
 export default function Lineup({ fixture }) {
-  const { currentGroup } = useGroupData();
-  const groupClubId = Number(currentGroup?.groupClubId);
+  const { activeGroup } = useGroupData();
+  const groupClubId = Number(activeGroup?.groupClubId);
   const fixtureId = fixture?.fixture?.id;
   const elapsed = fixture?.fixture?.status?.elapsed;
 

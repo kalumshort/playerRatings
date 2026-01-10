@@ -5,7 +5,7 @@ import { styled, useTheme } from "@mui/material/styles";
 import { tooltipClasses } from "@mui/material/Tooltip";
 import ScheduleContainer from "./ScheduleContainer";
 
-import { selectFixturesState } from "../Selectors/fixturesSelectors";
+import { selectActiveClubFixtures } from "../Selectors/fixturesSelectors";
 import useGroupData from "../Hooks/useGroupsData";
 
 // --- LAYOUT COMPONENTS ---
@@ -126,11 +126,10 @@ const HtmlTooltip = styled(({ className, ...props }) => (
 
 export default function SchedulePage() {
   const theme = useTheme();
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
-  const groupClubId = Number(currentGroup.groupClubId);
-  const { fixtures: allFixtures } = useSelector(selectFixturesState);
-
+  const groupClubId = Number(activeGroup.groupClubId);
+  const allFixtures = useSelector(selectActiveClubFixtures);
   // --- STATS CALCULATION ---
   const seasonData = useMemo(() => {
     if (!allFixtures) return { played: [], stats: { w: 0, d: 0, l: 0 } };

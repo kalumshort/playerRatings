@@ -10,8 +10,7 @@ import { useAlert } from "../Components/HelpfulComponents";
 import Login from "../Components/Auth/Login";
 import { useDispatch } from "react-redux";
 import { clearTeamSquads } from "../redux/Reducers/teamSquads";
-import { clearRatings } from "../redux/Reducers/playerRatingsReducer";
-import { clearFixtures } from "../redux/Reducers/fixturesReducer";
+
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 
 export default function GroupPublicPage() {
@@ -52,8 +51,7 @@ export default function GroupPublicPage() {
     // Show feedback based on the result
     if (result.success) {
       showAlert(`Successfully Joined ${inviteLinkDoc.groupName} `);
-      dispatch(clearFixtures());
-      dispatch(clearRatings());
+
       dispatch(clearTeamSquads());
     } else {
       showAlert(result.message); // Error message

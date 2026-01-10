@@ -1,67 +1,89 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { slugToClub } from "../Hooks/Helper_Functions";
 
-// 1. Core Helper: Prioritizes URL slug, falls back to User state
-const getActiveTeamId = (state, clubSlug = null) => {
-  // Priority 1: URL Context (Public/Guest view)
-  if (clubSlug && slugToClub[clubSlug]) {
-    return slugToClub[clubSlug].teamId;
+// --- 1. SLICE ACCESSORS ---
+const selectTeamSquadsSlice = (state) => state.teamSquads;
+const selectGroupData = (state) => state.groupData;
+const selectGlobalData = (state) => state.globalData;
+
+// --- 2. CONTEXT HELPER (Finds "Which Club/Year are we looking at?") ---
+const selectActiveSquadContext = createSelector(
+  [selectGroupData, selectGlobalData],
+  (groupData, globalData) => {
+    const activeGroupId = groupData.activeGroupId;
+    const activeGroup = groupData.byGroupId[activeGroupId];
+    return {
+      clubId: activeGroup?.groupClubId,
+      year: globalData.currentYear,
+    };
   }
+);
 
-  // Priority 2: User Preference (Private view on base domain)
-  const activeGroupId = state.userData?.accountData?.activeGroup;
-  const groupClubId = state.groupData?.data?.[activeGroupId]?.groupClubId;
+// --- 3. ROOT BUCKET SELECTOR ---
+// Retrieves the specific squad object for the current context
+// Returns: { activeSquad: [], seasonSquad: [], lastUpdated: ... }
+const selectActiveClubSquadBucket = createSelector(
+  [selectTeamSquadsSlice, selectActiveSquadContext],
+  (squadsSlice, { clubId, year }) => {
+    if (!clubId || !year) return null;
+    return squadsSlice.byClubId[clubId]?.[year] || null;
+  }
+);
 
-  return groupClubId || null;
-};
+// --- 4. DATA SELECTORS (The ones you use in components) ---
 
-// 2. Full Squad Array (Active)
-export const selectSquadData = (state, clubSlug = null) => {
-  const teamId = getActiveTeamId(state, clubSlug);
-  if (!teamId) return [];
-  return state.teamSquads?.squads?.[teamId]?.activeSquad || [];
-};
+// Returns the "Active Squad" (Current players)
+export const selectSquadData = createSelector(
+  [selectActiveClubSquadBucket],
+  (bucket) => bucket?.activeSquad || []
+);
 
-// 3. Full Season Squad Array (Historical/All Players)
-export const selectSeasonSquadData = (state, clubSlug = null) => {
-  const teamId = getActiveTeamId(state, clubSlug); // Updated to use clubSlug
-  if (!teamId) return [];
-  return state.teamSquads?.squads?.[teamId]?.seasonSquad || [];
-};
+// Returns the "Season Squad" (All players including transferred)
+export const selectSeasonSquadData = createSelector(
+  [selectActiveClubSquadBucket],
+  (bucket) => bucket?.seasonSquad || []
+);
 
-// 4. Squad Object (Active)
-export const selectSquadDataObject = (state, clubSlug = null) => {
-  const squad = selectSquadData(state, clubSlug);
-  if (!squad || squad.length === 0) return {};
+// Returns Active Squad as a Dictionary { [id]: player }
+export const selectSquadDataObject = createSelector(
+  [selectSquadData],
+  (squadArray) => {
+    return squadArray.reduce((acc, player) => {
+      acc[player.id] = player;
+      return acc;
+    }, {});
+  }
+);
 
-  return squad.reduce((acc, player) => {
-    acc[player.id] = player;
-    return acc;
-  }, {});
-};
+// Returns Season Squad as a Dictionary { [id]: player }
+export const selectSeasonSquadDataObject = createSelector(
+  [selectSeasonSquadData],
+  (squadArray) => {
+    return squadArray.reduce((acc, player) => {
+      acc[player.id] = player;
+      return acc;
+    }, {});
+  }
+);
 
-// 5. Season Squad Object (All Players)
-export const selectSeasonSquadDataObject = (state, clubSlug = null) => {
-  const squad = selectSeasonSquadData(state, clubSlug); // Pass slug context
-  if (!squad || squad.length === 0) return {};
+// --- 5. LOADING STATE SELECTOR ---
+export const selectSquadLoad = createSelector(
+  [selectTeamSquadsSlice, selectActiveClubSquadBucket],
+  (slice, bucket) => {
+    // We consider it "loaded" if the specific bucket exists
+    const isLoaded = !!bucket;
 
-  return squad.reduce((acc, player) => {
-    acc[player.id] = player;
-    return acc;
-  }, {});
-};
+    return {
+      squadLoaded: isLoaded,
+      squadError: slice.error,
+      squadLoading: slice.loading,
+    };
+  }
+);
 
-// 6. Metadata Selectors (Remain Global)
-export const selectSquadLoad = (state) => ({
-  squadLoaded: state.teamSquads.loaded,
-  squadError: state.teamSquads.error,
-  squadLoading: state.teamSquads.loading,
-});
-
-// 7. Factory Selector for Individual Players
-// This now requires both the playerId and the optional clubSlug
-export const selectSquadPlayerById = (id, clubSlug = null) =>
+// --- 6. INDIVIDUAL PLAYER SELECTOR ---
+// Note: This is a "Selector Factory". Call it like: useSelector(selectSquadPlayerById(123))
+export const selectSquadPlayerById = (playerId) =>
   createSelector(
-    [(state) => selectSeasonSquadDataObject(state, clubSlug)],
-    (squadState) => squadState[id] || null
+    [selectSeasonSquadDataObject],
+    (squadObj) => squadObj[playerId] || null
   );

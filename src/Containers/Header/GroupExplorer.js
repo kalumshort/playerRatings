@@ -31,8 +31,7 @@ import useUserData from "../../Hooks/useUserData";
 
 // Redux Actions
 import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
-import { clearRatings } from "../../redux/Reducers/playerRatingsReducer";
-import { clearFixtures } from "../../redux/Reducers/fixturesReducer";
+
 import { teamList } from "../../Hooks/Helper_Functions";
 
 /**
@@ -58,8 +57,6 @@ const DrawerGroupSelector = () => {
 
     // 2. Clear state to prevent data bleed between clubs
     dispatch(clearTeamSquads());
-    dispatch(clearRatings());
-    dispatch(clearFixtures());
 
     // Note: App.js NavigationSync will handle the URL redirect automatically
   };

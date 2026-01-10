@@ -20,7 +20,6 @@ import {
 import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
 import useGroupData from "../../../Hooks/useGroupsData";
-import { useParams } from "react-router-dom";
 
 // --- SUB-COMPONENT: EVENT BADGES (MATCHING STATUS-ICON STYLE) ---
 const EventIcon = ({ type, data, playerId, count }) => {
@@ -100,12 +99,12 @@ export default function LineupPlayer({
   ...props
 }) {
   const theme = useTheme();
-  const { clubSlug } = useParams();
+
   const playerData = useSelector((state) =>
-    selectSquadPlayerById(player?.id, clubSlug)(state)
+    selectSquadPlayerById(player?.id)(state)
   );
-  const { currentGroup } = useGroupData();
-  const groupColour = currentGroup?.accentColor || "#DA291C";
+  const { activeGroup } = useGroupData();
+  const groupColour = activeGroup?.accentColor || "#DA291C";
 
   // --- EVENT LOGIC ---
   const events = useMemo(() => {

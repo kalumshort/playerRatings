@@ -3,12 +3,11 @@ import { createSlice } from "@reduxjs/toolkit";
 const groupSlice = createSlice({
   name: "groupData",
   initialState: {
+    byGroupId: {}, // Replaces 'data'. Structure: { "group_A": { ... }, "group_B": { ... } }
+    activeGroupId: null, // Replaces 'activeGroup'. The ID of the group the user is currently VIEWING.
     loading: false,
     error: null,
     loaded: false,
-    data: {},
-    currentGroup: null, // The context set by the URL (ClubRouteGuard)
-    userHomeGroup: null,
   },
   reducers: {
     groupDataStart(state) {
@@ -21,27 +20,29 @@ const groupSlice = createSlice({
       state.loading = false;
       state.loaded = true;
     },
+    // UPDATED: Now merges new groups instead of wiping the state
     groupDataSuccess(state, action) {
       state.loading = false;
       state.loaded = true;
-      state.data = action.payload;
+      // Shallow merge: keep existing groups, add/overwrite with new ones
+      state.byGroupId = { ...state.byGroupId, ...action.payload };
     },
-    clearGroupIdData(state) {
-      state.loading = false;
-      state.error = null;
-      state.loaded = false;
-      state.data = {};
-    },
+    // UPDATED: Updates a specific group's data without touching others
     updateGroupData(state, action) {
       const { groupId, data } = action.payload;
-      state.data[groupId] = { ...state.data[groupId], ...data };
+      if (state.byGroupId[groupId]) {
+        state.byGroupId[groupId] = { ...state.byGroupId[groupId], ...data };
+      }
     },
-    setCurrentGroup: (state, action) => {
-      state.currentGroup = action.payload;
+    // UPDATED: Standardized naming
+    setActiveGroup: (state, action) => {
+      state.activeGroupId = action.payload;
     },
-    // Called when UserDataListener loads the user profile
-    setUserHomeGroup: (state, action) => {
-      state.userHomeGroup = action.payload;
+    // Optional: clears everything if user logs out
+    clearGroupData(state) {
+      state.byGroupId = {};
+      state.activeGroupId = null;
+      state.loaded = false;
     },
   },
 });
@@ -50,9 +51,9 @@ export const {
   groupDataStart,
   groupDataFailure,
   groupDataSuccess,
-  clearGroupIdData,
   updateGroupData,
-  setCurrentGroup,
+  setActiveGroup,
+  clearGroupData,
 } = groupSlice.actions;
 
 export default groupSlice.reducer;

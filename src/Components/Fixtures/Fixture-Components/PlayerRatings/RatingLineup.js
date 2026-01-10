@@ -18,18 +18,17 @@ import {
   useTheme,
 } from "@mui/material";
 import FanMOTMHighlight from "./MotmHighlight";
-import { useParams } from "react-router-dom";
 
 export default function RatingLineup({
   fixture,
   usersMatchPlayerRatings,
   motmPercentages,
 }) {
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
-  const groupClubId = Number(currentGroup?.groupClubId);
+  console.log(matchRatings);
+  const groupClubId = Number(activeGroup?.groupClubId);
 
   const [ratingSrc, setRatingSrc] = useState("Group");
 
@@ -194,9 +193,8 @@ export const RatingLineupPlayer = ({ player, playerRating }) => {
   const theme = useTheme();
   // Fetch supplementary player data if not passed in props
 
-  const { clubSlug } = useParams();
   const playerData = useSelector((state) =>
-    selectSquadPlayerById(player?.id, clubSlug)(state)
+    selectSquadPlayerById(player?.id)(state)
   );
 
   if (!player) return null;

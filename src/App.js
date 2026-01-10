@@ -13,16 +13,15 @@ import { ThemeProvider } from "./Components/Theme/ThemeContext";
 // --- Hooks, Context & Utils ---
 import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
-import useGlobalData from "./Hooks/useGlobalData";
-import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
 
-// --- Redux Selectors & Actions ---
-import { selectSquadLoad } from "./Selectors/squadDataSelectors";
-import { selectFixturesLoad } from "./Selectors/fixturesSelectors";
-import { fetchFixtures, fetchTeamSquad } from "./Hooks/Fixtures_Hooks";
+import { useDataManager } from "./Hooks/useDataManager"; // ✅ NEW IMPORT
+import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
+import useUserData from "./Hooks/useUserData";
+
+// --- Redux Actions ---
 import {
-  setCurrentGroup,
-  updateGroupData,
+  setActiveGroup,
+  groupDataSuccess,
 } from "./redux/Reducers/groupReducer";
 
 // --- UI Components ---
@@ -38,7 +37,6 @@ import Footer from "./Containers/Footer/Footer";
 import ContactForm from "./Containers/Footer/ContactForm";
 import PrivacyPolicy from "./Containers/Footer/PrivacyPolicy";
 import TermsOfService from "./Containers/Footer/TermsOfService";
-import useUserData from "./Hooks/useUserData";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -53,67 +51,19 @@ const SchedulePage = lazy(() => import("./Containers/SchedulePage"));
 const Fixture = lazy(() => import("./Components/Fixtures/Fixture"));
 const PlayerPage = lazy(() => import("./Components/PlayerStats/PlayerPage"));
 
-// --- 1. Custom Hook: Data Loader (OPTIMIZED) ---
-const useAppDataLoader = (currentYear) => {
-  const dispatch = useDispatch();
-  const { currentGroup } = useGroupData();
-
-  // Optimized: Get loading states to prevent double-fetching
-  const { squadLoaded } = useSelector(selectSquadLoad);
-  const { fixturesLoaded } = useSelector(selectFixturesLoad);
-
-  useEffect(() => {
-    if (currentGroup) {
-      const clubId = currentGroup.groupClubId;
-      console.log(
-        `[DataLoader] 🔍 Check Triggered for Club ID: ${clubId} | Year: ${currentYear}`
-      );
-
-      // Check Squad
-      if (!squadLoaded) {
-        console.log(`[DataLoader] 🟢 Fetching Squad...`);
-        dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
-      } else {
-        console.log(`[DataLoader] 🟡 Squad already loaded. Skipping.`);
-      }
-
-      // Check Fixtures
-      if (!fixturesLoaded) {
-        console.log(`[DataLoader] 🟢 Fetching Fixtures...`);
-        dispatch(fetchFixtures({ clubId: clubId, currentYear }));
-      } else {
-        console.log(`[DataLoader] 🟡 Fixtures already loaded. Skipping.`);
-      }
-    } else {
-      console.log(`[DataLoader] ⚪ Skipped. No currentGroup available.`);
-    }
-  }, [dispatch, currentGroup, currentYear, squadLoaded, fixturesLoaded]);
-};
-
-// --- 2. Dynamic Listeners Component ---
+// --- 1. Dynamic Listeners (Unchanged) ---
 const DynamicListeners = ({ user }) => {
-  const { currentGroup } = useGroupData();
-
-  useEffect(() => {
-    console.log(
-      `[DynamicListeners] Mounted. Listening for Group: ${
-        currentGroup?.groupClubId || "None"
-      }`
-    );
-  }, [currentGroup]);
+  const { activeGroup } = useGroupData(); // ✅ Updated to use 'activeGroup' from new hook
 
   return (
     <>
-      {currentGroup.groupClubId && (
-        <GroupListener groupId={currentGroup.groupClubId} />
-      )}
+      {activeGroup?.groupId && <GroupListener groupId={activeGroup.groupId} />}
     </>
   );
 };
 
-// --- 3. Main Layout ---
+// --- 2. Main Layout ---
 const MainLayout = () => {
-  // console.log("[MainLayout] Rendering Layout Wrapper");
   return (
     <>
       <Header />
@@ -127,56 +77,32 @@ const MainLayout = () => {
   );
 };
 
-// --- 4. Home Route Controller ---
+// --- 3. Home Route Controller ---
 const HomeRouteController = ({
   user,
   userLoading,
   groupDataLoaded,
   userHomeGroup,
 }) => {
-  console.log("[HomeRouteController] State Check:", {
-    userExists: !!user,
-    userLoading,
-    groupDataLoaded,
-    homeGroupSlug: userHomeGroup?.slug,
-  });
+  if (userLoading) return <Spinner text="Verifying User..." />;
+  if (!user) return <HomePage />;
 
-  if (userLoading) {
-    return <Spinner text="Verifying User..." />;
-  }
+  // Wait for initial group sync
+  if (!groupDataLoaded) return <Spinner text="Loading club preferences..." />;
 
-  if (!user) {
-    console.log("[HomeRouteController] 🔴 No User. Showing Public Home Page.");
-    return <HomePage />;
-  }
-
-  if (!groupDataLoaded) {
-    console.log(
-      "[HomeRouteController] ⏳ Logged in, but waiting for Group Data..."
-    );
-    return <Spinner text="Loading club preferences..." />;
-  }
-
-  // If we have a home group, send them there.
+  // Redirect to user's home group slug if available
   if (userHomeGroup?.slug) {
-    console.log(
-      `[HomeRouteController] 🟢 Redirecting to Home Group: /${userHomeGroup.slug}`
-    );
     return <Navigate to={`/${userHomeGroup.slug}`} replace />;
   }
 
-  console.log(
-    "[HomeRouteController] 🟡 User has no Home Group. Showing Global Selector."
-  );
   return <GlobalGroupSelect />;
 };
 
-// --- 5. Club Shell ---
+// --- 4. Club Shell (Optimized) ---
 const ClubShell = ({ user }) => {
-  const { currentYear } = useGlobalData();
-
-  console.log("[ClubShell] Rendering Shell. Initializing Data Loader...");
-  useAppDataLoader(currentYear);
+  // ✅ REPLACED: useAppDataLoader -> useDataManager
+  // This hook now smartly fetches fixtures/squads only if missing from Redux
+  useDataManager();
 
   return (
     <>
@@ -201,29 +127,43 @@ const ClubShell = ({ user }) => {
   );
 };
 
-// --- 6. Route Guard (OPTIMIZED) ---
+// --- 5. Route Guard (HEAVILY OPTIMIZED) ---
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
   const dispatch = useDispatch();
   const { userData } = useUserData();
-  const { currentGroup } = useGroupData(); // Hook to check if already loaded
 
-  const [loading, setLoading] = useState(true);
-  const [accessStatus, setAccessStatus] = useState("PENDING"); // PENDING, GRANTED, DENIED
+  // Access raw Redux state to check cache
+  const allGroups = useSelector((state) => state.groupData.byGroupId);
+  const activeGroupId = useSelector((state) => state.groupData.activeGroupId);
+
+  const [accessStatus, setAccessStatus] = useState("PENDING");
 
   useEffect(() => {
-    // 🛑 OPTIMIZATION: If we already have the correct group loaded, stop here.
-    if (currentGroup?.slug === clubSlug && accessStatus === "GRANTED") {
-      console.log(
-        "[ClubRouteGuard] 🛑 Group already loaded & access previously granted. Skipping re-check."
-      );
-      setLoading(false);
+    // 1. Check if we already have the correct group active
+    const currentActiveGroup = allGroups[activeGroupId];
+    if (currentActiveGroup?.slug === clubSlug) {
+      setAccessStatus("GRANTED");
       return;
     }
 
-    const fetchGroupContext = async () => {
-      console.group(`[ClubRouteGuard] Checking Access for slug: "${clubSlug}"`);
-      setLoading(true);
+    // 2. Check if the group exists in Redux memory but isn't active
+    const cachedGroup = Object.values(allGroups).find(
+      (g) => g.slug === clubSlug
+    );
+
+    if (cachedGroup) {
+      console.log(
+        `[RouteGuard] ⚡ Cache Hit: Switching to ${cachedGroup.name}`
+      );
+      dispatch(setActiveGroup(cachedGroup.groupId)); // ✅ Just switch pointer
+      setAccessStatus("GRANTED");
+      return;
+    }
+
+    // 3. Cache Miss: Fetch from Firestore
+    const fetchGroup = async () => {
+      console.log(`[RouteGuard] 🔍 Cache Miss. Fetching slug: ${clubSlug}`);
       try {
         const q = query(
           collection(db, "groups"),
@@ -232,87 +172,43 @@ const ClubRouteGuard = ({ children }) => {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          console.error("❌ Group not found in Firestore.");
           setAccessStatus("DENIED");
-          console.groupEnd();
-          setLoading(false);
           return;
         }
 
         const groupDoc = querySnapshot.docs[0];
-        // Ensure groupId is a string for comparison
-        const groupData = { ...groupDoc.data(), groupId: String(groupDoc.id) };
-        console.log("📄 Group Data Found:", {
-          name: groupData.name,
-          id: groupData.groupId,
-          visibility: groupData.visibility,
-        });
+        const groupData = { ...groupDoc.data(), groupId: groupDoc.id };
 
-        // --- STRICTER PERMISSION CHECK ---
+        // Permission Check
         const isPublic = groupData.visibility === "public";
+        const userGroups = userData?.groups?.map(String) || [];
+        const hasAccess =
+          isPublic || userGroups.includes(String(groupData.groupId));
 
-        // Ensure user.groups is an array and compare Strings
-        const userGroups =
-          userData?.groups && Array.isArray(userData.groups)
-            ? userData.groups.map(String)
-            : [];
-        const targetGroupId = String(groupData.groupId);
-
-        const hasUserAccess = userGroups.includes(targetGroupId);
-
-        console.log("🔐 Permission Check Details:", {
-          isPublic,
-          userGroups,
-          targetGroupId,
-          hasUserAccess,
-        });
-
-        if (isPublic || hasUserAccess) {
-          console.log("✅ Access GRANTED. Dispatching group data...");
-          dispatch(
-            updateGroupData({ groupId: groupData.groupId, data: groupData })
-          );
-          dispatch(setCurrentGroup(groupData));
+        if (hasAccess) {
+          // ✅ Merge into Redux "Bucket" so we don't fetch again
+          dispatch(groupDataSuccess({ [groupData.groupId]: groupData }));
+          dispatch(setActiveGroup(groupData.groupId));
           setAccessStatus("GRANTED");
         } else {
-          console.warn("⛔ Access DENIED. User does not have permission.");
           setAccessStatus("DENIED");
         }
       } catch (error) {
-        console.error("🔥 Error in Guard:", error);
+        console.error("Guard Error:", error);
         setAccessStatus("DENIED");
-      } finally {
-        setLoading(false);
-        console.groupEnd();
       }
     };
 
-    // If we haven't loaded the group yet, OR if the slug changed, run the logic
-    if (currentGroup?.slug !== clubSlug) {
-      fetchGroupContext();
-    } else {
-      // If slugs match but we just mounted, we can just say "Granted" and stop loading
-      // (This handles the case where Redux persists but Component remounts)
-      setAccessStatus("GRANTED");
-      setLoading(false);
-    }
-  }, [clubSlug, dispatch, userData, currentGroup?.slug, accessStatus]);
+    fetchGroup();
+  }, [clubSlug, activeGroupId, allGroups, dispatch, userData]);
 
-  if (loading) {
-    // console.log("[ClubRouteGuard] ⏳ UI State: Loading Spinner");
-    return <Spinner text="Verifying Club Access..." />;
-  }
+  if (accessStatus === "PENDING") return <Spinner text="Loading Club..." />;
 
-  // STOP THE BOUNCE: If denied, show a message instead of redirecting to "/"
   if (accessStatus === "DENIED") {
-    console.log("[ClubRouteGuard] ⛔ UI State: Access Denied Screen");
     return (
       <Box sx={{ textAlign: "center", mt: 10, p: 4 }}>
         <Typography variant="h4" color="error" gutterBottom>
           Access Restricted
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          You do not have permission to view this group, or it does not exist.
         </Typography>
         <Button variant="outlined" href="/">
           Return to Home
@@ -321,31 +217,15 @@ const ClubRouteGuard = ({ children }) => {
     );
   }
 
-  // console.log("[ClubRouteGuard] ✅ UI State: Rendering Children");
   return children;
 };
 
 function App() {
   const { user, userLoading } = useAuth();
-  const { userHomeGroup, groupDataLoaded, currentGroup } = useGroupData();
-  const { loaded: userDataLoaded } = useSelector((state) => state.userData);
-  const { squadLoaded } = useSelector(selectSquadLoad);
-  const { fixturesLoaded } = useSelector(selectFixturesLoad);
-
-  const isGroupDataReady = !!(userDataLoaded && fixturesLoaded && squadLoaded);
-
-  // Log top-level app state changes
-  useEffect(() => {
-    console.log("[App] 🔄 Global State Update:", {
-      userUid: user?.uid,
-      userLoading,
-      currentGroupSlug: currentGroup?.slug,
-      isGroupDataReady,
-    });
-  }, [user, userLoading, currentGroup, isGroupDataReady]);
+  const { userHomeGroup, groupDataLoaded, activeGroup } = useGroupData(); // Updated destructuring
 
   return (
-    <ThemeProvider accentColor={currentGroup?.accentColor || "#7FD880"}>
+    <ThemeProvider accentColor={activeGroup?.accentColor || "#7FD880"}>
       <GlobalContainer>
         {user && <UserDataListener userId={user.uid} />}
         <Router>
@@ -376,18 +256,10 @@ function App() {
                 <Route path="fixture/:matchId" element={<Fixture />} />
                 <Route path="players/:playerId" element={<PlayerPage />} />
                 <Route path="season-stats" element={<PlayerStatsContainer />} />
-                <Route
-                  path="dashboard"
-                  element={
-                    user && isGroupDataReady ? (
-                      <GroupDashboard />
-                    ) : (
-                      <Spinner text="Loading Dashboard Data..." />
-                    )
-                  }
-                />
+                <Route path="dashboard" element={<GroupDashboard />} />
               </Route>
 
+              {/* Other Routes */}
               {user && (
                 <>
                   <Route path="/profile" element={<ProfileContainer />} />

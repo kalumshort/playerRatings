@@ -35,7 +35,7 @@ export default function DroppablePitch({
   const dispatch = useDispatch();
   const { user } = useAuth();
   const globalData = useGlobalData();
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
   const { clubSlug } = useParams(); // e.g., "man-united"
   const squadData = useSelector((state) =>
     selectSquadDataObject(state, clubSlug)
@@ -60,7 +60,7 @@ export default function DroppablePitch({
       chosenTeam: chosenTeam,
       formation: formation,
       matchId: fixture.id,
-      groupId: currentGroup.groupId,
+      groupId: activeGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
       players: filteredPlayers,
@@ -69,7 +69,7 @@ export default function DroppablePitch({
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
-        groupId: currentGroup.groupId,
+        groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
       })
     );

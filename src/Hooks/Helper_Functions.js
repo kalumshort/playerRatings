@@ -376,8 +376,8 @@ export const DragProvider = ({ children }) => {
 export const useAppPaths = () => {
   const { clubSlug } = useParams(); // Priority 1: Current URL context
 
-  // Access both the transient silo (currentGroup) and persistent home team (userHomeGroup)
-  const { currentGroup, userHomeGroup } = useSelector(
+  // Access both the transient silo (activeGroup) and persistent home team (userHomeGroup)
+  const { activeGroup, userHomeGroup } = useSelector(
     (state) => state.groupData
   );
 
@@ -385,9 +385,9 @@ export const useAppPaths = () => {
    * Determine the current context slug.
    * Priority 1: The slug currently in the URL (browsing context).
    * Priority 2: The slug of the user's Home Group (persistent preference).
-   * Priority 3: The transient currentGroup (backup context).
+   * Priority 3: The transient activeGroup(backup context).
    */
-  const currentSlug = clubSlug || userHomeGroup?.slug || currentGroup?.slug;
+  const currentSlug = clubSlug || userHomeGroup?.slug || activeGroup?.slug;
 
   /**
    * Generates a context-aware path string

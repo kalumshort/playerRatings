@@ -1,32 +1,38 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom"; // Added useParams
-import { Paper, Typography, Box, Button, useTheme } from "@mui/material";
+import { Link } from "react-router-dom";
+import {
+  Paper,
+  Typography,
+  Box,
+  Button,
+  useTheme,
+  Skeleton,
+} from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
-import {
-  selectAllPlayersSeasonOverallRating,
-  selectPlayerRatingsLoad,
-} from "../../Selectors/selectors";
-import { Spinner } from "../../Containers/Helpers";
+import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
+
 import { RatingLineupPlayer } from "../Fixtures/Fixture-Components/PlayerRatings/RatingLineup";
 import { useAppPaths } from "../../Hooks/Helper_Functions";
-
 import useGlobalData from "../../Hooks/useGlobalData";
 import { fetchAllPlayersSeasonOverallRating } from "../../Hooks/Fixtures_Hooks";
 import useGroupData from "../../Hooks/useGroupsData";
 
-// --- STYLED COMPONENTS ---
+// --- STYLED COMPONENTS (Glassified) ---
 const CardContainer = styled(Paper)(({ theme }) => ({
-  padding: "20px",
+  padding: "24px",
+  borderRadius: "24px",
+  // Glass Effect
+  overflow: "hidden",
 }));
 
 const PitchContainer = styled(Box)(({ theme }) => {
   const accent = theme.palette.primary.main;
   return {
-    borderRadius: "16px",
+    borderRadius: "20px",
     padding: "40px 10px",
     minHeight: "450px",
     display: "flex",
@@ -34,17 +40,12 @@ const PitchContainer = styled(Box)(({ theme }) => {
     justifyContent: "space-between",
     position: "relative",
     overflow: "hidden",
-    background:
-      theme.palette.mode === "dark"
-        ? `linear-gradient(180deg, ${alpha("#0a2a12", 0.4)} 0%, ${alpha(
-            "#051a0b",
-            0.6
-          )} 100%)`
-        : `linear-gradient(180deg, ${alpha(accent, 0.1)} 0%, ${alpha(
-            accent,
-            0.05
-          )} 100%)`,
-    border: `1px solid ${alpha(accent, 0.2)}`,
+    // Pitch Gradient
+
+    border: `1px solid ${alpha(accent, 0.3)}`,
+    boxShadow: `inset 0 0 20px ${alpha("#000", 0.3)}`,
+
+    // Center Circle (Decoration)
     "&::before": {
       content: '""',
       position: "absolute",
@@ -53,18 +54,19 @@ const PitchContainer = styled(Box)(({ theme }) => {
       transform: "translate(-50%, -50%)",
       width: "120px",
       height: "120px",
-      border: `1px solid ${alpha(accent, 0.3)}`,
+      border: `2px solid ${alpha(accent, 0.2)}`,
       borderRadius: "50%",
       pointerEvents: "none",
     },
+    // Halfway Line
     "&::after": {
       content: '""',
       position: "absolute",
       top: "50%",
       left: 0,
       right: 0,
-      height: "1px",
-      backgroundColor: alpha(accent, 0.3),
+      height: "2px",
+      backgroundColor: alpha(accent, 0.2),
       pointerEvents: "none",
     },
   };
@@ -75,29 +77,31 @@ const PlayerRow = styled(Box)({
   justifyContent: "space-around",
   alignItems: "center",
   zIndex: 2,
+  position: "relative", // Ensures players sit above pitch decorations
 });
 
 export default function LatestTeamSeasonRating() {
   const theme = useTheme();
+  const dispatch = useDispatch();
+  const { getPath } = useAppPaths();
+  const globalData = useGlobalData();
 
+  // 1. Get Context from Hooks
+  const { activeGroup } = useGroupData();
+  const groupId = activeGroup?.groupId;
+  const clubId = Number(activeGroup?.groupClubId);
+
+  // 2. Selectors (Bucket Aware)
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
-  const { getPath } = useAppPaths();
-  const dispatch = useDispatch();
 
-  const { currentGroup } = useGroupData();
-
-  const globalData = useGlobalData();
-  // 1. Identify current club from Slug
-
-  const groupId = currentGroup?.groupClubId;
-
-  const { playerSeasonOverallRatingsLoaded } = useSelector(
-    selectPlayerRatingsLoad
-  );
-
+  // 3. Fetch Data (If missing)
+  // Note: Eventually, move this to useDataManager() to avoid component-level fetching
   useEffect(() => {
-    if (!playerSeasonOverallRatingsLoaded) {
+    // ✅ NEW CHECK: If we have a Group ID, but 'playerStats' is empty, FETCH!
+    const hasData = playerStats && Object.keys(playerStats).length > 0;
+
+    if (groupId && !hasData) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
           groupId: groupId,
@@ -105,20 +109,14 @@ export default function LatestTeamSeasonRating() {
         })
       );
     }
-  }, [
-    dispatch,
-    playerSeasonOverallRatingsLoaded,
-    groupId,
-    globalData.currentYear,
-  ]);
+  }, [dispatch, groupId, globalData.currentYear, playerStats]);
 
+  // 4. Compute Lineup Logic
   const { formationRows, fixtureData } = useMemo(() => {
-    if (!previousFixtures || !groupId)
+    if (!previousFixtures || !clubId)
       return { formationRows: [], fixtureData: null };
 
-    const clubId = Number(groupId);
-
-    // Find the most recent fixture where this club had a lineup recorded
+    // Find latest fixture with a lineup for THIS club
     const fixture = previousFixtures.find((f) =>
       f?.lineups?.some((team) => team.team.id === clubId)
     );
@@ -128,6 +126,7 @@ export default function LatestTeamSeasonRating() {
     const lineup =
       fixture.lineups.find((team) => team.team.id === clubId)?.startXI || [];
 
+    // Group by Grid Row (e.g., "1:1", "2:1")
     const rows = lineup.reduce((acc, { player }) => {
       const [row] = player.grid ? player.grid.split(":").map(Number) : [0];
       if (!acc[row]) acc[row] = [];
@@ -136,59 +135,81 @@ export default function LatestTeamSeasonRating() {
     }, {});
 
     const sortedRows = Object.keys(rows)
-      .sort((a, b) => b - a)
+      .sort((a, b) => b - a) // Sort rows (Goalkeeper at bottom usually, dependent on API grid)
       .map((key) => rows[key]);
 
     return { formationRows: sortedRows, fixtureData: fixture };
-  }, [previousFixtures, groupId]);
+  }, [previousFixtures, clubId]);
 
+  // 5. Loading State
   if (!playerStats && !previousFixtures) {
     return (
-      <CardContainer>
-        <Spinner text="Loading Lineup..." />
+      <CardContainer elevation={0}>
+        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 4 }} />
       </CardContainer>
     );
   }
 
   return (
     <CardContainer elevation={0}>
+      {/* Header */}
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb={3}
       >
-        <Typography variant="h5" sx={{ color: theme.palette.text.primary }}>
-          Latest XI{" "}
-          <span style={{ color: theme.palette.primary.main }}>Consensus</span>
-        </Typography>
+        <Box>
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            sx={{ color: theme.palette.text.primary }}
+          >
+            Latest XI
+          </Typography>
+          <Typography
+            variant="overline"
+            color={`${theme.palette.primary.main}`}
+            fontWeight={700}
+            letterSpacing={1.2}
+          >
+            Average Ratings
+          </Typography>
+        </Box>
 
         <Button
           component={Link}
-          to={getPath(`/season-stats`)} // Context-aware link
+          to={getPath(`/season-stats`)}
           size="small"
           endIcon={<ArrowForwardIcon />}
           sx={{
-            color: "primary.main",
+            borderRadius: "20px",
+            textTransform: "none",
+            fontWeight: 700,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
             "&:hover": {
               backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              borderColor: theme.palette.primary.main,
             },
           }}
         >
-          Full Squad
+          View Squad
         </Button>
       </Box>
 
+      {/* Pitch Visual */}
       <PitchContainer>
         {formationRows.length > 0 ? (
           formationRows.map((rowPlayers, rowIndex) => (
             <PlayerRow key={rowIndex}>
               {rowPlayers.map((player) => {
                 const stats = playerStats?.[player.id];
+
+                // Calculate Average safely
                 const playerRating =
                   stats?.totalRating && stats?.totalSubmits
                     ? (stats.totalRating / stats.totalSubmits).toFixed(1)
-                    : "N/A";
+                    : "—";
 
                 return (
                   <RatingLineupPlayer
@@ -203,12 +224,20 @@ export default function LatestTeamSeasonRating() {
             </PlayerRow>
           ))
         ) : (
-          <Typography
-            variant="body2"
-            sx={{ textAlign: "center", mt: 10, opacity: 0.6 }}
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            height="100%"
           >
-            Waiting for matchday data...
-          </Typography>
+            <Typography variant="h6" color="text.secondary">
+              No Lineup Available
+            </Typography>
+            <Typography variant="caption" color="text.disabled">
+              Wait for the next matchday update
+            </Typography>
+          </Box>
         )}
       </PitchContainer>
     </CardContainer>

@@ -101,7 +101,7 @@ export default function SmartLineupPredictor({ fixture }) {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const globalData = useGlobalData();
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { clubSlug } = useParams(); // e.g., "man-united"
@@ -168,7 +168,7 @@ export default function SmartLineupPredictor({ fixture }) {
       chosenTeam,
       formation,
       matchId: fixture.id,
-      groupId: currentGroup.groupId,
+      groupId: activeGroup.groupId,
       userId: user.uid,
       currentYear: globalData.currentYear,
       players: filteredPlayers,
@@ -177,7 +177,7 @@ export default function SmartLineupPredictor({ fixture }) {
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
-        groupId: currentGroup.groupId,
+        groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
       })
     );

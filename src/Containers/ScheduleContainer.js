@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
-  selectFixturesState,
+  selectActiveClubFixtures,
   selectLatestFixture,
 } from "../Selectors/fixturesSelectors";
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
@@ -79,7 +79,7 @@ export default function ScheduleContainer({
   const appNavigate = useAppNavigate();
   const { getPath } = useAppPaths();
 
-  const { fixtures: allFixtures } = useSelector(selectFixturesState);
+  const allFixtures = useSelector(selectActiveClubFixtures);
   const latestFixture = useSelector(selectLatestFixture);
 
   const [selectedLeague, setSelectedLeague] = useState("");

@@ -1,49 +1,90 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-// Selector to retrieve the loading status (if applicable)
-export const selectFixturesLoading = (state) =>
-  state.fixtures?.loading || false;
+// --- 1. SLICE ACCESSORS ---
+const selectFixturesSlice = (state) => state.fixtures;
+const selectGroupData = (state) => state.groupData;
+const selectGlobalData = (state) => state.globalData;
 
-// Selector to retrieve error status (if applicable)
-export const selectFixturesError = (state) => state.fixtures?.error || null;
-
-// Base selector to access the fixtures state
-const selectFixtures = (state) => state.fixtures;
-
-export const selectFixturesState = createSelector(
-  (state) => state.fixtures, // Input selector
-  (fixturesState) => fixturesState // Output mapping
+// --- 2. GLOBAL STATUS SELECTORS ---
+export const selectFixturesLoading = createSelector(
+  [selectFixturesSlice],
+  (slice) => slice.loading || false
 );
 
-export const selectFixturesLoad = (state) => ({
-  fixturesLoaded: state.fixtures.loaded,
-  fixturesError: state.fixtures.error,
-  fixturesLoading: state.fixtures.loading,
-});
+export const selectFixturesError = createSelector(
+  [selectFixturesSlice],
+  (slice) => slice.error || null
+);
 
-// Selector for previousFixtures
+// --- 3. CONTEXT HELPER (Finds "Which Club are we looking at?") ---
+const selectActiveContext = createSelector(
+  [selectGroupData, selectGlobalData],
+  (groupData, globalData) => {
+    const activeGroupId = groupData.activeGroupId;
+    const activeGroup = groupData.byGroupId[activeGroupId];
+    return {
+      clubId: activeGroup?.groupClubId,
+      year: globalData.currentYear,
+    };
+  }
+);
+
+// --- 4. MAIN DATA SELECTOR (The "Bucket" Finder) ---
+// Returns the specific array of fixtures for the CURRENT active group/year
+export const selectActiveClubFixtures = createSelector(
+  [selectFixturesSlice, selectActiveContext],
+  (fixturesSlice, { clubId, year }) => {
+    if (!clubId || !year) return [];
+
+    // Look up the specific bucket: byClubId -> [clubId] -> [year]
+    const bucket = fixturesSlice.byClubId[clubId]?.[year];
+
+    return bucket || []; // Return empty array if not found (loading/error)
+  }
+);
+
+// --- 5. LEGACY LOAD CHECKER ---
+// Replaces your old 'loaded' check.
+// True if the specific bucket exists (even if empty), False if we haven't fetched yet.
+export const selectFixturesLoad = createSelector(
+  [selectFixturesSlice, selectActiveContext],
+  (slice, { clubId, year }) => {
+    // Check if we have data specifically for this club/year
+    const isLoaded = !!slice.byClubId[clubId]?.[year];
+
+    return {
+      fixturesLoaded: isLoaded,
+      fixturesError: slice.error,
+      fixturesLoading: slice.loading,
+    };
+  }
+);
+
+// --- 6. DERIVED LISTS (Previous / Upcoming) ---
+// These now rely on 'selectActiveClubFixtures' instead of the raw state
+
 export const selectPreviousFixtures = createSelector(
-  [selectFixtures],
-  (fixturesState) =>
-    fixturesState.fixtures
+  [selectActiveClubFixtures],
+  (fixtures) =>
+    fixtures
       .filter(
         (fixture) => fixture.fixture.timestamp < Math.floor(Date.now() / 1000)
       )
       .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp)
 );
 
-// Selector for upcomingFixtures
 export const selectUpcomingFixtures = createSelector(
-  [selectFixtures],
-  (fixturesState) =>
-    fixturesState.fixtures
+  [selectActiveClubFixtures],
+  (fixtures) =>
+    fixtures
       .filter(
         (fixture) => fixture.fixture.timestamp > Math.floor(Date.now() / 1000)
       )
       .sort((a, b) => a.fixture.timestamp - b.fixture.timestamp)
 );
 
-// Selector for latestFixture
+// --- 7. LOGIC SELECTORS (Latest Match) ---
+
 export const selectLatestFixture = createSelector(
   [selectPreviousFixtures, selectUpcomingFixtures],
   (previousFixtures, upcomingFixtures) => {
@@ -52,6 +93,7 @@ export const selectLatestFixture = createSelector(
         previousFixtures[0].fixture.timestamp * 1000;
       const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
 
+      // If the last match was < 24h ago, show it. Otherwise show next match.
       return firstPreviousFixtureTime < twentyFourHoursAgo
         ? upcomingFixtures[0] || null
         : previousFixtures[0];
@@ -60,9 +102,11 @@ export const selectLatestFixture = createSelector(
   }
 );
 
+// --- 8. SPECIFIC ITEM LOOKUP ---
+// Searches within the ACTIVE context.
 export const selectFixtureById = (id) =>
   createSelector(
-    [selectFixtures],
-    (fixturesState) =>
-      fixturesState.fixtures.find((fixture) => fixture.id === id) || null
+    [selectActiveClubFixtures],
+    (fixtures) =>
+      fixtures.find((fixture) => String(fixture.id) === String(id)) || null
   );

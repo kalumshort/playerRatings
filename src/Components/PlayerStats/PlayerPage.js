@@ -122,7 +122,7 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
 // --- MAIN COMPONENT ---
 
 export default function PlayerPage() {
-  const { currentGroup } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const globalData = useGlobalData();
   const dispatch = useDispatch();
@@ -132,7 +132,7 @@ export default function PlayerPage() {
     selectSquadPlayerById(playerId, clubSlug)(state)
   );
 
-  const groupId = currentGroup?.groupId;
+  const groupId = activeGroup?.groupId;
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
   const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
@@ -233,7 +233,7 @@ export default function PlayerPage() {
             <div style={{ width: "100%", height: "250px" }}>
               <PlayerRatingsLineGraph
                 allPlayerRatings={allPlayerRatings}
-                clubId={currentGroup?.groupClubId || groupId}
+                clubId={activeGroup?.groupClubId || groupId}
               />
             </div>
           </GraphSection>
@@ -264,7 +264,7 @@ export default function PlayerPage() {
                 fixture={fixture}
                 matchTime={matchTime}
                 matchStats={matchStats}
-                groupClubId={currentGroup?.groupClubId || groupId}
+                groupClubId={activeGroup?.groupClubId || groupId}
                 playerId={playerId}
               />
             );
