@@ -18,14 +18,16 @@ import {
 } from "../redux/Reducers/userDataReducer";
 import { getAuth } from "firebase/auth";
 import useGlobalData from "../Hooks/useGlobalData";
+import useGroupData from "../Hooks/useGroupsData";
 
-export const FixturesListener = ({ teamId, fixtureId }) => {
+export const FixturesListener = ({ fixtureId }) => {
   const dispatch = useDispatch();
 
   const globalData = useGlobalData();
+  const { activeGroup } = useGroupData();
 
   useEffect(() => {
-    if (!teamId || !fixtureId) return;
+    if (!activeGroup.groupClubId || !fixtureId) return;
 
     const fixtureRef = doc(
       db,
@@ -37,7 +39,14 @@ export const FixturesListener = ({ teamId, fixtureId }) => {
       fixtureRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          dispatch(fixtureReducer({ id: snapshot.id, data: snapshot.data() }));
+          dispatch(
+            fixtureReducer({
+              id: snapshot.id,
+              data: snapshot.data(),
+              year: globalData.currentYear,
+              clubId: activeGroup.groupClubId,
+            })
+          );
         }
       },
       (error) => {
@@ -46,7 +55,7 @@ export const FixturesListener = ({ teamId, fixtureId }) => {
     );
 
     return () => unsubscribe(); // Cleanup listener on unmount
-  }, [teamId, fixtureId, dispatch, globalData.currentYear]);
+  }, [fixtureId, dispatch, globalData.currentYear, activeGroup.groupClubId]);
 
   return null; // No UI, just listens and dispatches
 };
