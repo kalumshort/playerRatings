@@ -19,7 +19,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useDispatch } from "react-redux";
 
 // Hooks & Firebase
 import useGroupData from "../../Hooks/useGroupsData";
@@ -30,7 +29,6 @@ import {
 import useUserData from "../../Hooks/useUserData";
 
 // Redux Actions
-import { clearTeamSquads } from "../../redux/Reducers/teamSquads";
 
 import { teamList } from "../../Hooks/Helper_Functions";
 
@@ -39,9 +37,8 @@ import { teamList } from "../../Hooks/Helper_Functions";
  * A Paginated selection UI for the Header Drawer.
  * Optimized for Web/Desktop navigation.
  */
-const DrawerGroupSelector = () => {
+const DrawerGroupSelector = ({ setDrawerOpen }) => {
   const muiTheme = useMuiTheme();
-  const dispatch = useDispatch();
 
   // userHomeGroup represents the active selection in 11Votes context
   const { groupData, userHomeGroup } = useGroupData();
@@ -52,13 +49,9 @@ const DrawerGroupSelector = () => {
   const handleSelectChange = async (groupId) => {
     if (!userData?.uid) return;
 
-    // 1. Update the 'activeGroup' in Firestore
     await updateUserField(userData.uid, "activeGroup", groupId);
 
-    // 2. Clear state to prevent data bleed between clubs
-    dispatch(clearTeamSquads());
-
-    // Note: App.js NavigationSync will handle the URL redirect automatically
+    setDrawerOpen(false);
   };
 
   // Logic: Transform object to array and sort userHomeGroup (Active) to index 0

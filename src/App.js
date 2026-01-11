@@ -37,6 +37,7 @@ import Footer from "./Containers/Footer/Footer";
 import ContactForm from "./Containers/Footer/ContactForm";
 import PrivacyPolicy from "./Containers/Footer/PrivacyPolicy";
 import TermsOfService from "./Containers/Footer/TermsOfService";
+import { useGroupAutoRedirect } from "./Hooks/useGroupAutoRedirect";
 
 // --- Lazy Load Pages ---
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
@@ -103,6 +104,10 @@ const ClubShell = ({ user }) => {
   // ✅ REPLACED: useAppDataLoader -> useDataManager
   // This hook now smartly fetches fixtures/squads only if missing from Redux
   useDataManager();
+
+  // 2. Initialize Auto Redirector ✅
+  // This sits here quietly watching for changes in your profile
+  useGroupAutoRedirect();
 
   return (
     <>

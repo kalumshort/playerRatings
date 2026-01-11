@@ -264,7 +264,7 @@ export default function Header() {
                   </ListItem>
                 ))}
 
-                {user && <GroupExplorer />}
+                {user && <GroupExplorer setDrawerOpen={setDrawerOpen} />}
               </List>
             </Box>
           )}
