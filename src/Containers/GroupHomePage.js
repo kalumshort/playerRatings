@@ -1,9 +1,9 @@
-import React from "react"; // Removed useEffect since we don't fetch here anymore
+import React from "react";
 import { useSelector } from "react-redux";
+import { Helmet } from "react-helmet-async"; // 1. Import Helmet
 import { useIsMobile } from "../Hooks/Helper_Functions";
 import { Grid, Box } from "@mui/material";
 
-// ✅ UPDATED IMPORTS: Use the new selectors
 import {
   selectActiveClubFixtures,
   selectFixturesLoading,
@@ -18,28 +18,46 @@ import LegacyGroupModal from "../Components/Widgets/legacyGroupModal";
 import { Spinner } from "./Helpers";
 
 export default function GroupHomePage() {
-  // ✅ REPLACED: Fetching logic is gone. Now we just ask for the active data.
-  // The 'selectActiveClubFixtures' selector automatically finds the right array
-  // based on the user's current group ID.
   const fixtures = useSelector(selectActiveClubFixtures);
   const loading = useSelector(selectFixturesLoading);
 
   const isMobile = useIsMobile();
-  const { userHomeGroup } = useGroupData();
-
-  // Note: We don't check 'if (!fixtures)' anymore because 'useDataManager'
-  // in App.js guarantees the data is requested when the route loads.
+  // 2. We need 'activeGroup' for the page SEO, not just 'userHomeGroup'
+  const { activeGroup, userHomeGroup } = useGroupData();
 
   if (loading && (!fixtures || fixtures.length === 0)) {
     return <Spinner text="Loading Fixtures..." />;
   }
 
-  // Note: 'error' handling can be added if you export selectFixturesError
-  // const error = useSelector(selectFixturesError);
-  // if (error) return <p>Error: {error}</p>;
+  // 3. DEFINE SEO VARIABLES
+  // Fallback to "Football" if data is missing, but activeGroup should exist here
+  const groupName = activeGroup?.name || "Football";
+
+  const metaTitle = `${groupName} Player Ratings & Fan Hub | 11Votes`;
+  const metaDescription = `The ultimate ${groupName} fan community. Rate players after every match, track season stats, and see the real-time fan consensus.`;
+  const canonicalUrl = `https://11votes.com/${activeGroup?.slug || ""}`;
 
   return (
     <div className="containerMargin">
+      {/* 4. INJECT SEO DATA */}
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+
+        {/* Open Graph (Facebook/WhatsApp/Twitter Cards) */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+
+        {/* Optional: Add a group logo if you have one in activeGroup.logoUrl */}
+        {activeGroup?.logoUrl && (
+          <meta property="og:image" content={activeGroup.logoUrl} />
+        )}
+
+        <link rel="canonical" href={canonicalUrl} />
+      </Helmet>
+
       <Grid container spacing={3}>
         {/* --- LEFT COLUMN: MAIN CONTENT (66% width) --- */}
         <Grid item xs={12} md={8}>
@@ -67,7 +85,6 @@ export default function GroupHomePage() {
               top: 20,
             }}
           >
-            {/* <SeasonPredictions /> */}
             <LatestTeamSeasonRating />
           </Box>
         </Grid>
