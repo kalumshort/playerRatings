@@ -563,7 +563,9 @@ exports.sitemap = onRequest(
 
       groupsSnapshot.forEach((doc) => {
         const data = doc.data();
-
+        if (data.visibility === "private") {
+          return;
+        }
         // Ensure the group has a slug and a mapped club ID
         if (data.slug && data.groupClubId) {
           // Example: clubIdToSlugMap[33] = "man-united"
