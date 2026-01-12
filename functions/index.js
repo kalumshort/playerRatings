@@ -14,7 +14,7 @@ const {
   Timestamp,
 } = require("firebase-admin/firestore");
 const { fetchAllMatchData, fetchFootballApi } = require("./helperFunctions");
-const { onCall, HttpsError } = require("firebase-functions/https");
+const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 
 const nodemailer = require("nodemailer");
 
@@ -533,6 +533,107 @@ exports.scheduledLiveMatchUpdate = onSchedule(
       logger.info("Live update cycle completed.");
     } catch (error) {
       logger.error("Error in scheduledLiveMatchUpdate:", error);
+    }
+  }
+);
+
+exports.sitemap = onRequest(
+  { timeoutSeconds: 60, memory: "256MiB" },
+  async (req, res) => {
+    try {
+      const db = getFirestore();
+      const baseUrl = "https://11votes.com";
+      const currentYear = "2025";
+
+      // 1. Fetch BOTH collections in parallel
+      const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
+        db.collection("groups").get(),
+        db.collection(`fixtures/${currentYear}/fixtures`).get(),
+      ]);
+
+      const urls = [
+        { loc: `${baseUrl}/`, changefreq: "daily", priority: "1.0" },
+      ];
+
+      // ==================================================================
+      // STEP 2: BUILD THE LOOKUP MAP (The "Rosetta Stone")
+      // We map the numeric API ID (e.g., 33) to your string Slug (e.g., 'man-united')
+      // ==================================================================
+      const clubIdToSlugMap = {};
+
+      groupsSnapshot.forEach((doc) => {
+        const data = doc.data();
+
+        // Ensure the group has a slug and a mapped club ID
+        if (data.slug && data.groupClubId) {
+          // Example: clubIdToSlugMap[33] = "man-united"
+          clubIdToSlugMap[data.groupClubId] = data.slug;
+
+          // Add the Group Landing Page while we are here
+          urls.push({
+            loc: `${baseUrl}/${data.slug}`,
+            changefreq: "weekly",
+            priority: "0.8",
+          });
+        }
+      });
+
+      // ==================================================================
+      // STEP 3: PROCESS FIXTURES USING THE MAP
+      // Check if Home or Away team matches a known Group
+      // ==================================================================
+      fixturesSnapshot.forEach((doc) => {
+        const fixtureData = doc.data();
+        const fixtureId = doc.id;
+
+        // Access the raw API IDs stored in your fixture doc
+        const homeTeamId = fixtureData.teams?.home?.id;
+        const awayTeamId = fixtureData.teams?.away?.id;
+
+        // SCENARIO A: Is the HOME team one of our groups?
+        if (clubIdToSlugMap[homeTeamId]) {
+          urls.push({
+            loc: `${baseUrl}/${clubIdToSlugMap[homeTeamId]}/fixture/${fixtureId}`,
+            changefreq: "always", // Match stats change often
+            priority: "0.9",
+          });
+        }
+
+        // SCENARIO B: Is the AWAY team one of our groups?
+        // (This allows you to generate a URL for the away fans if you have a group for them too)
+        if (clubIdToSlugMap[awayTeamId]) {
+          urls.push({
+            loc: `${baseUrl}/${clubIdToSlugMap[awayTeamId]}/fixture/${fixtureId}`,
+            changefreq: "always",
+            priority: "0.9",
+          });
+        }
+      });
+
+      // ==================================================================
+      // STEP 4: GENERATE XML
+      // ==================================================================
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+      urls.forEach((url) => {
+        xml += `
+  <url>
+    <loc>${url.loc}</loc>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`;
+      });
+
+      xml += `
+</urlset>`;
+
+      res.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
+      res.set("Content-Type", "application/xml");
+      res.status(200).send(xml);
+    } catch (error) {
+      logger.error("Sitemap generation failed", error);
+      res.status(500).end();
     }
   }
 );

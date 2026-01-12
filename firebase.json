@@ -48,6 +48,10 @@
       {
         "source": "**",
         "destination": "/index.html"
+      },
+      {
+        "source": "/sitemap.xml",
+        "function": "sitemap"
       }
     ]
   },

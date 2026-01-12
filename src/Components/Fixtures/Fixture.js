@@ -47,6 +47,8 @@ import { useAuth } from "../../Providers/AuthContext"; // Import Auth context
 import { Spinner } from "../../Containers/Helpers";
 import useGroupData from "../../Hooks/useGroupsData";
 
+import { Helmet } from "react-helmet-async";
+
 export default function Fixture() {
   const { matchId } = useParams(); // Now capturing clubSlug from URL
   const { user } = useAuth(); // Check if user is logged in
@@ -111,89 +113,141 @@ export default function Fixture() {
     fixture?.fixture?.status?.short === "TBD";
   const showPredictions = upcomingFixture?.id === matchId;
 
+  const homeTeam = fixture.teams.home.name;
+  const awayTeam = fixture.teams.away.name;
+  const date = new Date(fixture.fixture.date).toDateString();
+
+  // 2. CONSTRUCT THE KEYWORDS
+  // "Man United vs Chelsea Player Ratings"
+  const pageTitle = `${homeTeam} vs ${awayTeam} - Player Ratings & Vote | 11Votes`;
+
+  // Description: "Fan ratings for Man United vs Chelsea..."
+  const pageDescription = `Voice your opinion! Rate the players for ${homeTeam} vs ${awayTeam} on ${date}. See the real-time fan consensus and Man of the Match stats.`;
+
   return (
-    <FixtureGradientProvider
-      value={{ fixtureGradient, homeTeamColour, awayTeamColour }}
-    >
-      {/* Real-time Listeners */}
-      {String(latestFixture?.fixture?.id) === matchId && (
-        <FixturesListener
-          teamId={homeTeamId} // Pass actual team ID from fixture
-          fixtureId={latestFixture?.fixture?.id}
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+
+        {/* Open Graph (for nice cards on Twitter/WhatsApp) */}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+
+        <link
+          rel="canonical"
+          href={`https://11votes.com/${activeGroup?.slug}/fixture/${matchId}`}
         />
-      )}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SportsEvent",
+            name: `${homeTeam} vs ${awayTeam}`,
+            startDate: fixture.fixture.date, // ISO format required
+            location: {
+              "@type": "Place",
+              name: fixture.fixture.venue.name,
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: fixture.fixture.venue.city,
+              },
+            },
+            homeTeam: {
+              "@type": "SportsTeam",
+              name: homeTeam,
+            },
+            awayTeam: {
+              "@type": "SportsTeam",
+              name: awayTeam,
+            },
+            description: "Live fan player ratings and voting consensus.",
+          })}
+        </script>
+      </Helmet>
+      <FixtureGradientProvider
+        value={{ fixtureGradient, homeTeamColour, awayTeamColour }}
+      >
+        {/* Real-time Listeners */}
+        {String(latestFixture?.fixture?.id) === matchId && (
+          <FixturesListener
+            teamId={homeTeamId} // Pass actual team ID from fixture
+            fixtureId={latestFixture?.fixture?.id}
+          />
+        )}
 
-      {/* Only listen for user-specific match data if logged in */}
-      {user && groupId && (
-        <UsersMatchDataListener groupId={groupId} matchId={matchId} />
-      )}
+        {/* Only listen for user-specific match data if logged in */}
+        {user && groupId && (
+          <UsersMatchDataListener groupId={groupId} matchId={matchId} />
+        )}
 
-      {/* 1. Header */}
-      <Box sx={{ mb: 3 }}>
-        <FixtureHeader
-          fixture={fixture}
-          showDetails={true}
-          showScorers={true}
-          addClass={"containerMargin"}
-          showPenaltys={true}
-        />
-      </Box>
+        {/* 1. Header */}
+        <Box sx={{ mb: 3 }}>
+          <FixtureHeader
+            fixture={fixture}
+            showDetails={true}
+            showScorers={true}
+            addClass={"containerMargin"}
+            showPenaltys={true}
+          />
+        </Box>
 
-      {isMobile ? (
-        <MobileFixtureContainer
-          fixture={fixture}
-          showPredictions={showPredictions}
-          groupId={groupId}
-          currentYear={currentYear}
-        />
-      ) : (
-        <Box>
-          <Stack spacing={3}>
-            {/* 2. Pre-Match Prediction Section */}
-            {showPredictions && (
-              <Box sx={{ display: "flex", gap: 3, "& > *": { flex: 1 } }}>
-                <WinnerPredict fixture={fixture} />
-                <ScorePrediction fixture={fixture} />
-                <PreMatchMOTM fixture={fixture} />
-              </Box>
-            )}
-
-            {/* 3. Main Body Section */}
-            <Box sx={{ display: "flex", gap: 3 }}>
-              {showPredictions && !fixture?.lineups && (
-                <Box sx={{ flex: 1 }}>
-                  <LineupPredictor fixture={fixture} />
+        {isMobile ? (
+          <MobileFixtureContainer
+            fixture={fixture}
+            showPredictions={showPredictions}
+            groupId={groupId}
+            currentYear={currentYear}
+          />
+        ) : (
+          <Box>
+            <Stack spacing={3}>
+              {/* 2. Pre-Match Prediction Section */}
+              {showPredictions && (
+                <Box sx={{ display: "flex", gap: 3, "& > *": { flex: 1 } }}>
+                  <WinnerPredict fixture={fixture} />
+                  <ScorePrediction fixture={fixture} />
+                  <PreMatchMOTM fixture={fixture} />
                 </Box>
               )}
 
-              {fixture?.lineups && (
-                <>
-                  <Box sx={{ flex: 2 }}>
-                    <LineupAndPlayerRatings fixture={fixture} />
+              {/* 3. Main Body Section */}
+              <Box sx={{ display: "flex", gap: 3 }}>
+                {showPredictions && !fixture?.lineups && (
+                  <Box sx={{ flex: 1 }}>
+                    <LineupPredictor fixture={fixture} />
                   </Box>
-                  <Stack spacing={3} sx={{ flex: 1 }}>
-                    <Statistics fixture={fixture} />
-                    <Events events={fixture?.events} />
-                  </Stack>
-                </>
-              )}
-            </Box>
+                )}
 
-            {/* 4. Live/Post-Match Mood & Predictions */}
-            {!isPreMatch && groupId && (
-              <Box>
-                <MoodSelector
-                  fixture={fixture}
-                  groupId={groupId}
-                  currentYear={currentYear}
-                  matchId={matchId}
-                />
+                {fixture?.lineups && (
+                  <>
+                    <Box sx={{ flex: 2 }}>
+                      <LineupAndPlayerRatings fixture={fixture} />
+                    </Box>
+                    <Stack spacing={3} sx={{ flex: 1 }}>
+                      <Statistics fixture={fixture} />
+                      <Events events={fixture?.events} />
+                    </Stack>
+                  </>
+                )}
               </Box>
-            )}
-            {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
-          </Stack>
-        </Box>
-      )}
-    </FixtureGradientProvider>
+
+              {/* 4. Live/Post-Match Mood & Predictions */}
+              {!isPreMatch && groupId && (
+                <Box>
+                  <MoodSelector
+                    fixture={fixture}
+                    groupId={groupId}
+                    currentYear={currentYear}
+                    matchId={matchId}
+                  />
+                </Box>
+              )}
+              {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
+            </Stack>
+          </Box>
+        )}
+      </FixtureGradientProvider>
+    </>
   );
 }

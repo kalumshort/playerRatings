@@ -16,16 +16,21 @@ import store from "./redux/store";
 import { AlertProvider } from "./Components/HelpfulComponents";
 import { AuthProvider } from "./Providers/AuthContext";
 
+import { HelmetProvider } from "react-helmet-async";
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   // <React.StrictMode>
-  <AuthProvider>
-    <Provider store={store}>
-      <AlertProvider>
-        <App />
-      </AlertProvider>
-    </Provider>
-  </AuthProvider>
+  <HelmetProvider>
+    <AuthProvider>
+      <Provider store={store}>
+        <AlertProvider>
+          <App />
+        </AlertProvider>
+      </Provider>
+    </AuthProvider>
+  </HelmetProvider>
+
   // </React.StrictMode>
 );
 
