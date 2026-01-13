@@ -43,15 +43,15 @@ import {
 import { FixtureGradientProvider } from "../../Providers/FixtureGradientProvider";
 import MobileFixtureContainer from "../../Containers/MobileFixtureContainer";
 import useGlobalData from "../../Hooks/useGlobalData";
-import { useAuth } from "../../Providers/AuthContext"; // Import Auth context
+import { useAuth } from "../../Providers/AuthContext";
 import { Spinner } from "../../Containers/Helpers";
 import useGroupData from "../../Hooks/useGroupsData";
 
 import { Helmet } from "react-helmet-async";
 
 export default function Fixture() {
-  const { matchId } = useParams(); // Now capturing clubSlug from URL
-  const { user } = useAuth(); // Check if user is logged in
+  const { matchId } = useParams();
+  const { user } = useAuth();
   const dispatch = useDispatch();
   const isMobile = useIsMobile();
   const { currentYear } = useGlobalData();
@@ -68,25 +68,22 @@ export default function Fixture() {
     selectPlayerRatingsLoad
   );
 
-  // 3. Dynamic Styles based on fixture data
+  // 3. Dynamic Styles
   const homeTeamId = fixture?.teams?.home?.id;
   const awayTeamId = fixture?.teams?.away?.id;
   const homeTeamColour = footballClubsColours[homeTeamId] || "#7FD880";
   const awayTeamColour = footballClubsColours[awayTeamId] || "#241F20";
   const fixtureGradient = `linear-gradient(95deg, ${homeTeamColour} 40%, ${awayTeamColour} 60%)`;
 
-  // 4. Data Fetching Effects (URL Driven)
+  // 4. Data Fetching Effects
   useEffect(() => {
     if (matchId && groupId) {
-      // Fetch public community predictions
       dispatch(fetchMatchPredictions({ matchId, groupId, currentYear }));
-      // Fetch public community player ratings
       dispatch(fetchMatchPlayerRatings({ matchId, groupId, currentYear }));
     }
   }, [dispatch, matchId, groupId, currentYear]);
 
   useEffect(() => {
-    // ONLY fetch user-specific prediction/rating data if they are logged in
     if (user && matchId && groupId) {
       dispatch(fetchUsersMatchData({ matchId, groupId, currentYear }));
     }
@@ -98,13 +95,30 @@ export default function Fixture() {
     }
   }, [dispatch, playerSeasonOverallRatingsLoaded, groupId, currentYear]);
 
-  // 5. Guards
-  if (!fixture)
-    return (
-      <Box sx={{ p: 5, textAlign: "center" }}>
-        <Spinner text="Finding match details..." />
-      </Box>
-    );
+  // --- 5. SEO & METADATA PREPARATION (MOVED UP) ---
+  // We calculate these SAFELY using '?.' so they don't crash if fixture is null.
+
+  const homeTeam =
+    fixture?.teams?.home?.name || activeGroup?.groupName || "Home Team";
+  const awayTeam = fixture?.teams?.away?.name || "Away Team";
+  // Fallback date if fixture isn't loaded yet
+  const date = fixture?.fixture?.date
+    ? new Date(fixture.fixture.date).toDateString()
+    : "Upcoming Match";
+
+  const pageTitle = fixture
+    ? `${homeTeam} vs ${awayTeam} - Player Ratings & Vote | 11Votes`
+    : `${activeGroup?.groupName || "Football"} Match Center | 11Votes`;
+
+  const pageDescription = fixture
+    ? `Voice your opinion! Rate the players for ${homeTeam} vs ${awayTeam} on ${date}. See the real-time fan consensus and Man of the Match stats.`
+    : "View live player ratings, lineups, and fan predictions on 11Votes.";
+
+  const canonicalUrl = `https://11votes.com/${
+    activeGroup?.slug || "global"
+  }/fixture/${matchId}`;
+
+  // 6. Guards (Console logging mainly)
   if (predictionsError || ratingsError)
     console.error(predictionsError, ratingsError);
 
@@ -113,141 +127,143 @@ export default function Fixture() {
     fixture?.fixture?.status?.short === "TBD";
   const showPredictions = upcomingFixture?.id === matchId;
 
-  const homeTeam = fixture.teams.home.name;
-  const awayTeam = fixture.teams.away.name;
-  const date = new Date(fixture.fixture.date).toDateString();
-
-  // 2. CONSTRUCT THE KEYWORDS
-  // "Man United vs Chelsea Player Ratings"
-  const pageTitle = `${homeTeam} vs ${awayTeam} - Player Ratings & Vote | 11Votes`;
-
-  // Description: "Fan ratings for Man United vs Chelsea..."
-  const pageDescription = `Voice your opinion! Rate the players for ${homeTeam} vs ${awayTeam} on ${date}. See the real-time fan consensus and Man of the Match stats.`;
-
   return (
     <>
+      {/* --- SEO TAGS RENDERED IMMEDIATELY --- */}
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
 
-        {/* Open Graph (for nice cards on Twitter/WhatsApp) */}
+        {/* Open Graph */}
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
 
-        <link
-          rel="canonical"
-          href={`https://11votes.com/${activeGroup?.slug}/fixture/${matchId}`}
-        />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SportsEvent",
-            name: `${homeTeam} vs ${awayTeam}`,
-            startDate: fixture.fixture.date, // ISO format required
-            location: {
-              "@type": "Place",
-              name: fixture.fixture.venue.name,
-              address: {
-                "@type": "PostalAddress",
-                addressLocality: fixture.fixture.venue.city,
+        <link rel="canonical" href={canonicalUrl} />
+
+        {/* Only render JSON-LD if we actually have the fixture data */}
+        {fixture && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SportsEvent",
+              name: `${homeTeam} vs ${awayTeam}`,
+              startDate: fixture.fixture.date,
+              location: {
+                "@type": "Place",
+                name: fixture.fixture.venue.name,
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: fixture.fixture.venue.city,
+                },
               },
-            },
-            homeTeam: {
-              "@type": "SportsTeam",
-              name: homeTeam,
-            },
-            awayTeam: {
-              "@type": "SportsTeam",
-              name: awayTeam,
-            },
-            description: "Live fan player ratings and voting consensus.",
-          })}
-        </script>
+              homeTeam: {
+                "@type": "SportsTeam",
+                name: homeTeam,
+              },
+              awayTeam: {
+                "@type": "SportsTeam",
+                name: awayTeam,
+              },
+              description: "Live fan player ratings and voting consensus.",
+            })}
+          </script>
+        )}
       </Helmet>
-      <FixtureGradientProvider
-        value={{ fixtureGradient, homeTeamColour, awayTeamColour }}
-      >
-        {/* Real-time Listeners */}
-        {String(latestFixture?.fixture?.id) === matchId && (
-          <FixturesListener
-            teamId={homeTeamId} // Pass actual team ID from fixture
-            fixtureId={latestFixture?.fixture?.id}
-          />
-        )}
 
-        {/* Only listen for user-specific match data if logged in */}
-        {user && groupId && (
-          <UsersMatchDataListener groupId={groupId} matchId={matchId} />
-        )}
+      {/* --- CONTENT RENDER --- */}
+      {/* Instead of returning early, we conditionally render the Spinner or the Content */}
 
-        {/* 1. Header */}
-        <Box sx={{ mb: 3 }}>
-          <FixtureHeader
-            fixture={fixture}
-            showDetails={true}
-            showScorers={true}
-            addClass={"containerMargin"}
-            showPenaltys={true}
-          />
+      {!fixture ? (
+        <Box sx={{ p: 5, textAlign: "center" }}>
+          <Spinner text="Finding match details..." />
         </Box>
+      ) : (
+        <FixtureGradientProvider
+          value={{ fixtureGradient, homeTeamColour, awayTeamColour }}
+        >
+          {/* Real-time Listeners */}
+          {String(latestFixture?.fixture?.id) === matchId && (
+            <FixturesListener
+              teamId={homeTeamId}
+              fixtureId={latestFixture?.fixture?.id}
+            />
+          )}
 
-        {isMobile ? (
-          <MobileFixtureContainer
-            fixture={fixture}
-            showPredictions={showPredictions}
-            groupId={groupId}
-            currentYear={currentYear}
-          />
-        ) : (
-          <Box>
-            <Stack spacing={3}>
-              {/* 2. Pre-Match Prediction Section */}
-              {showPredictions && (
-                <Box sx={{ display: "flex", gap: 3, "& > *": { flex: 1 } }}>
-                  <WinnerPredict fixture={fixture} />
-                  <ScorePrediction fixture={fixture} />
-                  <PreMatchMOTM fixture={fixture} />
-                </Box>
-              )}
+          {/* Only listen for user-specific match data if logged in */}
+          {user && groupId && (
+            <UsersMatchDataListener groupId={groupId} matchId={matchId} />
+          )}
 
-              {/* 3. Main Body Section */}
-              <Box sx={{ display: "flex", gap: 3 }}>
-                {showPredictions && !fixture?.lineups && (
-                  <Box sx={{ flex: 1 }}>
-                    <LineupPredictor fixture={fixture} />
+          {/* 1. Header */}
+          <Box sx={{ mb: 3 }}>
+            <FixtureHeader
+              fixture={fixture}
+              showDetails={true}
+              showScorers={true}
+              addClass={"containerMargin"}
+              showPenaltys={true}
+            />
+          </Box>
+
+          {isMobile ? (
+            <MobileFixtureContainer
+              fixture={fixture}
+              showPredictions={showPredictions}
+              groupId={groupId}
+              currentYear={currentYear}
+            />
+          ) : (
+            <Box>
+              <Stack spacing={3}>
+                {/* 2. Pre-Match Prediction Section */}
+                {showPredictions && (
+                  <Box sx={{ display: "flex", gap: 3, "& > *": { flex: 1 } }}>
+                    <WinnerPredict fixture={fixture} />
+                    <ScorePrediction fixture={fixture} />
+                    <PreMatchMOTM fixture={fixture} />
                   </Box>
                 )}
 
-                {fixture?.lineups && (
-                  <>
-                    <Box sx={{ flex: 2 }}>
-                      <LineupAndPlayerRatings fixture={fixture} />
+                {/* 3. Main Body Section */}
+                <Box sx={{ display: "flex", gap: 3 }}>
+                  {showPredictions && !fixture?.lineups && (
+                    <Box sx={{ flex: 1 }}>
+                      <LineupPredictor fixture={fixture} />
                     </Box>
-                    <Stack spacing={3} sx={{ flex: 1 }}>
-                      <Statistics fixture={fixture} />
-                      <Events events={fixture?.events} />
-                    </Stack>
-                  </>
-                )}
-              </Box>
+                  )}
 
-              {/* 4. Live/Post-Match Mood & Predictions */}
-              {!isPreMatch && groupId && (
-                <Box>
-                  <MoodSelector
-                    fixture={fixture}
-                    groupId={groupId}
-                    currentYear={currentYear}
-                    matchId={matchId}
-                  />
+                  {fixture?.lineups && (
+                    <>
+                      <Box sx={{ flex: 2 }}>
+                        <LineupAndPlayerRatings fixture={fixture} />
+                      </Box>
+                      <Stack spacing={3} sx={{ flex: 1 }}>
+                        <Statistics fixture={fixture} />
+                        <Events events={fixture?.events} />
+                      </Stack>
+                    </>
+                  )}
                 </Box>
-              )}
-              {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
-            </Stack>
-          </Box>
-        )}
-      </FixtureGradientProvider>
+
+                {/* 4. Live/Post-Match Mood & Predictions */}
+                {!isPreMatch && groupId && (
+                  <Box>
+                    <MoodSelector
+                      fixture={fixture}
+                      groupId={groupId}
+                      currentYear={currentYear}
+                      matchId={matchId}
+                    />
+                  </Box>
+                )}
+                {!isPreMatch && <PostKickoffPredictions fixture={fixture} />}
+              </Stack>
+            </Box>
+          )}
+        </FixtureGradientProvider>
+      )}
     </>
   );
 }
