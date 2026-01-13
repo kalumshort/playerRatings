@@ -29,7 +29,11 @@ function PlayerThumbnail({
   const isMOTM = storedUsersMatchMOTM === String(player.id);
   const isActive = index === currentIndex;
 
-  const photo = playerData?.photo || player.photo;
+  const photo =
+    player?.photo ||
+    playerData?.photo ||
+    `https://media.api-sports.io/football/players/${player.id}.png`;
+
   const name = playerData?.name || player.name || "Unknown";
   const initials = (name || "?")
     .split(" ")

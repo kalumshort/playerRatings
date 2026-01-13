@@ -247,7 +247,7 @@ export default function Lineup({ fixture }) {
                 variant="caption"
                 sx={{ color: "white", fontWeight: "bold", letterSpacing: 1 }}
               >
-                LIVE
+                LIVE MANAGER
               </Typography>
             }
             sx={{ m: 0 }}

@@ -258,7 +258,11 @@ export function PlayerRatingCard({
         }}
       >
         <Avatar
-          src={playerData?.photo || player.photo}
+          src={
+            player?.photo ||
+            playerData?.photo ||
+            `https://media.api-sports.io/football/players/${player.id}.png`
+          }
           alt={playerData?.name || player.name}
           sx={{
             width: isMobile ? 80 : 140,

@@ -18,7 +18,7 @@ import {
 
 // --- HOOKS & SELECTORS ---
 import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
-import { missingPlayerImg } from "../../../Hooks/Helper_Functions";
+
 import useGroupData from "../../../Hooks/useGroupsData";
 
 // --- SUB-COMPONENT: EVENT BADGES (MATCHING STATUS-ICON STYLE) ---
@@ -187,9 +187,13 @@ export default function LineupPlayer({
       </style>
 
       {/* --- AVATAR CONTAINER --- */}
-      <Box sx={{ position: "relative", width: 50, height: 50 }}>
+      <Box sx={{ position: "relative", width: 60, height: 70 }}>
         <Avatar
-          src={player?.photo || playerData?.photo || missingPlayerImg}
+          src={
+            player?.photo ||
+            playerData?.photo ||
+            `https://media.api-sports.io/football/players/${player.id}.png`
+          }
           alt={player.name}
           sx={{
             width: "100%",

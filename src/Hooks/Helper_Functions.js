@@ -356,9 +356,6 @@ export const getRatingLineupClass = (rating) => {
   return "ratingLineupGreat";
 };
 
-export const missingPlayerImg =
-  "https://resources.premierleague.com/premierleague/photos/players/110x140/Photo-Missing.png";
-
 const DragContext = createContext();
 
 export const useDrag = () => useContext(DragContext);

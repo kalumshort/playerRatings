@@ -4,7 +4,7 @@ import { selectMatchRatingsById } from "../../../../Selectors/selectors";
 import { useSelector } from "react-redux";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
-import { missingPlayerImg } from "../../../../Hooks/Helper_Functions";
+
 import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import {
   alpha,
@@ -189,9 +189,8 @@ const ScoreBadge = styled(Box)(({ theme }) => ({
 
 // --- COMPONENT ---
 
-export const RatingLineupPlayer = ({ player, playerRating }) => {
+export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
   const theme = useTheme();
-  // Fetch supplementary player data if not passed in props
 
   const playerData = useSelector((state) =>
     selectSquadPlayerById(player?.id)(state)
@@ -199,40 +198,81 @@ export const RatingLineupPlayer = ({ player, playerRating }) => {
 
   if (!player) return null;
 
-  // Clean the rating display
   const displayRating =
-    playerRating && playerRating !== "na" ? playerRating : "-";
+    playerRating && playerRating !== "na" ? String(playerRating) : "—";
+
+  const hasRating = displayRating !== "—";
 
   return (
-    <Box sx={{ position: "relative", width: 50, height: 50, margin: 1 }}>
-      {/* Player Image */}
-      <Avatar
-        src={player?.photo || playerData?.photo || missingPlayerImg}
-        alt={player.name}
-        sx={{
-          width: "100%",
-          height: "100%",
-          // Semi-transparent border for the glass look
-          border: `2px solid ${alpha(theme.palette.primary.main, 0.6)}`,
-          boxShadow: `0 4px 8px rgba(0,0,0,0.4)`,
-          bgcolor: "grey.800",
-        }}
-      />
-
-      {/* Consensus Score Overlay */}
-      <ScoreBadge>
-        <Typography
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: 72,
+        minHeight: 90,
+        position: "relative",
+        transition: "transform 0.2s ease",
+        "&:hover": {
+          transform: "scale(1.08)",
+          zIndex: 2,
+        },
+      }}
+    >
+      {/* Avatar + badge wrapper */}
+      <Box sx={{ position: "relative", width: 56, height: 56 }}>
+        <Avatar
+          src={
+            player?.photo ||
+            playerData?.photo ||
+            `https://media.api-sports.io/football/players/${player.id}.png`
+          }
+          alt={player.name}
           sx={{
-            fontSize: "0.8rem",
-            fontWeight: "bold",
-            // Uses the retro-style font from your ThemeProvider
-
-            lineHeight: 1,
+            width: "100%",
+            height: "100%",
+            border: `2.5px solid ${alpha(theme.palette.primary.main, 0.7)}`,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            bgcolor: "grey.800",
           }}
-        >
-          {displayRating}
-        </Typography>
-      </ScoreBadge>
+        />
+
+        {/* Floating rating badge – bottom right */}
+        <ScoreBadge>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: "bold",
+              fontSize: "0.78rem",
+              color: hasRating ? "#000" : "#ccc",
+              lineHeight: 1,
+            }}
+          >
+            {displayRating}
+          </Typography>
+        </ScoreBadge>
+      </Box>
+
+      {/* Player name */}
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{
+          mt: 1.2,
+          fontSize: "0.74rem",
+          fontWeight: 600,
+          textAlign: "center",
+          maxWidth: "100%",
+          color: "white",
+          textShadow: "0 1px 3px rgba(0,0,0,0.9)",
+          lineHeight: 1.1,
+          px: 0.5,
+        }}
+      >
+        {playerData?.name || player.name}
+      </Typography>
+
+      {/* Optional shirt number – remove this block if you don't want/need it */}
     </Box>
   );
-};
+});

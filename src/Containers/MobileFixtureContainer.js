@@ -38,9 +38,9 @@ export default function MobileFixtureContainer({
     }
     // --- LIVE ---
     else if (isLive) {
+      arr.push({ label: "Lineup", value: "Lineup" });
       arr.push({ label: "Pulse", value: "Pulse" });
       arr.push({ label: "Stats", value: "Stats" });
-      arr.push({ label: "Lineup", value: "Lineup" });
       arr.push({ label: "Events", value: "Events" });
       arr.push({ label: "Ratings", value: "Ratings" });
       arr.push({ label: "The Consensus", value: "PostPredicts" });
