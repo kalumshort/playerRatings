@@ -7,7 +7,7 @@ import {
   Outlet,
   useParams,
 } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { ThemeProvider } from "./Components/Theme/ThemeContext";
 
 // --- Hooks, Context & Utils ---
@@ -16,7 +16,6 @@ import useGroupData from "./Hooks/useGroupsData";
 
 import { useDataManager } from "./Hooks/useDataManager"; // ✅ NEW IMPORT
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
-import useUserData from "./Hooks/useUserData";
 
 // --- Redux Actions ---
 import {
@@ -136,62 +135,48 @@ const ClubShell = ({ user }) => {
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
   const dispatch = useDispatch();
-  const { userData } = useUserData();
-
-  // Access raw Redux state to check cache
-  const allGroups = useSelector((state) => state.groupData.byGroupId);
-  const activeGroupId = useSelector((state) => state.groupData.activeGroupId);
+  const { allGroups = {} } = useGroupData(); // ← default empty object
 
   const [accessStatus, setAccessStatus] = useState("PENDING");
 
   useEffect(() => {
-    // 1. Check if we already have the correct group active
-    const currentActiveGroup = allGroups[activeGroupId];
-    if (currentActiveGroup?.slug === clubSlug) {
-      setAccessStatus("GRANTED");
+    // Skip if we don't have the slug yet
+    if (!clubSlug) {
+      setAccessStatus("DENIED");
       return;
     }
 
-    // 2. Check if the group exists in Redux memory but isn't active
-    const cachedGroup = Object.values(allGroups).find(
-      (g) => g.slug === clubSlug
-    );
-
-    if (cachedGroup) {
-      console.log(
-        `[RouteGuard] ⚡ Cache Hit: Switching to ${cachedGroup.name}`
-      );
-      dispatch(setActiveGroup(cachedGroup.groupId)); // ✅ Just switch pointer
-      setAccessStatus("GRANTED");
-      return;
-    }
-
-    // 3. Cache Miss: Fetch from Firestore
     const fetchGroup = async () => {
-      console.log(`[RouteGuard] 🔍 Cache Miss. Fetching slug: ${clubSlug}`);
       try {
-        const q = query(
-          collection(db, "groups"),
-          where("slug", "==", clubSlug)
+        // 1. Try to find in already loaded user groups
+        const userGroups = allGroups ? Object.values(allGroups) : [];
+        const matchingGroup = userGroups.find(
+          (group) => group?.slug === clubSlug
         );
-        const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-          setAccessStatus("DENIED");
+        if (matchingGroup?.groupId) {
+          dispatch(
+            groupDataSuccess({ [matchingGroup.groupId]: matchingGroup })
+          );
+          dispatch(setActiveGroup(matchingGroup.groupId));
+          setAccessStatus("GRANTED");
           return;
         }
 
-        const groupDoc = querySnapshot.docs[0];
-        const groupData = { ...groupDoc.data(), groupId: groupDoc.id };
+        // 2. Not in user's groups → try public lookup
+        const publicQuery = query(
+          collection(db, "groups"),
+          where("slug", "==", clubSlug),
+          where("visibility", "==", "public")
+        );
 
-        // Permission Check
-        const isPublic = groupData.visibility === "public";
-        const userGroups = userData?.groups?.map(String) || [];
-        const hasAccess =
-          isPublic || userGroups.includes(String(groupData.groupId));
+        const querySnapshot = await getDocs(publicQuery);
 
-        if (hasAccess) {
-          // ✅ Merge into Redux "Bucket" so we don't fetch again
+        if (!querySnapshot.empty) {
+          const groupDoc = querySnapshot.docs[0];
+          const groupData = groupDoc.data();
+          groupData.groupId = groupDoc.id;
+
           dispatch(groupDataSuccess({ [groupData.groupId]: groupData }));
           dispatch(setActiveGroup(groupData.groupId));
           setAccessStatus("GRANTED");
@@ -205,9 +190,11 @@ const ClubRouteGuard = ({ children }) => {
     };
 
     fetchGroup();
-  }, [clubSlug, activeGroupId, allGroups, dispatch, userData]);
+  }, [clubSlug, allGroups, dispatch]);
 
-  if (accessStatus === "PENDING") return <Spinner text="Loading Club..." />;
+  if (accessStatus === "PENDING") {
+    return <Spinner text="Loading Club..." />;
+  }
 
   if (accessStatus === "DENIED") {
     return (
