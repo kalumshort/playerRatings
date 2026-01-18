@@ -39,7 +39,7 @@ export default function PreMatchMOTM({ fixture }) {
   const dispatch = useDispatch();
   const { clubSlug } = useParams();
   const squadData = useSelector((state) =>
-    selectSquadDataObject(state, clubSlug)
+    selectSquadDataObject(state, clubSlug),
   );
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
@@ -70,14 +70,14 @@ export default function PreMatchMOTM({ fixture }) {
         matchId: fixture.id,
         groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
-      })
+      }),
     );
   };
 
   const result = calculatePercentages(
     matchPredictions?.preMatchMotm || {},
     matchPredictions?.preMatchMotmVotes || 0,
-    squadData
+    squadData,
   );
 
   const open = Boolean(anchorEl);
@@ -157,7 +157,7 @@ export default function PreMatchMOTM({ fixture }) {
                       border: `3px solid ${theme.palette.primary.main}`,
                       boxShadow: `0 0 30px ${alpha(
                         theme.palette.primary.main,
-                        0.3
+                        0.3,
                       )}`,
                     }}
                   />
@@ -326,15 +326,6 @@ export default function PreMatchMOTM({ fixture }) {
                 variant="contained"
                 fullWidth
                 startIcon={<CheckCircle />}
-                sx={{
-                  py: 1.5,
-                  borderRadius: 3,
-                  fontWeight: 900,
-                  boxShadow: `0 8px 20px ${alpha(
-                    theme.palette.primary.main,
-                    0.3
-                  )}`,
-                }}
               >
                 LOCK IN WATCH
               </Button>

@@ -27,7 +27,7 @@ export default function PlayersSelect({ onChange, showAvatar = true }) {
   const theme = useTheme();
   const { clubSlug } = useParams(); // e.g., "man-united"
   const squadData = useSelector((state) =>
-    selectSquadDataObject(state, clubSlug)
+    selectSquadDataObject(state, clubSlug),
   );
   const [open, setOpen] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState(null);
@@ -57,20 +57,6 @@ export default function PlayersSelect({ onChange, showAvatar = true }) {
         fullWidth
         onClick={() => setOpen(true)}
         endIcon={<KeyboardArrowDown />}
-        sx={{
-          py: 1.5,
-          px: 2,
-          justifyContent: "space-between",
-          bgcolor: alpha(theme.palette.background.paper, 0.4),
-          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          backdropFilter: "blur(10px)",
-          borderRadius: 3,
-          color: selectedPlayer ? "text.primary" : "text.secondary",
-          "&:hover": {
-            bgcolor: alpha(theme.palette.background.paper, 0.6),
-            borderColor: theme.palette.primary.main,
-          },
-        }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5}>
           {selectedPlayer ? (
@@ -146,7 +132,7 @@ export default function PlayersSelect({ onChange, showAvatar = true }) {
                       py: 1.5,
                       borderBottom: `1px solid ${alpha(
                         theme.palette.divider,
-                        0.05
+                        0.05,
                       )}`,
                       "&:hover": {
                         bgcolor: alpha(theme.palette.primary.main, 0.1),
@@ -163,7 +149,7 @@ export default function PlayersSelect({ onChange, showAvatar = true }) {
                           bgcolor: "background.paper",
                           border: `1px solid ${alpha(
                             theme.palette.divider,
-                            0.1
+                            0.1,
                           )}`,
                         }}
                       />

@@ -49,7 +49,7 @@ export default function PlayerRatingsCards({
 }) {
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),
-    [combinedPlayers]
+    [combinedPlayers],
   );
   const [index, setIndex] = useState(0);
 
@@ -126,7 +126,7 @@ export function PlayerRatingCard({
   const selectPlayer = useMemo(
     // Pass clubSlug to the factory to look in the correct team's data
     () => selectSquadPlayerById(player.id, clubSlug),
-    [player.id, clubSlug] // Re-memoize if player ID or club changes
+    [player.id, clubSlug], // Re-memoize if player ID or club changes
   );
 
   // 3. Select player data using the context-aware selector
@@ -206,14 +206,14 @@ export function PlayerRatingCard({
         currentYear,
       });
     },
-    [fixture.id, player.id, userId, groupId, currentYear]
+    [fixture.id, player.id, userId, groupId, currentYear],
   );
 
   const handleMotmClick = async () => {
     if (readOnly) return;
     setLocalStorageItem(
       `userMatchMOTM-${fixture.id}`,
-      isMOTM ? null : String(player.id)
+      isMOTM ? null : String(player.id),
     );
   };
 
@@ -360,7 +360,7 @@ export function PlayerRatingCard({
               </Typography>
               <Box
                 className={`globalBoxShadow ${getRatingClass(
-                  storedUsersPlayerRating
+                  storedUsersPlayerRating,
                 )}`}
                 sx={{
                   display: "flex",
@@ -416,7 +416,7 @@ export function PlayerRatingCard({
               </Typography>
               <Box
                 className={`globalBoxShadow ${getRatingClass(
-                  playerRatingAverage
+                  playerRatingAverage,
                 )}`}
                 sx={{
                   display: "flex",
@@ -540,8 +540,8 @@ const RatingInputSection = React.memo(
                   sliderValue >= 8
                     ? "#2ecc71"
                     : sliderValue >= 5
-                    ? ""
-                    : "#e74c3c",
+                      ? ""
+                      : "#e74c3c",
               }}
             >
               {sliderValue.toFixed(1).endsWith(".0")
@@ -587,10 +587,6 @@ const RatingInputSection = React.memo(
               flex: 1,
               maxWidth: 280,
               height: isMobile ? 48 : 56, // Smaller button height
-              borderRadius: "16px",
-              fontWeight: "bold",
-              fontSize: isMobile ? "1rem" : "1.1rem",
-              textTransform: "none",
             }}
           >
             Confirm
@@ -598,7 +594,7 @@ const RatingInputSection = React.memo(
         </Box>
       </Box>
     );
-  }
+  },
 );
 
 // =========================================================

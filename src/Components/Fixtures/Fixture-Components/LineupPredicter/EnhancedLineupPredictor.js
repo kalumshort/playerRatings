@@ -106,14 +106,14 @@ export default function SmartLineupPredictor({ fixture }) {
 
   const { clubSlug } = useParams(); // e.g., "man-united"
   const squadData = useSelector((state) =>
-    selectSquadDataObject(state, clubSlug)
+    selectSquadDataObject(state, clubSlug),
   );
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
   // --- STATE ---
   const [chosenTeam, setTeam] = useState(usersMatchData?.chosenTeam || {});
   const [formation, setFormation] = useState(
-    usersMatchData?.formation || "4-3-3"
+    usersMatchData?.formation || "4-3-3",
   );
   const [activeSlot, setActiveSlot] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -150,7 +150,7 @@ export default function SmartLineupPredictor({ fixture }) {
   const filteredSquad = useMemo(() => {
     return Object.entries(squadData).filter(
       ([id, p]) =>
-        p.position === selectedTab && !Object.values(chosenTeam).includes(id)
+        p.position === selectedTab && !Object.values(chosenTeam).includes(id),
     );
   }, [squadData, selectedTab, chosenTeam]);
 
@@ -179,7 +179,7 @@ export default function SmartLineupPredictor({ fixture }) {
         matchId: fixture.id,
         groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
-      })
+      }),
     );
   };
 
@@ -310,7 +310,6 @@ export default function SmartLineupPredictor({ fixture }) {
           disabled={Object.keys(chosenTeam).length !== 11}
           onClick={handleConfirm}
           startIcon={<CheckCircle />}
-          sx={{ borderRadius: 8, px: 6, py: 1.5 }}
         >
           CONFIRM LINEUP
         </Button>

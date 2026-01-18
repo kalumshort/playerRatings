@@ -106,7 +106,7 @@ export default function LatestTeamSeasonRating() {
         fetchAllPlayersSeasonOverallRating({
           groupId: groupId,
           currentYear: globalData.currentYear,
-        })
+        }),
       );
     }
   }, [dispatch, groupId, globalData.currentYear, playerStats]);
@@ -118,7 +118,7 @@ export default function LatestTeamSeasonRating() {
 
     // Find latest fixture with a lineup for THIS club
     const fixture = previousFixtures.find((f) =>
-      f?.lineups?.some((team) => team.team.id === clubId)
+      f?.lineups?.some((team) => team.team.id === clubId),
     );
 
     if (!fixture) return { formationRows: [], fixtureData: null };
@@ -182,16 +182,7 @@ export default function LatestTeamSeasonRating() {
           to={getPath(`/season-stats`)}
           size="small"
           endIcon={<ArrowForwardIcon />}
-          sx={{
-            borderRadius: "20px",
-            textTransform: "none",
-            fontWeight: 700,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-            "&:hover": {
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              borderColor: theme.palette.primary.main,
-            },
-          }}
+          variant="contained"
         >
           View Squad
         </Button>

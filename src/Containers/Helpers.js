@@ -45,17 +45,7 @@ export function ColorPicker({ value, onChange }) {
 
   return (
     <Box>
-      <Button
-        onClick={handleClick}
-        sx={{
-          width: "50px",
-          height: "35px",
-          minWidth: 0,
-          padding: 0,
-          backgroundColor: value,
-          "&:hover": { borderColor: "#888" },
-        }}
-      />
+      <Button onClick={handleClick} />
 
       <Popover
         open={open}

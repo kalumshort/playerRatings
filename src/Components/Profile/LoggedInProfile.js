@@ -165,7 +165,6 @@ export default function LoggedInProfile() {
             startIcon={<Save size={18} />}
             onClick={handleUpdate}
             disabled={!changedFields.displayName}
-            sx={{ borderRadius: "12px", py: 1.2 }}
           >
             Save Account Changes
           </Button>

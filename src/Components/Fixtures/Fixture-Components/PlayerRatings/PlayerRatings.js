@@ -247,7 +247,7 @@ export default function PlayerRatings({ fixture }) {
         <DialogActions>
           <Button
             onClick={() => setOpenConfirmDialog(false)}
-            sx={{ color: "#aaa" }}
+
           >
             Go Back
           </Button>

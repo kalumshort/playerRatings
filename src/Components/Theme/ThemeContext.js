@@ -9,255 +9,169 @@ import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
   alpha,
+  lighten,
 } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { motion } from "framer-motion";
+
+// --- 1. PHYSICS ENGINE ---
+const buttonMotionVariants = {
+  initial: { scale: 1, rotate: 0, y: 0 },
+  hover: {
+    scale: 1.05,
+    y: -3,
+    rotate: -2,
+    transition: { type: "spring", stiffness: 300, damping: 15 },
+  },
+  tap: {
+    scale: 0.95,
+    y: 2,
+    rotate: 0,
+    transition: { type: "spring", stiffness: 600, damping: 12 },
+  },
+};
+
+// --- 2. PALETTE ---
+const PALETTE = {
+  light: {
+    bg: "#FDFBF7",
+    paper: "#FFFFFF",
+    textPrimary: "#4A4A4A",
+    textSecondary: "#8C8C8C",
+  },
+  dark: {
+    bg: "#2D3142",
+    paper: "#393D50",
+    textPrimary: "#F0F0F0",
+    textSecondary: "#B0B3C7",
+  },
+  primary: "#A0E8AF", // Matcha Green
+  secondary: "#A2D2FF", // Periwinkle
+};
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children, accentColor = "#00FF87" }) => {
-  const [themeMode, setThemeMode] = useState("dark");
+export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
+  const [themeMode, setThemeMode] = useState("light");
 
-  // Persist theme preference
   useEffect(() => {
-    const savedTheme = localStorage.getItem("themeMode");
-    if (savedTheme) setThemeMode(savedTheme);
+    const saved = localStorage.getItem("themeMode");
+    if (saved) setThemeMode(saved);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("themeMode", themeMode);
-  }, [themeMode]);
+  const toggleTheme = () =>
+    setThemeMode((p) => (p === "light" ? "dark" : "light"));
 
-  const toggleTheme = () => {
-    setThemeMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-  };
+  const theme = useMemo(() => {
+    const isLight = themeMode === "light";
+    const colors = isLight ? PALETTE.light : PALETTE.dark;
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: themeMode,
-          primary: {
-            main: accentColor,
-            dark: alpha(accentColor, 0.7),
-            light: alpha(accentColor, 0.1),
-            contrastText: themeMode === "dark" ? "#000000" : "#ffffff",
-          },
-          ...(themeMode === "light"
-            ? {
-                background: {
-                  default: "#F8FAFC", // Modern Slate-50
-                  paper: "rgba(255, 255, 255, 0.8)",
-                },
-                text: {
-                  primary: "#0F172A",
-                  secondary: "#64748B",
-                },
-              }
-            : {
-                background: {
-                  default: "#020617", // Deep Navy/Black
-                  paper: "rgba(15, 23, 42, 0.6)",
-                },
-                text: {
-                  primary: "#F8FAFC",
-                  secondary: "#94A3B8",
-                },
-              }),
+    // Create the "Lip" color (darker shade for 3D depth)
+    const primaryMain = accentColor;
+
+    return createTheme({
+      palette: {
+        mode: themeMode,
+        primary: { main: primaryMain, contrastText: "#3D3D3D" },
+        secondary: { main: PALETTE.secondary },
+        background: { default: colors.bg, paper: colors.paper },
+        text: { primary: colors.textPrimary, secondary: colors.textSecondary },
+      },
+      shape: { borderRadius: 32 },
+
+      typography: {
+        fontFamily: "'Nunito', 'Quicksand', sans-serif",
+        button: {
+          fontWeight: 800,
+          fontSize: "1rem",
+          letterSpacing: "0.02em",
+          textTransform: "none",
+        },
+      },
+
+      components: {
+        MuiCssBaseline: {
+          styleOverrides: `
+            @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+            body { background-color: ${colors.bg}; transition: background-color 0.4s ease; }
+          `,
         },
 
-        shape: { borderRadius: 16 },
-        //Courier Prime
-        typography: {
-          // Main UI and Body font (Rounded & Modern)
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-
-          // Heading variants (Geometric & Bold)
-          h1: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 800,
-            letterSpacing: "-0.04em",
-            textTransform: "uppercase",
+        // --- BUTTON CONFIGURATION ---
+        MuiButton: {
+          defaultProps: {
+            // 1. PHYSICS (Keep the bounce)
+            component: motion.button,
+            variants: buttonMotionVariants,
+            initial: "initial",
+            whileHover: "hover",
+            whileTap: "tap",
+            disableRipple: true, // Clean interaction
           },
-          h2: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            textTransform: "uppercase",
-          },
-          h3: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          },
-          h4: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "-0.01em",
-          },
-          h5: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 600,
-          },
-          h6: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 600,
-          },
-
-          // Subtitles & Secondary UI text
-          subtitle1: {
-            fontWeight: 600,
-            lineHeight: 1.5,
-            letterSpacing: "0.01em",
-          },
-          subtitle2: {
-            fontWeight: 600,
-            fontSize: "0.875rem",
-          },
-
-          // Standard Body Text
-          body1: {
-            fontWeight: 400,
-            fontSize: "1rem",
-            lineHeight: 1.6,
-          },
-          body2: {
-            fontWeight: 400,
-            fontSize: "0.875rem",
-            lineHeight: 1.6,
-          },
-
-          // Technical/Stat labels (Keeping Space Mono for the 'Data' look)
-          caption: {
-            fontWeight: 400,
-            letterSpacing: "0.02em",
-          },
-
-          // Action Elements
-          button: {
-            fontFamily: "'Outfit', sans-serif",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          },
-        },
-
-        components: {
-          MuiCssBaseline: {
-            styleOverrides: (theme) => ({
-              // Load modern font weights
-
-              body: {
-                backgroundColor: theme.palette.background.default,
-                color: theme.palette.text.primary,
-                transition: "background-color 0.3s ease",
-              },
-              // Dynamic Scrollbar synced to club accent color
-              "::-webkit-scrollbar": { width: "6px" },
-              "::-webkit-scrollbar-track": {
-                backgroundColor:
-                  theme.palette.mode === "dark" ? "#020617" : "#F8FAFC",
-              },
-              "::-webkit-scrollbar-thumb": {
-                backgroundColor: alpha(accentColor, 0.4),
-                borderRadius: "10px",
-                "&:hover": { backgroundColor: accentColor },
-              },
-            }),
-          },
-          MuiPaper: {
-            styleOverrides: {
-              root: ({ theme }) => ({
-                backgroundImage: "none", // Remove default MUI overlay
-                backdropFilter: "blur(16px) saturate(180%)",
-                WebkitBackdropFilter: "blur(16px) saturate(180%)",
-                border: "1px solid",
-                borderColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "rgba(0, 0, 0, 0.08)",
-                boxShadow:
-                  theme.palette.mode === "dark"
-                    ? "0 10px 30px -10px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)"
-                    : "0 10px 30px -10px rgba(0,0,0,0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-
-                // Margin Logic
-                margin: 0, // Default for tablet and desktop
-                [theme.breakpoints.down("sm")]: {
-                  margin: "8px", // Only applied on mobile
-                },
-              }),
-            },
-          },
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                borderRadius: 12,
-                padding: "8px 24px",
-                "&:hover": {
-                  transform: "translateY(-1px)",
-                  boxShadow: `0 8px 20px -6px ${alpha(accentColor, 0.5)}`,
-                },
-              },
-              containedPrimary: {
-                // Subtle gradient for primary buttons
-                background: `linear-gradient(135deg, ${accentColor} 0%, ${alpha(
-                  accentColor,
-                  0.8
-                )} 100%)`,
+          styleOverrides: {
+            root: {
+              borderRadius: "50px", // Full Pill Shape
+              padding: "12px 32px",
+              transition: "all 0.2s ease",
+              fontWeight: 800,
+              letterSpacing: "0.02em",
+              textTransform: "none",
+              // Remove default Material elevation
+              boxShadow: "none",
+              "&:hover": {
+                boxShadow: "none",
               },
             },
-          },
-          MuiAvatar: {
-            styleOverrides: {
-              root: ({ theme }) => ({
-                borderRadius: "8px",
-              }),
-            },
-          },
-          MuiTab: {
-            styleOverrides: {
-              root: {
-                borderRadius: 10,
-                margin: "4px",
-                minHeight: "40px",
-                "&.Mui-selected": {
-                  backgroundColor: alpha(accentColor, 0.15),
-                  color: accentColor,
-                },
+
+            // 2. THE CLEAN "CONTAINED" STYLE
+            containedPrimary: {
+              backgroundColor: primaryMain,
+              color: "#3D3D3D",
+              border: "none", // Removed the border for a cleaner look
+
+              // No box-shadows at all. Just pure color.
+              boxShadow: "none",
+
+              "&:hover": {
+                // Just a slight color shift
+                backgroundColor: lighten(primaryMain, 0.15),
+                boxShadow: "none",
+              },
+              "&:active": {
+                boxShadow: "none",
               },
             },
-          },
-          MuiStack: {
-            defaultProps: {
-              useFlexGap: true,
-              spacing: 2, // Default 16px gap between all stacked Papers
-            },
-          },
-          MuiContainer: {
-            styleOverrides: {
-              root: {
-                paddingLeft: "16px",
-                paddingRight: "16px",
-                "@media (min-width: 600px)": {
-                  paddingLeft: "24px",
-                  paddingRight: "24px",
-                },
+
+            // 3. THE "TEXT" STYLE (No background)
+            text: {
+              backgroundColor: "transparent",
+              "&:hover": {
+                backgroundColor: alpha(primaryMain, 0.1),
               },
             },
           },
         },
-      }),
-    [themeMode, accentColor]
-  );
+
+        // Clay Cards
+        MuiPaper: {
+          styleOverrides: {
+            root: {
+              backgroundImage: "none",
+              margin: "8px",
+              border: "none",
+              boxShadow: isLight
+                ? "inset 0px 2px 0px rgba(255, 255, 255, 0.6), 0px 10px 40px -10px rgba(166, 175, 195, 0.3)"
+                : "inset 0px 1px 0px rgba(255, 255, 255, 0.1), 0px 10px 40px -10px rgba(0,0,0,0.5)",
+            },
+          },
+        },
+      },
+    });
+  }, [themeMode, accentColor]);
 
   const value = useMemo(
-    () => ({
-      themeMode,
-      toggleTheme,
-      accentColor,
-    }),
-    [themeMode, accentColor]
+    () => ({ themeMode, toggleTheme, accentColor }),
+    [themeMode, accentColor],
   );
 
   return (

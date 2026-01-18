@@ -44,12 +44,7 @@ const Logout = () => {
   return (
     <div>
       {/* Log out text button */}
-      <Button
-        ref={anchorRef}
-        onClick={handleClick}
-        variant="outlined"
-        color="white"
-      >
+      <Button ref={anchorRef} onClick={handleClick} variant="outlined">
         Log Out
       </Button>
 
@@ -67,10 +62,10 @@ const Logout = () => {
             Are you sure you want to log out?
           </Typography>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button onClick={handleLogout} color="white" variant="outlined">
+            <Button onClick={handleLogout} variant="outlined">
               Yes
             </Button>
-            <Button onClick={handleCancel} color="white" variant="outlined">
+            <Button onClick={handleCancel} variant="outlined">
               No
             </Button>
           </Box>

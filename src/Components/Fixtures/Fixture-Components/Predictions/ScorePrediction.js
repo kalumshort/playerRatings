@@ -24,7 +24,6 @@ import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 import ScorePredictionResults from "../ScorePredictionResults";
 
 export default function ScorePrediction({ fixture }) {
-  const theme = useTheme();
   const dispatch = useDispatch();
 
   // Data Selectors
@@ -56,7 +55,7 @@ export default function ScorePrediction({ fixture }) {
         matchId: fixture.id,
         groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
-      })
+      }),
     );
   };
 
@@ -148,15 +147,6 @@ export default function ScorePrediction({ fixture }) {
           variant="contained"
           size="small" // Smaller button
           startIcon={<CheckCircle sx={{ fontSize: "1rem !important" }} />}
-          sx={{
-            width: "100%",
-            maxWidth: 220,
-            py: 1, // Less padding
-            borderRadius: 6,
-
-            fontSize: "0.8rem",
-            boxShadow: `0 4px 15px -4px ${theme.palette.primary.main}40`,
-          }}
         >
           CONFIRM {homeScore}-{awayScore}
         </Button>

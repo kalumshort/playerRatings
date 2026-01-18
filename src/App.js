@@ -42,8 +42,8 @@ import { useGroupAutoRedirect } from "./Hooks/useGroupAutoRedirect";
 const GroupHomePage = lazy(() => import("./Containers/GroupHomePage"));
 const GlobalGroupSelect = lazy(() => import("./Containers/GlobalGroupSelect"));
 const ProfileContainer = lazy(() => import("./Containers/ProfileContainer"));
-const PlayerStatsContainer = lazy(() =>
-  import("./Containers/PlayerStatsContainer")
+const PlayerStatsContainer = lazy(
+  () => import("./Containers/PlayerStatsContainer"),
 );
 const GroupDashboard = lazy(() => import("./Containers/GroupDashboard"));
 const GroupPublicPage = lazy(() => import("./Containers/GroupPublicPage"));
@@ -151,12 +151,12 @@ const ClubRouteGuard = ({ children }) => {
         // 1. Try to find in already loaded user groups
         const userGroups = allGroups ? Object.values(allGroups) : [];
         const matchingGroup = userGroups.find(
-          (group) => group?.slug === clubSlug
+          (group) => group?.slug === clubSlug,
         );
 
         if (matchingGroup?.groupId) {
           dispatch(
-            groupDataSuccess({ [matchingGroup.groupId]: matchingGroup })
+            groupDataSuccess({ [matchingGroup.groupId]: matchingGroup }),
           );
           dispatch(setActiveGroup(matchingGroup.groupId));
           setAccessStatus("GRANTED");
@@ -167,7 +167,7 @@ const ClubRouteGuard = ({ children }) => {
         const publicQuery = query(
           collection(db, "groups"),
           where("slug", "==", clubSlug),
-          where("visibility", "==", "public")
+          where("visibility", "==", "public"),
         );
 
         const querySnapshot = await getDocs(publicQuery);
@@ -214,10 +214,10 @@ const ClubRouteGuard = ({ children }) => {
 
 function App() {
   const { user, userLoading } = useAuth();
-  const { userHomeGroup, groupDataLoaded, activeGroup } = useGroupData(); // Updated destructuring
+  const { userHomeGroup, groupDataLoaded } = useGroupData(); // Updated destructuring
 
   return (
-    <ThemeProvider accentColor={activeGroup?.accentColor || "#7FD880"}>
+    <ThemeProvider>
       <GlobalContainer>
         {user && <UserDataListener userId={user.uid} />}
         <Router>

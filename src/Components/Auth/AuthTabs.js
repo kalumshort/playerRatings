@@ -128,7 +128,7 @@ const AuthTabs = ({ groupId }) => {
             )}
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-              <Button variant="contained" color="primary" type="submit">
+              <Button variant="contained" type="submit">
                 {value === 0 ? "Sign Up" : "Log In"}
               </Button>
             </Box>

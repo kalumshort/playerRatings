@@ -225,20 +225,6 @@ const ContactForm = () => {
               <SendIcon />
             )
           }
-          sx={{
-            py: 1.5,
-
-            fontSize: "1.1rem",
-            borderRadius: "12px",
-            backgroundColor: theme.palette.primary.main,
-            color: "#000",
-            "&:hover": {
-              backgroundColor: theme.palette.primary.dark,
-              transform: "translateY(-2px)",
-              boxShadow: `0 4px 20px ${theme.palette.primary.main}50`,
-            },
-            transition: "all 0.3s ease",
-          }}
         >
           {status === "loading" ? "SENDING..." : "SUBMIT"}
         </Button>

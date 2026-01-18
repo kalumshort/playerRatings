@@ -163,15 +163,6 @@ export default function ScorePredictionResults({
           startIcon={<BarChartIcon />}
           variant="outlined"
           size="small"
-          sx={{
-            mt: 3,
-            borderRadius: 8,
-            borderColor: theme.palette.divider,
-            color: hasData ? "text.primary" : "text.disabled",
-            "&:disabled": {
-              borderColor: alpha(theme.palette.divider, 0.5),
-            },
-          }}
         >
           {hasData ? "FULL BREAKDOWN" : "NO ANALYTICS YET"}
         </Button>

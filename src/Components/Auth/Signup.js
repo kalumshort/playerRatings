@@ -64,13 +64,7 @@ export default function SignUp() {
             </Typography>
           )}
 
-          <Button
-            variant="contained"
-            color="primary"
-            type="submit"
-            fullWidth
-            sx={{ padding: "12px", fontSize: "16px" }}
-          >
+          <Button variant="contained" color="primary" type="submit" fullWidth>
             Sign Up
           </Button>
         </form>
