@@ -1,29 +1,25 @@
 import React, { useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router-dom";
 import {
   Box,
   Typography,
   Stack,
   Button,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Tabs,
   Tab,
-  useTheme,
   SwipeableDrawer,
-  IconButton,
   Grid,
+  Avatar,
+  styled,
+  useTheme,
 } from "@mui/material";
-import {
-  CheckCircle,
-  DeleteSweep,
-  PersonOff,
-  Close,
-} from "@mui/icons-material";
+import { CheckCircle, DeleteSweep, Add as AddIcon } from "@mui/icons-material";
 
-// --- SELECTORS & FIREBASE FUNCTIONS ---
+// --- EXTERNAL HOOKS & SELECTORS ---
 import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
 import { handlePredictTeamSubmit } from "../../../../Firebase/Firebase";
@@ -31,70 +27,87 @@ import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
-import { FORMATIONS } from "./LineupPredictor";
-import LineupPlayer from "../LineupPlayer";
-import { useParams } from "react-router-dom";
 import AuthModal from "../../../Auth/AuthModal";
 
-// --- CONSTANTS (From your files) ---
+// --- CONFIG & UTILS ---
+import { FORMATIONS } from "./LineupPredictor";
+import { AsyncButton } from "../../../Inputs/AsyncButton";
 
-// --- SUB-COMPONENT: PITCH DECORATION ---
-const PitchLines = () => (
-  <Box
-    sx={{
-      position: "absolute",
-      inset: 0,
-      pointerEvents: "none",
-      opacity: 0.15,
-    }}
-  >
-    <Box
-      sx={{
-        position: "absolute",
-        top: "-10%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "40%",
-        height: "25%",
-        border: "2px solid white",
-        borderRadius: "50%",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        top: 0,
-        width: "100%",
-        height: "2px",
-        bgcolor: "white",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "70%",
-        height: "18%",
-        border: "2px solid white",
-        borderBottom: "none",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        bottom: "12%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: 4,
-        height: 4,
-        bgcolor: "white",
-        borderRadius: "50%",
-      }}
-    />
-  </Box>
-);
+const PitchSurface = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: "100%",
+  aspectRatio: "0.70",
+  backgroundColor: "#A0E8AF", // Matcha Green
+  borderRadius: theme.shape.borderRadius, // Uses global theme radius (e.g., 24px)
+  // Deep inset shadow to create the "tray" effect
+  boxShadow:
+    "inset 10px 10px 20px rgba(0,0,0,0.15), inset -10px -10px 20px rgba(255,255,255,0.4)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-around",
+  overflow: "hidden",
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+}));
+
+// 2. The White Lines: Semi-transparent overlay
+const PitchMarking = styled(Box)({
+  position: "absolute",
+  borderColor: "rgba(255,255,255,0.6)",
+  borderStyle: "solid",
+  borderWidth: 2,
+  pointerEvents: "none",
+});
+
+// 3. The Player Slot: Tactile, bouncy interactions
+const PlayerSlot = styled(Box)(({ theme }) => ({
+  width: 60,
+  height: 60,
+  cursor: "pointer",
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "50%",
+  transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", // Spring physics
+
+  // Default state (Empty): A small dent in the grass
+  backgroundColor: "rgba(0,0,0,0.05)",
+  boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.1)",
+
+  "&:hover": {
+    transform: "scale(1.15)",
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+
+  // When active/filled, we handle styling via children,
+  // but the container remains the touch target.
+}));
+
+const RemoveButton = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: -2,
+  right: -2,
+  width: 20,
+  height: 20,
+  borderRadius: "50%",
+  backgroundColor: theme.palette.error.main,
+  color: "#FFF",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "12px",
+  fontWeight: "bold",
+  boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+  zIndex: 10,
+  transition: "0.2s",
+  "&:hover": { transform: "scale(1.2)" },
+}));
+
+// =============================================================================
+//  MAIN COMPONENT
+// =============================================================================
 
 export default function SmartLineupPredictor({ fixture }) {
   const theme = useTheme();
@@ -102,15 +115,18 @@ export default function SmartLineupPredictor({ fixture }) {
   const { user } = useAuth();
   const globalData = useGlobalData();
   const { activeGroup } = useGroupData();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { clubSlug } = useParams();
 
-  const { clubSlug } = useParams(); // e.g., "man-united"
+  const [loading, setLoading] = useState(false);
+
+  // --- REDUX SELECTORS ---
   const squadData = useSelector((state) =>
     selectSquadDataObject(state, clubSlug),
   );
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
-  // --- STATE ---
+  // --- LOCAL STATE ---
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [chosenTeam, setTeam] = useState(usersMatchData?.chosenTeam || {});
   const [formation, setFormation] = useState(
     usersMatchData?.formation || "4-3-3",
@@ -119,7 +135,7 @@ export default function SmartLineupPredictor({ fixture }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("Goalkeeper");
 
-  // --- LOGIC ---
+  // --- HELPERS ---
   const getPositionBySlot = (slotId) => {
     if (slotId === 1) return "Goalkeeper";
     if ([2, 3, 4, 5].includes(slotId)) return "Defender";
@@ -127,10 +143,18 @@ export default function SmartLineupPredictor({ fixture }) {
     return "Attacker";
   };
 
+  const filteredSquad = useMemo(() => {
+    return Object.entries(squadData).filter(
+      ([id, p]) =>
+        p.position === selectedTab && !Object.values(chosenTeam).includes(id),
+    );
+  }, [squadData, selectedTab, chosenTeam]);
+
+  // --- HANDLERS ---
   const handleSlotClick = (slotId) => {
     setActiveSlot(slotId);
     setSelectedTab(getPositionBySlot(slotId));
-    setIsDrawerOpen(true); // Open the "Modal" pop up
+    setIsDrawerOpen(true);
   };
 
   const handlePlayerPick = (playerId) => {
@@ -147,23 +171,20 @@ export default function SmartLineupPredictor({ fixture }) {
     });
   };
 
-  const filteredSquad = useMemo(() => {
-    return Object.entries(squadData).filter(
-      ([id, p]) =>
-        p.position === selectedTab && !Object.values(chosenTeam).includes(id),
-    );
-  }, [squadData, selectedTab, chosenTeam]);
-
+  // --- SUBMIT LOGIC (Restored) ---
   const handleConfirm = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
+    setLoading(true);
+    // 1. Build the player object for storage
     const filteredPlayers = Object.keys(chosenTeam).reduce((res, key) => {
       if (squadData[chosenTeam[key]]) res[key] = squadData[chosenTeam[key]];
       return res;
     }, {});
 
+    // 2. Submit to Firebase
     await handlePredictTeamSubmit({
       chosenTeam,
       formation,
@@ -174,6 +195,7 @@ export default function SmartLineupPredictor({ fixture }) {
       players: filteredPlayers,
     });
 
+    // 3. Refresh Data
     dispatch(
       fetchMatchPredictions({
         matchId: fixture.id,
@@ -181,7 +203,13 @@ export default function SmartLineupPredictor({ fixture }) {
         currentYear: globalData.currentYear,
       }),
     );
+
+    setLoading(false);
   };
+
+  // ===========================================================================
+  //  RENDER
+  // ===========================================================================
 
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", p: 2 }}>
@@ -189,17 +217,24 @@ export default function SmartLineupPredictor({ fixture }) {
         open={showAuthModal}
         handleClose={() => setShowAuthModal(false)}
       />
-      {/* HEADER CONTROLS */}
-      <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
+
+      {/* HEADER: Formation & Clear */}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <FormControl variant="standard" sx={{ minWidth: 140 }}>
-          <InputLabel sx={{ fontSize: "0.7rem" }}>TACTIC</InputLabel>
+          {/* Note: The global theme should handle the font weight and colors of Select */}
           <Select
             value={formation}
             onChange={(e) => setFormation(e.target.value)}
+            displayEmpty
             sx={{
-              color: theme.palette.primary.main,
-              fontSize: "1.2rem",
-              fontWeight: "bold",
+              fontWeight: 800,
+              color: theme.palette.primary.dark,
+              "&:before, &:after": { borderBottom: "none!important" }, // Clean look
             }}
           >
             {Object.keys(FORMATIONS).map((f) => (
@@ -209,113 +244,136 @@ export default function SmartLineupPredictor({ fixture }) {
             ))}
           </Select>
         </FormControl>
+
         <Button
           startIcon={<DeleteSweep />}
           onClick={() => setTeam({})}
           color="error"
+          sx={{ fontWeight: 700 }}
         >
           Clear
         </Button>
       </Stack>
 
-      {/* THE PITCH */}
-      <Box
-        sx={{
-          position: "relative",
-          width: "100%",
-          aspectRatio: "0.85",
-          bgcolor: "background.paper",
-          borderRadius: 4,
-          overflow: "hidden",
-          border: `1px solid ${theme.palette.divider}`,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-around",
-          boxShadow: theme.shadows[10],
-        }}
-      >
-        <PitchLines />
+      {/* THE CLAY PITCH */}
+      <PitchSurface>
+        {/* -- Decorative Lines (Absolute Positioned) -- */}
+        <PitchMarking
+          sx={{
+            top: "-10%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "40%",
+            height: "25%",
+            borderRadius: "50%",
+          }}
+        />
+        <PitchMarking
+          sx={{ top: 0, width: "100%", borderBottomWidth: 2, height: 0 }}
+        />
+        <PitchMarking
+          sx={{
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "70%",
+            height: "18%",
+            borderBottom: "none",
+          }}
+        />
+        <PitchMarking
+          sx={{
+            bottom: "12%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 4,
+            height: 4,
+            borderRadius: "50%",
+            bgcolor: "rgba(255,255,255,0.8)",
+            borderWidth: 0,
+          }}
+        />
+
+        {/* -- Rows & Slots -- */}
         {(FORMATIONS[formation] || FORMATIONS["4-3-3"]).map((row) => (
           <Box
             key={row.rowId}
-            sx={{ display: "flex", justifyContent: "space-evenly", zIndex: 1 }}
+            sx={{
+              display: "flex",
+              justifyContent: "space-evenly",
+              zIndex: 1,
+              position: "relative",
+            }}
           >
             {row.slots.map((slotId) => {
               const player = squadData[chosenTeam[slotId]];
               return (
-                <Box
+                <PlayerSlot
                   key={slotId}
                   onClick={() => handleSlotClick(slotId)}
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "0.2s",
-                    "&:hover": {
-                      transform: "scale(1.1)",
-                    },
-                  }}
                 >
                   {player ? (
-                    <Box sx={{ position: "relative" }}>
-                      <LineupPlayer
-                        player={player}
-                        showPlayerName={true}
-                        // Optional: Disable drag props here since it's a static view
-                        draggable={false}
+                    <Box sx={{ position: "relative", textAlign: "center" }}>
+                      <Avatar
+                        src={player.photo}
+                        sx={{
+                          width: 60,
+                          height: 60,
+                          border: "2px solid #FFF",
+                          boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
+                        }}
                       />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: "block",
+                          color: "#FFF",
+                          fontWeight: 800,
+                          textShadow: "0px 1px 3px rgba(0,0,0,0.6)",
+                          fontSize: "0.65rem",
+                          lineHeight: 1,
+                          mt: 0.5,
+                        }}
+                      >
+                        {player.name ? player.name.split(" ").pop() : "Player"}
+                      </Typography>
 
-                      <Box
+                      <RemoveButton
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemovePlayer(slotId);
                         }}
-                        sx={{
-                          position: "absolute",
-                          top: -5,
-                          right: -5,
-                          bgcolor: "error.main",
-                          width: 16,
-                          height: 16,
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 10,
-                          color: "white",
-                        }}
                       >
                         ×
-                      </Box>
+                      </RemoveButton>
                     </Box>
                   ) : (
-                    <PersonOff sx={{ opacity: 0.2 }} />
+                    <AddIcon
+                      sx={{ color: "rgba(255,255,255,0.5)", fontSize: 28 }}
+                    />
                   )}
-                </Box>
+                </PlayerSlot>
               );
             })}
           </Box>
         ))}
-      </Box>
+      </PitchSurface>
 
       {/* CONFIRM BUTTON */}
       <Box sx={{ mt: 4, textAlign: "center" }}>
-        <Button
+        <AsyncButton
           variant="contained"
           size="large"
           disabled={Object.keys(chosenTeam).length !== 11}
           onClick={handleConfirm}
           startIcon={<CheckCircle />}
+          loading={loading}
         >
           CONFIRM LINEUP
-        </Button>
+        </AsyncButton>
       </Box>
 
-      {/* PLAYER SELECTION MODAL (DRAWER) */}
+      {/* PLAYER SELECTION DRAWER (MODAL) */}
       <SwipeableDrawer
         anchor="bottom"
         open={isDrawerOpen}
@@ -323,84 +381,66 @@ export default function SmartLineupPredictor({ fixture }) {
         onOpen={() => setIsDrawerOpen(true)}
         PaperProps={{
           sx: {
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            maxHeight: "70vh",
-            background:
-              theme.palette.mode === "dark"
-                ? "linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(10,10,10,1) 100%)"
-                : "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,1) 100%)",
-            backdropFilter: "blur(20px)",
-            p: 3,
+            borderTopLeftRadius: 32,
+            borderTopRightRadius: 32,
+            maxHeight: "85vh",
           },
         }}
       >
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}
-        >
-          <Typography variant="h6">
-            SELECT {getPositionBySlot(activeSlot).toUpperCase()}
-          </Typography>
-          <IconButton onClick={() => setIsDrawerOpen(false)}>
-            <Close />
-          </IconButton>
-        </Stack>
+        <Box sx={{ p: 3, pb: 6 }}>
+          {/* Drawer Header */}
 
-        <Tabs
-          value={selectedTab}
-          onChange={(e, v) => setSelectedTab(v)}
-          variant="fullWidth"
-          sx={{ mb: 3 }}
-        >
-          <Tab label="GK" value="Goalkeeper" />
-          <Tab label="DEF" value="Defender" />
-          <Tab label="MID" value="Midfielder" />
-          <Tab label="FOR" value="Attacker" />
-        </Tabs>
+          {/* Position Tabs */}
+          <Tabs
+            value={selectedTab}
+            onChange={(e, v) => setSelectedTab(v)}
+            variant="fullWidth"
+            sx={{
+              mb: 3,
+              "& .MuiTab-root": { fontWeight: 700 },
+            }}
+          >
+            <Tab label="GK" value="Goalkeeper" />
+            <Tab label="DEF" value="Defender" />
+            <Tab label="MID" value="Midfielder" />
+            <Tab label="FOR" value="Attacker" />
+          </Tabs>
 
-        <Box sx={{ overflowY: "auto", pb: 4 }}>
-          <Grid container spacing={2}>
-            {filteredSquad.map(([id, player]) => (
-              <Grid item xs={4} sm={3} key={id}>
-                <Box
-                  onClick={() => handlePlayerPick(id)}
-                  sx={{
-                    p: 1.5,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    borderRadius: 4,
-                    transition: "0.2s",
-                    border: "1px solid transparent",
-                    "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.1)",
-                      borderColor: theme.palette.primary.main,
-                    },
-                  }}
-                >
-                  <img
-                    src={player.photo}
-                    style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
-                      marginBottom: 8,
+          {/* Player Grid */}
+          <Box sx={{ overflowY: "auto" }}>
+            <Grid container spacing={2}>
+              {filteredSquad.map(([id, player]) => (
+                <Grid item xs={4} sm={3} key={id}>
+                  <Stack
+                    onClick={() => handlePlayerPick(id)}
+                    alignItems="center"
+                    sx={{
+                      cursor: "pointer",
+                      p: 1.5,
+                      borderRadius: 3,
+                      transition: "0.2s",
+                      "&:hover": {
+                        bgcolor: "rgba(0,0,0,0.04)",
+                        transform: "translateY(-2px)",
+                      },
                     }}
-                    alt=""
-                  />
-                  <Typography
-                    variant="caption"
-                    display="block"
-                    sx={{ fontWeight: "bold", lineHeight: 1.2 }}
                   >
-                    {player.name}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+                    <Avatar
+                      src={player.photo}
+                      sx={{ width: 60, height: 60, mb: 1, boxShadow: 2 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      align="center"
+                      sx={{ fontWeight: 700, lineHeight: 1.1 }}
+                    >
+                      {player.name}
+                    </Typography>
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         </Box>
       </SwipeableDrawer>
     </Box>

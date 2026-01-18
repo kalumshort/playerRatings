@@ -1,21 +1,13 @@
-import React, { useRef } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Stack,
-  useTheme,
-  Tooltip,
-  Paper,
-} from "@mui/material";
+import React, { useRef, useState } from "react";
+import { Box, Typography, Stack, useTheme, Paper, Avatar } from "@mui/material";
 import { Download as DownloadIcon, SportsSoccer } from "@mui/icons-material";
 import html2canvas from "html2canvas";
 
-// --- EXISTING IMPORTS ---
-
-import whiteLogo from "../../../../assets/logo/11votes-nobg-clear-white.png";
-import LineupPlayer from "../LineupPlayer";
 import { FORMATIONS } from "./LineupPredictor";
+
+// --- NEW IMPORT ---
+// Ensure this path matches where you saved the file!
+import { AsyncButton } from "../../../Inputs/AsyncButton";
 
 export default function ChosenLineup({
   squadData,
@@ -25,32 +17,48 @@ export default function ChosenLineup({
   const theme = useTheme();
   const lineupRef = useRef();
 
+  // 1. NEW LOCAL STATE FOR LOADING
+  const [isSaving, setIsSaving] = useState(false);
+
   // --- IMAGE SAVER LOGIC ---
   const handleSaveImage = async () => {
     const target = lineupRef.current;
     if (!target) return;
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const styles = getComputedStyle(target);
-    const radius = parseFloat(styles.borderRadius) || 0;
+    // A. Start Loading (Triggers Clay "Pressed" State)
+    setIsSaving(true);
 
-    const canvas = await html2canvas(target, {
-      backgroundColor: null,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      scale: dpr,
-      ignoreElements: (el) => el?.dataset?.nosnap === "true", // hide buttons
-    });
+    try {
+      // slight delay to let the UI update (optional, but feels better)
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const finalCanvas =
-      radius > 0 ? applyRoundMask(canvas, radius * dpr) : canvas;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const styles = getComputedStyle(target);
+      const radius = parseFloat(styles.borderRadius) || 0;
 
-    const imgData = finalCanvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = imgData;
-    link.download = `11Votes-My-XI-${formation}.png`;
-    link.click();
+      const canvas = await html2canvas(target, {
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scale: dpr,
+        ignoreElements: (el) => el?.dataset?.nosnap === "true", // hide buttons
+      });
+
+      const finalCanvas =
+        radius > 0 ? applyRoundMask(canvas, radius * dpr) : canvas;
+
+      const imgData = finalCanvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = imgData;
+      link.download = `11Votes-My-XI-${formation}.png`;
+      link.click();
+    } catch (err) {
+      console.error("Screenshot failed:", err);
+    } finally {
+      // B. End Loading (Button pops back up)
+      setIsSaving(false);
+    }
   };
 
   function applyRoundMask(srcCanvas, r) {
@@ -85,6 +93,8 @@ export default function ChosenLineup({
       sx={{
         maxWidth: 600,
         mx: "auto",
+        borderRadius: "24px", // Ensure outer paper matches theme
+        overflow: "hidden",
       }}
     >
       {/* --- THE PITCH CONTAINER (Ref for Screenshot) --- */}
@@ -92,39 +102,29 @@ export default function ChosenLineup({
         ref={lineupRef}
         sx={{
           position: "relative",
-          // Dark Green Gradient
           overflow: "hidden",
           boxShadow: `0 15px 40px -10px ${theme.palette.common.black}80`,
-          aspectRatio: "0.85", // Matches DroppablePitch
+          aspectRatio: "0.70",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
+          backgroundColor: "#A0E8AF", // Matcha Green
         }}
       >
-        {/* WATERMARK LOGO */}
-        <Box
-          component="img"
-          src={whiteLogo}
-          alt="11Votes"
-          sx={{
-            height: 60,
-            position: "absolute",
-            top: 20,
-            right: 20,
-            opacity: 0.15,
-            pointerEvents: "none",
-          }}
-        />
-
         {/* HEADER (Inside image) */}
         <Stack
           direction="row"
           alignItems="center"
           spacing={1}
-          sx={{ position: "absolute", bottom: 15, right: 15, opacity: 10 }}
+          sx={{ position: "absolute", bottom: 15, right: 15, opacity: 0.8 }}
         >
-          <SportsSoccer sx={{ fontSize: 18 }} />
-          <Typography variant="caption">{formation}</Typography>
+          <SportsSoccer sx={{ fontSize: 18, color: "white" }} />
+          <Typography
+            variant="caption"
+            sx={{ color: "white", fontWeight: 700 }}
+          >
+            {formation}
+          </Typography>
         </Stack>
 
         {/* VISUAL FIELD LINES */}
@@ -144,31 +144,43 @@ export default function ChosenLineup({
             }}
           >
             {row.slots.map((slotId) => {
-              // Retrieve player ID from the chosenTeam map
               const playerId = chosenTeam?.[slotId];
               const player = squadData?.[playerId];
 
-              // Render spacer if no player (shouldn't happen in view mode usually)
               if (!player) return <Box key={slotId} sx={{ width: 60 }} />;
 
               return (
-                <Box
-                  key={slotId}
-                  sx={{ width: 60, display: "flex", justifyContent: "center" }}
-                >
-                  <LineupPlayer
-                    player={player}
-                    showPlayerName={true}
-                    // Optional: Disable drag props here since it's a static view
-                    draggable={false}
+                <Box sx={{ position: "relative", textAlign: "center" }}>
+                  <Avatar
+                    src={player.photo}
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      border: "2px solid #FFF",
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
+                    }}
                   />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      color: "#FFF",
+                      fontWeight: 800,
+                      textShadow: "0px 1px 3px rgba(0,0,0,0.6)",
+                      fontSize: "0.65rem",
+                      lineHeight: 1,
+                      mt: 0.5,
+                    }}
+                  >
+                    {player.name ? player.name.split(" ").pop() : "Player"}
+                  </Typography>
                 </Box>
               );
             })}
           </Box>
         ))}
 
-        {/* FOOTER (Social Handle or App Name) */}
+        {/* FOOTER */}
         <Box
           sx={{
             position: "absolute",
@@ -176,35 +188,42 @@ export default function ChosenLineup({
             left: 10,
             width: "100%",
             textAlign: "left",
-            opacity: 1,
+            opacity: 0.8,
           }}
         >
-          <Typography variant="caption">11VOTES.COM</Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: "white", fontWeight: 800 }}
+          >
+            11VOTES.COM
+          </Typography>
         </Box>
 
-        {/* SAVE BUTTON (Hidden from screenshot via data-nosnap) */}
+        {/* --- SAVE BUTTON --- */}
+        {/* 'data-nosnap' ensures this button is invisible in the downloaded image */}
         <Box
           data-nosnap="true"
-          sx={{ position: "absolute", bottom: 55, right: 15, zIndex: 10 }}
+          sx={{
+            position: "absolute",
+            bottom: 20, // Moved up slightly
+            right: 8,
+            zIndex: 10,
+          }}
         >
-          <Tooltip title="Download Image">
-            <IconButton
-              onClick={handleSaveImage}
-              sx={{
-                backdropFilter: "blur(4px)",
-                "&:hover": { bgcolor: "primary.main", color: "black" },
-              }}
-            >
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
+          <AsyncButton
+            loading={isSaving}
+            onClick={handleSaveImage}
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            size="small"
+          ></AsyncButton>
         </Box>
       </Box>
     </Paper>
   );
 }
 
-// --- PITCH LINES (Self-contained to ensure it renders correctly in screenshot) ---
+// --- PITCH LINES (Unchanged) ---
 const PitchLines = ({ theme }) => (
   <Box
     sx={{
@@ -224,10 +243,7 @@ const PitchLines = ({ theme }) => (
         transform: "translateX(-50%)",
         width: "40%",
         height: "25%",
-        border:
-          theme.palette.mode === "dark"
-            ? "2px solid rgba(255,255,255,0.15)"
-            : "2px solid rgba(81, 81, 81, 1)",
+        border: "2px solid rgba(255,255,255,0.3)",
         borderRadius: "50%",
       }}
     />
@@ -248,10 +264,7 @@ const PitchLines = ({ theme }) => (
         transform: "translateX(-50%)",
         width: "70%",
         height: "18%",
-        border:
-          theme.palette.mode === "dark"
-            ? "2px solid rgba(255,255,255,0.15)"
-            : "2px solid rgba(81, 81, 81, 1)",
+        border: "2px solid rgba(255,255,255,0.3)",
         borderBottom: "none",
       }}
     />
@@ -263,10 +276,7 @@ const PitchLines = ({ theme }) => (
         transform: "translateX(-50%)",
         width: "35%",
         height: "7%",
-        border:
-          theme.palette.mode === "dark"
-            ? "2px solid rgba(255,255,255,0.15)"
-            : "2px solid rgba(81, 81, 81, 1)",
+        border: "2px solid rgba(255,255,255,0.3)",
         borderBottom: "none",
       }}
     />
@@ -278,10 +288,7 @@ const PitchLines = ({ theme }) => (
         transform: "translateX(-50%)",
         width: 4,
         height: 4,
-        border:
-          theme.palette.mode === "dark"
-            ? "2px solid rgba(255,255,255,0.15)"
-            : "2px solid rgba(255,255,255,0.15)",
+        border: "2px solid rgba(255,255,255,0.3)",
         borderRadius: "50%",
       }}
     />

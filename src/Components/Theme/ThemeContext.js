@@ -8,25 +8,23 @@ import React, {
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
-  alpha,
   lighten,
+  darken,
 } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { motion } from "framer-motion";
 
-// --- 1. PHYSICS ENGINE ---
+// --- 1. PHYSICS ENGINE (Framer Motion) ---
 const buttonMotionVariants = {
   initial: { scale: 1, rotate: 0, y: 0 },
   hover: {
-    scale: 1.05,
-    y: -3,
-    rotate: -2,
+    scale: 1.02, // Subtle lift
+    y: -2,
     transition: { type: "spring", stiffness: 300, damping: 15 },
   },
   tap: {
-    scale: 0.95,
-    y: 2,
-    rotate: 0,
+    scale: 0.97, // Physical press
+    y: 1,
     transition: { type: "spring", stiffness: 600, damping: 12 },
   },
 };
@@ -34,16 +32,20 @@ const buttonMotionVariants = {
 // --- 2. PALETTE ---
 const PALETTE = {
   light: {
-    bg: "#FDFBF7",
+    bg: "#FDFBF7", // Warm Off-White
     paper: "#FFFFFF",
     textPrimary: "#4A4A4A",
     textSecondary: "#8C8C8C",
+    shadowLight: "#FFFFFF",
+    shadowDark: "#D1D9E6",
   },
   dark: {
     bg: "#2D3142",
     paper: "#393D50",
     textPrimary: "#F0F0F0",
     textSecondary: "#B0B3C7",
+    shadowLight: "#3c4155",
+    shadowDark: "#202330",
   },
   primary: "#A0E8AF", // Matcha Green
   secondary: "#A2D2FF", // Periwinkle
@@ -65,9 +67,25 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
   const theme = useMemo(() => {
     const isLight = themeMode === "light";
     const colors = isLight ? PALETTE.light : PALETTE.dark;
-
-    // Create the "Lip" color (darker shade for 3D depth)
     const primaryMain = accentColor;
+
+    // --- 3. CLAY SHADOW GENERATOR ---
+    // Calculates the "Float" and the "Pressed" state based on color
+    const getClayShadows = (baseColor) => {
+      return {
+        // The "Marshmallow" Float
+        float: isLight
+          ? `10px 10px 20px ${colors.shadowDark}, -10px -10px 20px ${colors.shadowLight}`
+          : `8px 8px 16px ${colors.shadowDark}, -8px -8px 16px ${colors.shadowLight}`,
+
+        // The "Pressed" Inset (Deep Groove)
+        pressed: isLight
+          ? `inset 6px 6px 12px ${darken(baseColor, 0.2)}, inset -6px -6px 12px ${lighten(baseColor, 0.4)}`
+          : `inset 4px 4px 8px ${darken(baseColor, 0.5)}, inset -4px -4px 8px ${lighten(baseColor, 0.1)}`,
+      };
+    };
+
+    const primaryShadows = getClayShadows(primaryMain);
 
     return createTheme({
       palette: {
@@ -77,7 +95,7 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         background: { default: colors.bg, paper: colors.paper },
         text: { primary: colors.textPrimary, secondary: colors.textSecondary },
       },
-      shape: { borderRadius: 32 },
+      shape: { borderRadius: 24 }, // Slightly softer than 32 for clay
 
       typography: {
         fontFamily: "'Nunito', 'Quicksand', sans-serif",
@@ -97,71 +115,88 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
           `,
         },
 
-        // --- BUTTON CONFIGURATION ---
+        // --- STANDARD BUTTON ---
         MuiButton: {
           defaultProps: {
-            // 1. PHYSICS (Keep the bounce)
             component: motion.button,
             variants: buttonMotionVariants,
             initial: "initial",
             whileHover: "hover",
             whileTap: "tap",
-            disableRipple: true, // Clean interaction
+            disableRipple: true,
           },
           styleOverrides: {
             root: {
-              borderRadius: "50px", // Full Pill Shape
-              padding: "12px 32px",
-              transition: "all 0.2s ease",
-              fontWeight: 800,
-              letterSpacing: "0.02em",
-              textTransform: "none",
-              // Remove default Material elevation
-              boxShadow: "none",
-              "&:hover": {
-                boxShadow: "none",
-              },
+              borderRadius: "50px",
+              padding: "14px 32px", // Thick padding for tactile feel
+              boxShadow: primaryShadows.float, // Apply Clay Shadow by default
+              transition: "box-shadow 0.2s ease, background-color 0.2s ease",
             },
-
-            // 2. THE CLEAN "CONTAINED" STYLE
             containedPrimary: {
               backgroundColor: primaryMain,
               color: "#3D3D3D",
-              border: "none", // Removed the border for a cleaner look
-
-              // No box-shadows at all. Just pure color.
-              boxShadow: "none",
-
               "&:hover": {
-                // Just a slight color shift
-                backgroundColor: lighten(primaryMain, 0.15),
-                boxShadow: "none",
-              },
-              "&:active": {
-                boxShadow: "none",
+                backgroundColor: primaryMain, // Motion handles the lift, color stays
+                boxShadow: primaryShadows.float,
               },
             },
-
-            // 3. THE "TEXT" STYLE (No background)
             text: {
+              boxShadow: "none", // Text buttons stay flat
               backgroundColor: "transparent",
-              "&:hover": {
-                backgroundColor: alpha(primaryMain, 0.1),
-              },
             },
           },
         },
 
-        // Clay Cards
+        // --- LOADING BUTTON (The New Logic) ---
+        // Requires @mui/lab to be installed
+        MuiLoadingButton: {
+          styleOverrides: {
+            root: {
+              borderRadius: "50px",
+              padding: "14px 32px",
+              boxShadow: primaryShadows.float,
+              backgroundColor: primaryMain,
+              color: "#3D3D3D",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", // Smooth morph
+
+              // 1. THE PRESSED STATE
+              // When loading is true, we invert the shadows to look "stuck down"
+              "&.Mui-loading": {
+                backgroundColor: primaryMain, // Keep color solid
+                opacity: 1, // Override default fade
+                boxShadow: primaryShadows.pressed, // <--- THE MAGIC
+                paddingLeft: "32px", // Prevent layout shift
+              },
+
+              // 2. THE SPINNER
+              "& .MuiLoadingButton-loadingIndicator": {
+                position: "absolute", // Center it
+                color: "#4A4A4A", // Dark spinner for visibility
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+              },
+
+              // 3. TEXT HANDLING
+              // We make text transparent instead of removing it to keep size
+              "&.Mui-loading .MuiButton-startIcon, &.Mui-loading .MuiButton-endIcon, &.Mui-loading .MuiButton-label":
+                {
+                  visibility: "hidden", // Or opacity: 0
+                },
+            },
+          },
+        },
+
+        // --- CLAY CARDS ---
         MuiPaper: {
           styleOverrides: {
             root: {
               backgroundImage: "none",
               margin: "8px",
               border: "none",
+              // Soft Clay Float for Cards
               boxShadow: isLight
-                ? "inset 0px 2px 0px rgba(255, 255, 255, 0.6), 0px 10px 40px -10px rgba(166, 175, 195, 0.3)"
-                : "inset 0px 1px 0px rgba(255, 255, 255, 0.1), 0px 10px 40px -10px rgba(0,0,0,0.5)",
+                ? "20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff"
+                : "20px 20px 60px #1b1e28, -20px -20px 60px #262a38",
             },
           },
         },

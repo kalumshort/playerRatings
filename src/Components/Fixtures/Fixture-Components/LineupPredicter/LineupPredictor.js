@@ -15,7 +15,7 @@ import { useParams } from "react-router-dom";
 export default function LineupPredictor({ fixture, readOnly }) {
   const { clubSlug } = useParams(); // e.g., "man-united"
   const squadData = useSelector((state) =>
-    selectSquadDataObject(state, clubSlug)
+    selectSquadDataObject(state, clubSlug),
   );
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
 
