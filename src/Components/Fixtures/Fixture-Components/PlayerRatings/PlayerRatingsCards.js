@@ -12,12 +12,11 @@ import {
 } from "@mui/material";
 
 // Icons
-import StarIcon from "@mui/icons-material/Star";
-import StarOutlineIcon from "@mui/icons-material/StarOutline";
-
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
+import StarIcon from "@mui/icons-material/StarRounded";
+import StarOutlineIcon from "@mui/icons-material/StarOutlineRounded";
+import CheckCircleIcon from "@mui/icons-material/CheckCircleRounded";
+import AddIcon from "@mui/icons-material/AddRounded";
+import RemoveIcon from "@mui/icons-material/RemoveRounded";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import StyleIcon from "@mui/icons-material/Style";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
@@ -25,7 +24,6 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 import {
-  getRatingClass,
   setLocalStorageItem,
   useLocalStorage,
 } from "../../../../Hooks/Helper_Functions";
@@ -84,17 +82,14 @@ export default function PlayerRatingsCards({
         onPrev={prev}
       />
 
-      <Box
-        sx={{
-          mt: 2,
-          display: "flex",
-          gap: 1,
-          alignItems: "center",
-          color: "text.secondary",
-        }}
-      >
-        <Typography variant="caption" fontWeight="bold">
-          {index + 1} / {players.length}
+      <Box sx={{ mt: 3, display: "flex", gap: 1, alignItems: "center" }}>
+        <Typography
+          variant="overline"
+          fontWeight="bold"
+          letterSpacing={2}
+          color="text.secondary"
+        >
+          Player {index + 1} / {players.length}
         </Typography>
       </Box>
     </Box>
@@ -115,24 +110,16 @@ export function PlayerRatingCard({
   currentYear,
   usersMatchPlayerRating,
   swiperRef,
-  onNext,
-  onPrev,
 }) {
-  // 1. Performance: Memoize Selector
-  // 1. Extract clubSlug from the URL context
   const { clubSlug } = useParams();
 
-  // 2. Performance: Memoize Selector including the clubSlug context
   const selectPlayer = useMemo(
-    // Pass clubSlug to the factory to look in the correct team's data
     () => selectSquadPlayerById(player.id, clubSlug),
-    [player.id, clubSlug], // Re-memoize if player ID or club changes
+    [player.id, clubSlug],
   );
 
-  // 3. Select player data using the context-aware selector
   const playerData = useSelector(selectPlayer, shallowEqual);
 
-  // 2. Performance: Memoize Events Logic
   const playerEvents = useMemo(() => {
     if (!fixture?.events) return [];
     const pId = player.id;
@@ -142,43 +129,33 @@ export function PlayerRatingCard({
       const time =
         ev.time.elapsed + (ev.time.extra ? `+${ev.time.extra}` : "") + "'";
 
+      // ... (Keep existing event logic exactly as is) ...
       if (
         ev.type === "Goal" &&
         ev.player.id === pId &&
         ev.detail === "Normal Goal"
-      ) {
+      )
         events.push({ type: "goal", label: "Goal", time });
-      }
-      if (
-        ev.type === "Goal" &&
-        ev.player.id === pId &&
-        ev.detail === "Penalty"
-      ) {
+      if (ev.type === "Goal" && ev.player.id === pId && ev.detail === "Penalty")
         events.push({ type: "penalty", label: "Penalty", time });
-      }
-      if (ev.type === "Goal" && ev.assist.id === pId) {
+      if (ev.type === "Goal" && ev.assist.id === pId)
         events.push({ type: "assist", label: "Assist", time });
-      }
       if (
         ev.type === "Card" &&
         ev.player.id === pId &&
         ev.detail.includes("Yellow")
-      ) {
+      )
         events.push({ type: "yellow", label: "Yellow Card", time });
-      }
       if (
         ev.type === "Card" &&
         ev.player.id === pId &&
         ev.detail.includes("Red")
-      ) {
+      )
         events.push({ type: "red", label: "Red Card", time });
-      }
-      if (ev.type === "subst" && ev.player.id === pId) {
+      if (ev.type === "subst" && ev.player.id === pId)
         events.push({ type: "subOut", label: "Subbed Out", time });
-      }
-      if (ev.type === "subst" && ev.assist.id === pId) {
+      if (ev.type === "subst" && ev.assist.id === pId)
         events.push({ type: "subIn", label: "Subbed In", time });
-      }
     });
     return events;
   }, [fixture?.events, player.id]);
@@ -194,7 +171,6 @@ export function PlayerRatingCard({
       ).toFixed(1)
     : storedUsersPlayerRating;
 
-  // Memoize submit handler to prevent re-renders
   const onRatingSubmit = useCallback(
     async (ratingValue) => {
       await handlePlayerRatingSubmit({
@@ -217,33 +193,31 @@ export function PlayerRatingCard({
     );
   };
 
+  const displayName = playerData?.name || player.name;
+  const displayPhoto =
+    player?.photo ||
+    playerData?.photo ||
+    `https://media.api-sports.io/football/players/${player.id}.png`;
+
   return (
     <Paper
-      elevation={10}
-      sx={{
-        // 1. Dynamic Solid Background Color logic
-        backgroundColor: (theme) =>
-          theme.palette.mode === "light"
-            ? "#F8FAFC" // Solid White (matches your light mode base)
-            : "#020617", // Solid Dark Grey (matches your dark mode rgb(20,20,20))
-
-        // Optional: Reset backdrop filter since it's now opaque (performance boost)
-        backdropFilter: "none",
-
-        // 2. Your existing layout styles (converted to system props where applicable)
+      elevation={0}
+      sx={(theme) => ({
+        ...theme.clay.card, // <--- 1. LOAD GLOBAL CLAY STYLES
         width: isMobile ? "95%" : "500px",
         height: "auto",
-        minHeight: isMobile ? "500px" : "640px",
+        minHeight: isMobile ? "520px" : "640px",
         maxHeight: "85vh",
-        pb: 2, // 'pb' works natively in sx
-        m: "auto", // 'margin' becomes 'm'
+        pb: 3,
+        m: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
         overflow: "hidden",
         position: "relative",
-      }}
+        borderRadius: "16px",
+      })}
     >
       {/* --- TOP: Player Info & Events --- */}
       <Box
@@ -254,36 +228,44 @@ export function PlayerRatingCard({
           alignItems: "center",
           justifyContent: "center",
           width: "100%",
-          px: 6, // Padding to avoid overlap with nav buttons
+          px: 6,
+          mt: 2,
         }}
       >
         <Avatar
-          src={
-            player?.photo ||
-            playerData?.photo ||
-            `https://media.api-sports.io/football/players/${player.id}.png`
-          }
-          alt={playerData?.name || player.name}
-          sx={{
-            width: isMobile ? 80 : 140,
-            height: isMobile ? 80 : 140,
-            mb: 1,
-            border: isMOTM ? 4 : 1,
-            borderColor: isMOTM ? "warning.main" : "divider", // Theme color
-            boxShadow: isMOTM ? 10 : 2,
-          }}
+          src={displayPhoto}
+          alt={displayName}
+          sx={(theme) => ({
+            width: isMobile ? 100 : 150,
+            height: isMobile ? 100 : 150,
+            mb: 2,
+            border: `5px solid ${theme.palette.background.default}`, // Matches bg
+            boxShadow: isMOTM
+              ? "0 0 25px #FFC8DD" // Glowing MOTM
+              : theme.clay.card.boxShadow, // Inherit Clay Shadow
+            transition: "all 0.3s ease",
+          })}
         />
-        <Typography variant="h4" fontWeight="bold" textAlign="center">
-          {playerData?.name || player.name}
+
+        <Typography
+          variant="h4"
+          fontWeight={800}
+          textAlign="center"
+          letterSpacing="-0.5px"
+        >
+          {displayName}
         </Typography>
 
         {playerData?.position && (
           <Typography
             variant="subtitle1"
+            color="text.secondary"
             sx={{
               textTransform: "uppercase",
               letterSpacing: 2,
               mt: 0.5,
+              fontSize: "0.75rem",
+              fontWeight: 700,
             }}
           >
             {playerData?.position}
@@ -295,7 +277,7 @@ export function PlayerRatingCard({
           sx={{
             display: "flex",
             gap: 1,
-            mt: 2,
+            mt: 3,
             flexWrap: "wrap",
             justifyContent: "center",
             minHeight: 32,
@@ -318,8 +300,6 @@ export function PlayerRatingCard({
         sx={{
           width: "100%",
           position: "relative",
-          backdropFilter: "blur(15px)",
-
           p: 3,
           display: "flex",
           flexDirection: "column",
@@ -327,117 +307,34 @@ export function PlayerRatingCard({
           gap: 2,
         }}
       >
-        {storedUsersPlayerRating ? (
+        {!storedUsersPlayerRating ? (
           /* RESULTS VIEW */
           <Box
-            className="PlayerRatingsResults"
             sx={{
               width: "100%",
               display: "flex",
               justifyContent: "space-evenly",
               alignItems: "center",
-              py: 2, // Added padding for breathing room
+              py: 1,
             }}
           >
-            {/* YOUR SCORE */}
+            <ResultDisplay label="YOURS" score={storedUsersPlayerRating} />
             <Box
-              sx={{
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="overline"
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: 1.2,
-                  mb: 1,
-                }}
-              >
-                YOURS
-              </Typography>
-              <Box
-                className={`globalBoxShadow ${getRatingClass(
-                  storedUsersPlayerRating,
-                )}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 72, // Increased size
-                  height: 72, // Square aspect ratio
-                  borderRadius: "18px",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  bgcolor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(0,0,0,0.05)",
-                }}
-              >
-                <Typography
-                  variant="h4" // Larger, bolder text
-                >
-                  {storedUsersPlayerRating}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Vertical Divider */}
-            <Box
-              sx={{
-                width: "1px",
+              sx={(theme) => ({
+                width: "2px",
                 height: 50,
-                bgcolor: "divider",
+                bgcolor:
+                  theme.palette.mode === "light"
+                    ? "rgba(0,0,0,0.05)"
+                    : "rgba(255,255,255,0.1)",
                 mx: 1,
-                opacity: 0.5,
-              }}
+                borderRadius: "2px",
+              })}
             />
-
-            {/* AVERAGE SCORE */}
-            <Box
-              sx={{
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="overline"
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: 1.2,
-                  mb: 1,
-                }}
-              >
-                AVERAGE
-              </Typography>
-              <Box
-                className={`globalBoxShadow ${getRatingClass(
-                  playerRatingAverage,
-                )}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 72,
-                  height: 72,
-                  borderRadius: "18px",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  bgcolor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.05)"
-                      : "rgba(0,0,0,0.05)",
-                }}
-              >
-                <Typography variant="h4">{playerRatingAverage}</Typography>
-              </Box>
-            </Box>
+            <ResultDisplay label="AVERAGE" score={playerRatingAverage} />
           </Box>
         ) : (
-          /* NEW STEPPER INPUT VIEW */
+          /* INPUT VIEW */
           <RatingInputSection
             swiperRef={swiperRef}
             onRatingSubmit={onRatingSubmit}
@@ -447,22 +344,28 @@ export function PlayerRatingCard({
           />
         )}
       </Box>
-      <div style={{ position: "absolute", top: 16, right: 16 }}>
+
+      {/* --- MOTM TOGGLE --- */}
+      <Box sx={{ position: "absolute", top: 20, right: 20 }}>
         <Tooltip title={isMOTM ? "Remove MOTM" : "Award MOTM"} arrow>
           <ToggleButton
             value="motm"
             selected={isMOTM}
             onChange={handleMotmClick}
             disabled={readOnly}
-            sx={{
-              flex: "0 0 auto",
+            sx={(theme) => ({
+              ...theme.clay.button, // Use surface clay style
               width: isMobile ? 48 : 56,
               height: isMobile ? 48 : 56,
-              borderRadius: "16px",
-              border: 1,
-              borderColor: isMOTM && "warning.main",
-              color: isMOTM && "warning.main",
-            }}
+              color: isMOTM ? "#FF9EBB" : "text.secondary",
+              border: "none",
+              "&.Mui-selected": {
+                backgroundColor: "background.default",
+                color: "#FF9EBB",
+                boxShadow: theme.clay.box.boxShadow, // Inset state
+                "&:hover": { backgroundColor: "background.default" },
+              },
+            })}
           >
             {isMOTM ? (
               <StarIcon fontSize={isMobile ? "medium" : "large"} />
@@ -471,16 +374,16 @@ export function PlayerRatingCard({
             )}
           </ToggleButton>
         </Tooltip>
-      </div>
+      </Box>
     </Paper>
   );
 }
 
 // =========================================================
-// 3. ISOLATED INPUT SECTION (STEPPER)
+// 3. ISOLATED INPUT SECTION
 // =========================================================
 const RatingInputSection = React.memo(
-  ({ swiperRef, onRatingSubmit, isMOTM, onMotmToggle, readOnly, isMobile }) => {
+  ({ swiperRef, onRatingSubmit, isMOTM, readOnly, isMobile }) => {
     const [sliderValue, setSliderValue] = useState(6);
 
     const adjustScore = (amount) => {
@@ -498,66 +401,61 @@ const RatingInputSection = React.memo(
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          gap: isMobile ? 1.5 : 2,
+          gap: isMobile ? 2 : 3,
         }}
       >
-        {/* --- STEPPER ROW --- */}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "space-evenly",
             width: "100%",
-            maxWidth: isMobile ? 280 : 350, // Tighter width on mobile
+            maxWidth: isMobile ? 300 : 380,
             mx: "auto",
-            mb: isMobile ? 0 : 1,
           }}
         >
           {/* MINUS BUTTON */}
           <IconButton
             onClick={() => adjustScore(-0.5)}
             disabled={sliderValue <= 1}
-            sx={{
-              border: "1px solid",
-
-              // Smaller buttons on mobile
-              width: isMobile ? 44 : 56,
-              height: isMobile ? 44 : 56,
-              borderRadius: "16px",
-            }}
+            sx={(theme) => ({
+              ...theme.clay.button,
+              width: isMobile ? 50 : 64,
+              height: isMobile ? 50 : 64,
+            })}
           >
             <RemoveIcon fontSize={isMobile ? "small" : "medium"} />
           </IconButton>
 
-          {/* CENTER SCORE DISPLAY */}
-          <Box sx={{ textAlign: "center", minWidth: isMobile ? 60 : 80 }}>
+          {/* SCORE DISPLAY (Uses theme.clay.box for Pressed look) */}
+          <Box
+            sx={(theme) => ({
+              ...theme.clay.box,
+              textAlign: "center",
+              minWidth: isMobile ? 80 : 100,
+              height: isMobile ? 80 : 100,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            })}
+          >
             <Typography
-              variant={isMobile ? "h3" : "h2"} // Smaller text on mobile
-              fontWeight="900"
-              sx={{
+              variant={isMobile ? "h3" : "h2"}
+              sx={(theme) => ({
+                fontWeight: 900,
                 lineHeight: 1,
                 color:
                   sliderValue >= 8
-                    ? "#2ecc71"
+                    ? theme.palette.primary.main
                     : sliderValue >= 5
-                      ? ""
-                      : "#e74c3c",
-              }}
+                      ? "text.primary"
+                      : "#FFC8DD",
+              })}
             >
               {sliderValue.toFixed(1).endsWith(".0")
                 ? sliderValue
                 : sliderValue.toFixed(1)}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                textTransform: "uppercase",
-                letterSpacing: 1,
-
-                fontSize: isMobile ? "0.65rem" : "0.75rem",
-              }}
-            >
-              Rating
             </Typography>
           </Box>
 
@@ -565,31 +463,30 @@ const RatingInputSection = React.memo(
           <IconButton
             onClick={() => adjustScore(0.5)}
             disabled={sliderValue >= 10}
-            sx={{
-              border: "1px solid",
-
-              width: isMobile ? 44 : 56,
-              height: isMobile ? 44 : 56,
-              borderRadius: "16px",
-            }}
+            sx={(theme) => ({
+              ...theme.clay.button,
+              width: isMobile ? 50 : 64,
+              height: isMobile ? 50 : 64,
+            })}
           >
             <AddIcon fontSize={isMobile ? "small" : "medium"} />
           </IconButton>
         </Box>
 
-        {/* --- ACTION ROW: MOTM + CONFIRM --- */}
-        <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+        {/* CONFIRM BUTTON (Uses standard MUI Button which has global theme style) */}
+        <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Button
             variant="contained"
             onClick={() => onRatingSubmit(sliderValue)}
             startIcon={<CheckCircleIcon />}
             sx={{
               flex: 1,
-              maxWidth: 280,
-              height: isMobile ? 48 : 56, // Smaller button height
+              maxWidth: 300,
+              height: isMobile ? 48 : 56,
+              fontSize: "1rem",
             }}
           >
-            Confirm
+            Confirm Rating
           </Button>
         </Box>
       </Box>
@@ -598,40 +495,77 @@ const RatingInputSection = React.memo(
 );
 
 // =========================================================
-// 4. HELPER: EVENT BADGE
+// 4. HELPER: RESULTS DISPLAY
+// =========================================================
+const ResultDisplay = ({ label, score }) => (
+  <Box
+    sx={{
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+    }}
+  >
+    <Typography
+      variant="overline"
+      sx={{
+        fontWeight: 700,
+        letterSpacing: 1.2,
+        mb: 1,
+        color: "text.secondary",
+      }}
+    >
+      {label}
+    </Typography>
+    <Box
+      sx={(theme) => ({
+        ...theme.clay.box, // The "Pressed" look
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 72,
+        height: 72,
+      })}
+    >
+      <Typography variant="h4" fontWeight="bold">
+        {score}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+// =========================================================
+// 5. HELPER: EVENT BADGE
 // =========================================================
 const EventBadge = React.memo(({ type, label, time }) => {
   let icon = null;
-  let color = "white";
-  let bg = "rgba(255,255,255,0.1)";
+  let color = "text.primary";
+  let bg = "background.default"; // Fallback
 
+  // Logic to determine colors
   switch (type) {
     case "goal":
     case "penalty":
       icon = <SportsSoccerIcon fontSize="small" />;
-      color = "#2ecc71"; // Green
+      color = "#2F5C34";
+      bg = "#A0E8AF";
       break;
     case "assist":
       icon = <AutoFixHighIcon fontSize="small" />;
-      color = "#3498db"; // Blue
+      color = "#2B4C6F";
+      bg = "#A2D2FF";
       break;
     case "yellow":
       icon = <StyleIcon fontSize="small" sx={{ transform: "rotate(90deg)" }} />;
-      color = "#f1c40f"; // Yellow
+      color = "#744210";
+      bg = "#F6E05E";
       break;
     case "red":
       icon = <StyleIcon fontSize="small" sx={{ transform: "rotate(90deg)" }} />;
-      color = "#e74c3c"; // Red
+      color = "#742A2A";
+      bg = "#FEB2B2";
       break;
     case "subIn":
-      icon = (
-        <CompareArrowsIcon
-          fontSize="small"
-          sx={{ transform: "rotate(90deg)" }}
-        />
-      );
-      color = "#2ecc71";
-      break;
     case "subOut":
       icon = (
         <CompareArrowsIcon
@@ -639,7 +573,8 @@ const EventBadge = React.memo(({ type, label, time }) => {
           sx={{ transform: "rotate(90deg)" }}
         />
       );
-      color = "#e74c3c";
+      color = type === "subIn" ? "#2F5C34" : "#742A2A";
+      bg = type === "subIn" ? "#C6F6D5" : "#FED7D7";
       break;
     default:
       break;
@@ -648,19 +583,22 @@ const EventBadge = React.memo(({ type, label, time }) => {
   return (
     <Tooltip title={label} arrow>
       <Box
-        sx={{
+        sx={(theme) => ({
           display: "flex",
           alignItems: "center",
-          gap: 0.5,
-          borderRadius: "12px",
-          px: 1,
+          gap: 0.8,
+          borderRadius: "20px",
+          px: 1.5,
           py: 0.5,
-          border: `1px solid ${color}40`,
           bgcolor: bg,
-        }}
+          color: color,
+          // Subtle lift for badges
+          boxShadow: "2px 2px 5px rgba(0,0,0,0.05)",
+          fontWeight: 600,
+        })}
       >
-        <Box sx={{ display: "flex", color: color }}>{icon}</Box>
-        <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+        <Box sx={{ display: "flex" }}>{icon}</Box>
+        <Typography variant="caption" sx={{ fontWeight: "800" }}>
           {time}
         </Typography>
       </Box>

@@ -27,7 +27,7 @@ export default function RatingLineup({
   const { activeGroup } = useGroupData();
 
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-  console.log(matchRatings);
+
   const groupClubId = Number(activeGroup?.groupClubId);
 
   const [ratingSrc, setRatingSrc] = useState("Group");
@@ -37,7 +37,7 @@ export default function RatingLineup({
   };
 
   const lineup = fixture?.lineups?.find(
-    (team) => team.team.id === groupClubId
+    (team) => team.team.id === groupClubId,
   )?.startXI;
 
   const substitutedPlayerIds = fixture?.events
@@ -46,7 +46,7 @@ export default function RatingLineup({
       const newPlayer =
         item.assist &&
         !lineup.some(
-          (lineupPlayer) => lineupPlayer.player.id === item.assist.id
+          (lineupPlayer) => lineupPlayer.player.id === item.assist.id,
         )
           ? item.assist
           : item.player;
@@ -111,7 +111,7 @@ export default function RatingLineup({
                             ? matchRatings[player.id].totalRating /
                               matchRatings[player.id].totalSubmits
                             : null
-                          : usersMatchPlayerRatings?.[player.id] ?? null;
+                          : (usersMatchPlayerRatings?.[player.id] ?? null);
 
                       return (
                         <RatingLineupPlayer
@@ -149,7 +149,7 @@ export default function RatingLineup({
                         ? matchRatings[player.id].totalRating /
                           matchRatings[player.id].totalSubmits
                         : null
-                      : usersMatchPlayerRatings?.[player.id] ?? null;
+                      : (usersMatchPlayerRatings?.[player.id] ?? null);
 
                   return (
                     <RatingLineupPlayer
@@ -193,7 +193,7 @@ export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
   const theme = useTheme();
 
   const playerData = useSelector((state) =>
-    selectSquadPlayerById(player?.id)(state)
+    selectSquadPlayerById(player?.id)(state),
   );
 
   if (!player) return null;

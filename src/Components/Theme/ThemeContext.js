@@ -86,8 +86,35 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
     };
 
     const primaryShadows = getClayShadows(primaryMain);
-
+    const surfaceShadows = getClayShadows(colors.bg);
     return createTheme({
+      clay: {
+        // 1. The Floating Container (Cards, Avatars)
+        card: {
+          backgroundColor: colors.bg,
+          borderRadius: 32,
+          boxShadow: surfaceShadows.float,
+          border: isLight
+            ? "1px solid rgba(255,255,255,0.6)"
+            : "1px solid rgba(255,255,255,0.05)",
+        },
+        // 2. The Pressed Groove (Score Inputs, Result Boxes)
+        box: {
+          backgroundColor: colors.bg,
+          borderRadius: 20,
+          boxShadow: surfaceShadows.pressed,
+          border: isLight ? "1px solid rgba(255,255,255,0.4)" : "none",
+        },
+        button: {
+          backgroundColor: colors.bg,
+          borderRadius: 20,
+          boxShadow: surfaceShadows.float,
+          color: colors.textPrimary,
+          "&:active": {
+            boxShadow: surfaceShadows.pressed,
+          },
+        },
+      },
       palette: {
         mode: themeMode,
         primary: { main: primaryMain, contrastText: "#3D3D3D" },

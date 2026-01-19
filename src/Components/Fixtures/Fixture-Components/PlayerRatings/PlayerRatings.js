@@ -53,7 +53,7 @@ export default function PlayerRatings({ fixture }) {
   const groupClubId = Number(activeGroup?.groupClubId);
 
   const motmPercentages = useSelector(
-    selectMotmPercentagesByMatchId(fixture.id, clubSlug)
+    selectMotmPercentagesByMatchId(fixture.id, clubSlug),
   );
 
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
@@ -71,7 +71,7 @@ export default function PlayerRatings({ fixture }) {
         const newPlayer =
           item.assist &&
           !_lineup.some(
-            (lineupPlayer) => lineupPlayer.player.id === item.assist.id
+            (lineupPlayer) => lineupPlayer.player.id === item.assist.id,
           )
             ? item.assist
             : item.player;
@@ -89,7 +89,7 @@ export default function PlayerRatings({ fixture }) {
     }));
 
     const _coach = fixture.lineups.find(
-      (team) => team.team.id === Number(groupClubId)
+      (team) => team.team.id === Number(groupClubId),
     )?.coach;
 
     const _combined = [..._players, ...substitutedPlayerIds, _coach];
@@ -143,14 +143,14 @@ export default function PlayerRatings({ fixture }) {
           matchId: fixture.id,
           groupId: activeGroup.groupId,
           currentYear: globalData.currentYear,
-        })
+        }),
       );
       dispatch(
         fetchUsersMatchData({
           matchId: fixture.id,
           groupId: activeGroup.groupId,
           currentYear: globalData.currentYear,
-        })
+        }),
       );
 
       setOpenConfirmDialog(false);
@@ -165,7 +165,7 @@ export default function PlayerRatings({ fixture }) {
     if (!allPlayersRated) {
       showAlert(
         `You have ${unratedPlayersCount} players left to rate!`,
-        "error"
+        "error",
       );
       return;
     }
@@ -184,7 +184,7 @@ export default function PlayerRatings({ fixture }) {
           <div style={{ textAlign: "center", padding: "10px" }}>
             Missing Lineup
           </div>
-        ) : isMatchRatingsSubmitted || !user ? (
+        ) : !isMatchRatingsSubmitted || !user ? (
           <SubmittedPlayerRatings
             motmPercentages={motmPercentages}
             fixture={fixture}
@@ -245,12 +245,7 @@ export default function PlayerRatings({ fixture }) {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setOpenConfirmDialog(false)}
-
-          >
-            Go Back
-          </Button>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Go Back</Button>
           <Button
             onClick={() => performSubmission(null)}
             variant="contained"
