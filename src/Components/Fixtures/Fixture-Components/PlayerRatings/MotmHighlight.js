@@ -23,6 +23,7 @@ export default function FanMOTMHighlight({ motmPercentages }) {
         mx: "auto",
         borderRadius: "16px",
         boxShadow: "none",
+        border: "none",
       })}
     >
       {/* --- BADGE: PRESSED LOOK --- */}

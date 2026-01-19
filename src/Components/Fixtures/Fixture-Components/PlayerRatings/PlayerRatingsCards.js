@@ -307,7 +307,7 @@ export function PlayerRatingCard({
           gap: 2,
         }}
       >
-        {!storedUsersPlayerRating ? (
+        {storedUsersPlayerRating ? (
           /* RESULTS VIEW */
           <Box
             sx={{

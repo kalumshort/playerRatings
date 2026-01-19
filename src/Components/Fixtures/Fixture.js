@@ -65,7 +65,7 @@ export default function Fixture() {
   const latestFixture = useSelector(selectLatestFixture);
   const { predictionsError } = useSelector(selectPredictionsLoad);
   const { ratingsError, playerSeasonOverallRatingsLoaded } = useSelector(
-    selectPlayerRatingsLoad
+    selectPlayerRatingsLoad,
   );
 
   // 3. Dynamic Styles
@@ -236,10 +236,12 @@ export default function Fixture() {
 
                   {fixture?.lineups && (
                     <>
-                      <Box sx={{ flex: 2 }}>
+                      {/* Add minWidth: 0 to PREVENT flex item from growing infinitely */}
+                      <Box sx={{ flex: 2, minWidth: 0 }}>
                         <LineupAndPlayerRatings fixture={fixture} />
                       </Box>
-                      <Stack spacing={3} sx={{ flex: 1 }}>
+
+                      <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
                         <Statistics fixture={fixture} />
                         <Events events={fixture?.events} />
                       </Stack>

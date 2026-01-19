@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
-import { Box, IconButton } from "@mui/material";
-import ChevronLeft from "@mui/icons-material/ChevronLeft";
-import ChevronRight from "@mui/icons-material/ChevronRight";
+import { Box, IconButton, useTheme } from "@mui/material";
+import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import PlayerThumbnail from "./PlayerThumbnail";
 
 export default function PlayerImageCarousel({
@@ -14,84 +14,117 @@ export default function PlayerImageCarousel({
   fixture,
 }) {
   const trackRef = useRef(null);
+  const theme = useTheme();
 
+  // --- Auto-Scroll to Active Player ---
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
     const child = el.children[currentIndex];
     if (!child) return;
+
     const box = child.getBoundingClientRect();
     const parent = el.getBoundingClientRect();
     const delta = box.left - (parent.left + parent.width / 2 - box.width / 2);
+
     el.scrollBy({ left: delta, behavior: "smooth" });
   }, [currentIndex]);
 
+  // --- Manual Scroll Logic ---
   const scroll = (dir) => {
     const el = trackRef.current;
     if (!el) return;
-    const amt = isMobile ? 240 : 360;
+    const amt = isMobile ? 200 : 300;
     el.scrollBy({ left: dir * amt, behavior: "smooth" });
   };
 
   return (
     <Box
-      sx={{ position: "relative", px: 5, mb: 1 }}
-      style={{ margin: "15px 0px 30px 0px" }}
+      sx={{
+        // 1. GRID-LIKE STRUCTURE
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1, // Space between buttons and list
+        // 2. CONSTRAINT
+        width: "100%",
+        maxWidth: "100%", // Hard stop on growth
+        mt: 0,
+        mb: 0,
+        px: 0, // Outer safety padding
+      }}
     >
+      {/* --- LEFT BUTTON (Static Position) --- */}
       <IconButton
-        size="small"
         onClick={() => scroll(-1)}
         sx={{
-          position: "absolute",
-          left: 0,
-          top: "50%",
-          transform: "translateY(-50%)",
-
-          zIndex: 1,
+          ...theme.clay.button,
+          width: 44,
+          height: 44,
+          flexShrink: 0, // Never shrink the button
+          zIndex: 2,
         }}
       >
-        <ChevronLeft />
-      </IconButton>
-      <IconButton
-        size="small"
-        onClick={() => scroll(1)}
-        sx={{
-          position: "absolute",
-          right: 0,
-          top: "50%",
-          transform: "translateY(-50%)",
-
-          "&:hover": { bgcolor: "rgba(0,0,0,0.55)" },
-          zIndex: 1,
-        }}
-      >
-        <ChevronRight />
+        <ChevronLeftRounded />
       </IconButton>
 
+      {/* --- SCROLL TRACK CONTAINER --- */}
       <Box
         ref={trackRef}
         sx={{
+          // 3. THE "DONT GROW" FIX
+          flex: 1, // Take remaining space
+          minWidth: 0, // CRITICAL: Allows flex child to shrink below content size
+
           display: "flex",
-          gap: 1.25,
+          gap: 2,
+
+          // SCROLL PHYSICS
           overflowX: "auto",
+          scrollBehavior: "smooth",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
-          px: 1,
+          scrollSnapType: "x mandatory",
+
+          // SHADOW ROOM
+          py: 2, // Vertical padding so bottom shadows don't get cut off
+          px: 1, // Tiny padding inside track
         }}
       >
         {combinedPlayers.map((p, i) => (
-          <PlayerThumbnail
+          <Box
             key={p.id}
-            player={p}
-            index={i}
-            currentIndex={currentIndex}
-            onSelect={onSelect}
-            usersMatchPlayerRatings={usersMatchPlayerRatings}
-            storedUsersMatchMOTM={storedUsersMatchMOTM}
-            fixture={fixture}
-          />
+            sx={{
+              scrollSnapAlign: "center",
+              flexShrink: 0, // Prevent thumbnails from squishing
+            }}
+          >
+            <PlayerThumbnail
+              player={p}
+              index={i}
+              currentIndex={currentIndex}
+              onSelect={onSelect}
+              usersMatchPlayerRatings={usersMatchPlayerRatings}
+              storedUsersMatchMOTM={storedUsersMatchMOTM}
+              fixture={fixture}
+            />
+          </Box>
         ))}
       </Box>
+
+      {/* --- RIGHT BUTTON (Static Position) --- */}
+      <IconButton
+        onClick={() => scroll(1)}
+        sx={{
+          ...theme.clay.button,
+          width: 44,
+          height: 44,
+          flexShrink: 0,
+          zIndex: 2,
+        }}
+      >
+        <ChevronRightRounded />
+      </IconButton>
     </Box>
   );
 }

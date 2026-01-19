@@ -5,9 +5,7 @@ import { useSelector } from "react-redux";
 
 import { selectSquadPlayerById } from "../../../../Selectors/squadDataSelectors";
 
-import { ContentContainer } from "../../../../Containers/GlobalContainer";
 import {
-  alpha,
   Avatar,
   Box,
   MenuItem,
@@ -25,11 +23,8 @@ export default function RatingLineup({
   motmPercentages,
 }) {
   const { activeGroup } = useGroupData();
-
   const matchRatings = useSelector(selectMatchRatingsById(fixture.id));
-
   const groupClubId = Number(activeGroup?.groupClubId);
-
   const [ratingSrc, setRatingSrc] = useState("Group");
 
   const handleChange = (event) => {
@@ -57,7 +52,6 @@ export default function RatingLineup({
       };
     });
 
-  // Ensure both lineup and substitutedPlayerIds are defined and not empty
   if (
     (!lineup || lineup.length === 0) &&
     (!substitutedPlayerIds || substitutedPlayerIds.length === 0)
@@ -66,44 +60,73 @@ export default function RatingLineup({
   }
 
   return (
-    <Paper>
+    <Paper
+      elevation={0}
+      sx={(theme) => ({
+        ...theme.clay.card, // 1. Apply Global Clay Card
+        p: 0, // Reset padding for children
+        overflow: "hidden",
+        position: "relative",
+        pb: 2,
+        borderRadius: "16px",
+      })}
+    >
       <FanMOTMHighlight motmPercentages={motmPercentages} />
-      <ContentContainer
-        className="lineup-container"
-        style={{ padding: "15px 5px", position: "relative" }}
-      >
-        <Select
-          value={ratingSrc}
-          onChange={handleChange}
-          size="small"
-          variant="standard"
-          style={{ position: "absolute", top: "5px", right: "5px", zIndex: 10 }}
+
+      <Paper style={{ padding: "15px 5px", position: "relative" }}>
+        {/* --- SOURCE SELECTOR --- */}
+        <Box
+          sx={(theme) => ({
+            position: "absolute",
+            top: 10,
+            right: 15,
+            zIndex: 10,
+            ...theme.clay.box, // Pressed look for controls
+            borderRadius: "12px",
+            bgcolor: "background.default",
+            px: 1,
+          })}
         >
-          <MenuItem key="global" value="Group">
-            Group
-          </MenuItem>
-          <MenuItem key="personal" value="Personal">
-            Personal
-          </MenuItem>
-        </Select>
+          <Select
+            value={ratingSrc}
+            onChange={handleChange}
+            size="small"
+            variant="standard"
+            disableUnderline
+            sx={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              color: "text.secondary",
+              "& .MuiSelect-select": {
+                padding: "4px 8px",
+              },
+            }}
+          >
+            <MenuItem value="Group" sx={{ fontSize: "0.8rem" }}>
+              Group
+            </MenuItem>
+            <MenuItem value="Personal" sx={{ fontSize: "0.8rem" }}>
+              Personal
+            </MenuItem>
+          </Select>
+        </Box>
+
         <div style={{ position: "relative" }}>
+          {/* --- PITCH VIEW --- */}
           <div className="pitch">
             {lineup &&
               lineup.length > 0 &&
               lineup
                 .reduce((rows, { player }) => {
                   const [row] = player.grid.split(":").map(Number);
-
                   if (!rows[row]) rows[row] = [];
                   rows[row].push(player);
-
                   return rows;
                 }, [])
-                .reverse() // Reverse the order of rows
+                .reverse()
                 .map((rowPlayers, rowIndex) => (
                   <div key={rowIndex} className="row">
                     {rowPlayers.map((player) => {
-                      // Ensure the player has a valid rating or fallback to an empty object
                       const playerRating =
                         ratingSrc === "Group"
                           ? matchRatings?.[player.id]?.totalRating &&
@@ -125,18 +148,28 @@ export default function RatingLineup({
                   </div>
                 ))}
           </div>
-          <div>
-            <h2
-              className="heading2"
-              style={{ textAlign: "center", marginTop: "10px" }}
+
+          {/* --- SUBS VIEW --- */}
+          <Box sx={{ mt: 3, px: 2 }}>
+            <Typography
+              variant="overline"
+              align="center"
+              display="block"
+              sx={{
+                fontWeight: 800,
+                color: "text.secondary",
+                letterSpacing: 1.5,
+                mb: 1,
+              }}
             >
               Substitutes
-            </h2>
+            </Typography>
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                justifyContent: "space-evenly",
+                justifyContent: "center",
+                gap: "16px",
               }}
             >
               {substitutedPlayerIds &&
@@ -161,9 +194,9 @@ export default function RatingLineup({
                   );
                 })}
             </div>
-          </div>
+          </Box>
         </div>
-      </ContentContainer>
+      </Paper>
     </Paper>
   );
 }
@@ -172,16 +205,18 @@ export default function RatingLineup({
 
 const ScoreBadge = styled(Box)(({ theme }) => ({
   position: "absolute",
-  bottom: -2,
-  right: -2,
-  backgroundColor: theme.palette.primary.main, // Uses your group's accent color
+  bottom: 0,
+  right: -4,
+  // Use primary color but cleaner shape
+  backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
-  padding: "2px 4px",
-  borderRadius: "6px",
-  border: `1.5px solid ${theme.palette.background.default}`,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+  padding: "2px 6px",
+  borderRadius: "8px",
+  // White border to separate from Avatar
+  border: `2px solid ${theme.palette.background.default}`,
+  boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
   zIndex: 10,
-  minWidth: "22px",
+  minWidth: "24px",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -201,8 +236,6 @@ export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
   const displayRating =
     playerRating && playerRating !== "na" ? String(playerRating) : "—";
 
-  const hasRating = displayRating !== "—";
-
   return (
     <Box
       sx={{
@@ -214,12 +247,12 @@ export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
         position: "relative",
         transition: "transform 0.2s ease",
         "&:hover": {
-          transform: "scale(1.08)",
+          transform: "translateY(-4px)", // Lift effect instead of zoom
           zIndex: 2,
         },
       }}
     >
-      {/* Avatar + badge wrapper */}
+      {/* Avatar Wrapper */}
       <Box sx={{ position: "relative", width: 56, height: 56 }}>
         <Avatar
           src={
@@ -231,20 +264,21 @@ export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
           sx={{
             width: "100%",
             height: "100%",
-            border: `2.5px solid ${alpha(theme.palette.primary.main, 0.7)}`,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-            bgcolor: "grey.800",
+            // 2. The Clay Avatar Look
+            // Matches background to create "cutout", Global Shadow for float
+            border: `3px solid ${theme.palette.background.default}`,
+            boxShadow: theme.clay.card.boxShadow,
+            bgcolor: "background.paper",
           }}
         />
 
-        {/* Floating rating badge – bottom right */}
+        {/* Rating Badge */}
         <ScoreBadge>
           <Typography
             variant="caption"
             sx={{
-              fontWeight: "bold",
-              fontSize: "0.78rem",
-              color: hasRating ? "#000" : "#ccc",
+              fontWeight: 800,
+              fontSize: "0.7rem",
               lineHeight: 1,
             }}
           >
@@ -253,26 +287,23 @@ export const RatingLineupPlayer = React.memo(({ player, playerRating }) => {
         </ScoreBadge>
       </Box>
 
-      {/* Player name */}
+      {/* Player Name */}
       <Typography
         variant="caption"
         noWrap
         sx={{
-          mt: 1.2,
-          fontSize: "0.74rem",
-          fontWeight: 600,
+          mt: 1,
+          fontSize: "0.7rem",
+          fontWeight: 700,
           textAlign: "center",
           maxWidth: "100%",
-          color: "white",
-          textShadow: "0 1px 3px rgba(0,0,0,0.9)",
-          lineHeight: 1.1,
+          color: "text.primary",
+          textShadow: "0 1px 2px rgba(255,255,255,0.5)", // Subtle depth for text
           px: 0.5,
         }}
       >
         {playerData?.name || player.name}
       </Typography>
-
-      {/* Optional shirt number – remove this block if you don't want/need it */}
     </Box>
   );
 });

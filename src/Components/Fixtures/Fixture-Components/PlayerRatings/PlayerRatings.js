@@ -184,7 +184,7 @@ export default function PlayerRatings({ fixture }) {
           <div style={{ textAlign: "center", padding: "10px" }}>
             Missing Lineup
           </div>
-        ) : !isMatchRatingsSubmitted || !user ? (
+        ) : isMatchRatingsSubmitted || !user ? (
           <SubmittedPlayerRatings
             motmPercentages={motmPercentages}
             fixture={fixture}
