@@ -26,7 +26,7 @@ export const handleCreateAccount = async ({ email, password, groupId }) => {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
 
     // Get the user ID (UID)
@@ -67,7 +67,11 @@ export const handleCreateAccount = async ({ email, password, groupId }) => {
 //   }
 // };
 
-export const handleAddUserToGroup = async ({ userData, groupId }) => {
+export const handleAddUserToGroup = async ({
+  userData,
+  groupId,
+  role = "user",
+}) => {
   try {
     const functions = getFunctions();
 
@@ -78,7 +82,7 @@ export const handleAddUserToGroup = async ({ userData, groupId }) => {
       userId: userData.uid, // The user's UID
       userData: {
         email: userData.email,
-        role: "user", // Optionally, you could pass more data like role, username, etc.
+        role: role,
       },
     });
 
@@ -203,7 +207,7 @@ export const fetchUserData = (userId) => async (dispatch) => {
               const groupUserRef = doc(
                 db,
                 `groupUsers/${groupId}/members`,
-                userId
+                userId,
               );
               const groupUserDoc = await getDoc(groupUserRef);
               if (groupUserDoc.exists()) {
@@ -215,7 +219,7 @@ export const fetchUserData = (userId) => async (dispatch) => {
             } else {
               // This will log if the group doesn't exist
               console.error(
-                `Group ${groupId} does not exist or the user does not have permission to access it.`
+                `Group ${groupId} does not exist or the user does not have permission to access it.`,
               );
             }
           }

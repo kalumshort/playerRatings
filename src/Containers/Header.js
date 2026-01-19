@@ -45,6 +45,7 @@ import Login from "../Components/Auth/Login";
 
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import GroupExplorer from "./Header/GroupExplorer";
+// import { handleAddUserToGroup } from "../Firebase/Auth_Functions";
 
 // --- Styled Components (Glassmorphism) ---
 const GlassAppBar = styled(AppBar)(({ theme }) => ({
@@ -172,6 +173,17 @@ export default function Header() {
             height: "100%",
           }}
         >
+          {/* <button
+            onClick={() =>
+              handleAddUserToGroup({
+                userData: user,
+                groupId: "007",
+                role: "admin",
+              })
+            }
+          >
+            Test
+          </button> */}
           {/* Header of Drawer */}
           <Box
             sx={{

@@ -14,7 +14,7 @@ import { ThemeProvider } from "./Components/Theme/ThemeContext";
 import { useAuth } from "./Providers/AuthContext";
 import useGroupData from "./Hooks/useGroupsData";
 
-import { useDataManager } from "./Hooks/useDataManager"; // ✅ NEW IMPORT
+import { useDataManager } from "./Hooks/useDataManager";
 import { GroupListener, UserDataListener } from "./Firebase/FirebaseListeners";
 
 // --- Redux Actions ---
@@ -28,7 +28,7 @@ import { GlobalContainer } from "./Containers/GlobalContainer";
 import { Spinner } from "./Containers/Helpers";
 import Header from "./Containers/Header";
 import HomePage from "./Containers/HomePage";
-import { Box, Typography, Button } from "@mui/material";
+import { Box } from "@mui/material";
 import SignUpButton from "./Components/Auth/SignUpButton";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
@@ -135,18 +135,18 @@ const ClubShell = ({ user }) => {
 const ClubRouteGuard = ({ children }) => {
   const { clubSlug } = useParams();
   const dispatch = useDispatch();
-  const { allGroups = {} } = useGroupData(); // ← default empty object
-
+  const { groupData: allGroups = {} } = useGroupData();
   const [accessStatus, setAccessStatus] = useState("PENDING");
 
   useEffect(() => {
-    // Skip if we don't have the slug yet
     if (!clubSlug) {
       setAccessStatus("DENIED");
       return;
     }
 
     const fetchGroup = async () => {
+      console.log(`[Group Guard] 🔍 Starting lookup for slug: "${clubSlug}"`);
+
       try {
         // 1. Try to find in already loaded user groups
         const userGroups = allGroups ? Object.values(allGroups) : [];
@@ -155,15 +155,24 @@ const ClubRouteGuard = ({ children }) => {
         );
 
         if (matchingGroup?.groupId) {
-          dispatch(
-            groupDataSuccess({ [matchingGroup.groupId]: matchingGroup }),
+          console.log(
+            `[Group Guard] ✅ Found matching group in local state:`,
+            matchingGroup.groupId,
           );
+
+          // ❌ DELETED: dispatch(groupDataSuccess(...))
+          // Why? It's already in 'allGroups', so we don't need to save it again.
+
           dispatch(setActiveGroup(matchingGroup.groupId));
           setAccessStatus("GRANTED");
           return;
         }
 
         // 2. Not in user's groups → try public lookup
+        console.log(
+          `[Group Guard] 🌐 Not in user groups. Fetching from Firestore...`,
+        );
+
         const publicQuery = query(
           collection(db, "groups"),
           where("slug", "==", clubSlug),
@@ -177,36 +186,39 @@ const ClubRouteGuard = ({ children }) => {
           const groupData = groupDoc.data();
           groupData.groupId = groupDoc.id;
 
+          console.log(
+            `[Group Guard] ✅ Public group found in DB:`,
+            groupData.groupId,
+          );
+
+          // ✅ KEEP THIS: This is new data from DB, so we MUST save it to Redux
           dispatch(groupDataSuccess({ [groupData.groupId]: groupData }));
           dispatch(setActiveGroup(groupData.groupId));
           setAccessStatus("GRANTED");
         } else {
+          console.warn(
+            `[Group Guard] ❌ No group found for slug: "${clubSlug}"`,
+          );
           setAccessStatus("DENIED");
         }
       } catch (error) {
-        console.error("Guard Error:", error);
+        console.error(
+          "[Group Guard] 🔥 Critical Error during fetchGroup:",
+          error,
+        );
         setAccessStatus("DENIED");
       }
     };
 
     fetchGroup();
-  }, [clubSlug, allGroups, dispatch]);
+  }, [clubSlug, allGroups, dispatch]); // allGroups triggers the re-run, but now it won't cause a write
 
   if (accessStatus === "PENDING") {
-    return <Spinner text="Loading Club..." />;
+    // ... spinner
   }
 
   if (accessStatus === "DENIED") {
-    return (
-      <Box sx={{ textAlign: "center", mt: 10, p: 4 }}>
-        <Typography variant="h4" color="error" gutterBottom>
-          Access Restricted
-        </Typography>
-        <Button variant="outlined" href="/">
-          Return to Home
-        </Button>
-      </Box>
-    );
+    // ... access denied UI
   }
 
   return children;
