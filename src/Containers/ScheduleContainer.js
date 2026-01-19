@@ -14,6 +14,7 @@ import {
   Typography,
   Box,
   Paper,
+  Button,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -23,6 +24,7 @@ import {
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import { useAppPaths } from "../Hooks/Helper_Functions";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -51,23 +53,6 @@ const ScrollContainer = styled("div")(({ scroll }) => ({
   },
   "-ms-overflow-style": "none",
   scrollbarWidth: "none",
-}));
-
-const StyledLink = styled(Link)(({ theme }) => ({
-  fontSize: "0.75rem",
-  textDecoration: "none",
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "1px",
-  color: theme.palette.primary.main,
-
-  padding: "4px 12px",
-
-  transition: "all 0.2s ease",
-  "&:hover": {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-  },
 }));
 
 export default function ScheduleContainer({
@@ -105,7 +90,7 @@ export default function ScheduleContainer({
         const start = Math.max(0, targetIndex - limitAroundLatest);
         const end = Math.min(
           processed.length,
-          targetIndex + limitAroundLatest + 1
+          targetIndex + limitAroundLatest + 1,
         );
         return processed.slice(start, end);
       }
@@ -127,7 +112,7 @@ export default function ScheduleContainer({
     (matchId) => {
       appNavigate(`/fixture/${matchId}`);
     },
-    [appNavigate]
+    [appNavigate],
   );
 
   // --- SCROLL TO ACTIVE MATCH ---
@@ -196,7 +181,15 @@ export default function ScheduleContainer({
             </Select>
           </FormControl>
         ) : (
-          <StyledLink to={getPath(`/schedule`)}>View All</StyledLink>
+          <Button
+            component={Link}
+            to={getPath(`/schedule`)}
+            size="small"
+            endIcon={<ArrowForwardIcon />}
+            variant="contained"
+          >
+            View All
+          </Button>
         )}
       </HeaderContainer>
 
@@ -209,7 +202,7 @@ export default function ScheduleContainer({
           displayFixtures.map((fixture) => {
             const isLatest = latestFixture?.id === fixture.id;
             const matchTime = new Date(
-              fixture.fixture.timestamp * 1000
+              fixture.fixture.timestamp * 1000,
             ).toLocaleDateString("en-GB", {
               weekday: "short",
               day: "numeric",
