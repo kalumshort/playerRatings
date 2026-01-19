@@ -92,7 +92,6 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         // 1. The Floating Container (Cards, Avatars)
         card: {
           backgroundColor: colors.bg,
-          borderRadius: 32,
           boxShadow: surfaceShadows.float,
           border: isLight
             ? "1px solid rgba(255,255,255,0.6)"
@@ -101,7 +100,6 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         // 2. The Pressed Groove (Score Inputs, Result Boxes)
         box: {
           backgroundColor: colors.bg,
-          borderRadius: 20,
           boxShadow: surfaceShadows.pressed,
           border: isLight ? "1px solid rgba(255,255,255,0.4)" : "none",
         },
@@ -122,7 +120,7 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         background: { default: colors.bg, paper: colors.paper },
         text: { primary: colors.textPrimary, secondary: colors.textSecondary },
       },
-      shape: { borderRadius: 24 }, // Slightly softer than 32 for clay
+      shape: { borderRadius: "16px" }, // Slightly softer than 32 for clay
 
       typography: {
         fontFamily: "'Nunito', 'Quicksand', sans-serif",

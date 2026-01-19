@@ -7,13 +7,16 @@ import {
   Grid,
   Button,
   IconButton,
+  useTheme,
+  Zoom,
+  Fade,
 } from "@mui/material";
 import {
-  Whatshot,
-  AcUnit,
-  SwapHoriz,
-  Close,
-  TrendingUp,
+  WhatshotRounded,
+  AcUnitRounded,
+  SwapHorizRounded,
+  CloseRounded,
+  TrendingUpRounded,
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -23,15 +26,6 @@ import useGlobalData from "../../../Hooks/useGlobalData";
 import useGroupData from "../../../Hooks/useGroupsData";
 import { selectSquadPlayerById } from "../../../Selectors/squadDataSelectors";
 
-const glassStyle = {
-  background: "rgba(20, 20, 20, 0.90)",
-  backdropFilter: "blur(20px)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  borderRadius: "24px",
-  color: "white",
-  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.6)",
-};
-
 // --- SUB ITEM COMPONENT ---
 const SubstituteItem = ({
   playerId,
@@ -40,8 +34,9 @@ const SubstituteItem = ({
   voteCount,
   compact = false,
 }) => {
+  const theme = useTheme();
   const playerData = useSelector((state) =>
-    selectSquadPlayerById(playerId, clubSlug)(state)
+    selectSquadPlayerById(playerId, clubSlug)(state),
   );
   if (!playerData) return null;
 
@@ -52,24 +47,42 @@ const SubstituteItem = ({
         onClick={() => onVote(playerData.id)}
         sx={{
           justifyContent: "space-between",
-          color: "white",
-          p: compact ? 0.5 : 1, // Smaller padding for compact mode
+          color: "text.primary",
+          p: compact ? 1 : 1.5,
+          borderRadius: "16px",
+          // Hover effect for the list item
+          "&:hover": {
+            bgcolor: theme.palette.action.hover,
+            transform: "translateX(4px)",
+          },
+          transition: "all 0.2s ease",
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Avatar
             src={playerData.photo}
-            sx={{ width: compact ? 28 : 35, height: compact ? 28 : 35, mr: 2 }}
+            sx={{
+              width: compact ? 32 : 40,
+              height: compact ? 32 : 40,
+              mr: 2,
+              border: `2px solid ${theme.palette.divider}`,
+            }}
           />
           <Box sx={{ textAlign: "left" }}>
             <Typography
               variant="body2"
-              sx={{ fontWeight: 600, fontSize: compact ? "0.85rem" : "0.9rem" }}
+              sx={{
+                fontWeight: 800,
+                fontSize: compact ? "0.85rem" : "0.95rem",
+              }}
             >
               {playerData.name}
             </Typography>
             {!compact && (
-              <Typography variant="caption" sx={{ color: "#aaa" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", fontWeight: 600 }}
+              >
                 {playerData.pos}
               </Typography>
             )}
@@ -77,12 +90,18 @@ const SubstituteItem = ({
         </Box>
 
         {voteCount > 0 && (
-          <Box sx={{ textAlign: "right" }}>
-            <Typography
-              variant="caption"
-              sx={{ color: "#00e676", fontWeight: "bold", display: "block" }}
-            >
-              {voteCount} votes
+          <Box
+            sx={{
+              bgcolor: "success.main",
+              color: "white",
+              px: 1,
+              borderRadius: "8px",
+              minWidth: "24px",
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 900 }}>
+              {voteCount}
             </Typography>
           </Box>
         )}
@@ -100,38 +119,34 @@ export default function PlayerActionModal({
   elapsedTime = "HT",
   liveData = { totals: {} },
 }) {
+  const theme = useTheme();
   const { currentYear } = useGlobalData();
   const { activeGroup } = useGroupData();
   const [view, setView] = useState("main");
   const { clubSlug } = useParams();
 
   const mainPlayerData = useSelector((state) =>
-    selectSquadPlayerById(player?.id, clubSlug)(state)
+    selectSquadPlayerById(player?.id, clubSlug)(state),
   );
 
   // --- SORTED SUBS LOGIC ---
   const sortedSubs = useMemo(() => {
     const playerStats = liveData.totals[player?.id] || {};
-
     const subsWithVotes = substitutes.map((sub) => {
-      // Key: "sub_req_{subID}" stored on current player
       const specificVoteKey = `sub_req_${sub.player.id}`;
       const count = playerStats[specificVoteKey] || 0;
       return { ...sub, voteCount: count };
     });
-
     return subsWithVotes.sort((a, b) => b.voteCount - a.voteCount);
   }, [substitutes, liveData, player]);
 
-  // --- GET TOP 2 FOR MAIN VIEW ---
-  // Only take players who actually have votes (> 0)
   const top2Suggestions = sortedSubs.filter((s) => s.voteCount > 0).slice(0, 2);
 
   if (!player) return null;
 
   const handleVote = async (type, subInId = null) => {
     onClose();
-    setView("main");
+    setView("main"); // Reset view for next open
     if (!activeGroup?.groupId) return;
 
     const commonPayload = {
@@ -169,16 +184,34 @@ export default function PlayerActionModal({
     <Dialog
       open={open}
       onClose={onClose}
-      PaperProps={{ style: glassStyle }}
-      fullWidth
-      maxWidth="xs"
+      TransitionComponent={Zoom} // Pop-in animation
+      PaperProps={{
+        sx: {
+          ...theme.clay.card, // 1. Global Clay Card
+          borderRadius: "32px",
+          p: 0,
+          margin: 2,
+          maxWidth: "360px",
+          width: "100%",
+          overflow: "visible", // Allow close button to float if needed
+        },
+      }}
     >
-      <Box sx={{ p: 2, position: "relative" }}>
+      <Box sx={{ p: 3, position: "relative" }}>
+        {/* Close Button */}
         <IconButton
           onClick={onClose}
-          sx={{ position: "absolute", right: 8, top: 8, color: "white" }}
+          sx={{
+            position: "absolute",
+            right: 12,
+            top: 12,
+            color: "text.secondary",
+            bgcolor: "background.default", // Clay effect for button
+            boxShadow: theme.shadows[1],
+            "&:hover": { bgcolor: "background.default", color: "error.main" },
+          }}
         >
-          <Close />
+          <CloseRounded />
         </IconButton>
 
         {/* --- HEADER --- */}
@@ -187,153 +220,182 @@ export default function PlayerActionModal({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            mb: 2,
+            mb: 3,
+            mt: 1,
           }}
         >
           <Avatar
             src={mainPlayerData?.photo || player?.photo}
             sx={{
-              width: 80,
-              height: 80,
-              border: "2px solid rgba(255,255,255,0.2)",
-              mb: 1,
+              width: 90,
+              height: 90,
+              // Clay Sphere
+              border: `5px solid ${theme.palette.background.paper}`,
+              boxShadow: theme.clay.card.boxShadow,
+              mb: 2,
             }}
           />
-          <Typography variant="h5" sx={{ fontFamily: "'VT323', monospace" }}>
+          <Typography variant="h5" fontWeight={900} letterSpacing="-0.5px">
             {mainPlayerData?.name || player?.name}
           </Typography>
         </Box>
 
         {view === "main" ? (
-          <>
-            <Grid container spacing={2}>
-              {/* HOT / COLD BUTTONS */}
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleVote("hot")}
-                  sx={{
-                    height: "90px",
-                    borderColor: "#ff5722",
-                    color: "#ff5722",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Whatshot sx={{ fontSize: 32, mb: 0.5 }} /> On Fire
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleVote("cold")}
-                  sx={{
-                    height: "90px",
-                    borderColor: "#29b6f6",
-                    color: "#29b6f6",
-                    flexDirection: "column",
-                  }}
-                >
-                  <AcUnit sx={{ fontSize: 32, mb: 0.5 }} /> Frozen
-                </Button>
+          <Fade in={true}>
+            <Box>
+              <Grid container spacing={2}>
+                {/* HOT BUTTON */}
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={() => handleVote("hot")}
+                    sx={{
+                      ...theme.clay.button, // Clay Button Shape
+                      height: "110px",
+                      flexDirection: "column",
+                      bgcolor: "#FFF3E0", // Pastel Orange
+                      border: "2px solid #FFCC80",
+                      color: "#E65100",
+                      "&:hover": { bgcolor: "#FFE0B2" },
+                    }}
+                  >
+                    <WhatshotRounded sx={{ fontSize: 36, mb: 1 }} />
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      ON FIRE
+                    </Typography>
+                  </Button>
+                </Grid>
+
+                {/* COLD BUTTON */}
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={() => handleVote("cold")}
+                    sx={{
+                      ...theme.clay.button,
+                      height: "110px",
+                      flexDirection: "column",
+                      bgcolor: "#E1F5FE", // Pastel Blue
+                      border: "2px solid #81D4FA",
+                      color: "#0277BD",
+                      "&:hover": { bgcolor: "#B3E5FC" },
+                    }}
+                  >
+                    <AcUnitRounded sx={{ fontSize: 36, mb: 1 }} />
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      FROZEN
+                    </Typography>
+                  </Button>
+                </Grid>
+
+                {/* SUB BUTTON */}
+                <Grid item xs={12}>
+                  <Button
+                    fullWidth
+                    onClick={() => setView("subs")}
+                    startIcon={<SwapHorizRounded />}
+                    sx={{
+                      ...theme.clay.button,
+                      py: 1.5,
+                      bgcolor: "background.default",
+                      color: "text.primary",
+                      fontWeight: 800,
+                      mt: 1,
+                    }}
+                  >
+                    VOTE TO SUBSTITUTE
+                  </Button>
+                </Grid>
               </Grid>
 
-              {/* SUB BUTTON */}
-              <Grid item xs={12}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={() => setView("subs")}
-                  sx={{
-                    background: "rgba(255,255,255,0.1)",
-                    color: "white",
-                    py: 1.5,
-                  }}
-                  startIcon={<SwapHoriz />}
+              {/* --- TOP SUGGESTIONS (Pressed Well) --- */}
+              {top2Suggestions.length > 0 && (
+                <Box
+                  sx={(theme) => ({
+                    ...theme.clay.box, // Pressed look
+                    mt: 3,
+                    p: 2,
+                    borderRadius: "20px",
+                    bgcolor: "background.default",
+                  })}
                 >
-                  Vote to Substitute
-                </Button>
-              </Grid>
-            </Grid>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 1,
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    <TrendingUpRounded
+                      sx={{ fontSize: 16, mr: 1, color: "success.main" }}
+                    />
+                    FANS WANT TO SEE:
+                  </Typography>
+                  <Grid container spacing={1}>
+                    {top2Suggestions.map((sub) => (
+                      <SubstituteItem
+                        key={sub.player.id}
+                        playerId={sub.player.id}
+                        clubSlug={clubSlug}
+                        voteCount={sub.voteCount}
+                        compact={true}
+                        onVote={(id) => handleVote("sub", id)}
+                      />
+                    ))}
+                  </Grid>
+                </Box>
+              )}
+            </Box>
+          </Fade>
+        ) : (
+          /* --- FULL LIST VIEW --- */
+          <Fade in={true}>
+            <Box>
+              <Typography
+                variant="subtitle1"
+                align="center"
+                fontWeight={800}
+                sx={{ mb: 2, color: "text.secondary" }}
+              >
+                WHO COMES ON?
+              </Typography>
 
-            {/* --- TOP 2 SUGGESTIONS SECTION --- */}
-            {top2Suggestions.length > 0 && (
+              {/* Scrollable Area */}
               <Box
                 sx={{
-                  mt: 2,
-                  p: 1.5,
-                  background: "rgba(0,0,0,0.3)",
-                  borderRadius: "16px",
+                  maxHeight: "350px",
+                  overflowY: "auto",
+                  pr: 1,
+                  mx: -1, // slight negative margin for wider scroll area
+                  px: 1,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "#aaa",
-                    display: "flex",
-                    alignItems: "center",
-                    mb: 1,
-                    ml: 0.5,
-                  }}
-                >
-                  <TrendingUp sx={{ fontSize: 16, mr: 1, color: "#00e676" }} />
-                  FANS WANT TO SEE:
-                </Typography>
                 <Grid container spacing={1}>
-                  {top2Suggestions.map((sub) => (
+                  {sortedSubs.map((sub) => (
                     <SubstituteItem
                       key={sub.player.id}
                       playerId={sub.player.id}
                       clubSlug={clubSlug}
-                      voteCount={sub.voteCount}
-                      compact={true} // Use compact mode for main view
                       onVote={(id) => handleVote("sub", id)}
+                      voteCount={sub.voteCount}
                     />
                   ))}
                 </Grid>
               </Box>
-            )}
-          </>
-        ) : (
-          /* --- FULL LIST VIEW --- */
-          <Box>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                mb: 2,
-                textAlign: "center",
-                color: "#00e676",
-                letterSpacing: 1,
-              }}
-            >
-              WHO SHOULD COME ON?
-            </Typography>
 
-            <Grid
-              container
-              spacing={1}
-              sx={{ maxHeight: "400px", overflowY: "auto", pr: 0.5 }}
-            >
-              {sortedSubs.map((sub) => (
-                <SubstituteItem
-                  key={sub.player.id}
-                  playerId={sub.player.id}
-                  clubSlug={clubSlug}
-                  onVote={(id) => handleVote("sub", id)}
-                  voteCount={sub.voteCount}
-                />
-              ))}
-            </Grid>
-
-            <Button
-              fullWidth
-              onClick={() => setView("main")}
-              sx={{ mt: 2, color: "#aaa" }}
-            >
-              Back
-            </Button>
-          </Box>
+              <Button
+                fullWidth
+                onClick={() => setView("main")}
+                sx={{ mt: 3, color: "text.secondary", fontWeight: 700 }}
+              >
+                Back to Actions
+              </Button>
+            </Box>
+          </Fade>
         )}
       </Box>
     </Dialog>

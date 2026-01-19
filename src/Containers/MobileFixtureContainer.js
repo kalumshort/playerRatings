@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Paper, Tabs, Tab, Box, Fade } from "@mui/material";
+import { Tabs, Tab, Box, Fade } from "@mui/material";
 
 // Components
 import ScorePrediction from "../Components/Fixtures/Fixture-Components/Predictions/ScorePrediction";
@@ -43,16 +43,16 @@ export default function MobileFixtureContainer({
       arr.push({ label: "Stats", value: "Stats" });
       arr.push({ label: "Events", value: "Events" });
       arr.push({ label: "Ratings", value: "Ratings" });
-      arr.push({ label: "The Consensus", value: "PostPredicts" });
+      arr.push({ label: "Consensus", value: "PostPredicts" });
     }
     // --- POST-MATCH ---
     else if (isFinished) {
-      // Lead with the results of the community
       arr.push({ label: "Ratings", value: "Ratings" });
-      arr.push({ label: "Pulse", value: "Pulse" }); // View the timeline of the game's energy
-      arr.push({ label: "The Consensus", value: "PostPredicts" });
+      arr.push({ label: "Pulse", value: "Pulse" });
+      arr.push({ label: "Consensus", value: "PostPredicts" });
       arr.push({ label: "Lineup", value: "Lineup" });
       arr.push({ label: "Stats", value: "Stats" });
+      arr.push({ label: "Events", value: "Events" });
     }
 
     return arr;
@@ -77,43 +77,80 @@ export default function MobileFixtureContainer({
 
   return (
     <>
-      {/* Sticky Glass Tab Navigator */}
-      <Paper
-        elevation={0}
+      {/* --- STICKY CLAY NAVIGATOR --- */}
+      <Box
         sx={{
           position: "sticky",
-          top: 70, // Adjust based on your MobileHeader height
-          zIndex: 10,
-          mx: 1,
-          mt: 2,
-          mb: 2,
+          top: 70, // Adjust based on your header height
+          zIndex: 20,
+          px: 1,
+          pb: 1,
+          // Optional: Add a subtle blur behind the floating tabs
         }}
       >
-        <Tabs
-          value={selectedTab}
-          onChange={(_, newValue) => setSelectedTab(newValue)}
-          variant="scrollable"
-          scrollButtons={false}
-          sx={{
+        <Box
+          sx={(theme) => ({
+            // The "Track" -> Pressed Groove Look
+            ...theme.clay.box,
+            display: "flex",
+            alignItems: "center",
             p: 0.5,
-            minHeight: "48px",
-            "& .MuiTabs-flexContainer": {
-              gap: 1,
-            },
-          }}
+            borderRadius: "24px",
+            overflow: "hidden",
+          })}
         >
-          {tabs.map((tab) => (
-            <Tab key={tab.value} label={tab.label} value={tab.value} />
-          ))}
-        </Tabs>
-      </Paper>
+          <Tabs
+            value={selectedTab}
+            onChange={(_, newValue) => setSelectedTab(newValue)}
+            variant="scrollable"
+            scrollButtons={false}
+            // Hide default underline
+            TabIndicatorProps={{ style: { display: "none" } }}
+            sx={{
+             
+             
+              "& .MuiTabs-flexContainer": { gap: 0.5 },
+            }}
+          >
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.value}
+                label={tab.label}
+                value={tab.value}
+                disableRipple
+                sx={(theme) => ({
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  minHeight: "40px",
+                  borderRadius: "20px",
+                  color: "text.secondary",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  zIndex: 1,
+                  px: 2,
 
-      {/* Content Area with smooth transitions */}
-      <Box sx={{ px: 1, pb: 4 }}>
-        <Fade in={true} key={selectedTab} timeout={400}>
+                  // ACTIVE STATE -> Floating Pill
+                  "&.Mui-selected": {
+                    color: "primary.main",
+                    bgcolor: "background.paper", // White/Dark Grey
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)", // Floating shadow
+                    // Or use theme.clay.card if you want the full clay effect:
+                    // ...theme.clay.card,
+                    // p: 0, // reset padding if using clay card
+                  },
+                })}
+              />
+            ))}
+          </Tabs>
+        </Box>
+      </Box>
+
+      {/* --- CONTENT AREA --- */}
+      <Box sx={{ px: 1, pb: 6, minHeight: "60vh" }}>
+        <Fade in={true} key={selectedTab} timeout={500}>
           <Box>
             {selectedTab === "Predicts" && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 <WinnerPredict fixture={fixture} />
                 <ScorePrediction fixture={fixture} />
                 <PreMatchMOTM fixture={fixture} />
@@ -125,9 +162,8 @@ export default function MobileFixtureContainer({
             )}
 
             {selectedTab === "Lineup" && (
-              <Paper sx={{ p: 1, border: "none", background: "transparent" }}>
-                <Lineup fixture={fixture} />
-              </Paper>
+              // Lineup component handles its own clay container now
+              <Lineup fixture={fixture} />
             )}
 
             {selectedTab === "Ratings" && <PlayerRatings fixture={fixture} />}

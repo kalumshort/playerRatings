@@ -61,7 +61,7 @@ export default function FixtureHeader({
   };
 
   const penaltyEvents = events?.filter(
-    (e) => e.comments === "Penalty Shootout"
+    (e) => e.comments === "Penalty Shootout",
   );
 
   return (

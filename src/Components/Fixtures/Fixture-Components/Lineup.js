@@ -42,7 +42,7 @@ export default function Lineup({ fixture }) {
   const liveLineupData = useMemo(() => {
     // 1. EXTRACT DATA INSIDE MEMO (Fixes dependency warning)
     const teamLineupData = fixture?.lineups?.find(
-      (team) => team.team.id === groupClubId
+      (team) => team.team.id === groupClubId,
     );
     const startXI = teamLineupData?.startXI || [];
     const allSubs = teamLineupData?.substitutes || [];
@@ -53,7 +53,7 @@ export default function Lineup({ fixture }) {
     let subbedOutList = [];
 
     const subEvents = events.filter(
-      (e) => e.team.id === groupClubId && e.type === "subst"
+      (e) => e.team.id === groupClubId && e.type === "subst",
     );
 
     // 3. APPLY SUBS
@@ -62,7 +62,7 @@ export default function Lineup({ fixture }) {
       const playerOnId = event.assist.id;
 
       const index = currentPlayers.findIndex(
-        (p) => p.player.id === playerOffId
+        (p) => p.player.id === playerOffId,
       );
 
       if (index !== -1) {
@@ -96,7 +96,7 @@ export default function Lineup({ fixture }) {
   // We re-derive startXI/allSubs here just for the "Toggle OFF" view
   // (This is cheap and safe to do outside memo for rendering logic)
   const rawLineupData = fixture?.lineups?.find(
-    (team) => team.team.id === groupClubId
+    (team) => team.team.id === groupClubId,
   );
   const fallbackXI = rawLineupData?.startXI || [];
   const fallbackSubs = rawLineupData?.substitutes || [];

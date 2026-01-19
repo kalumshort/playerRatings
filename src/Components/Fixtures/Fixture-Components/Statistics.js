@@ -8,15 +8,14 @@ import {
   Divider,
   useTheme,
 } from "@mui/material";
-import { BarChart, Equalizer } from "@mui/icons-material";
+import { BarChartRounded, EqualizerRounded } from "@mui/icons-material"; // Rounded Icons
 
-// --- CONFIGURATION: Define Categories ---
+// --- CONFIGURATION ---
 const STAT_GROUPS = {
   General: ["Ball Possession", "Corner Kicks", "Offsides"],
   Shooting: [
     "Total Shots",
     "Shots on Goal",
-    "Shots off Goal",
     "Blocked Shots",
     "Shots insidebox",
     "Shots outsidebox",
@@ -37,33 +36,23 @@ const parseValue = (val) => {
 export default function Statistics({ fixture }) {
   const theme = useTheme();
 
-  // --- 1. MEMOIZED DATA PROCESSING ---
+  // --- DATA PROCESSING ---
   const categorizedStats = useMemo(() => {
     if (!fixture.statistics || fixture.statistics.length !== 2) return null;
-
     const [team1Data, team2Data] = fixture.statistics;
 
-    // Helper to find value by type name in a team's stats array
     const findStatValue = (statsArray, typeName) => {
       const found = statsArray.find((s) => s.type === typeName);
       return found ? found.value : 0;
     };
 
-    // Build the object structure: { "Shooting": [{ label, val1, val2 }, ...], ... }
     const groupedData = {};
-
     Object.entries(STAT_GROUPS).forEach(([category, statTypes]) => {
       const statsInGroup = statTypes.map((type) => {
-        // Check if this stat exists in the API response (some leagues omit data)
         const val1 = findStatValue(team1Data.statistics, type);
         const val2 = findStatValue(team2Data.statistics, type);
-
-        // Only include if at least one team has data (prevents rows of 0 vs 0 if data missing)
-        // However, for standard stats like Cards/Goals, 0 vs 0 is valid.
-        // We'll include it to keep the UI consistent.
         return { label: type, val1, val2 };
       });
-
       groupedData[category] = statsInGroup;
     });
 
@@ -78,23 +67,22 @@ export default function Statistics({ fixture }) {
   if (!categorizedStats) {
     return (
       <Paper
-        sx={{
+        elevation={0}
+        sx={(theme) => ({
+          ...theme.clay.card, // Clay Style
           p: 4,
           minHeight: 200,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          borderStyle: "dashed",
-          borderColor: "divider",
-          bgcolor: "transparent",
-        }}
-        elevation={0}
-        className="containerMargin"
+        })}
       >
-        <Equalizer sx={{ fontSize: 40, color: "text.disabled", mb: 2 }} />
-        <Typography variant="body1" color="text.secondary">
-          No match statistics available yet.
+        <EqualizerRounded
+          sx={{ fontSize: 48, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="body1" color="text.secondary" fontWeight="bold">
+          No stats available yet.
         </Typography>
       </Paper>
     );
@@ -104,45 +92,39 @@ export default function Statistics({ fixture }) {
 
   return (
     <Paper
-      sx={{
-        p: 0,
+      elevation={0}
+      sx={(theme) => ({
+        ...theme.clay.card, // 1. Global Clay Style
+        p: 0, // Reset padding for header/content split
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        // Glass effect handled by ThemeContext generally, but ensuring it here:
-        background: theme.palette.background.paper,
-        backdropFilter: "blur(20px)",
-      }}
-      elevation={0}
-      className="containerMargin"
+        width: "100%",
+        margin: "0px",
+      })}
     >
       {/* --- HEADER --- */}
       <Box
         sx={{
-          p: 2,
+          p: 2.5,
           borderBottom: `1px solid ${theme.palette.divider}`,
-          bgcolor:
-            theme.palette.mode === "dark"
-              ? "rgba(255,255,255,0.03)"
-              : "rgba(0,0,0,0.02)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: 1.5,
+          bgcolor:
+            theme.palette.mode === "light"
+              ? "rgba(0,0,0,0.02)"
+              : "rgba(255,255,255,0.02)",
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <BarChart color="primary" fontSize="small" />
-          <Typography
-            variant="h6"
-            sx={{ fontSize: "0.9rem", letterSpacing: "1px" }}
-          >
-            MATCH STATS
-          </Typography>
-        </Stack>
+        <BarChartRounded color="primary" />
+        <Typography variant="h6" fontWeight={800} letterSpacing="-0.5px">
+          MATCH STATS
+        </Typography>
       </Box>
 
       {/* --- TEAM LEGEND --- */}
-      <Box sx={{ p: 2, pb: 0 }}>
+      <Box sx={{ px: 3, pt: 3, pb: 1 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -150,62 +132,79 @@ export default function Statistics({ fixture }) {
         >
           {/* Home Team */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Avatar src={team1.logo} sx={{ width: 32, height: 32 }} />
-            <Typography variant="button" fontWeight="bold">
+            <Avatar
+              src={team1.logo}
+              sx={{
+                width: 40,
+                height: 40,
+                border: `3px solid ${theme.palette.background.default}`,
+                boxShadow: theme.clay.card.boxShadow,
+              }}
+            />
+            <Typography variant="subtitle2" fontWeight={800}>
               {team1.name}
             </Typography>
           </Stack>
 
           {/* Away Team */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Typography variant="button" fontWeight="bold">
+            <Typography variant="subtitle2" fontWeight={800}>
               {team2.name}
             </Typography>
-            <Avatar src={team2.logo} sx={{ width: 32, height: 32 }} />
+            <Avatar
+              src={team2.logo}
+              sx={{
+                width: 40,
+                height: 40,
+                border: `3px solid ${theme.palette.background.default}`,
+                boxShadow: theme.clay.card.boxShadow,
+              }}
+            />
           </Stack>
         </Stack>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* --- SCROLLABLE STATS LIST --- */}
+      {/* --- SCROLLABLE STATS --- */}
       <Box
         sx={{
-          maxHeight: 500,
+          flex: 1,
           overflowY: "auto",
           px: 3,
           pb: 4,
-          // Custom scrollbar styling if needed
-          "&::-webkit-scrollbar": { width: "4px" },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.divider,
-            borderRadius: "4px",
-          },
+          mt: 1,
         }}
       >
         <Stack spacing={4}>
           {Object.entries(groupedData).map(([category, stats]) => {
-            // Filter out empty groups if needed, usually we keep them for structure
             if (stats.length === 0) return null;
 
             return (
               <Box key={category}>
-                {/* CATEGORY HEADER */}
-                <Divider textAlign="center" sx={{ mb: 2, opacity: 0.6 }}>
+                {/* CATEGORY TITLE */}
+                <Box
+                  sx={{ position: "relative", my: 2.5, textAlign: "center" }}
+                >
+                  <Divider
+                    sx={{ position: "absolute", width: "100%", top: "50%" }}
+                  />
                   <Typography
                     variant="caption"
                     sx={{
+                      position: "relative",
+                      bgcolor: theme.palette.background.default, // Mask line
+                      px: 2,
+                      fontWeight: 800,
+                      letterSpacing: 1.5,
+                      color: "text.secondary",
                       textTransform: "uppercase",
-
-                      letterSpacing: "0.1em",
                     }}
                   >
                     {category}
                   </Typography>
-                </Divider>
+                </Box>
 
                 {/* STAT ROWS */}
-                <Stack spacing={2}>
+                <Stack spacing={2.5}>
                   {stats.map((stat, index) => {
                     const val1Num = parseValue(stat.val1);
                     const val2Num = parseValue(stat.val2);
@@ -232,30 +231,32 @@ export default function Statistics({ fixture }) {
   );
 }
 
-// --- ROW COMPONENT (Unchanged logic, slight visual tweaks) ---
+// --- ROW COMPONENT (Clay Aesthetic) ---
 const StatRow = ({ label, value1, value2, percent1 }) => {
   const theme = useTheme();
   const val1Num = parseValue(value1);
   const val2Num = parseValue(value2);
 
-  // Logic to highlight the "winner" of the stat
   const isHomeWinner = val1Num > val2Num;
   const isAwayWinner = val2Num > val1Num;
 
   return (
     <Box>
+      {/* Labels & Numbers */}
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="flex-end"
-        sx={{ mb: 0.5 }}
+        sx={{ mb: 1 }}
       >
         <Typography
-          variant="h5" // Using h5 (VT323 font from theme) for numbers
+          variant="h6" // Standard font, bold
           sx={{
+            lineHeight: 1,
+            fontWeight: isHomeWinner ? 900 : 500,
             color: isHomeWinner ? "primary.main" : "text.secondary",
-            fontWeight: isHomeWinner ? 700 : 400,
-            transition: "color 0.3s ease",
+            fontSize: isHomeWinner ? "1.1rem" : "1rem",
+            transition: "all 0.3s ease",
           }}
         >
           {value1}
@@ -264,37 +265,40 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
         <Typography
           variant="caption"
           sx={{
-            textTransform: "uppercase",
+            fontWeight: 700,
             color: "text.secondary",
-            fontSize: "0.7rem",
-            mb: 0.5,
+            letterSpacing: 0.5,
+            fontSize: "0.75rem",
           }}
         >
           {label}
         </Typography>
 
         <Typography
-          variant="h5"
+          variant="h6"
           sx={{
+            lineHeight: 1,
+            fontWeight: isAwayWinner ? 900 : 500,
             color: isAwayWinner ? "text.primary" : "text.secondary",
-            fontWeight: isAwayWinner ? 700 : 400,
-            transition: "color 0.3s ease",
+            fontSize: isAwayWinner ? "1.1rem" : "1rem",
+            transition: "all 0.3s ease",
           }}
         >
           {value2}
         </Typography>
       </Stack>
 
-      {/* Progress Bar Container */}
+      {/* CLAY PROGRESS BAR (Pressed Groove) */}
       <Box
-        sx={{
-          height: 6,
+        sx={(theme) => ({
+          ...theme.clay.box, // The "Inset" Shadow
+          height: 12, // Thicker bar
           width: "100%",
-          bgcolor: theme.palette.action.selected, // Slightly visible background
-          borderRadius: 4,
+          borderRadius: "10px",
           position: "relative",
           overflow: "hidden",
-        }}
+          bgcolor: theme.palette.background.default, // Match base
+        })}
       >
         {/* Home Team Bar (Left) */}
         <Box
@@ -304,14 +308,17 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
             top: 0,
             bottom: 0,
             width: `${percent1}%`,
-            bgcolor: "primary.main",
-            boxShadow: `0 0 10px ${theme.palette.primary.main}`, // Add subtle neon glow
-            borderRight: `2px solid ${theme.palette.background.paper}`,
-            transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)", // Smooth animation on load
+            bgcolor: "primary.main", // Matcha Green
+            borderRadius: "8px", // Soft pill shape inside
+            boxShadow: "2px 0 5px rgba(0,0,0,0.1)", // Slight depth
+            transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+
+            // Separator Line
+            borderRight: `4px solid ${theme.palette.background.default}`,
           }}
         />
 
-        {/* Away Team Bar (Right - distinct color or faded primary) */}
+        {/* Away Team Bar (Right) */}
         <Box
           sx={{
             position: "absolute",
@@ -319,9 +326,9 @@ const StatRow = ({ label, value1, value2, percent1 }) => {
             top: 0,
             bottom: 0,
             left: `${percent1}%`,
-            bgcolor: theme.palette.mode === "dark" ? "#ffffff" : "#000000",
-            opacity: 0.15,
-            transition: "left 1s cubic-bezier(0.4, 0, 0.2, 1)",
+            bgcolor: theme.palette.mode === "light" ? "#E2E8F0" : "#4A5568", // Neutral Grey
+            borderRadius: "8px",
+            transition: "left 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       </Box>
