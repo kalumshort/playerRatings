@@ -48,7 +48,7 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
       try {
         const data = await firebaseGetDocument(
           `groups/${groupId}/seasons/${currentYear}/fixtureMoods`,
-          matchId
+          matchId,
         );
         setMatchMoods(data);
       } catch (error) {
@@ -73,7 +73,7 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
     ]);
     setTimeout(
       () => setParticles((prev) => prev.filter((p) => p.id !== id)),
-      1000
+      1000,
     );
 
     await handleFixtureMood({
@@ -168,8 +168,8 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
                 {MOODS.map((mood) => (
                   <motion.div
                     key={mood.label}
-                    whileHover={{ scale: 1.15 }}
-                    whileTap={{ scale: 0.9 }}
+                    whilehover={{ scale: 1.15 }}
+                    whiletap={{ scale: 0.9 }}
                   >
                     <IconButton
                       onClick={(e) => handleMoodClick(mood, e)}

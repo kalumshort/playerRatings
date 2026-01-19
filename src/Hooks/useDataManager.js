@@ -6,52 +6,56 @@ export const useDataManager = () => {
   const dispatch = useDispatch();
 
   // 1. GET CONTEXT
-  // We look at the 'activeGroupId' to decide what data we need.
   const activeGroupId = useSelector((state) => state.groupData.activeGroupId);
   const groups = useSelector((state) => state.groupData.byGroupId);
   const currentYear = useSelector((state) => state.globalData.currentYear);
 
-  // Derive the active group object safely
   const activeGroup = groups[activeGroupId];
-  const clubId = activeGroup?.groupClubId; // Assuming your group object has 'groupClubId'
+  const clubId = activeGroup?.groupClubId;
 
-  // 2. CHECK CACHE (The "Smart" Part)
-  // We check our new "Buckets" to see if data exists for this specific club/year
-  const fixturesCached = useSelector(
-    (state) => state.fixtures.byClubId[clubId]?.[currentYear]
+  // 2. CHECK STATUS (Optimized)
+  // We use the double bang (!!) to convert data to a simple Boolean (true/false).
+  // Booleans are primitives; they don't trigger re-renders like Arrays/Objects do.
+  const hasFixtures = useSelector(
+    (state) => !!state.fixtures.byClubId[clubId]?.[currentYear],
   );
 
-  const squadCached = useSelector(
-    (state) => state.teamSquads.byClubId[clubId]?.[currentYear]
+  const hasSquad = useSelector(
+    (state) => !!state.teamSquads.byClubId[clubId]?.[currentYear],
   );
 
   // 3. FETCH EFFECT
   useEffect(() => {
+    // Safety check: ensure we have the config variables
     if (!clubId || !currentYear) return;
 
     // A. FETCH FIXTURES
-    if (!fixturesCached) {
+    // Only fetch if we DO NOT have fixtures
+    if (!hasFixtures) {
       console.log(
-        `[Data Manager] 📥 Fetching Fixtures: Club ${clubId}, Year ${currentYear}`
+        `[Data Manager] 📥 Fetching Fixtures: Club ${clubId}, Year ${currentYear}`,
       );
-      // NOTE: Ensure your 'fetchFixtures' thunk dispatches 'fetchFixturesSuccess' with { clubId, year, fixtures }
       dispatch(fetchFixtures({ clubId, currentYear }));
-    } else {
-      console.log(`[Data Manager] ✅ Fixtures cached for Club ${clubId}`);
+    }
+    // (Optional) Remove the "Cached" log to reduce console noise,
+    // or keep it for debugging but now it will only fire once.
+    else {
+      // console.log(`[Data Manager] ✅ Fixtures cached for Club ${clubId}`);
     }
 
     // B. FETCH SQUAD
-    if (!squadCached) {
+    if (!hasSquad) {
       console.log(
-        `[Data Manager] 📥 Fetching Squad: Club ${clubId}, Year ${currentYear}`
+        `[Data Manager] 📥 Fetching Squad: Club ${clubId}, Year ${currentYear}`,
       );
       dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
     } else {
-      console.log(`[Data Manager] ✅ Squad cached for Club ${clubId}`);
+      // console.log(`[Data Manager] ✅ Squad cached for Club ${clubId}`);
     }
-  }, [clubId, currentYear, fixturesCached, squadCached, dispatch]);
+  }, [clubId, currentYear, hasFixtures, hasSquad, dispatch]);
+  // ^^^ Now depending on stable Booleans, not constantly changing Arrays
 
   return {
-    isLoading: (!fixturesCached || !squadCached) && !!clubId,
+    isLoading: (!hasFixtures || !hasSquad) && !!clubId,
   };
 };

@@ -19,6 +19,11 @@ const store = configureStore({
     groupData: groupSlice,
     globalData: globalSlice,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: { warnAfter: 128 }, // Increase threshold (default is 32ms)
+      serializableCheck: { warnAfter: 128 }, // Increase threshold (default is 32ms)
+    }),
 });
 
 export default store;

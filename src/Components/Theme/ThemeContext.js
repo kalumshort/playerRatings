@@ -110,7 +110,7 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
       components: {
         MuiCssBaseline: {
           styleOverrides: `
-            @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
             body { background-color: ${colors.bg}; transition: background-color 0.4s ease; }
           `,
         },
@@ -121,8 +121,8 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
             component: motion.button,
             variants: buttonMotionVariants,
             initial: "initial",
-            whileHover: "hover",
-            whileTap: "tap",
+            whilehover: "hover",
+            whiletap: "tap",
             disableRipple: true,
           },
           styleOverrides: {

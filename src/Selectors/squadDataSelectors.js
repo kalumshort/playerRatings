@@ -15,7 +15,7 @@ const selectActiveSquadContext = createSelector(
       clubId: activeGroup?.groupClubId,
       year: globalData.currentYear,
     };
-  }
+  },
 );
 
 // --- 3. ROOT BUCKET SELECTOR ---
@@ -26,7 +26,7 @@ const selectActiveClubSquadBucket = createSelector(
   (squadsSlice, { clubId, year }) => {
     if (!clubId || !year) return null;
     return squadsSlice.byClubId[clubId]?.[year] || null;
-  }
+  },
 );
 
 // --- 4. DATA SELECTORS (The ones you use in components) ---
@@ -34,13 +34,13 @@ const selectActiveClubSquadBucket = createSelector(
 // Returns the "Active Squad" (Current players)
 export const selectSquadData = createSelector(
   [selectActiveClubSquadBucket],
-  (bucket) => bucket?.activeSquad || []
+  (bucket) => bucket?.activeSquad || [],
 );
 
 // Returns the "Season Squad" (All players including transferred)
 export const selectSeasonSquadData = createSelector(
   [selectActiveClubSquadBucket],
-  (bucket) => bucket?.seasonSquad || []
+  (bucket) => bucket?.seasonSquad || [],
 );
 
 // Returns Active Squad as a Dictionary { [id]: player }
@@ -51,7 +51,7 @@ export const selectSquadDataObject = createSelector(
       acc[player.id] = player;
       return acc;
     }, {});
-  }
+  },
 );
 
 // Returns Season Squad as a Dictionary { [id]: player }
@@ -62,7 +62,7 @@ export const selectSeasonSquadDataObject = createSelector(
       acc[player.id] = player;
       return acc;
     }, {});
-  }
+  },
 );
 
 // --- 5. LOADING STATE SELECTOR ---
@@ -77,7 +77,7 @@ export const selectSquadLoad = createSelector(
       squadError: slice.error,
       squadLoading: slice.loading,
     };
-  }
+  },
 );
 
 // --- 6. INDIVIDUAL PLAYER SELECTOR ---
@@ -85,5 +85,5 @@ export const selectSquadLoad = createSelector(
 export const selectSquadPlayerById = (playerId) =>
   createSelector(
     [selectSeasonSquadDataObject],
-    (squadObj) => squadObj[playerId] || null
+    (squadObj) => squadObj[playerId] || null,
   );
