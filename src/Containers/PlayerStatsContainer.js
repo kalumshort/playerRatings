@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllPlayersSeasonOverallRating } from "../Hooks/Fixtures_Hooks";
 import AllPlayerStats from "../Components/PlayerStats/AllPlayerStats";
 import "../Components/PlayerStats/playerStats.css";
-import { selectPlayerRatingsLoad } from "../Selectors/selectors";
-import { Spinner } from "./Helpers";
+import { selectAllPlayersSeasonOverallRating } from "../Selectors/selectors";
 
 import useGlobalData from "../Hooks/useGlobalData";
 
@@ -15,29 +14,24 @@ export default function PlayerStatsContainer() {
 
   const { activeGroup } = useGroupData();
 
-  const groupId = activeGroup?.groupClubId;
+  const groupId = activeGroup?.groupId;
 
   const globalData = useGlobalData();
 
-  const { playerSeasonOverallRatingsLoaded } = useSelector(
-    selectPlayerRatingsLoad
-  );
+  const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
 
   useEffect(() => {
-    if (!playerSeasonOverallRatingsLoaded) {
+    const hasData = playerStats && Object.keys(playerStats).length > 0;
+
+    if (groupId && !hasData) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
           groupId: groupId,
           currentYear: globalData.currentYear,
-        })
+        }),
       );
     }
-  }, [
-    dispatch,
-    playerSeasonOverallRatingsLoaded,
-    groupId,
-    globalData.currentYear,
-  ]);
+  }, [dispatch, playerStats, groupId, globalData.currentYear]);
 
-  return playerSeasonOverallRatingsLoaded ? <AllPlayerStats /> : <Spinner />;
+  return <AllPlayerStats />;
 }

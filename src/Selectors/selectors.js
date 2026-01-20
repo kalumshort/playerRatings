@@ -14,37 +14,52 @@ const selectActiveRatingsBucket = createSelector(
       return { matches: {}, players: {} }; // Return empty structure if not loaded
     }
     return ratings.byGroupId[groupId];
-  }
+  },
 );
 
 // --- 3. DERIVED BASE SELECTORS ---
 // These now point to the bucket, not the root state
 export const allMatchRatings = createSelector(
   [selectActiveRatingsBucket],
-  (bucket) => bucket.matches || {}
+  (bucket) => bucket.matches || {},
 );
 
 export const allPlayerRatings = createSelector(
   [selectActiveRatingsBucket],
-  (bucket) => bucket.players || {}
+  (bucket) => bucket.players || {},
 );
 
 // --- 4. LOADING STATE SELECTOR ---
 // Note: Loading states are global per slice in your current setup,
 // but you might want to make them per-group later. For now, we keep it simple.
+// Ensure you import selectActiveGroupId at the top of your selectors file
+// import { selectActiveGroupId } from './groupSelectors'; (or wherever it lives)
+
 export const selectPlayerRatingsLoad = createSelector(
-  [selectRatingsSlice],
-  (slice) => ({
-    ratingsLoaded: !slice.loading,
-    ratingsError: slice.error,
-    ratingsLoading: slice.loading,
-    // Note: These granular loading states might need refactoring in the reducer
-    // if you want them per-group, but for now we pull from root.
-    playerSeasonOverallRatingsLoading: false, // simplified for now
-    playerSeasonOverallRatingsLoaded: true,
-    playerAllMatchesRatingLoading: false,
-    playerAllMatchesRatingLoaded: true,
-  })
+  [selectRatingsSlice, selectActiveGroupId],
+  (slice, groupId) => {
+    // 1. Check if we actually have data for this group in the state
+    // We check 'slice.byGroupId[groupId]' to see if the bucket exists
+    const groupData =
+      groupId && slice.byGroupId ? slice.byGroupId[groupId] : null;
+    const hasData = !!groupData;
+
+    return {
+      ratingsLoaded: !slice.loading,
+      ratingsError: slice.error,
+      ratingsLoading: slice.loading,
+
+      // 2. Dynamic Loading States
+      // If global loading is true, we assume we are loading.
+      playerSeasonOverallRatingsLoading: slice.loading,
+
+      // 3. THE FIX: Only return true if we actually found data for this group
+      playerSeasonOverallRatingsLoaded: hasData,
+
+      playerAllMatchesRatingLoading: slice.loading,
+      playerAllMatchesRatingLoaded: hasData,
+    };
+  },
 );
 
 // --- 5. DATA SELECTORS ---
@@ -57,7 +72,7 @@ export const selectAllPlayersSeasonOverallRating = createSelector(
       ratings[playerId] = playerData.seasonOverall || {};
     });
     return ratings;
-  }
+  },
 );
 
 export const selectPlayerRatingsById = (playerId) =>
@@ -66,7 +81,7 @@ export const selectPlayerRatingsById = (playerId) =>
 export const selectPlayerOverallRatingById = (playerId) =>
   createSelector(
     [allPlayerRatings],
-    (players) => players[playerId]?.seasonOverall || {}
+    (players) => players[playerId]?.seasonOverall || {},
   );
 
 export const selectMatchRatingsById = (matchId) =>
@@ -113,7 +128,7 @@ export const selectMotmPercentagesByMatchId = (matchId, clubSlug) =>
           };
         })
         .sort((a, b) => b.percentage - a.percentage);
-    }
+    },
   );
 
 export const selectGlobalData = (state) => state.globalData;

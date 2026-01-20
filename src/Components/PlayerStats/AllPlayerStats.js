@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 
+// MUI
 import {
   Paper,
   Typography,
@@ -11,204 +12,45 @@ import {
   MenuItem,
   Grid,
   Chip,
+  Stack,
+  useTheme,
+  alpha,
+  Fade,
+  Skeleton, // Import Skeleton
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import SortIcon from "@mui/icons-material/Sort";
-import WhatshotIcon from "@mui/icons-material/Whatshot";
-import AcUnitIcon from "@mui/icons-material/AcUnit";
+import {
+  FilterListRounded,
+  SortRounded,
+  EmojiEventsRounded,
+} from "@mui/icons-material";
 
+// SELECTORS & HOOKS
 import { selectAllPlayersSeasonOverallRating } from "../../Selectors/selectors";
 import { selectSeasonSquadDataObject } from "../../Selectors/squadDataSelectors";
-import { selectPreviousFixtures } from "../../Selectors/fixturesSelectors";
 
-import useGroupData from "../../Hooks/useGroupsData";
 import { useAppNavigate } from "../../Hooks/useAppNavigate";
-import { useParams } from "react-router-dom";
+import PlayerFormWidgets from "./PlayerFormWidget";
 
-// --- STYLED COMPONENTS ---
+// --- HELPERS ---
+const getRatingColor = (score, theme) => {
+  if (score >= 7.5) return theme.palette.success.main;
+  if (score >= 6.0) return theme.palette.warning.main;
+  return theme.palette.error.main;
+};
 
-const PageContainer = styled("div")(({ theme }) => ({
-  padding: "20px",
-  maxWidth: "1200px",
-  margin: "0 auto",
-  paddingBottom: "80px",
-  [theme.breakpoints.down("sm")]: {
-    padding: "10px",
-  },
-}));
-
-const WidgetCard = styled(Paper)(({ theme }) => ({
-  padding: "20px",
-  marginBottom: "20px",
-  borderRadius: "16px",
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-  border: `1px solid ${theme.palette.divider}`,
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontWeight: 800,
-  fontSize: "1.1rem",
-  marginBottom: "4px",
-}));
-
-// PODIUM STYLES
-const PodiumRow = styled(Box)({
-  display: "flex",
-  justifyContent: "space-around",
-  alignItems: "flex-end",
-  height: "140px",
-  marginTop: "10px",
-});
-
-const PodiumSpot = styled(Box)(({ rank }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  position: "relative",
-  transform: rank === 1 ? "scale(1.1) translateY(-10px)" : "none",
-  zIndex: rank === 1 ? 2 : 1,
-  cursor: "pointer",
-}));
-
-const PodiumAvatar = styled(Avatar)(({ rank }) => ({
-  width: rank === 1 ? 70 : 50,
-  height: rank === 1 ? 70 : 50,
-
-  marginBottom: "8px",
-}));
-
-// LIST STYLES
-const StickyHeader = styled(Paper)(({ theme }) => ({
-  position: "sticky",
-  top: "10px",
-  zIndex: 10,
-  padding: "12px 16px",
-  marginBottom: "16px",
-  borderRadius: "12px",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  boxShadow: theme.shadows[2],
-}));
-
-const PlayerListItem = styled(Paper)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  padding: "12px 16px",
-  marginBottom: "10px",
-  borderRadius: "12px",
-  cursor: "pointer",
-  transition: "all 0.2s",
-  border: `1px solid ${theme.palette.divider}`,
-  "&:hover": {
-    backgroundColor: theme.palette.action.hover,
-    borderColor: theme.palette.primary.light,
-  },
-}));
-
-// --- NEW COLORED PILL COMPONENT ---
-// This uses "Soft" colors for readability
-const RatingPill = styled("div")(({ theme, score }) => {
-  // Determine color based on score directly
-  // Adjust these thresholds to match your app's logic
-  let bg;
-
-  if (score >= 7.0) {
-    // High (Green)
-    bg = "rgba(46, 125, 50, 0.12)"; // Soft Green
-  } else if (score >= 6.0) {
-    // Average (Orange/Yellow)
-    bg = "rgba(237, 108, 2, 0.12)"; // Soft Orange
-  } else {
-    // Low (Red)
-    bg = "rgba(211, 47, 47, 0.12)"; // Soft Red
-  }
-
-  return {
-    backgroundColor: bg,
-    padding: "6px 12px",
-    borderRadius: "8px",
-    fontWeight: 400,
-    fontSize: "1rem",
-    minWidth: "50px",
-    textAlign: "center",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-});
-// Container for the two cards (Side-by-Side)
-const FormRow = styled(Box)({
-  display: "flex",
-  gap: "16px", // Gap between the two cards
-  marginTop: "16px",
-});
-
-// The Individual Vertical Card
-const FormCard = styled(Box)(({ theme, type }) => {
-  const isHot = type === "hot";
-  const colorMain = isHot ? theme.palette.error.main : theme.palette.info.main;
-  const bgFade = isHot ? "rgba(211, 47, 47, 0.04)" : "rgba(2, 136, 209, 0.04)";
-
-  return {
-    flex: 1, // Takes up 50% width
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "16px 12px",
-    borderRadius: "16px",
-    cursor: "pointer",
-    backgroundColor: bgFade, // Very subtle tint
-    border: `1px solid ${
-      isHot ? theme.palette.error.light : theme.palette.info.light
-    }`,
-    transition: "all 0.2s ease",
-
-    "&:hover": {
-      transform: "translateY(-4px)",
-      boxShadow: `0 8px 16px ${
-        isHot ? "rgba(211, 47, 47, 0.1)" : "rgba(2, 136, 209, 0.1)"
-      }`,
-      backgroundColor: theme.palette.background.paper,
-      borderColor: colorMain,
-    },
-  };
-});
-
-// A pill for the HOT/COLD text
-const StatusBadge = styled(Box)(({ theme, type }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  padding: "4px 12px",
-  borderRadius: "20px",
-  marginBottom: "12px",
-  backgroundColor:
-    type === "hot" ? theme.palette.error.main : theme.palette.info.main,
-  color: "#fff",
-  fontWeight: 800,
-  fontSize: "0.75rem",
-  letterSpacing: "0.5px",
-}));
+const getRatingBg = (score, theme) => {
+  if (score >= 7.5) return alpha(theme.palette.success.main, 0.1);
+  if (score >= 6.0) return alpha(theme.palette.warning.main, 0.1);
+  return alpha(theme.palette.error.main, 0.1);
+};
 
 export default function AllPlayerStats() {
+  const theme = useTheme();
   const appNavigate = useAppNavigate();
 
-  const { activeGroup } = useGroupData();
-
-  const { clubSlug } = useParams(); // Now capturing clubSlug from URL
-
-  const groupClubId = Number(activeGroup?.groupClubId);
-
   // Redux Data
-  const squadData = useSelector(
-    (state) => selectSeasonSquadDataObject(state, clubSlug) //
-  );
+  const squadData = useSelector((state) => selectSeasonSquadDataObject(state));
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
-  const previousFixtures = useSelector(selectPreviousFixtures);
 
   // Local State
   const [sort, setSort] = useState("desc");
@@ -219,7 +61,7 @@ export default function AllPlayerStats() {
     window.scrollTo(0, 0);
   }, []);
 
-  // --- 1. DATA PREPARATION ---
+  // --- DATA PROCESSING ---
   const allPlayers = useMemo(() => {
     if (!playerStats || !squadData) return [];
 
@@ -230,371 +72,461 @@ export default function AllPlayerStats() {
         playerName: squadData[playerId]?.name,
         playerImg: squadData[playerId]?.photo,
         position: squadData[playerId]?.position,
-        rating: stats.totalRating / stats.totalSubmits,
+        rating:
+          stats.totalSubmits > 0 ? stats.totalRating / stats.totalSubmits : 0,
         votes: stats.totalSubmits,
       }))
-      .filter((p) => p.playerId !== "4720");
+      .filter((p) => p.playerId !== "4720" && p.rating > 0);
   }, [playerStats, squadData]);
 
-  // Top 3 for Leaderboard
+  // Loading Check
+  const isLoading = !allPlayers || allPlayers.length === 0;
+
+  // Top 3
   const top3Players = useMemo(() => {
     return [...allPlayers].sort((a, b) => b.rating - a.rating).slice(0, 3);
   }, [allPlayers]);
 
-  // Main List
+  // List (Filtered & Sorted)
   const listPlayers = useMemo(() => {
     let result = [...allPlayers];
     if (positionFilter) {
       result = result.filter((p) => p.position === positionFilter);
     }
     result.sort((a, b) =>
-      sort === "asc" ? a.rating - b.rating : b.rating - a.rating
+      sort === "asc" ? a.rating - b.rating : b.rating - a.rating,
     );
     return result;
   }, [allPlayers, positionFilter, sort]);
 
-  // --- 2. HOT & COLD LOGIC ---
-  const { hotPlayer, coldPlayer } = useMemo(() => {
-    if (!previousFixtures || !groupClubId || !squadData)
-      return { hotPlayer: null, coldPlayer: null };
-
-    // Get Last 3 Matches
-    const recentMatches = [...previousFixtures]
-      .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp)
-      .slice(0, 3);
-
-    if (recentMatches.length === 0)
-      return { hotPlayer: null, coldPlayer: null };
-
-    const recentForm = {};
-
-    recentMatches.forEach((fixture) => {
-      const teamStats = fixture.players?.find((t) => t.team.id === groupClubId);
-      if (teamStats && teamStats.players) {
-        teamStats.players.forEach((p) => {
-          const rating = parseFloat(p.statistics[0]?.games?.rating);
-          if (rating) {
-            if (!recentForm[p.player.id]) {
-              recentForm[p.player.id] = { total: 0, count: 0 };
-            }
-            recentForm[p.player.id].total += rating;
-            recentForm[p.player.id].count += 1;
-          }
-        });
-      }
-    });
-
-    const formArray = Object.entries(recentForm).map(([id, data]) => ({
-      playerId: id,
-      formRating: data.total / data.count,
-      matchCount: data.count,
-    }));
-
-    const eligible = formArray.filter((p) => p.matchCount >= 1);
-
-    if (eligible.length < 2) {
-      const seasonSorted = [...allPlayers].sort((a, b) => b.rating - a.rating);
-      return {
-        hotPlayer: seasonSorted[0],
-        coldPlayer: seasonSorted[seasonSorted.length - 1],
-      };
-    }
-
-    eligible.sort((a, b) => b.formRating - a.formRating);
-
-    const getDetails = (item) => ({
-      ...item,
-      playerName: squadData[item.playerId]?.name,
-      playerImg: squadData[item.playerId]?.photo,
-    });
-
-    return {
-      hotPlayer: getDetails(eligible[0]),
-      coldPlayer: getDetails(eligible[eligible.length - 1]),
-    };
-  }, [previousFixtures, groupClubId, squadData, allPlayers]);
-
-  // --- HANDLERS ---
   const handleNavigate = (id) => appNavigate(`/players/${id}`);
-  const handleFilterClick = (e) => setAnchorEl(e.currentTarget);
-  const handleFilterClose = (val) => {
-    if (val !== undefined) setPositionFilter(val);
-    setAnchorEl(null);
-  };
 
   return (
-    <PageContainer>
-      <Grid container spacing={3}>
-        {/* RIGHT COLUMN */}
+    <Box
+      className="containerMargin"
+      sx={{ pb: 8, maxWidth: "1200px", mx: "auto" }}
+    >
+      <Grid container spacing={3} sx={{ p: { xs: 1, md: 3 } }}>
+        {/* --- RIGHT COL: WIDGETS --- */}
         <Grid item xs={12} md={5} lg={4} order={{ xs: 1, md: 2 }}>
-          {/* Leaderboard */}
-          <WidgetCard>
-            <SectionTitle>Season Leaderboard</SectionTitle>
-            <Typography variant="caption" color="text.secondary">
-              Top 3 Highest Rated
-            </Typography>
-
-            {top3Players.length > 0 && (
-              <PodiumRow>
-                {/* 2nd */}
-                {top3Players[1] && (
-                  <PodiumSpot
-                    rank={2}
-                    onClick={() => handleNavigate(top3Players[1].playerId)}
-                  >
-                    <PodiumAvatar src={top3Players[1].playerImg} rank={2} />
-                    <Typography variant="body2" fontWeight={700}>
-                      {top3Players[1].playerName.split(" ").pop()}
-                    </Typography>
-                    <RatingPill
-                      score={top3Players[1].rating}
-                      style={{
-                        padding: "2px 8px",
-                        fontSize: "0.8rem",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {top3Players[1].rating.toFixed(2)}
-                    </RatingPill>
-                  </PodiumSpot>
-                )}
-                {/* 1st */}
-                {top3Players[0] && (
-                  <PodiumSpot
-                    rank={1}
-                    onClick={() => handleNavigate(top3Players[0].playerId)}
-                  >
-                    <span style={{ fontSize: "1.5rem" }}></span>
-                    <PodiumAvatar src={top3Players[0].playerImg} rank={1} />
-                    <Typography variant="body1" fontWeight={800}>
-                      {top3Players[0].playerName.split(" ").pop()}
-                    </Typography>
-                    <RatingPill
-                      score={top3Players[0].rating}
-                      style={{
-                        padding: "4px 10px",
-                        fontSize: "0.9rem",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {top3Players[0].rating.toFixed(2)}
-                    </RatingPill>
-                  </PodiumSpot>
-                )}
-                {/* 3rd */}
-                {top3Players[2] && (
-                  <PodiumSpot
-                    rank={3}
-                    onClick={() => handleNavigate(top3Players[2].playerId)}
-                  >
-                    <PodiumAvatar src={top3Players[2].playerImg} rank={3} />
-                    <Typography variant="body2" fontWeight={700}>
-                      {top3Players[2].playerName.split(" ").pop()}
-                    </Typography>
-                    <RatingPill
-                      score={top3Players[2].rating}
-                      style={{
-                        padding: "2px 8px",
-                        fontSize: "0.8rem",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {top3Players[2].rating.toFixed(2)}
-                    </RatingPill>
-                  </PodiumSpot>
-                )}
-              </PodiumRow>
-            )}
-          </WidgetCard>
-
-          {/* Hot & Cold */}
-          {hotPlayer && coldPlayer && (
-            <WidgetCard>
-              <SectionTitle>Form Guide</SectionTitle>
-              <Typography variant="caption" color="text.secondary">
-                Last 3 Matches
-              </Typography>
-
-              <FormRow>
-                {/* HOT CARD */}
-                <FormCard
-                  type="hot"
-                  onClick={() => handleNavigate(hotPlayer.playerId)}
-                >
-                  <StatusBadge type="hot">
-                    <WhatshotIcon style={{ fontSize: "1rem" }} />
-                    HOT
-                  </StatusBadge>
-
-                  <Avatar
-                    src={hotPlayer.playerImg}
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      marginBottom: "12px",
-                      border: "2px solid white",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    }}
-                  />
-
-                  <Typography
-                    variant="h6"
-                    fontWeight={800}
-                    align="center"
-                    noWrap
-                    sx={{ width: "100%", px: 1 }}
-                  >
-                    {hotPlayer.playerName.split(" ").pop()}
-                  </Typography>
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Form Rating
-                  </Typography>
-
-                  <Typography variant="p" fontWeight={900} color="error">
-                    {hotPlayer.formRating
-                      ? hotPlayer.formRating.toFixed(1)
-                      : hotPlayer.rating.toFixed(1)}
-                  </Typography>
-                </FormCard>
-
-                {/* COLD CARD */}
-                <FormCard
-                  type="cold"
-                  onClick={() => handleNavigate(coldPlayer.playerId)}
-                >
-                  <StatusBadge type="cold">
-                    <AcUnitIcon style={{ fontSize: "1rem" }} />
-                    COLD
-                  </StatusBadge>
-
-                  <Avatar
-                    src={coldPlayer.playerImg}
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      marginBottom: "12px",
-                      border: "2px solid white",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    }}
-                  />
-
-                  <Typography
-                    variant="h6"
-                    fontWeight={800}
-                    align="center"
-                    noWrap
-                    sx={{ width: "100%", px: 1 }}
-                  >
-                    {coldPlayer.playerName.split(" ").pop()}
-                  </Typography>
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Form Rating
-                  </Typography>
-
-                  <Typography variant="p" fontWeight={900} color="info">
-                    {coldPlayer.formRating
-                      ? coldPlayer.formRating.toFixed(1)
-                      : coldPlayer.rating.toFixed(1)}
-                  </Typography>
-                </FormCard>
-              </FormRow>
-            </WidgetCard>
-          )}
-        </Grid>
-
-        {/* LEFT COLUMN: LIST */}
-        <Grid item xs={12} md={7} lg={8} order={{ xs: 2, md: 1 }}>
-          <StickyHeader elevation={0}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="h6" fontWeight={700}>
-                {positionFilter ? `${positionFilter}s` : "All Players"}
-              </Typography>
-              <Chip label={listPlayers.length} size="small" />
-            </Box>
-            <Box>
-              <IconButton
-                onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
-              >
-                <SortIcon color={sort === "desc" ? "primary" : "action"} />
-              </IconButton>
-              <IconButton onClick={handleFilterClick}>
-                <FilterListIcon color={positionFilter ? "primary" : "action"} />
-              </IconButton>
-            </Box>
-          </StickyHeader>
-
-          {listPlayers.map((player) => {
-            const globalRank =
-              allPlayers
-                .sort((a, b) => b.rating - a.rating)
-                .findIndex((p) => p.playerId === player.playerId) + 1;
-
-            return (
-              <PlayerListItem
-                key={player.playerId}
-                elevation={0}
-                onClick={() => handleNavigate(player.playerId)}
-              >
+          <Stack spacing={3}>
+            {/* 1. LEADERBOARD CARD */}
+            <Paper
+              elevation={0}
+              sx={(theme) => ({
+                ...theme.clay.card,
+                p: 3,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                background: `linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${alpha(
+                  theme.palette.background.default,
+                  0.5,
+                )} 100%)`,
+                minHeight: 280, // Prevent collapse during loading
+              })}
+            >
+              <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                <EmojiEventsRounded color="primary" />
                 <Typography
                   variant="h6"
-                  color="text.secondary"
-                  fontWeight={700}
-                  sx={{ width: 30 }}
+                  fontWeight={800}
+                  letterSpacing="-0.5px"
                 >
-                  #{globalRank}
+                  TOP RATED
                 </Typography>
+              </Stack>
 
-                <Avatar
-                  src={player.playerImg}
-                  sx={{ width: 40, height: 40, mr: 2 }}
-                />
-
-                <Box flexGrow={1}>
-                  <Typography variant="h6">{player.playerName}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {player.position}
-                  </Typography>
+              {/* LOADING STATE: PODIUM SKELETON */}
+              {isLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: 2,
+                    mt: 4,
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                >
+                  {/* 2nd Place Skeleton */}
+                  <Stack alignItems="center" spacing={1}>
+                    <Skeleton variant="circular" width={60} height={60} />
+                    <Skeleton
+                      variant="rounded"
+                      width={80}
+                      height={110}
+                      sx={{ borderRadius: "16px 16px 0 0" }}
+                    />
+                  </Stack>
+                  {/* 1st Place Skeleton */}
+                  <Stack alignItems="center" spacing={1}>
+                    <Skeleton variant="circular" width={80} height={80} />
+                    <Skeleton
+                      variant="rounded"
+                      width={100}
+                      height={140}
+                      sx={{ borderRadius: "16px 16px 0 0" }}
+                    />
+                  </Stack>
+                  {/* 3rd Place Skeleton */}
+                  <Stack alignItems="center" spacing={1}>
+                    <Skeleton variant="circular" width={60} height={60} />
+                    <Skeleton
+                      variant="rounded"
+                      width={80}
+                      height={90}
+                      sx={{ borderRadius: "16px 16px 0 0" }}
+                    />
+                  </Stack>
                 </Box>
+              ) : (
+                top3Players.length > 0 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      gap: 2,
+                      mt: 3,
+                      width: "100%",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <PodiumStep
+                      rank={2}
+                      player={top3Players[1]}
+                      onClick={() => handleNavigate(top3Players[1]?.playerId)}
+                    />
+                    <PodiumStep
+                      rank={1}
+                      player={top3Players[0]}
+                      onClick={() => handleNavigate(top3Players[0]?.playerId)}
+                    />
+                    <PodiumStep
+                      rank={3}
+                      player={top3Players[2]}
+                      onClick={() => handleNavigate(top3Players[2]?.playerId)}
+                    />
+                  </Box>
+                )
+              )}
+            </Paper>
 
-                {/* THE NEW COLORED PILL */}
-                <RatingPill score={player.rating}>
-                  {player.rating.toFixed(1)}
-                </RatingPill>
-              </PlayerListItem>
-            );
-          })}
+            {/* 2. HOT & COLD CARDS */}
+            {/* The widget component handles its own loading internally */}
+            <PlayerFormWidgets />
+          </Stack>
+        </Grid>
+
+        {/* --- LEFT COL: LIST --- */}
+        <Grid item xs={12} md={7} lg={8} order={{ xs: 2, md: 1 }}>
+          {/* Sticky Controls */}
+          <Box
+            sx={(theme) => ({
+              position: "sticky",
+              top: 10,
+              zIndex: 20,
+              mb: 2,
+              p: 1.5,
+              borderRadius: "16px",
+              ...theme.clay.card,
+              backdropFilter: "blur(12px)",
+              bgcolor: alpha(theme.palette.background.paper, 0.8),
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            })}
+          >
+            <Stack direction="row" alignItems="center" spacing={1.5} pl={1}>
+              <Typography variant="h6" fontWeight={800}>
+                {positionFilter ? `${positionFilter}s` : "All Squad"}
+              </Typography>
+              {isLoading ? (
+                <Skeleton variant="rounded" width={30} height={20} />
+              ) : (
+                <Chip
+                  label={listPlayers.length}
+                  size="small"
+                  sx={{
+                    fontWeight: 800,
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: "primary.main",
+                  }}
+                />
+              )}
+            </Stack>
+
+            <Stack direction="row">
+              <IconButton
+                onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
+                disabled={isLoading}
+              >
+                <SortRounded color={sort === "desc" ? "primary" : "action"} />
+              </IconButton>
+              <IconButton
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                disabled={isLoading}
+              >
+                <FilterListRounded
+                  color={positionFilter ? "primary" : "action"}
+                />
+              </IconButton>
+            </Stack>
+          </Box>
+
+          {/* LOADING STATE: LIST SKELETONS */}
+          <Stack spacing={1.5}>
+            {isLoading
+              ? Array.from(new Array(6)).map((_, index) => (
+                  <Paper
+                    key={index}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      borderRadius: "16px",
+                      display: "flex",
+                      alignItems: "center",
+                      border: "1px solid rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    <Skeleton
+                      variant="text"
+                      width={30}
+                      height={30}
+                      sx={{ mr: 2 }}
+                    />
+                    <Skeleton
+                      variant="circular"
+                      width={48}
+                      height={48}
+                      sx={{ mr: 2 }}
+                    />
+                    <Box flexGrow={1}>
+                      <Skeleton variant="text" width="40%" height={24} />
+                      <Skeleton variant="text" width="20%" height={16} />
+                    </Box>
+                    <Skeleton
+                      variant="rounded"
+                      width={50}
+                      height={30}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </Paper>
+                ))
+              : listPlayers.map((player, index) => {
+                  const globalRank =
+                    allPlayers
+                      .sort((a, b) => b.rating - a.rating)
+                      .findIndex((p) => p.playerId === player.playerId) + 1;
+
+                  return (
+                    <Fade in key={player.playerId} timeout={300 + index * 50}>
+                      <Box
+                        onClick={() => handleNavigate(player.playerId)}
+                        sx={(theme) => ({
+                          p: 2,
+                          borderRadius: "16px",
+                          bgcolor: "background.paper",
+                          border: `1px solid ${theme.palette.divider}`,
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            transform: "translateY(-2px)",
+                            boxShadow: theme.shadows[2],
+                            borderColor: theme.palette.primary.main,
+                          },
+                        })}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            width: 40,
+                            fontWeight: 900,
+                            color: "text.disabled",
+                            fontSize: "1.1rem",
+                          }}
+                        >
+                          #{globalRank}
+                        </Typography>
+
+                        <Avatar
+                          src={player.playerImg}
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            mr: 2,
+                            border: `2px solid ${theme.palette.background.default}`,
+                            boxShadow: theme.shadows[1],
+                          }}
+                        />
+
+                        <Box flexGrow={1}>
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={700}
+                            lineHeight={1.2}
+                          >
+                            {player.playerName}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontWeight={600}
+                          >
+                            {player.position}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: "8px",
+                            bgcolor: getRatingBg(player.rating, theme),
+                            color: getRatingColor(player.rating, theme),
+                            border: `1px solid ${alpha(
+                              getRatingColor(player.rating, theme),
+                              0.2,
+                            )}`,
+                            minWidth: 50,
+                            textAlign: "center",
+                          }}
+                        >
+                          <Typography variant="subtitle2" fontWeight={800}>
+                            {player.rating.toFixed(1)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Fade>
+                  );
+                })}
+          </Stack>
         </Grid>
       </Grid>
 
+      {/* Filter Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={() => handleFilterClose()}
+        onClose={() => setAnchorEl(null)}
+        PaperProps={{ sx: { borderRadius: 3, mt: 1, minWidth: 150 } }}
       >
-        <MenuItem onClick={() => handleFilterClose("")}>All Positions</MenuItem>
-        <MenuItem onClick={() => handleFilterClose("Attacker")}>
+        <MenuItem
+          onClick={() => {
+            setPositionFilter("");
+            setAnchorEl(null);
+          }}
+        >
+          All Positions
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setPositionFilter("Attacker");
+            setAnchorEl(null);
+          }}
+        >
           Forwards
         </MenuItem>
-        <MenuItem onClick={() => handleFilterClose("Midfielder")}>
+        <MenuItem
+          onClick={() => {
+            setPositionFilter("Midfielder");
+            setAnchorEl(null);
+          }}
+        >
           Midfielders
         </MenuItem>
-        <MenuItem onClick={() => handleFilterClose("Defender")}>
+        <MenuItem
+          onClick={() => {
+            setPositionFilter("Defender");
+            setAnchorEl(null);
+          }}
+        >
           Defenders
         </MenuItem>
-        <MenuItem onClick={() => handleFilterClose("Goalkeeper")}>
+        <MenuItem
+          onClick={() => {
+            setPositionFilter("Goalkeeper");
+            setAnchorEl(null);
+          }}
+        >
           Goalkeepers
         </MenuItem>
       </Menu>
-    </PageContainer>
+    </Box>
   );
 }
+
+// --- SUB-COMPONENTS ---
+
+const PodiumStep = ({ rank, player, onClick }) => {
+  const theme = useTheme();
+  const isFirst = rank === 1;
+  const height = isFirst ? 140 : rank === 2 ? 110 : 90;
+
+  if (!player) return <Box sx={{ width: isFirst ? 100 : 80 }} />;
+
+  return (
+    <Stack
+      alignItems="center"
+      sx={{
+        cursor: "pointer",
+        position: "relative",
+        width: isFirst ? 100 : 80,
+      }}
+      onClick={onClick}
+    >
+      <Avatar
+        src={player.playerImg}
+        sx={{
+          width: isFirst ? 80 : 60,
+          height: isFirst ? 80 : 60,
+          mb: -2,
+          zIndex: 2,
+          border: `4px solid ${theme.palette.background.paper}`,
+          boxShadow: theme.shadows[4],
+        }}
+      />
+      <Box
+        sx={{
+          width: "100%",
+          height: height,
+          bgcolor: isFirst
+            ? "primary.main"
+            : alpha(theme.palette.primary.main, 0.1),
+          borderRadius: "16px 16px 0 0",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          pt: 4,
+          color: isFirst ? "white" : "text.primary",
+        }}
+      >
+        <Typography variant="h6" fontWeight={900}>
+          {rank}
+        </Typography>
+        <Typography
+          variant="caption"
+          noWrap
+          sx={{ maxWidth: "90%", fontWeight: 700, opacity: 0.8 }}
+        >
+          {player.playerName.split(" ").pop()}
+        </Typography>
+        <Box
+          sx={{
+            mt: 1,
+            px: 1,
+            bgcolor: "background.paper",
+            borderRadius: 4,
+            color: "text.primary",
+            fontWeight: 800,
+            fontSize: "0.75rem",
+          }}
+        >
+          {player.rating.toFixed(1)}
+        </Box>
+      </Box>
+    </Stack>
+  );
+};
