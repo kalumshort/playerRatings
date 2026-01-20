@@ -15,6 +15,8 @@ import {
   Box,
   Paper,
   Button,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -24,33 +26,35 @@ import {
 import FixtureListItem from "../Components/Fixtures/FixtureListItem";
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import { useAppPaths } from "../Hooks/Helper_Functions";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+
+// --- STYLED COMPONENTS ---
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: "16px 16px",
+  padding: "16px 20px",
+  // Clay Header Style
+  backgroundColor:
+    theme.palette.mode === "light"
+      ? "rgba(255,255,255,0.6)"
+      : "rgba(255,255,255,0.02)",
+  backdropFilter: "blur(10px)",
   borderBottom: `1px solid ${theme.palette.divider}`,
-  marginBottom: "0px",
-  background: "rgba(255,255,255,0.02)", // Subtle tint
+  zIndex: 10,
 }));
 
 const ScrollContainer = styled("div")(({ scroll }) => ({
-  // If scroll is false, we let the parent handle height (flex-grow)
-  // If scroll is true, we cap it (e.g., for a widget)
   height: scroll ? "70vh" : "auto",
   maxHeight: scroll ? "70vh" : "none",
   overflowY: scroll ? "auto" : "visible",
-  overflowX: "hidden", // Stops horizontal wobble
+  overflowX: "hidden",
   scrollBehavior: "smooth",
-  paddingBottom: "80px", // Extra padding at bottom for mobile nav clearance
+  paddingBottom: "80px",
   position: "relative",
   width: "100%",
-
-  "&::-webkit-scrollbar": {
-    display: "none",
-  },
+  "&::-webkit-scrollbar": { display: "none" },
   "-ms-overflow-style": "none",
   scrollbarWidth: "none",
 }));
@@ -58,9 +62,10 @@ const ScrollContainer = styled("div")(({ scroll }) => ({
 export default function ScheduleContainer({
   limitAroundLatest = 0,
   showLink,
-  scroll = true, // Default to true for standalone use
+  scroll = true,
   scrollOnLoad = true,
 }) {
+  const theme = useTheme();
   const appNavigate = useAppNavigate();
   const { getPath } = useAppPaths();
 
@@ -80,10 +85,9 @@ export default function ScheduleContainer({
       ? allFixtures.filter((item) => item.league.name === selectedLeague)
       : [...allFixtures];
 
-    // Sort: Newest First (Desc)
+    // Sort: Newest First
     processed.sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
-    // Limit logic (optional)
     if (limitAroundLatest > 0 && latestFixture) {
       const targetIndex = processed.findIndex((f) => f.id === latestFixture.id);
       if (targetIndex !== -1) {
@@ -95,7 +99,6 @@ export default function ScheduleContainer({
         return processed.slice(start, end);
       }
     }
-
     return processed;
   }, [allFixtures, selectedLeague, latestFixture, limitAroundLatest]);
 
@@ -115,18 +118,12 @@ export default function ScheduleContainer({
     [appNavigate],
   );
 
-  // --- SCROLL TO ACTIVE MATCH ---
+  // --- SCROLL LOGIC ---
   useLayoutEffect(() => {
-    // Only scroll if internal scrolling is enabled OR if we can access the parent window
-    // Ideally, for the 'scroll=false' mode (SchedulePage), the parent handles scroll.
-    // This logic specifically targets the Ref attached to THIS component's wrapper.
     if (latestFixture && scrollOnLoad && containerRef.current) {
       const node = itemsRef.current.get(latestFixture.id);
       const container = containerRef.current;
 
-      // Check if we are in "Widget Mode" (scroll=true) or "Page Mode" (scroll=false)
-      // If Page Mode, we might need to scroll the window or the parent 'ContentArea'
-      // But for now, let's keep the logic safe for the container itself.
       if (node && container && scroll) {
         const itemTop = node.offsetTop;
         const itemHeight = node.clientHeight;
@@ -134,7 +131,6 @@ export default function ScheduleContainer({
         const scrollTo = itemTop - containerHeight / 2 + itemHeight / 2;
         container.scrollTop = scrollTo;
       } else if (node && !scroll) {
-        // In Page Mode, scroll the node into view gently
         node.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
@@ -143,13 +139,17 @@ export default function ScheduleContainer({
   return (
     <Paper
       elevation={0}
-      sx={{
+      sx={(theme) => ({
         display: "flex",
         flexDirection: "column",
-      }}
+        p: 0,
+        overflow: "hidden",
+      })}
     >
       <HeaderContainer>
-        <Typography variant="h6">Match Schedule</Typography>
+        <Typography variant="h6" fontWeight={800} letterSpacing="-0.5px">
+          Schedule
+        </Typography>
 
         {!showLink ? (
           <FormControl variant="standard" size="small" sx={{ minWidth: 120 }}>
@@ -160,21 +160,29 @@ export default function ScheduleContainer({
               disableUnderline
               sx={{
                 fontSize: "0.85rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 color: "text.secondary",
                 "& .MuiSelect-select": {
                   paddingRight: "24px !important",
+                  textAlign: "right",
+                },
+                "&:hover": {
+                  color: "primary.main",
                 },
               }}
               renderValue={(selected) => (
                 <span>{selected || "All Competitions"}</span>
               )}
             >
-              <MenuItem value="">
+              <MenuItem value="" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
                 <em>All Competitions</em>
               </MenuItem>
               {leagueOptions.map((league) => (
-                <MenuItem key={league} value={league}>
+                <MenuItem
+                  key={league}
+                  value={league}
+                  sx={{ fontWeight: 600, fontSize: "0.85rem" }}
+                >
                   {league}
                 </MenuItem>
               ))}
@@ -185,8 +193,15 @@ export default function ScheduleContainer({
             component={Link}
             to={getPath(`/schedule`)}
             size="small"
-            endIcon={<ArrowForwardIcon />}
-            variant="contained"
+            endIcon={<ArrowForwardRoundedIcon />}
+            sx={(theme) => ({
+              ...theme.clay.button,
+              fontSize: "0.75rem",
+              py: 0.5,
+              height: 32,
+              minWidth: "auto",
+              px: 2,
+            })}
           >
             View All
           </Button>
@@ -196,7 +211,9 @@ export default function ScheduleContainer({
       <ScrollContainer ref={containerRef} scroll={scroll}>
         {displayFixtures.length === 0 ? (
           <Box p={4} textAlign="center" color="text.secondary">
-            <Typography variant="body1">No fixtures found.</Typography>
+            <Typography variant="body2" fontWeight={600}>
+              No fixtures found.
+            </Typography>
           </Box>
         ) : (
           displayFixtures.map((fixture) => {
@@ -218,52 +235,29 @@ export default function ScheduleContainer({
                 }}
                 sx={{
                   position: "relative",
-                  marginBottom: "8px",
-                  padding: "0 8px", // Prevent edge clipping
+                  px: 2,
+                  py: "2px", // Vertical spacing between items
                   transition: "all 0.3s ease",
-                  // The Highlight Logic
+
+                  // HIGHLIGHT LOGIC
                   ...(isLatest && {
+                    // Wrapper styles for the highlighted item
                     "& > div": {
-                      // Target the inner FixtureListItem
-                      borderColor: (theme) => theme.palette.primary.main,
-                      boxShadow: (theme) =>
-                        `0 0 15px ${theme.palette.primary.main}40`, // Soft glow
-                      background: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "rgba(255,255,255,0.05)"
-                          : "rgba(255,255,255,0.8)",
+                      // Using 'boxShadow' on the child (FixtureListItem)
+                      boxShadow: `0 0 0 2px ${theme.palette.primary.main}, 0 4px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
+                      bgcolor: alpha(theme.palette.primary.main, 0.03),
+                      transform: "scale(1.02)",
+                      zIndex: 2,
+                      position: "relative",
                     },
                   }),
                 }}
               >
-                {/* Render "Next Match" or "Last Result" label above the highlighted item 
-                   for better context 
-                */}
-                {isLatest && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: "block",
-                      marginBottom: "4px",
-                      marginLeft: "4px",
-                      color: "primary.main",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "1px",
-                      fontSize: "0.7rem",
-                    }}
-                  >
-                    {fixture.fixture.status.short === "NS"
-                      ? "Up Next"
-                      : "Latest Result"}
-                  </Typography>
-                )}
-
                 <FixtureListItem
                   fixture={fixture}
                   matchTime={matchTime}
                   handleFixtureClick={handleFixtureClick}
-                  // We handle highlight via the wrapper Box sx prop now for better control
+                  // We handle highlight visually above, so pass false or custom prop
                   highlight={false}
                 />
               </Box>

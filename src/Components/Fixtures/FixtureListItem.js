@@ -12,29 +12,20 @@ const pulse = keyframes`
 
 // --- STYLED COMPONENTS ---
 
-const ItemContainer = styled("div", {
+const ItemContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== "statusColor" && prop !== "active",
 })(({ theme, statusColor, active }) => ({
+  ...theme.clay.card, // 1. Global Clay Card
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   padding: "12px 16px",
   margin: "8px 0",
   borderRadius: "16px",
-  background: active
-    ? alpha(theme.palette.primary.main, 0.1)
-    : alpha(theme.palette.background.paper, 0.4), // Glassified Standard
-  backdropFilter: "blur(10px)",
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
   borderLeft: `6px solid ${statusColor}`,
   transition: "all 0.2s ease-in-out",
   cursor: "pointer",
   overflow: "hidden",
-
-  "&:hover": {
-    background: alpha(theme.palette.background.paper, 0.6),
-    transform: "translateX(4px)",
-  },
 
   [theme.breakpoints.down("sm")]: {
     padding: "10px 12px",

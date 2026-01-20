@@ -1,14 +1,22 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Paper, Typography, Box, Grid, Tooltip, Zoom } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import {
+  Paper,
+  Typography,
+  Box,
+  Grid,
+  Tooltip,
+  Zoom,
+  useTheme,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { tooltipClasses } from "@mui/material/Tooltip";
 import ScheduleContainer from "./ScheduleContainer";
 
 import { selectActiveClubFixtures } from "../Selectors/fixturesSelectors";
 import useGroupData from "../Hooks/useGroupsData";
 
-// --- LAYOUT COMPONENTS ---
+// --- STYLED COMPONENTS ---
 
 const PageLayout = styled("div")({
   height: "100vh",
@@ -19,108 +27,33 @@ const PageLayout = styled("div")({
 
 const FixedHeader = styled("div")({
   flexShrink: 0,
-
   zIndex: 10,
+  paddingBottom: "16px", // Space for shadow
 });
 
 const ContentArea = styled("div")({
   flexGrow: 1,
   minHeight: 0,
-});
-
-// --- HEADER STYLES ---
-
-const SeasonHeader = styled(Paper)(({ theme }) => ({
-  padding: "16px 0 10px 0",
-  marginBottom: "16px",
-}));
-
-const StatBox = styled(Box)(({ theme }) => ({
-  textAlign: "center",
-  padding: "8px",
   display: "flex",
   flexDirection: "column",
-  alignItems: "center",
-}));
-
-const StatValue = styled(Typography)(({ theme, color }) => ({
-  fontWeight: 800,
-  fontSize: "1.6rem",
-  lineHeight: 1,
-  color: color || theme.palette.text.primary,
-}));
-
-const StatLabel = styled(Typography)(({ theme }) => ({
-  fontSize: "0.7rem",
-  textTransform: "uppercase",
-  color: theme.palette.text.secondary,
-  fontWeight: 700,
-  marginTop: "4px",
-}));
-
-const FormStrip = styled("div")({
-  display: "flex",
-  gap: "6px",
-  overflowX: "auto",
-  padding: "16px 16px 8px 16px",
-  marginTop: "8px",
-  "&::-webkit-scrollbar": { display: "none" },
-  "-ms-overflow-style": "none",
-  scrollbarWidth: "none",
-  scrollBehavior: "smooth",
 });
 
-const MatchBar = styled("div")(({ theme, result, height }) => ({
-  minWidth: "14px",
-  width: "14px",
-  height: height,
-  borderRadius: "20px",
-  backgroundColor:
-    result === "W"
-      ? theme.palette.success.main
-      : result === "D"
-      ? theme.palette.warning.main
-      : theme.palette.error.main,
-  opacity: 0.85,
-  position: "relative",
-  flexShrink: 0,
-  cursor: "pointer",
-  transition: "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-
-  "&:hover": {
-    transform: "scaleY(1.3)",
-    opacity: 1,
-  },
-  "&:active": {
-    transform: "scale(0.9)",
-  },
-}));
-
-const HeaderTitle = styled(Typography)(({ theme }) => ({
-  padding: "0 16px",
-  fontWeight: 900,
-  fontSize: "1.2rem",
-  marginBottom: "10px",
-  color: theme.palette.text.primary,
-}));
-
-// --- CUSTOM TOOLTIP STYLE ---
-// This makes the popup look like a sleek black bubble
+// --- CUSTOM TOOLTIP ---
 const HtmlTooltip = styled(({ className, ...props }) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
   [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: "#1a1a1a",
-    color: "#fff",
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
     maxWidth: 220,
     fontSize: theme.typography.pxToRem(12),
-    border: "1px solid #333",
-    borderRadius: "8px",
-    padding: "8px 12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: "12px",
+    padding: "12px",
+    boxShadow: theme.shadows[4],
   },
   [`& .${tooltipClasses.arrow}`]: {
-    color: "#1a1a1a",
+    color: theme.palette.background.paper,
   },
 }));
 
@@ -130,12 +63,13 @@ export default function SchedulePage() {
 
   const groupClubId = Number(activeGroup.groupClubId);
   const allFixtures = useSelector(selectActiveClubFixtures);
+
   // --- STATS CALCULATION ---
   const seasonData = useMemo(() => {
     if (!allFixtures) return { played: [], stats: { w: 0, d: 0, l: 0 } };
 
     const playedGames = allFixtures.filter((f) =>
-      ["FT", "AET", "PEN"].includes(f.fixture.status.short)
+      ["FT", "AET", "PEN"].includes(f.fixture.status.short),
     );
     // Sort Oldest -> Newest
     playedGames.sort((a, b) => a.fixture.timestamp - b.fixture.timestamp);
@@ -161,89 +95,202 @@ export default function SchedulePage() {
   return (
     <PageLayout className="containerMargin">
       <FixedHeader>
-        <SeasonHeader elevation={0}>
-          <HeaderTitle>Season Overview</HeaderTitle>
+        <Paper
+          elevation={0}
+          sx={(theme) => ({
+            p: 3,
+            mb: 0, // Margin handled by parent padding
+            borderRadius: "0 0 32px 32px", // Only round bottom corners for header feel
+            borderTop: "none",
+          })}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 900,
+              fontSize: "1.2rem",
+              mb: 3,
+              textAlign: "center",
+              letterSpacing: -0.5,
+            }}
+          >
+            SEASON OVERVIEW
+          </Typography>
 
-          <Grid container spacing={0} sx={{ padding: "0 8px" }}>
+          {/* STATS GRID */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={4}>
-              <StatBox>
-                <StatValue color={theme.palette.success.main}>
-                  {seasonData.stats.w}
-                </StatValue>
-                <StatLabel>Won</StatLabel>
-              </StatBox>
+              <StatBox
+                value={seasonData.stats.w}
+                label="WON"
+                color={theme.palette.success.main}
+              />
             </Grid>
             <Grid item xs={4}>
-              <StatBox>
-                <StatValue color={theme.palette.warning.main}>
-                  {seasonData.stats.d}
-                </StatValue>
-                <StatLabel>Drawn</StatLabel>
-              </StatBox>
+              <StatBox
+                value={seasonData.stats.d}
+                label="DRAWN"
+                color={theme.palette.warning.main}
+              />
             </Grid>
             <Grid item xs={4}>
-              <StatBox>
-                <StatValue color={theme.palette.error.main}>
-                  {seasonData.stats.l}
-                </StatValue>
-                <StatLabel>Lost</StatLabel>
-              </StatBox>
+              <StatBox
+                value={seasonData.stats.l}
+                label="LOST"
+                color={theme.palette.error.main}
+              />
             </Grid>
           </Grid>
 
-          <FormStrip>
+          {/* FORM STRIP */}
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 800,
+              color: "text.secondary",
+              ml: 1,
+              opacity: 0.6,
+            }}
+          >
+            FORM GUIDE
+          </Typography>
+
+          <Box
+            sx={(theme) => ({
+              display: "flex",
+              gap: "8px",
+              overflowX: "auto",
+              py: 2,
+              px: 1,
+              mx: -1, // Negative margin to allow full-width scroll feel
+              "&::-webkit-scrollbar": { display: "none" },
+              "-ms-overflow-style": "none",
+              scrollbarWidth: "none",
+            })}
+          >
             {seasonData.played.map((game) => (
               <HtmlTooltip
                 key={game.id}
                 TransitionComponent={Zoom}
-                enterTouchDelay={0} // Makes it work instantly on tap for mobile
-                leaveTouchDelay={3000} // Hides after 3s or when tapping elsewhere
+                enterTouchDelay={0}
+                leaveTouchDelay={3000}
                 arrow
                 title={
-                  <React.Fragment>
+                  <Box>
                     <Typography
-                      color="inherit"
-                      sx={{ fontSize: "0.85rem", fontWeight: 700 }}
+                      variant="subtitle2"
+                      fontWeight={800}
+                      color="text.primary"
                     >
                       {game.teams.home.name} vs {game.teams.away.name}
                     </Typography>
-                    <Typography sx={{ fontSize: "0.75rem", marginTop: "4px" }}>
+                    <Typography variant="caption" color="text.secondary">
                       Result:{" "}
-                      <span style={{ fontWeight: 800, color: "#4fc3f7" }}>
+                      <Box
+                        component="span"
+                        sx={{ fontWeight: 900, color: "primary.main" }}
+                      >
                         {game.goals.home} - {game.goals.away}
-                      </span>
+                      </Box>
                     </Typography>
-                  </React.Fragment>
+                  </Box>
                 }
               >
-                <MatchBar
-                  result={game.result}
-                  height={
-                    game.result === "W"
-                      ? "45px"
-                      : game.result === "D"
-                      ? "30px"
-                      : "15px"
-                  }
+                <Box
+                  sx={(theme) => ({
+                    minWidth: "16px",
+                    width: "16px",
+                    height:
+                      game.result === "W"
+                        ? "48px"
+                        : game.result === "D"
+                          ? "32px"
+                          : "20px",
+                    borderRadius: "20px",
+                    bgcolor:
+                      game.result === "W"
+                        ? "success.main"
+                        : game.result === "D"
+                          ? "warning.main"
+                          : "error.main",
+
+                    // Floating Pill Style
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.15)",
+                    transition:
+                      "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                    cursor: "pointer",
+                    alignSelf: "flex-end", // Align bars to bottom
+
+                    "&:hover": {
+                      transform: "scaleY(1.2) translateY(-4px)",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                    },
+                  })}
                 />
               </HtmlTooltip>
             ))}
+
             {seasonData.played.length === 0 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ width: "100%", textAlign: "center", p: 2 }}
+              <Box
+                sx={{
+                  width: "100%",
+                  textAlign: "center",
+                  py: 1,
+                  opacity: 0.5,
+                }}
               >
-                Matches will appear here as they are played.
-              </Typography>
+                <Typography variant="caption" fontWeight={600}>
+                  Matches will appear here as they are played.
+                </Typography>
+              </Box>
             )}
-          </FormStrip>
-        </SeasonHeader>
+          </Box>
+        </Paper>
       </FixedHeader>
 
       <ContentArea>
+        {/* Pass extra props if needed to ScheduleContainer to ensure it fills height */}
         <ScheduleContainer scroll={true} />
       </ContentArea>
     </PageLayout>
   );
 }
+
+// --- SUB-COMPONENT: STAT BOX (Pressed Well) ---
+const StatBox = ({ value, label, color }) => (
+  <Box
+    sx={(theme) => ({
+      ...theme.clay.box, // Pressed Well
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      py: 1.5,
+      borderRadius: "16px",
+      bgcolor: "background.default",
+    })}
+  >
+    <Typography
+      sx={{
+        fontWeight: 900,
+        fontSize: "1.8rem",
+        lineHeight: 1,
+        color: color,
+      }}
+    >
+      {value}
+    </Typography>
+    <Typography
+      variant="caption"
+      sx={{
+        fontSize: "0.65rem",
+        fontWeight: 800,
+        color: "text.secondary",
+        mt: 0.5,
+        letterSpacing: 0.5,
+      }}
+    >
+      {label}
+    </Typography>
+  </Box>
+);
