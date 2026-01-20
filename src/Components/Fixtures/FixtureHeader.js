@@ -101,7 +101,6 @@ export default function FixtureHeader({
         ) : (
           <Box
             sx={(theme) => ({
-              ...theme.clay.box, // Pressed Pill
               px: 2,
               py: 0.5,
               borderRadius: "12px",
