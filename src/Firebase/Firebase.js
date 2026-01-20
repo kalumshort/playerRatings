@@ -168,7 +168,7 @@ export const firebaseSetDoc = async ({
 
     // Sanitize data: Remove any undefined values
     const sanitizedData = Object.fromEntries(
-      Object.entries(data).filter(([_, value]) => value !== undefined)
+      Object.entries(data).filter(([_, value]) => value !== undefined),
     );
 
     // Firestore reference and write
@@ -262,45 +262,113 @@ export const firebaseUpdateOrSetDoc = async ({
   }
 };
 
+// export const handlePredictTeamSubmit = async ({
+//   players,
+//   matchId,
+//   groupId,
+//   userId,
+//   currentYear,
+//   chosenTeam,
+//   formation,
+// }) => {
+//   // await firebaseAddDoc({
+//   //   path: `groups/${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
+//   //   data: players,
+//   // });
+//   // await firebaseSetDoc({
+//   //   path: `groups//${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
+//   //   docId: matchId,
+//   //   data: { totalTeamSubmits: increment(1) },
+//   // });
+
+//   for (const [key, player] of Object.entries(players)) {
+//     console.log(key);
+//     await firebaseSetDoc({
+//       path: `groups/${groupId}/seasons/${currentYear}/predictions`,
+//       docId: matchId,
+//       data: { totalPlayersSubmits: { [player.id]: increment(1) } },
+//     });
+//   }
+
+//   await firebaseSetDoc({
+//     path: `groups/${groupId}/seasons/${currentYear}/predictions`,
+//     docId: matchId,
+//     data: {
+//       totalTeamSubmits: increment(1),
+//       formations: { [formation]: increment(1) },
+//     },
+//   });
+
+//   await firebaseUpdateOrSetDoc({
+//     path: `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+//     docId: matchId,
+//     data: { chosenTeam: chosenTeam, formation: formation },
+//   });
+// };
+
+// Firebase.js
+
 export const handlePredictTeamSubmit = async ({
-  players,
+  chosenTeam,
+  formation,
   matchId,
   groupId,
   userId,
   currentYear,
-  chosenTeam,
-  formation,
 }) => {
-  // await firebaseAddDoc({
-  //   path: `groups/${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
-  //   data: players,
-  // });
-  // await firebaseSetDoc({
-  //   path: `groups//${groupId}/seasons/2025/predictions/${matchId}/teamSubmissions`,
-  //   docId: matchId,
-  //   data: { totalTeamSubmits: increment(1) },
-  // });
+  try {
+    const predictionRef = doc(
+      db,
+      `groups/${groupId}/seasons/${currentYear}/predictions`,
+      matchId,
+    );
 
-  for (const [key, player] of Object.entries(players)) {
-    console.log(key);
-    await firebaseSetDoc({
-      path: `groups/${groupId}/seasons/${currentYear}/predictions`,
+    // 1. Initialize the Nested Object Structure
+    // We do NOT use dot notation strings (e.g. "formations.4-3-3") here.
+    // We use real nested objects.
+    const updates = {
+      totalTeamSubmits: increment(1),
+      formations: {
+        [formation]: increment(1),
+      },
+      positionConsensus: {}, // We will fill this in the loop
+      totalPlayersSubmits: {}, // We will fill this in the loop
+    };
+
+    // 2. Populate the Nested Objects
+    if (chosenTeam) {
+      Object.entries(chosenTeam).forEach(([positionIndex, playerId]) => {
+        if (!playerId) return;
+
+        // A. Position Consensus
+        // Ensure the "Position" bucket exists before adding the player
+        if (!updates.positionConsensus[positionIndex]) {
+          updates.positionConsensus[positionIndex] = {};
+        }
+        updates.positionConsensus[positionIndex][playerId] = increment(1);
+
+        // B. Total Player Counts
+        updates.totalPlayersSubmits[playerId] = increment(1);
+      });
+    }
+
+    // 3. Send via setDoc (Merge)
+    // Firestore will see the nested objects and merge them deeply.
+    // It will NOT overwrite existing data in other positions.
+    await setDoc(predictionRef, updates, { merge: true });
+
+    // 4. Update User Personal Data
+    await firebaseUpdateOrSetDoc({
+      path: `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
       docId: matchId,
-      data: { totalPlayersSubmits: { [player.id]: increment(1) } },
+      data: { chosenTeam, formation, teamSubmitted: true },
     });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Prediction Error:", error);
+    return { success: false, error: error.message };
   }
-
-  await firebaseSetDoc({
-    path: `groups/${groupId}/seasons/${currentYear}/predictions`,
-    docId: matchId,
-    data: { totalTeamSubmits: increment(1) },
-  });
-
-  await firebaseUpdateOrSetDoc({
-    path: `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
-    docId: matchId,
-    data: { chosenTeam: chosenTeam, formation: formation },
-  });
 };
 
 export const handlePredictTeamScore = async (data) => {

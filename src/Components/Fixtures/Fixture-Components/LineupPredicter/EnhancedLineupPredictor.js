@@ -34,14 +34,11 @@ import { FORMATIONS } from "./LineupPredictor";
 import { AsyncButton } from "../../../Inputs/AsyncButton";
 
 const PitchSurface = styled(Box)(({ theme }) => ({
+  ...theme.clay.card,
   position: "relative",
   width: "100%",
   aspectRatio: "0.70",
-  backgroundColor: "#A0E8AF", // Matcha Green
-  borderRadius: theme.shape.borderRadius, // Uses global theme radius (e.g., 24px)
-  // Deep inset shadow to create the "tray" effect
-  boxShadow:
-    "inset 10px 10px 20px rgba(0,0,0,0.15), inset -10px -10px 20px rgba(255,255,255,0.4)",
+
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-around",

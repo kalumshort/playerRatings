@@ -108,7 +108,6 @@ export default function ChosenLineup({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
-          backgroundColor: "#A0E8AF", // Matcha Green
         }}
       >
         {/* HEADER (Inside image) */}
