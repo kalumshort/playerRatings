@@ -395,12 +395,23 @@ const CountdownDisplay = ({ targetTime }) => {
     );
 
   return (
-    <Stack direction="row" spacing={0.5}>
+    <Box
+      sx={{
+        display: "grid",
+        // Responsive Columns: 2 cols on mobile, 4 cols on web
+        gridTemplateColumns: {
+          xs: timeLeft.days > 0 ? "repeat(2, 1fr)" : "repeat(2, 1fr)", // Always 2x2 on mobile
+          sm: "repeat(4, 1fr)", // Horizontal strip on web
+        },
+        gap: 0.5,
+        justifyContent: "center", // Center the grid itself
+      }}
+    >
       {timeLeft.days > 0 && <TimeBox val={timeLeft.days} lbl="D" />}
       <TimeBox val={timeLeft.hours} lbl="H" />
       <TimeBox val={timeLeft.minutes} lbl="M" />
       <TimeBox val={timeLeft.seconds} lbl="S" />
-    </Stack>
+    </Box>
   );
 };
 
@@ -412,17 +423,23 @@ const TimeBox = ({ val, lbl }) => (
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      width: 34,
-      height: 38,
+      width: 55,
+      height: 55,
       bgcolor: "background.paper",
       borderRadius: "8px",
     })}
   >
-    <Typography sx={{ fontSize: "0.9rem", fontWeight: 800, lineHeight: 1 }}>
+    <Typography
+      sx={{
+        fontSize: "1.3rem",
+        fontWeight: 800,
+        lineHeight: 1,
+      }}
+    >
       {String(val).padStart(2, "0")}
     </Typography>
     <Typography
-      sx={{ fontSize: "0.5rem", fontWeight: 700, color: "text.secondary" }}
+      sx={{ fontSize: "0.8rem", fontWeight: 700, color: "text.secondary" }}
     >
       {lbl}
     </Typography>
