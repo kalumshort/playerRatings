@@ -266,7 +266,7 @@ export default function PlayerPage() {
                   </Typography>
                 </Stack>
 
-                <Stack spacing={1.5}>
+                <Stack spacing={1}>
                   {previousFixtures.map((fixture, index) => {
                     const matchStats = Object.values(
                       allPlayerRatings.matches,
