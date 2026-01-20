@@ -17,6 +17,7 @@ import {
   Button,
   useTheme,
   alpha,
+  Fade,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -27,6 +28,7 @@ import FixtureListItem from "../Components/Fixtures/FixtureListItem";
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import { useAppPaths } from "../Hooks/Helper_Functions";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 
 // --- STYLED COMPONENTS ---
 
@@ -34,18 +36,19 @@ const HeaderContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: "16px 20px",
-  // Clay Header Style
-  backgroundColor:
-    theme.palette.mode === "light"
-      ? "rgba(255,255,255,0.6)"
-      : "rgba(255,255,255,0.02)",
-  backdropFilter: "blur(10px)",
+  padding: "16px 24px",
+  // Glass Header
+  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+  backdropFilter: "blur(12px)",
   borderBottom: `1px solid ${theme.palette.divider}`,
   zIndex: 10,
+  position: "sticky",
+  top: 0,
 }));
 
-const ScrollContainer = styled("div")(({ scroll }) => ({
+const ScrollContainer = styled("div", {
+  shouldForwardProp: (prop) => prop !== "scroll",
+})(({ scroll }) => ({
   height: scroll ? "70vh" : "auto",
   maxHeight: scroll ? "70vh" : "none",
   overflowY: scroll ? "auto" : "visible",
@@ -54,6 +57,8 @@ const ScrollContainer = styled("div")(({ scroll }) => ({
   paddingBottom: "80px",
   position: "relative",
   width: "100%",
+
+  // Hide Scrollbar but keep functionality
   "&::-webkit-scrollbar": { display: "none" },
   "-ms-overflow-style": "none",
   scrollbarWidth: "none",
@@ -85,7 +90,7 @@ export default function ScheduleContainer({
       ? allFixtures.filter((item) => item.league.name === selectedLeague)
       : [...allFixtures];
 
-    // Sort: Newest First
+    // Sort: Newest First (Descending Timestamp)
     processed.sort((a, b) => b.fixture.timestamp - a.fixture.timestamp);
 
     if (limitAroundLatest > 0 && latestFixture) {
@@ -125,6 +130,7 @@ export default function ScheduleContainer({
       const container = containerRef.current;
 
       if (node && container && scroll) {
+        // Center the latest match
         const itemTop = node.offsetTop;
         const itemHeight = node.clientHeight;
         const containerHeight = container.clientHeight;
@@ -144,12 +150,16 @@ export default function ScheduleContainer({
         flexDirection: "column",
         p: 0,
         overflow: "hidden",
+        // Apply Global Clay Style Wrapper if desired, or keep it clean
       })}
     >
       <HeaderContainer>
-        <Typography variant="h6" fontWeight={800} letterSpacing="-0.5px">
-          Schedule
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <CalendarMonthRoundedIcon color="primary" />
+          <Typography variant="h6" fontWeight={800} letterSpacing="-0.5px">
+            Schedule
+          </Typography>
+        </Box>
 
         {!showLink ? (
           <FormControl variant="standard" size="small" sx={{ minWidth: 120 }}>
@@ -166,9 +176,7 @@ export default function ScheduleContainer({
                   paddingRight: "24px !important",
                   textAlign: "right",
                 },
-                "&:hover": {
-                  color: "primary.main",
-                },
+                "& :hover": { color: "primary.main" },
               }}
               renderValue={(selected) => (
                 <span>{selected || "All Competitions"}</span>
@@ -194,14 +202,7 @@ export default function ScheduleContainer({
             to={getPath(`/schedule`)}
             size="small"
             endIcon={<ArrowForwardRoundedIcon />}
-            sx={(theme) => ({
-              ...theme.clay.button,
-              fontSize: "0.75rem",
-              py: 0.5,
-              height: 32,
-              minWidth: "auto",
-              px: 2,
-            })}
+            variant="contained"
           >
             View All
           </Button>
@@ -210,59 +211,59 @@ export default function ScheduleContainer({
 
       <ScrollContainer ref={containerRef} scroll={scroll}>
         {displayFixtures.length === 0 ? (
-          <Box p={4} textAlign="center" color="text.secondary">
-            <Typography variant="body2" fontWeight={600}>
+          <Box p={6} textAlign="center" color="text.secondary">
+            <Typography variant="body1" fontWeight={600}>
               No fixtures found.
             </Typography>
           </Box>
         ) : (
-          displayFixtures.map((fixture) => {
-            const isLatest = latestFixture?.id === fixture.id;
-            const matchTime = new Date(
-              fixture.fixture.timestamp * 1000,
-            ).toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            });
+          <Box sx={{ pt: 1 }}>
+            {" "}
+            {/* Top padding for first item */}
+            {displayFixtures.map((fixture, index) => {
+              const isLatest = latestFixture?.id === fixture.id;
 
-            return (
-              <Box
-                key={fixture.id}
-                ref={(node) => {
-                  if (node) itemsRef.current.set(fixture.id, node);
-                  else itemsRef.current.delete(fixture.id);
-                }}
-                sx={{
-                  position: "relative",
-                  px: 2,
-                  py: "2px", // Vertical spacing between items
-                  transition: "all 0.3s ease",
-
-                  // HIGHLIGHT LOGIC
-                  ...(isLatest && {
-                    // Wrapper styles for the highlighted item
-                    "& > div": {
-                      // Using 'boxShadow' on the child (FixtureListItem)
-                      boxShadow: `0 0 0 2px ${theme.palette.primary.main}, 0 4px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
-                      bgcolor: alpha(theme.palette.primary.main, 0.03),
-                      transform: "scale(1.02)",
-                      zIndex: 2,
+              return (
+                <Fade
+                  in
+                  key={fixture.id}
+                  timeout={300 + Math.min(index, 5) * 50}
+                >
+                  <Box
+                    ref={(node) => {
+                      if (node) itemsRef.current.set(fixture.id, node);
+                      else itemsRef.current.delete(fixture.id);
+                    }}
+                    sx={{
                       position: "relative",
-                    },
-                  }),
-                }}
-              >
-                <FixtureListItem
-                  fixture={fixture}
-                  matchTime={matchTime}
-                  handleFixtureClick={handleFixtureClick}
-                  // We handle highlight visually above, so pass false or custom prop
-                  highlight={false}
-                />
-              </Box>
-            );
-          })
+                      px: 2,
+                      py: 0.5, // Gap between list items
+                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+
+                      // --- HIGHLIGHT THE CURRENT MATCH ---
+                      ...(isLatest && {
+                        "& > div": {
+                          // Target the FixtureListItem
+                          transform: "scale(1.02)", // Pop out
+                          zIndex: 2,
+                          borderColor: theme.palette.primary.main,
+                          boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.25)}`,
+                          // Optional: Subtle glow background
+                          background: `linear-gradient(135deg, ${theme.palette.background.paper} 60%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                        },
+                      }),
+                    }}
+                  >
+                    <FixtureListItem
+                      fixture={fixture}
+                      handleFixtureClick={handleFixtureClick}
+                      highlight={isLatest} // Pass prop down if component needs it for logic
+                    />
+                  </Box>
+                </Fade>
+              );
+            })}
+          </Box>
         )}
       </ScrollContainer>
     </Paper>

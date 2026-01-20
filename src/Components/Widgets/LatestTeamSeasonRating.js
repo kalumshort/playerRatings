@@ -25,8 +25,8 @@ import useGroupData from "../../Hooks/useGroupsData";
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: "24px",
   borderRadius: "24px",
-  // Glass Effect
   overflow: "hidden",
+  // Use clay card style if available in your theme, otherwise fallback
 }));
 
 const PitchContainer = styled(Box)(({ theme }) => {
@@ -40,7 +40,6 @@ const PitchContainer = styled(Box)(({ theme }) => {
     justifyContent: "space-between",
     position: "relative",
     overflow: "hidden",
-    // Pitch Gradient
 
     border: `1px solid ${alpha(accent, 0.3)}`,
     boxShadow: `inset 0 0 20px ${alpha("#000", 0.3)}`,
@@ -77,7 +76,7 @@ const PlayerRow = styled(Box)({
   justifyContent: "space-around",
   alignItems: "center",
   zIndex: 2,
-  position: "relative", // Ensures players sit above pitch decorations
+  position: "relative",
 });
 
 export default function LatestTeamSeasonRating() {
@@ -86,21 +85,18 @@ export default function LatestTeamSeasonRating() {
   const { getPath } = useAppPaths();
   const globalData = useGlobalData();
 
-  // 1. Get Context from Hooks
+  // 1. Get Context
   const { activeGroup } = useGroupData();
   const groupId = activeGroup?.groupId;
   const clubId = Number(activeGroup?.groupClubId);
 
-  // 2. Selectors (Bucket Aware)
+  // 2. Selectors
   const previousFixtures = useSelector(selectPreviousFixtures);
   const playerStats = useSelector(selectAllPlayersSeasonOverallRating);
 
-  // 3. Fetch Data (If missing)
-  // Note: Eventually, move this to useDataManager() to avoid component-level fetching
+  // 3. Fetch Data
   useEffect(() => {
-    // ✅ NEW CHECK: If we have a Group ID, but 'playerStats' is empty, FETCH!
     const hasData = playerStats && Object.keys(playerStats).length > 0;
-
     if (groupId && !hasData) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
@@ -116,7 +112,6 @@ export default function LatestTeamSeasonRating() {
     if (!previousFixtures || !clubId)
       return { formationRows: [], fixtureData: null };
 
-    // Find latest fixture with a lineup for THIS club
     const fixture = previousFixtures.find((f) =>
       f?.lineups?.some((team) => team.team.id === clubId),
     );
@@ -126,7 +121,6 @@ export default function LatestTeamSeasonRating() {
     const lineup =
       fixture.lineups.find((team) => team.team.id === clubId)?.startXI || [];
 
-    // Group by Grid Row (e.g., "1:1", "2:1")
     const rows = lineup.reduce((acc, { player }) => {
       const [row] = player.grid ? player.grid.split(":").map(Number) : [0];
       if (!acc[row]) acc[row] = [];
@@ -135,21 +129,53 @@ export default function LatestTeamSeasonRating() {
     }, {});
 
     const sortedRows = Object.keys(rows)
-      .sort((a, b) => b - a) // Sort rows (Goalkeeper at bottom usually, dependent on API grid)
+      .sort((a, b) => b - a)
       .map((key) => rows[key]);
 
     return { formationRows: sortedRows, fixtureData: fixture };
   }, [previousFixtures, clubId]);
 
-  // 5. Loading State
-  if (!playerStats && !previousFixtures) {
+  // 5. LOADING STATE (Improved)
+  // Show Skeleton if either Stats or Fixtures are missing
+  const isLoading = !playerStats || !previousFixtures;
+
+  if (isLoading) {
     return (
       <CardContainer elevation={0}>
-        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 4 }} />
+        {/* Header Skeleton */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
+          <Box>
+            <Skeleton variant="text" width={140} height={40} sx={{ mb: 0.5 }} />
+            <Skeleton variant="text" width={100} height={20} />
+          </Box>
+          <Skeleton
+            variant="rounded"
+            width={120}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
+        </Box>
+
+        {/* Pitch Skeleton */}
+        <Skeleton
+          variant="rounded"
+          height={450}
+          width="100%"
+          sx={{
+            borderRadius: "20px",
+            bgcolor: alpha(theme.palette.action.hover, 0.1),
+          }}
+        />
       </CardContainer>
     );
   }
 
+  // 6. RENDER
   return (
     <CardContainer elevation={0}>
       {/* Header */}
@@ -169,7 +195,7 @@ export default function LatestTeamSeasonRating() {
           </Typography>
           <Typography
             variant="overline"
-            color={`${theme.palette.primary.main}`}
+            color="primary.main"
             fontWeight={700}
             letterSpacing={1.2}
           >
@@ -196,7 +222,6 @@ export default function LatestTeamSeasonRating() {
               {rowPlayers.map((player) => {
                 const stats = playerStats?.[player.id];
 
-                // Calculate Average safely
                 const playerRating =
                   stats?.totalRating && stats?.totalSubmits
                     ? (stats.totalRating / stats.totalSubmits).toFixed(1)

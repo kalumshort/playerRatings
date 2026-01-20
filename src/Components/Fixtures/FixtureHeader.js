@@ -7,7 +7,8 @@ import {
   Avatar,
   Grid,
   alpha,
-  useTheme,
+  Skeleton,
+  useTheme, // Added Skeleton import
 } from "@mui/material";
 import {
   StadiumRounded,
@@ -30,6 +31,66 @@ const calculateTimeLeft = (targetTime) => {
   return timeLeft;
 };
 
+// --- SKELETON COMPONENT ---
+export const FixtureHeaderSkeleton = ({ className }) => (
+  <Paper
+    elevation={0}
+    className={className}
+    sx={{
+      p: 0,
+      pb: 4,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      minHeight: "200px",
+    }}
+  >
+    {/* Status Row */}
+    <Box sx={{ display: "flex", justifyContent: "center", pt: 2.5, pb: 1 }}>
+      <Skeleton
+        variant="rounded"
+        width={90}
+        height={24}
+        sx={{ borderRadius: "12px" }}
+      />
+    </Box>
+
+    {/* Main Grid */}
+    <Box sx={{ px: 2 }}>
+      <Grid container alignItems="center" spacing={1}>
+        {/* Home Team */}
+        <Grid item xs={3.5}>
+          <Stack alignItems="center" spacing={1.5}>
+            <Skeleton variant="circular" width={65} height={65} />
+            <Skeleton variant="text" width={60} height={20} />
+          </Stack>
+        </Grid>
+
+        {/* Center Score/Timer */}
+        <Grid item xs={5}>
+          <Stack alignItems="center" spacing={1}>
+            <Skeleton
+              variant="rounded"
+              width={100}
+              height={50}
+              sx={{ borderRadius: 3 }}
+            />
+            <Skeleton variant="text" width={60} height={15} />
+          </Stack>
+        </Grid>
+
+        {/* Away Team */}
+        <Grid item xs={3.5}>
+          <Stack alignItems="center" spacing={1.5}>
+            <Skeleton variant="circular" width={65} height={65} />
+            <Skeleton variant="text" width={60} height={20} />
+          </Stack>
+        </Grid>
+      </Grid>
+    </Box>
+  </Paper>
+);
+
 // --- COMPONENT ---
 export default function FixtureHeader({
   fixture,
@@ -40,6 +101,12 @@ export default function FixtureHeader({
   addClass,
 }) {
   const theme = useTheme();
+
+  // ✅ LOADING CHECK: If no fixture data, show Skeleton
+  if (!fixture) {
+    return <FixtureHeaderSkeleton className={addClass} />;
+  }
+
   const { teams, fixture: fixData, goals, score, events } = fixture;
 
   const status = fixData.status.short;
