@@ -1,9 +1,26 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
-import { Paper, Typography, Box, Avatar, Chip } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import {
+  Paper,
+  Typography,
+  Box,
+  Avatar,
+  Chip,
+  Stack,
+  Grid,
+  useTheme,
+  alpha,
+  Skeleton,
+  Fade,
+  Divider,
+} from "@mui/material";
+import {
+  ArrowForwardRounded,
+  TrendingUpRounded,
+  HistoryRounded,
+  SportsSoccerRounded,
+} from "@mui/icons-material";
 
 // Selectors & Hooks
 import { selectSquadPlayerById } from "../../Selectors/squadDataSelectors";
@@ -21,140 +38,61 @@ import useGlobalData from "../../Hooks/useGlobalData";
 import PlayerRatingsLineGraph from "./PlayerRatingsLineGraph";
 import {
   getPlayersFixtureEvents,
-  RatingBadge,
   useAppPaths,
 } from "../../Hooks/Helper_Functions";
 import { EventBadge } from "../Widgets/EventBadge";
 
-// --- STYLED COMPONENTS ---
+// --- HELPERS ---
+const getResultColor = (result, theme) => {
+  if (result === "W") return theme.palette.success.main;
+  if (result === "D") return theme.palette.warning.main;
+  return theme.palette.error.main;
+};
 
-const PageContainer = styled("div")(({ theme }) => ({
-  maxWidth: "800px",
-  margin: "0 auto",
-  padding: "20px",
-  paddingBottom: "80px",
-  [theme.breakpoints.down("sm")]: {
-    padding: "10px", // Tighter page padding on mobile
-  },
-}));
-
-// 1. HERO PROFILE - OPTIMIZED FOR MOBILE
-const HeroSection = styled(Paper)(({ theme }) => ({
-  padding: "24px",
-  borderRadius: "12px",
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  marginBottom: "20px",
-  display: "flex",
-  alignItems: "center",
-  gap: "24px",
-
-  // Mobile Adjustments
-  [theme.breakpoints.down("sm")]: {
-    padding: "16px", // Less padding
-    gap: "16px", // Less gap
-    // Keep it ROW (horizontal) to save vertical space
-    flexDirection: "row",
-    alignItems: "flex-start", // Align top
-    marginBottom: "16px",
-  },
-}));
-
-const HeroAvatar = styled(Avatar)(({ theme }) => ({
-  width: 80,
-  height: 80,
-  border: "2px solid #fff",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  [theme.breakpoints.down("sm")]: {
-    width: 60, // Smaller avatar on mobile
-    height: 60,
-  },
-}));
-
-// 2. GRAPH CONTAINER
-const GraphSection = styled(Paper)(({ theme }) => ({
-  padding: "20px",
-  borderRadius: "12px",
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  marginBottom: "24px",
-  [theme.breakpoints.down("sm")]: {
-    padding: "10px",
-    marginBottom: "16px",
-  },
-}));
-
-// 3. MATCH ROW - OPTIMIZED FOR MOBILE CROWDING
-const MatchItem = styled(Paper)(({ theme, result }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "16px",
-  marginBottom: "10px",
-  borderRadius: "10px",
-  border: `1px solid ${theme.palette.divider}`,
-  borderLeft: `6px solid ${
-    result === "W"
-      ? theme.palette.success.main
-      : result === "D"
-      ? theme.palette.warning.main
-      : theme.palette.error.main
-  }`,
-  transition: "transform 0.2s ease",
-  cursor: "pointer",
-  "&:hover": {
-    transform: "translateX(4px)",
-    backgroundColor: theme.palette.action.hover,
-  },
-  [theme.breakpoints.down("sm")]: {
-    padding: "12px", // Compact padding
-    marginBottom: "8px",
-  },
-}));
-
-const SectionHeader = styled(Typography)(({ theme }) => ({
-  fontWeight: 900,
-  fontSize: "1.2rem",
-  marginBottom: "12px",
-  color: theme.palette.text.primary,
-}));
-
-// --- MAIN COMPONENT ---
+const getResultBg = (result, theme) => {
+  if (result === "W") return alpha(theme.palette.success.main, 0.1);
+  if (result === "D") return alpha(theme.palette.warning.main, 0.1);
+  return alpha(theme.palette.error.main, 0.1);
+};
 
 export default function PlayerPage() {
-  const { activeGroup } = useGroupData();
-
-  const globalData = useGlobalData();
+  const theme = useTheme();
   const dispatch = useDispatch();
-
   const { clubSlug, playerId } = useParams();
-  const playerData = useSelector((state) =>
-    selectSquadPlayerById(playerId, clubSlug)(state)
-  );
+  const { activeGroup } = useGroupData();
+  const globalData = useGlobalData();
 
+  // Data Selectors
+  const playerData = useSelector((state) =>
+    selectSquadPlayerById(playerId, clubSlug)(state),
+  );
   const groupId = activeGroup?.groupId;
   const allPlayerRatings = useSelector(selectPlayerRatingsById(playerId));
   const previousFixtures = useSelector(selectPreviousFixtures);
-  const { playerAllMatchesRatingLoaded, playerSeasonOverallRatingsLoaded } =
-    useSelector(selectPlayerRatingsLoad);
+  const { playerSeasonOverallRatingsLoaded } = useSelector(
+    selectPlayerRatingsLoad,
+  );
 
+  // --- DATA FETCHING ---
   useEffect(() => {
-    dispatch(
-      fetchPlayerRatingsAllMatches({
-        playerId,
-        groupId: groupId,
-        currentYear: globalData.currentYear,
-      })
-    );
+    if (playerId && groupId && globalData.currentYear) {
+      dispatch(
+        fetchPlayerRatingsAllMatches({
+          playerId,
+          groupId: groupId,
+          currentYear: globalData.currentYear,
+        }),
+      );
+    }
   }, [dispatch, playerId, groupId, globalData.currentYear]);
 
   useEffect(() => {
-    if (!playerSeasonOverallRatingsLoaded) {
+    if (!playerSeasonOverallRatingsLoaded && groupId) {
       dispatch(
         fetchAllPlayersSeasonOverallRating({
           groupId: groupId,
           currentYear: globalData.currentYear,
-        })
+        }),
       );
     }
   }, [
@@ -164,244 +102,411 @@ export default function PlayerPage() {
     globalData.currentYear,
   ]);
 
-  if (!playerSeasonOverallRatingsLoaded && !playerAllMatchesRatingLoaded)
-    return <div className="spinner"></div>;
-
+  // Loading & Calc
+  const isLoading = !playerData || !allPlayerRatings?.matches;
   const seasonAverageRating =
     allPlayerRatings?.seasonOverall?.totalRating /
       allPlayerRatings?.seasonOverall?.totalSubmits || 0;
 
+  if (isLoading) return <PlayerPageSkeleton />;
+
   return (
-    <PageContainer>
-      {/* 1. HERO PROFILE */}
-      <HeroSection elevation={0}>
-        <HeroAvatar src={playerData?.photo} />
-
-        <Box flexGrow={1}>
-          <Typography
-            variant="h4"
-            fontWeight={900}
-            sx={{ fontSize: { xs: "1.5rem", sm: "2.125rem" } }}
-          >
-            {playerData?.name}
-          </Typography>
-
+    <Box
+      sx={{
+        maxWidth: "1200px",
+        mx: "auto",
+        pb: 10,
+        px: { xs: 2, md: 4 },
+        pt: 2,
+      }}
+    >
+      <Grid container spacing={3}>
+        {/* --- LEFT COLUMN: STICKY PROFILE CARD --- */}
+        <Grid item xs={12} md={4} lg={3}>
           <Box
-            display="flex"
-            alignItems="center"
-            gap={1}
-            mt={0.5}
-            flexWrap="wrap"
+            sx={{
+              position: { md: "sticky" },
+              top: { md: 100 }, // Stick to top on web
+            }}
           >
-            <Chip
-              label={playerData?.position}
-              size="small"
-              variant="outlined"
-            />
-            <Typography variant="body2" color="text.secondary">
-              #{playerData?.number}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Rating Box - Keeps fixed width to prevent squashing */}
-        <Box textAlign="center" minWidth="70px">
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            fontWeight={700}
-            sx={{ fontSize: "0.65rem" }}
-          >
-            SEASON AVG
-          </Typography>
-          <Box display="flex" justifyContent="center">
-            <RatingBadge
-              score={seasonAverageRating}
-              style={{ width: "60px", padding: "8px 0", fontSize: "1.2rem" }}
+            <Paper
+              elevation={0}
+              sx={{
+                ...theme.clay.card,
+                p: 3,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                background: theme.palette.background.paper, // Clean White
+                position: "relative",
+                overflow: "hidden",
+              }}
             >
-              {seasonAverageRating.toFixed(1)}
-            </RatingBadge>
+              {/* Background Decor (Optional) */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "80px",
+                  bgcolor: alpha(theme.palette.text.primary, 0.03),
+                }}
+              />
+
+              <Avatar
+                src={playerData?.photo}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  border: `6px solid ${theme.palette.background.paper}`,
+                  boxShadow: theme.shadows[3],
+                  mt: 2,
+                  mb: 2,
+                  bgcolor: "grey.200",
+                }}
+              />
+
+              <Typography variant="h5" fontWeight={900} gutterBottom>
+                {playerData?.name}
+              </Typography>
+
+              <Stack direction="row" spacing={1} mb={3}>
+                <Chip
+                  icon={<SportsSoccerRounded sx={{ fontSize: 16 }} />}
+                  label={playerData?.position}
+                  size="small"
+                  sx={{ fontWeight: 700 }}
+                />
+                <Chip
+                  label={`#${playerData?.number}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
+
+              <Divider flexItem sx={{ mb: 3 }} />
+
+              <Box>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  color="text.secondary"
+                  letterSpacing={1}
+                >
+                  SEASON RATING
+                </Typography>
+                <Typography
+                  variant="h2"
+                  fontWeight={900}
+                  sx={{ color: "text.primary", letterSpacing: -1 }}
+                >
+                  {seasonAverageRating.toFixed(1)}
+                </Typography>
+              </Box>
+            </Paper>
           </Box>
-        </Box>
-      </HeroSection>
+        </Grid>
 
-      {/* 2. GRAPH */}
-      {allPlayerRatings?.matches && (
-        <Box mb={4}>
-          <SectionHeader>Performance History</SectionHeader>
-          <GraphSection elevation={0}>
-            <div style={{ width: "100%", height: "250px" }}>
-              <PlayerRatingsLineGraph
-                allPlayerRatings={allPlayerRatings}
-                clubId={activeGroup?.groupClubId || groupId}
-              />
-            </div>
-          </GraphSection>
-        </Box>
-      )}
+        {/* --- RIGHT COLUMN: CONTENT STREAM --- */}
+        <Grid item xs={12} md={8} lg={9}>
+          <Stack spacing={3}>
+            {/* 1. PERFORMANCE GRAPH */}
+            {allPlayerRatings?.matches && (
+              <Box>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  mb={2}
+                  pl={1}
+                >
+                  <TrendingUpRounded color="action" />
+                  <Typography variant="h6" fontWeight={800}>
+                    Form Trajectory
+                  </Typography>
+                </Stack>
 
-      {/* 3. MATCH LIST */}
-      {previousFixtures && allPlayerRatings?.matches && (
-        <Box>
-          <SectionHeader>Matches</SectionHeader>
-          {previousFixtures.map((fixture, index) => {
-            const matchStats = Object.values(allPlayerRatings.matches).find(
-              (m) => m.id === fixture.id
-            );
-            if (!matchStats) return null;
+                <Paper
+                  elevation={0}
+                  sx={{
+                    ...theme.clay.card,
+                    p: 2,
+                    height: "300px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Box width="100%" height="100%">
+                    <PlayerRatingsLineGraph
+                      allPlayerRatings={allPlayerRatings}
+                      clubId={activeGroup?.groupClubId || groupId}
+                    />
+                  </Box>
+                </Paper>
+              </Box>
+            )}
 
-            const matchTime = new Date(
-              fixture.fixture.timestamp * 1000
-            ).toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            });
+            {/* 2. MATCH HISTORY */}
+            {previousFixtures && allPlayerRatings?.matches && (
+              <Box>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  mb={2}
+                  pl={1}
+                >
+                  <HistoryRounded color="action" />
+                  <Typography variant="h6" fontWeight={800}>
+                    Match History
+                  </Typography>
+                </Stack>
 
-            return (
-              <PlayerMatchRow
-                key={fixture.id || index}
-                fixture={fixture}
-                matchTime={matchTime}
-                matchStats={matchStats}
-                groupClubId={activeGroup?.groupClubId || groupId}
-                playerId={playerId}
-              />
-            );
-          })}
-        </Box>
-      )}
-    </PageContainer>
+                <Stack spacing={1.5}>
+                  {previousFixtures.map((fixture, index) => {
+                    const matchStats = Object.values(
+                      allPlayerRatings.matches,
+                    ).find((m) => m.id === fixture.id);
+
+                    if (!matchStats) return null;
+
+                    return (
+                      <Fade in key={fixture.id} timeout={300 + index * 50}>
+                        <div>
+                          <PlayerMatchRow
+                            fixture={fixture}
+                            matchStats={matchStats}
+                            groupClubId={activeGroup?.groupClubId || groupId}
+                            playerId={playerId}
+                          />
+                        </div>
+                      </Fade>
+                    );
+                  })}
+                </Stack>
+              </Box>
+            )}
+          </Stack>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
 
-// --- SUB COMPONENT ---
-const PlayerMatchRow = ({
-  fixture,
-  matchTime,
-  matchStats,
-  groupClubId,
-  playerId,
-}) => {
+// --- SUB COMPONENT: MATCH ROW ---
+const PlayerMatchRow = ({ fixture, matchStats, groupClubId, playerId }) => {
+  const theme = useTheme();
   const { getPath } = useAppPaths();
 
   const clubIdNum = Number(groupClubId);
   const pIdNum = Number(playerId);
 
-  // 1. Determine Result
+  // 1. Result Logic
   const isHome = fixture.teams.home.id === clubIdNum;
   const homeWin = fixture.teams.home.winner;
   const awayWin = fixture.teams.away.winner;
+
   let result = "D";
   if ((isHome && homeWin) || (!isHome && awayWin)) result = "W";
   else if ((isHome && awayWin) || (!isHome && homeWin)) result = "L";
 
-  // 2. Find Opponent & Score
+  // 2. Data Prep
   const opponent = isHome ? fixture.teams.away : fixture.teams.home;
   const scoreStr = `${fixture.score.fulltime.home} - ${fixture.score.fulltime.away}`;
   const rating = matchStats
     ? matchStats.totalRating / matchStats.totalSubmits
     : 0;
 
-  // 3. Get Player Events
   const events = useMemo(
     () => getPlayersFixtureEvents(fixture, pIdNum),
-    [fixture, pIdNum]
+    [fixture, pIdNum],
   );
+
+  const dateObj = new Date(fixture.fixture.timestamp * 1000);
+  const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "short" });
+  const dayNum = dateObj.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+
+  // Color Logic
+  const statusColor = getResultColor(result, theme);
 
   return (
     <Link
       to={getPath(`/fixture/${fixture.id}`)}
       style={{ textDecoration: "none" }}
     >
-      <MatchItem elevation={0} result={result}>
-        {/* LEFT: DATE */}
-        {/* On mobile, we reduce width to save space */}
-        <Box
-          display="flex"
-          flexDirection="column"
-          sx={{ width: { xs: "50px", sm: "80px" } }}
-        >
-          <Typography
-            variant="body2"
-            fontWeight={700}
-            color="text.primary"
-            sx={{ fontSize: { xs: "0.8rem", sm: "1rem" } }}
-          >
-            {matchTime.split(",")[1] || matchTime}{" "}
-            {/* Fallback: shows just date part on mobile if formatted as "Mon, 12 Oct" */}
-          </Typography>
-          {/* Hide League Name on Mobile to reduce clutter */}
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            noWrap
-            sx={{ display: { xs: "none", sm: "block" } }}
-          >
-            {fixture.league.name}
-          </Typography>
-        </Box>
+      <Paper
+        sx={{
+          // 1. Base Clay Style
 
-        {/* CENTER: OPPONENT & EVENTS */}
+          p: 0, // Reset padding to handle border correctly
+          overflow: "hidden", // Ensure border radius clips content
+          display: "flex",
+          alignItems: "center",
+          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+
+          // 2. The "Classic" Left Border Strip
+          borderLeft: `6px solid ${statusColor}`,
+
+          "&:hover": {
+            transform: "translateY(-2px) translateX(4px)",
+          },
+        }}
+      >
         <Box
-          display="flex"
-          alignItems="center"
-          flex={1}
-          gap={2}
-          ml={1}
-          sx={{ overflow: "hidden" }}
+          sx={{ display: "flex", alignItems: "center", width: "100%", p: 2 }}
         >
-          <img
-            src={opponent.logo}
-            alt={opponent.name}
-            style={{ width: 32, height: 32, objectFit: "contain" }}
-          />
-          <Box sx={{ minWidth: 0, width: "100%" }}>
-            {/* Name & Events Container */}
-            <Box
-              display="flex"
-              alignItems={{ xs: "flex-start", sm: "center" }}
-              flexDirection={{ xs: "column", sm: "row" }} // Stack on mobile
-              gap={{ xs: 0.5, sm: 1 }}
+          {/* DATE (Left Aligned) */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minWidth: "55px",
+              mr: 2,
+              opacity: 0.8,
+            }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              lineHeight={1}
+              sx={{ fontSize: "0.7rem", textTransform: "uppercase" }}
             >
-              <Typography variant="body2" fontWeight={800} noWrap>
+              {dayName}
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={900}
+              color="text.primary"
+              lineHeight={1.2}
+            >
+              {dayNum}
+            </Typography>
+          </Box>
+
+          {/* OPPONENT & SCORE (Center) */}
+          <Box
+            display="flex"
+            alignItems="center"
+            flexGrow={1}
+            overflow="hidden"
+          >
+            <Avatar
+              src={opponent.logo}
+              variant="rounded" // Rounded square looks more modern for clubs
+              sx={{
+                width: 36,
+                height: 36,
+                mr: 2,
+                bgcolor: "transparent",
+                "& img": { objectFit: "contain" },
+              }}
+            />
+
+            <Box
+              overflow="hidden"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <Typography
+                variant="body2"
+                fontWeight={800}
+                noWrap
+                sx={{ fontSize: "0.95rem" }}
+              >
                 vs {opponent.name}
               </Typography>
 
-              {/* Event Badges */}
-              {/* On mobile this sits BELOW the name due to column flex */}
-              <Box display="flex" gap={0.5} flexWrap="wrap">
-                {events.map((event, index) => (
-                  <EventBadge
-                    key={index}
-                    type={event.type}
-                    label={event.label}
-                    time={event.time}
-                  />
-                ))}
-              </Box>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{ color: statusColor }}
+                >
+                  {scoreStr}
+                </Typography>
+
+                {/* Events (Goals/Cards) */}
+                {events.length > 0 && (
+                  <Stack direction="row" spacing={0.5}>
+                    {events.map((e, i) => (
+                      <EventBadge key={i} type={e.type} />
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+            </Box>
+          </Box>
+
+          {/* RATING (Right) */}
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Box
+              sx={{
+                minWidth: "45px",
+                textAlign: "center",
+                py: 0.5,
+                px: 1,
+                borderRadius: "8px",
+                bgcolor: getResultBg(result, theme), // Subtle colored background
+                color: statusColor, // Text matches result
+                border: `1px solid ${alpha(statusColor, 0.2)}`,
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={900}>
+                {rating.toFixed(1)}
+              </Typography>
             </Box>
 
-            <Typography variant="caption" color="text.secondary" noWrap>
-              Result: {scoreStr}
-            </Typography>
+            <ArrowForwardRounded
+              sx={{
+                fontSize: 18,
+                color: "text.disabled",
+                display: { xs: "none", sm: "block" },
+              }}
+            />
           </Box>
         </Box>
-
-        {/* RIGHT: RATING */}
-        <Box display="flex" alignItems="center" gap={1} ml={1}>
-          <RatingBadge score={rating}>
-            {rating > 0 ? rating.toFixed(1) : "-"}
-          </RatingBadge>
-          <ArrowForwardIosIcon
-            sx={{
-              fontSize: "12px",
-              color: "text.disabled",
-              display: { xs: "none", sm: "block" },
-            }}
-          />
-        </Box>
-      </MatchItem>
+      </Paper>
     </Link>
   );
 };
+
+// --- LOADING SKELETON ---
+const PlayerPageSkeleton = () => (
+  <Box sx={{ maxWidth: "1200px", mx: "auto", pb: 10, px: 3, pt: 2 }}>
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={4}>
+        <Skeleton variant="rounded" height={400} sx={{ borderRadius: 3 }} />
+      </Grid>
+      <Grid item xs={12} md={8}>
+        <Skeleton
+          variant="rounded"
+          height={300}
+          sx={{ mb: 3, borderRadius: 3 }}
+        />
+        <Stack spacing={2}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={70}
+              sx={{ borderRadius: 3 }}
+            />
+          ))}
+        </Stack>
+      </Grid>
+    </Grid>
+  </Box>
+);
