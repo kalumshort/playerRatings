@@ -14,11 +14,11 @@ import {
   alpha,
 } from "@mui/material";
 import {
-  BarChart as BarChartIcon,
-  Close,
-  SportsSoccer,
-  TrendingUp,
-  QueryStats, // Added for empty state
+  BarChartRounded,
+  CloseRounded,
+  SportsSoccerRounded,
+  TrendingUpRounded,
+  QueryStatsRounded,
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import {
@@ -46,8 +46,6 @@ export default function ScorePredictionResults({
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
   // --- DATA PROCESSING ---
-
-  // 1. Score Distribution (Top 6 Scores)
   const processScoreData = (data) => {
     if (!data || Object.keys(data).length === 0) return [];
     const totalVotes = Object.values(data).reduce((a, b) => a + b, 0);
@@ -64,7 +62,6 @@ export default function ScorePredictionResults({
 
   const scoreData = processScoreData(matchPredictions?.scorePredictions);
 
-  // 2. Goal Data
   const processGoalData = (data) => {
     if (!data || Object.keys(data).length === 0) return [];
     return Object.entries(data)
@@ -75,45 +72,33 @@ export default function ScorePredictionResults({
   const homeGoalData = processGoalData(matchPredictions?.homeGoals);
   const awayGoalData = processGoalData(matchPredictions?.awayGoals);
 
-  // 3. Consensus Score & Data Availability Check
   const hasData = scoreData.length > 0;
   const consensusScore = hasData ? scoreData[0]?.score : "-";
-
-  // --- STYLES ---
-  const glassCardStyles = {
-    p: 3,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    border: `1px solid ${theme.palette.divider}`,
-    minHeight: "240px",
-  };
-
-  const modalStyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: isMobile ? "95vw" : 650,
-    maxHeight: "90vh",
-    overflowY: "auto",
-    bgcolor: "background.default",
-    boxShadow: 24,
-    border: `1px solid ${theme.palette.divider}`,
-    outline: "none",
-    borderRadius: 4,
-  };
 
   return (
     <>
       {/* --- MAIN DASHBOARD CARD --- */}
-      <Paper sx={glassCardStyles} elevation={0}>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-          <SportsSoccer fontSize="small" color="primary" />
+      <Paper
+        elevation={0}
+        sx={(theme) => ({
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-between",
+          minHeight: "220px",
+        })}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1}
+          sx={{ mb: 3, opacity: 0.8 }}
+        >
+          <SportsSoccerRounded fontSize="small" color="primary" />
           <Typography
             variant="caption"
-            sx={{ letterSpacing: 1, fontWeight: 700 }}
+            sx={{ letterSpacing: 1, fontWeight: 800, fontSize: "0.7rem" }}
           >
             RESULT COMPARISON
           </Typography>
@@ -125,7 +110,7 @@ export default function ScorePredictionResults({
             spacing={2}
             alignItems="center"
             justifyContent="center"
-            sx={{ width: "100%" }}
+            sx={{ width: "100%", mb: 3 }}
           >
             {storedUsersPredictedScore && (
               <BigStatCard
@@ -135,7 +120,10 @@ export default function ScorePredictionResults({
               />
             )}
             {storedUsersPredictedScore && hasData && (
-              <Typography variant="h6" sx={{ color: "text.disabled" }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "text.disabled", fontWeight: 300 }}
+              >
                 VS
               </Typography>
             )}
@@ -148,10 +136,13 @@ export default function ScorePredictionResults({
             )}
           </Stack>
         ) : (
-          /* EMPTY STATE WITHIN CARD */
+          /* EMPTY STATE */
           <Stack alignItems="center" spacing={1} sx={{ py: 2, opacity: 0.5 }}>
-            <QueryStats sx={{ fontSize: 40 }} />
-            <Typography variant="caption" sx={{ textAlign: "center" }}>
+            <QueryStatsRounded sx={{ fontSize: 40 }} />
+            <Typography
+              variant="caption"
+              sx={{ textAlign: "center", fontWeight: 700 }}
+            >
               AWAITING FIRST PREDICTIONS
             </Typography>
           </Stack>
@@ -160,9 +151,14 @@ export default function ScorePredictionResults({
         <Button
           onClick={() => setOpen(true)}
           disabled={!hasData}
-          startIcon={<BarChartIcon />}
-          variant="outlined"
-          size="small"
+          startIcon={<BarChartRounded />}
+          sx={(theme) => ({
+            ...theme.clay.button,
+            bgcolor: "background.paper",
+            color: "text.primary",
+            fontWeight: 700,
+            width: "100%",
+          })}
         >
           {hasData ? "FULL BREAKDOWN" : "NO ANALYTICS YET"}
         </Button>
@@ -171,7 +167,22 @@ export default function ScorePredictionResults({
       {/* --- ANALYTICS MODAL --- */}
       <Modal open={open} onClose={() => setOpen(false)} closeAfterTransition>
         <Fade in={open}>
-          <Box sx={modalStyle}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: isMobile ? "95vw" : 650,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              // Clay Modal Style
+              ...theme.clay.card,
+              borderRadius: "24px",
+              p: 0,
+              outline: "none",
+            }}
+          >
             {/* Header */}
             <Box
               sx={{
@@ -179,15 +190,17 @@ export default function ScorePredictionResults({
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 display: "flex",
                 justifyContent: "space-between",
-                bgcolor: "background.paper",
+                alignItems: "center",
               }}
             >
               <Stack direction="row" spacing={1} alignItems="center">
-                <TrendingUp color="primary" />
-                <Typography variant="h6">MATCH ANALYTICS</Typography>
+                <TrendingUpRounded color="primary" />
+                <Typography variant="h6" fontWeight={800}>
+                  MATCH ANALYTICS
+                </Typography>
               </Stack>
               <IconButton onClick={() => setOpen(false)} size="small">
-                <Close />
+                <CloseRounded />
               </IconButton>
             </Box>
 
@@ -195,23 +208,35 @@ export default function ScorePredictionResults({
               {/* 1. SCORE DISTRIBUTION CHART */}
               <Box>
                 <SectionTitle>SCORELINE CONSENSUS</SectionTitle>
-                <Box sx={{ height: 200, width: "100%", mt: 2 }}>
+                <Box
+                  sx={{
+                    height: 220,
+                    width: "100%",
+                    mt: 2,
+                    // Chart Container Well
+                    ...theme.clay.box,
+                    bgcolor: "background.paper",
+                    p: 1,
+                  }}
+                >
                   <ResponsiveContainer>
                     <BarChart
                       data={scoreData}
                       layout="horizontal"
-                      margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
+                      margin={{ top: 10, right: 10, bottom: 0, left: -20 }}
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}
                         stroke={theme.palette.divider}
+                        opacity={0.5}
                       />
                       <XAxis
                         dataKey="score"
                         tick={{
                           fill: theme.palette.text.secondary,
-                          fontSize: 16,
+                          fontSize: 12,
+                          fontWeight: 700,
                         }}
                         axisLine={false}
                         tickLine={false}
@@ -226,8 +251,9 @@ export default function ScorePredictionResults({
                               <Paper
                                 sx={{
                                   p: 1,
-                                  bgcolor: "background.paper",
+                                  bgcolor: "background.default",
                                   border: `1px solid ${theme.palette.divider}`,
+                                  borderRadius: 2,
                                 }}
                               >
                                 <Typography
@@ -243,7 +269,7 @@ export default function ScorePredictionResults({
                           return null;
                         }}
                       />
-                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                         {scoreData.map((entry, index) => {
                           const isUserPick =
                             entry.score === storedUsersPredictedScore;
@@ -255,7 +281,7 @@ export default function ScorePredictionResults({
                                   ? theme.palette.secondary.main
                                   : theme.palette.primary.main
                               }
-                              opacity={isUserPick ? 1 : 0.6 + index * -0.1}
+                              opacity={isUserPick ? 1 : 0.8}
                             />
                           );
                         })}
@@ -263,11 +289,12 @@ export default function ScorePredictionResults({
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
+
                 <Stack
                   direction="row"
                   justifyContent="center"
-                  spacing={2}
-                  sx={{ mt: 1 }}
+                  spacing={3}
+                  sx={{ mt: 2 }}
                 >
                   <LegendItem
                     color={theme.palette.primary.main}
@@ -316,45 +343,44 @@ export default function ScorePredictionResults({
 // --- SUB-COMPONENTS ---
 
 const BigStatCard = ({ label, value, highlight }) => {
-  const theme = useTheme();
   return (
-    <Paper
-      sx={{
+    <Box
+      sx={(theme) => ({
+        // Pressed Well Logic
+        ...theme.clay.box,
         flex: 1,
         textAlign: "center",
         p: 2,
+        borderRadius: "16px",
         bgcolor: highlight
-          ? alpha(theme.palette.primary.main, 0.05)
-          : "transparent",
-        border: `1px solid ${
-          highlight ? theme.palette.primary.main : theme.palette.divider
-        }`,
-        borderRadius: 2,
-        boxShadow: highlight
-          ? `0 4px 15px -5px ${theme.palette.primary.main}40`
-          : "none",
-      }}
-      elevation={0}
+          ? alpha(theme.palette.primary.main, 0.1)
+          : "background.default",
+        border: highlight
+          ? `2px solid ${theme.palette.primary.main}`
+          : `1px solid ${theme.palette.divider}`,
+      })}
     >
       <Typography
         variant="caption"
         sx={{
           display: "block",
-          mb: 1,
-          fontWeight: 700,
-          opacity: 0.7,
+          mb: 0.5,
+          fontWeight: 800,
+          opacity: 0.6,
+          color: highlight ? "primary.main" : "text.secondary",
         }}
       >
         {label}
       </Typography>
-      <Typography variant="h3" sx={{ fontWeight: 900 }}>
+      <Typography variant="h3" sx={{ fontWeight: 900, color: "text.primary" }}>
         {value}
       </Typography>
-    </Paper>
+    </Box>
   );
 };
 
 const GoalChart = ({ data, color, teamName, teamLogo }) => {
+  const theme = useTheme();
   const hasGoalData = data && data.length > 0;
 
   return (
@@ -365,8 +391,8 @@ const GoalChart = ({ data, color, teamName, teamLogo }) => {
         spacing={1.5}
         sx={{ mb: 2, pb: 1, borderBottom: `1px dashed ${alpha(color, 0.4)}` }}
       >
-        <Avatar src={teamLogo} sx={{ width: 24, height: 24 }} />
-        <Typography variant="caption" fontWeight="bold" noWrap>
+        <Avatar src={teamLogo} sx={{ width: 28, height: 28 }} />
+        <Typography variant="caption" fontWeight="800" noWrap>
           {teamName}
         </Typography>
       </Stack>
@@ -378,6 +404,11 @@ const GoalChart = ({ data, color, teamName, teamLogo }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          // Well style
+          ...theme.clay.box,
+          bgcolor: "background.paper",
+          borderRadius: "12px",
+          p: 1,
         }}
       >
         {hasGoalData ? (
@@ -385,7 +416,7 @@ const GoalChart = ({ data, color, teamName, teamLogo }) => {
             <BarChart data={data}>
               <XAxis
                 dataKey="goals"
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 10, fontWeight: 700 }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -397,13 +428,14 @@ const GoalChart = ({ data, color, teamName, teamLogo }) => {
                   backgroundColor: "#333",
                   color: "#fff",
                   fontSize: "10px",
+                  fontWeight: "bold",
                 }}
               />
               <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <Typography variant="caption" sx={{ opacity: 0.4 }}>
+          <Typography variant="caption" sx={{ opacity: 0.4, fontWeight: 600 }}>
             No Goal Data
           </Typography>
         )}
@@ -428,9 +460,9 @@ const SectionTitle = ({ children }) => (
 );
 
 const LegendItem = ({ color, label }) => (
-  <Stack direction="row" alignItems="center" spacing={0.5}>
-    <Box sx={{ width: 10, height: 10, bgcolor: color, borderRadius: 1 }} />
-    <Typography variant="caption" sx={{ fontSize: "0.7rem", fontWeight: 600 }}>
+  <Stack direction="row" alignItems="center" spacing={1}>
+    <Box sx={{ width: 12, height: 12, bgcolor: color, borderRadius: "4px" }} />
+    <Typography variant="caption" sx={{ fontSize: "0.75rem", fontWeight: 700 }}>
       {label}
     </Typography>
   </Stack>

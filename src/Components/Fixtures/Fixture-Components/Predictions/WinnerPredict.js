@@ -7,19 +7,12 @@ import {
   Avatar,
   useTheme,
   Fade,
-  alpha,
-  Chip,
 } from "@mui/material";
-import {
-  CheckCircle,
-  EmojiEvents,
-  Groups,
-  HourglassEmpty,
-} from "@mui/icons-material";
+import { CheckCircleRounded, EmojiEventsRounded } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- HOOKS & FIREBASE ---
+// --- HOOKS ---
 import { handlePredictWinningTeam } from "../../../../Firebase/Firebase";
 import { fetchMatchPredictions } from "../../../../Hooks/Fixtures_Hooks";
 import { selectPredictionsByMatchId } from "../../../../Selectors/predictionsSelectors";
@@ -39,9 +32,6 @@ export default function WinnerPredict({ fixture }) {
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const matchPredictions = useSelector(selectPredictionsByMatchId(fixture.id));
 
-  // --- LOGIC GATE: DETERMINING VIEW STATE ---
-  // 1. If no user is signed in, force show results (Read-only mode).
-  // 2. If user is signed in, show results only after they have voted.
   const showResults = !user || !!usersMatchData?.result;
   const userChoice = usersMatchData?.result;
 
@@ -52,7 +42,6 @@ export default function WinnerPredict({ fixture }) {
     home = 0,
   } = matchPredictions?.result || {};
 
-  // Safeguard: Ensure we don't divide by zero for guests viewing empty games
   const percentages = {
     home: totalVotes > 0 ? (home / totalVotes) * 100 : 0,
     draw: totalVotes > 0 ? (draw / totalVotes) * 100 : 0,
@@ -75,203 +64,184 @@ export default function WinnerPredict({ fixture }) {
         matchId: fixture.id,
         groupId: activeGroup.groupId,
         currentYear: globalData.currentYear,
-      })
+      }),
     );
-  };
-
-  // --- STYLES (Glassmorphism) ---
-  const optionCardStyles = (choice) => {
-    const isSelected = userChoice === choice;
-    const pct = percentages[choice];
-    const hasData = totalVotes > 0;
-
-    return {
-      flex: 1,
-      p: 2,
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      cursor: showResults ? "default" : "pointer",
-      borderRadius: "16px",
-      border: "1px solid",
-      borderColor: isSelected
-        ? theme.palette.primary.main
-        : alpha(theme.palette.divider, 0.1),
-      backgroundColor: isSelected
-        ? alpha(theme.palette.primary.main, 0.05)
-        : alpha(theme.palette.background.paper, 0.2),
-      overflow: "hidden",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      minHeight: 120,
-
-      // Progress bar background (Only visible if results are being shown and data exists)
-      "&::before": {
-        content: '""',
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        width: "100%",
-        height: showResults && hasData ? `${pct}%` : "0%",
-        bgcolor: isSelected
-          ? alpha(theme.palette.primary.main, 0.2)
-          : alpha(theme.palette.text.disabled, 0.1),
-        transition: "height 1s ease-out",
-        zIndex: 0,
-      },
-
-      "&:hover": !showResults && {
-        borderColor: theme.palette.primary.main,
-        transform: "translateY(-4px)",
-        boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`,
-        bgcolor: alpha(theme.palette.background.paper, 0.4),
-      },
-    };
   };
 
   return (
     <Paper
       elevation={0}
-      sx={{
+      sx={(theme) => ({
         p: 3,
         textAlign: "center",
         minHeight: "260px",
         display: "flex",
         flexDirection: "column",
-        border: `1px solid ${theme.palette.divider}`,
-      }}
+        alignItems: "center",
+        justifyContent: "center",
+      })}
     >
-      {/* Header Section */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
-        <Stack direction="row" spacing={1} alignItems="center">
-          <EmojiEvents color="primary" sx={{ fontSize: 18 }} />
-          <Typography
-            variant="button"
-            sx={{
-              letterSpacing: 2,
-              fontSize: "0.7rem",
-              fontWeight: 900,
-              opacity: 0.8,
-            }}
-          >
-            Winner Consensus
-          </Typography>
-        </Stack>
+      {/* --- HEADER --- */}
 
-        {totalVotes > 0 ? (
-          <Stack
-            direction="row"
-            spacing={0.5}
-            alignItems="center"
-            sx={{ opacity: 0.6 }}
-          >
-            <Groups sx={{ fontSize: 14 }} />
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-              {totalVotes} {totalVotes === 1 ? "VOTE" : "VOTES"}
-            </Typography>
-          </Stack>
-        ) : (
-          <Chip
-            size="small"
-            icon={<HourglassEmpty style={{ fontSize: "12px" }} />}
-            label={user ? "BE THE FIRST" : "AWAITING DATA"}
-            variant="outlined"
-            sx={{
-              height: 20,
-              fontSize: "0.6rem",
-              fontWeight: 900,
-              opacity: 0.5,
-            }}
-          />
-        )}
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+        <EmojiEventsRounded color="primary" sx={{ fontSize: 20 }} />
+        <Typography
+          variant="button"
+          sx={{
+            letterSpacing: 1.5,
+            opacity: 0.8,
+            fontWeight: 900,
+            fontSize: "0.75rem",
+          }}
+        >
+          WINNER CONSENSUS
+        </Typography>
       </Stack>
 
-      {/* Main Options Grid */}
+      {/* --- OPTIONS GRID --- */}
       <Stack direction="row" spacing={2} sx={{ width: "100%", flexGrow: 1 }}>
-        {["home", "draw", "away"].map((type) => (
-          <Box
-            key={type}
-            component={motion.div}
-            layout
-            onClick={() => handleWinningTeamPredict(type)}
-            sx={optionCardStyles(type)}
-          >
-            <Box sx={{ zIndex: 1, textAlign: "center" }}>
-              {type === "draw" ? (
+        {["home", "draw", "away"].map((type) => {
+          const isSelected = userChoice === type;
+          const pct = percentages[type];
+
+          return (
+            <Box
+              key={type}
+              component={motion.div}
+              layout
+              onClick={() => handleWinningTeamPredict(type)}
+              sx={(theme) => ({
+                flex: 1,
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: showResults ? "default" : "pointer",
+                borderRadius: "20px",
+                overflow: "hidden",
+                minHeight: 130,
+                transition: "all 0.2s ease",
+
+                // 2. Dynamic Clay State
+                // If selected or results shown -> Pressed Box (Inset)
+                // If interactive -> Floating Button (Outset)
+                ...(showResults || isSelected
+                  ? theme.clay.box
+                  : theme.clay.button),
+
+                // Active Border
+                border: isSelected
+                  ? `2px solid ${theme.palette.primary.main}`
+                  : `1px solid ${theme.palette.divider}`,
+
+                "&:hover": !showResults && {
+                  transform: "translateY(-4px)",
+                  borderColor: theme.palette.primary.main,
+                },
+              })}
+            >
+              {/* Progress Fill Background */}
+              {showResults && totalVotes > 0 && (
                 <Box
                   sx={{
-                    width: 40,
-                    height: 40,
-                    mb: 1,
-                    mx: "auto",
-                    borderRadius: "50%",
-                    border: `1px solid ${theme.palette.divider}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 900,
-                    fontSize: "1.2rem",
-                    bgcolor: alpha(theme.palette.background.default, 0.5),
-                  }}
-                >
-                  X
-                </Box>
-              ) : (
-                <Avatar
-                  src={fixture.teams[type].logo}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    mb: 1,
-                    mx: "auto",
-                    filter:
-                      showResults && totalVotes === 0 ? "grayscale(1)" : "none",
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${pct}%`,
+                    bgcolor: isSelected
+                      ? `${theme.palette.primary.main}20` // Faint highlight
+                      : "action.hover",
+                    transition: "height 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                    zIndex: 0,
                   }}
                 />
               )}
 
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 900, display: "block", fontSize: "0.65rem" }}
-              >
-                {type.toUpperCase()}
-              </Typography>
-
-              <AnimatePresence>
-                {showResults && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    sx={{ mt: 0.5 }}
+              {/* Content Layer */}
+              <Box sx={{ zIndex: 1, textAlign: "center", width: "100%" }}>
+                {type === "draw" ? (
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      mb: 1.5,
+                      mx: "auto",
+                      borderRadius: "50%",
+                      bgcolor: "background.paper",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 900,
+                      fontSize: "1.2rem",
+                      color: "text.secondary",
+                      border: "1px solid rgba(0,0,0,0.1)",
+                    }}
                   >
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        fontSize: "1.2rem",
-                        fontWeight: 900,
-                        color:
-                          userChoice === type ? "primary.main" : "text.primary",
-                      }}
-                    >
-                      {totalVotes > 0
-                        ? `${Math.round(percentages[type])}%`
-                        : "-%"}
-                    </Typography>
-                  </motion.div>
+                    X
+                  </Box>
+                ) : (
+                  <Avatar
+                    src={fixture.teams[type].logo}
+                    sx={{
+                      borderRadius: "8px",
+                      width: 45,
+                      height: 45,
+                      mb: 1.5,
+                      mx: "auto",
+                      // Grayscale if results are shown but no votes yet
+                      filter:
+                        showResults && totalVotes === 0
+                          ? "grayscale(1)"
+                          : "none",
+                    }}
+                  />
                 )}
-              </AnimatePresence>
+
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 900,
+                    display: "block",
+                    fontSize: "0.7rem",
+                    color: "text.secondary",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {type === "draw" ? "DRAW" : type}
+                </Typography>
+
+                <AnimatePresence>
+                  {showResults && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontSize: "1.4rem",
+                          fontWeight: 900,
+                          mt: 0.5,
+                          color: isSelected ? "primary.main" : "text.primary",
+                        }}
+                      >
+                        {totalVotes > 0
+                          ? `${Math.round(percentages[type])}%`
+                          : "-"}
+                      </Typography>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          );
+        })}
       </Stack>
 
-      {/* Footer / Feedback Section */}
+      {/* --- FOOTER --- */}
       {showResults && (
         <Fade in timeout={800}>
           <Box sx={{ mt: 3 }}>
@@ -282,21 +252,29 @@ export default function WinnerPredict({ fixture }) {
                 alignItems="center"
                 spacing={1}
               >
-                <CheckCircle color="primary" sx={{ fontSize: 16 }} />
+                <CheckCircleRounded color="primary" sx={{ fontSize: 18 }} />
                 <Typography
                   variant="caption"
                   color="primary"
-                  sx={{ fontWeight: 900, textTransform: "uppercase" }}
+                  sx={{
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                  }}
                 >
                   {totalVotes === 0
                     ? "Vote Recorded"
-                    : `Locked In: ${userChoice}`}
+                    : `LOCKED IN: ${userChoice}`}
                 </Typography>
               </Stack>
             ) : (
               <Typography
                 variant="caption"
-                sx={{ opacity: 0.5, fontStyle: "italic" }}
+                sx={{
+                  opacity: 0.6,
+                  fontStyle: "italic",
+                  color: "text.secondary",
+                }}
               >
                 Sign in to add your vote to the consensus.
               </Typography>

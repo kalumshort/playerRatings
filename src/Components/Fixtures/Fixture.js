@@ -219,10 +219,27 @@ export default function Fixture() {
               <Stack spacing={3}>
                 {/* 2. Pre-Match Prediction Section */}
                 {showPredictions && (
-                  <Box sx={{ display: "flex", gap: 3, "& > *": { flex: 1 } }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gap: 3,
+                      // 1. Define Columns based on Screen Size
+                      gridTemplateColumns: {
+                        xs: "1fr", // Mobile: 1 Column (Stacked)
+                        md: "repeat(2, 1fr)", // Tablet: 2 Columns
+                        lg: "repeat(3, 1fr)", // Desktop: 3 Columns
+                      },
+                      // 2. Ensure cards stretch to match height (optional)
+                      alignItems: "stretch",
+                    }}
+                  >
                     <WinnerPredict fixture={fixture} />
                     <ScorePrediction fixture={fixture} />
-                    <PreMatchMOTM fixture={fixture} />
+
+                    {/* On Tablet (2-col mode), make the 3rd item span full width to look centered */}
+                    <Box sx={{ gridColumn: { md: "span 2", lg: "span 1" } }}>
+                      <PreMatchMOTM fixture={fixture} />
+                    </Box>
                   </Box>
                 )}
 

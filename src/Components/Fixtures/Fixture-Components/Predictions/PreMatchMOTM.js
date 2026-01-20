@@ -10,14 +10,13 @@ import {
   Avatar,
   useTheme,
   Chip,
-  alpha,
 } from "@mui/material";
 import {
   InfoOutlined,
-  Visibility,
-  CheckCircle,
-  Star,
-  HourglassEmpty, // Added for empty state
+  VisibilityRounded,
+  CheckCircleRounded,
+  StarRounded,
+  HourglassEmptyRounded,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +37,7 @@ export default function PreMatchMOTM({ fixture }) {
   const theme = useTheme();
   const dispatch = useDispatch();
   const { clubSlug } = useParams();
+
   const squadData = useSelector((state) =>
     selectSquadDataObject(state, clubSlug),
   );
@@ -84,43 +84,45 @@ export default function PreMatchMOTM({ fixture }) {
   const topPlayer = result.length > 0 ? result[0] : null;
 
   // --- RENDER: VIEW RESULTS STATE ---
-  // If the user has voted OR if we are just viewing, we show the results
-  // We check for topPlayer to ensure there is data to show
   if (storedUsersPlayerToWatch || !user) {
     return (
       <Paper
-        sx={{
+        elevation={0}
+        sx={(theme) => ({
           p: 3,
           position: "relative",
-          minHeight: "240px",
+          minHeight: "260px",
           display: "flex",
           flexDirection: "column",
-        }}
-        elevation={0}
+        })}
       >
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ mb: 3 }}
+          sx={{ mb: 4 }}
         >
           <Chip
-            icon={<Visibility sx={{ fontSize: "1rem !important" }} />}
+            icon={<VisibilityRounded sx={{ fontSize: "1rem !important" }} />}
             label="COMMUNITY WATCH"
             size="small"
             sx={{
               fontWeight: 900,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              borderColor: alpha(theme.palette.primary.main, 0.3),
-              color: theme.palette.primary.main,
+              bgcolor: "background.default", // Clay look
+              border: `1px solid ${theme.palette.divider}`,
+              color: "primary.main",
+              fontSize: "0.65rem",
             }}
-            variant="outlined"
           />
           {topPlayer && (
             <IconButton
               onClick={handleClick}
               size="small"
-              sx={{ color: "text.secondary" }}
+              sx={(theme) => ({
+                ...theme.clay.button, // Floating button
+                width: 32,
+                height: 32,
+              })}
             >
               <InfoOutlined fontSize="small" />
             </IconButton>
@@ -154,11 +156,9 @@ export default function PreMatchMOTM({ fixture }) {
                     sx={{
                       width: 90,
                       height: 90,
-                      border: `3px solid ${theme.palette.primary.main}`,
-                      boxShadow: `0 0 30px ${alpha(
-                        theme.palette.primary.main,
-                        0.3,
-                      )}`,
+                      // Floating Sphere
+                      border: `4px solid ${theme.palette.background.default}`,
+                      boxShadow: theme.clay.card.boxShadow,
                     }}
                   />
                   <Box
@@ -168,10 +168,10 @@ export default function PreMatchMOTM({ fixture }) {
                       left: "50%",
                       transform: "translateX(-50%)",
                       bgcolor: "primary.main",
-                      color: "black",
+                      color: "primary.contrastText",
                       px: 1.5,
-                      borderRadius: 1,
-                      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
                     }}
                   >
                     <Typography variant="caption" sx={{ fontWeight: 900 }}>
@@ -184,12 +184,21 @@ export default function PreMatchMOTM({ fixture }) {
               <Box>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.6, letterSpacing: 1, fontWeight: 700 }}
+                  sx={{
+                    opacity: 0.6,
+                    letterSpacing: 1,
+                    fontWeight: 800,
+                    fontSize: "0.65rem",
+                  }}
                 >
                   KEY PROTAGONIST
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 900, mb: 0.5 }}>
-                  {topPlayer.name.toUpperCase()}
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 900, mb: 0.5, lineHeight: 1 }}
+                >
+                  {topPlayer.name.split(" ").pop().toUpperCase()}{" "}
+                  {/* Last Name Only for Impact */}
                 </Typography>
                 <Stack direction="row" alignItems="baseline" spacing={0.5}>
                   <Typography
@@ -208,9 +217,9 @@ export default function PreMatchMOTM({ fixture }) {
               </Box>
             </Stack>
           ) : (
-            /* EMPTY STATE: RESULTS NOT READY */
+            /* EMPTY STATE */
             <Stack alignItems="center" spacing={1} sx={{ opacity: 0.5 }}>
-              <HourglassEmpty sx={{ fontSize: 40 }} />
+              <HourglassEmptyRounded sx={{ fontSize: 40 }} />
               <Typography
                 variant="caption"
                 sx={{ fontWeight: 700, letterSpacing: 1 }}
@@ -233,11 +242,9 @@ export default function PreMatchMOTM({ fixture }) {
               mt: 1.5,
               p: 2,
               minWidth: 220,
-              borderRadius: 3,
-              bgcolor: alpha(theme.palette.background.default, 0.95),
-              backdropFilter: "blur(10px)",
+              borderRadius: "16px",
+              ...theme.clay.card, // Reuse Clay Card style
               border: `1px solid ${theme.palette.divider}`,
-              boxShadow: theme.shadows[10],
             },
           }}
         >
@@ -266,7 +273,9 @@ export default function PreMatchMOTM({ fixture }) {
                 >
                   {index + 1}. {name}
                 </Typography>
-                <Typography variant="caption">{percentage}%</Typography>
+                <Typography variant="caption" fontWeight={700}>
+                  {percentage}%
+                </Typography>
               </Stack>
             ))}
           </Stack>
@@ -275,41 +284,56 @@ export default function PreMatchMOTM({ fixture }) {
     );
   }
 
-  // --- RENDER: VOTING STATE (User hasn't voted yet) ---
+  // --- RENDER: VOTING STATE ---
   return (
     <Paper
-      sx={{
+      elevation={0}
+      sx={(theme) => ({
         p: 3,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         minHeight: "240px",
-      }}
-      elevation={0}
+      })}
     >
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
-        <Star color="primary" sx={{ fontSize: 18 }} />
-        <Typography variant="button" sx={{ letterSpacing: 2, opacity: 0.8 }}>
-          Player to Watch
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+        <StarRounded color="primary" sx={{ fontSize: 20 }} />
+        <Typography
+          variant="button"
+          sx={{
+            letterSpacing: 1.5,
+            opacity: 0.8,
+            fontWeight: 900,
+            fontSize: "0.75rem",
+          }}
+        >
+          PLAYER TO WATCH
         </Typography>
       </Stack>
 
       <Typography
         variant="caption"
-        sx={{ mb: 3, opacity: 0.6, textAlign: "center", maxWidth: "80%" }}
+        sx={{
+          mb: 4,
+          opacity: 0.6,
+          textAlign: "center",
+          maxWidth: "80%",
+          lineHeight: 1.4,
+        }}
       >
-        Identify the player most likely to influence the result.
+        Identify the player most likely to influence the result today.
       </Typography>
 
-      <Box sx={{ width: "100%", maxWidth: 280 }}>
+      <Box sx={{ width: "100%", maxWidth: 300 }}>
         <Box
-          sx={{
+          sx={(theme) => ({
             mb: 3,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 3,
-              bgcolor: alpha(theme.palette.background.paper, 0.3),
-            },
-          }}
+            // Pressed Well for Input
+            ...theme.clay.box,
+            bgcolor: "background.default",
+            p: 0.5,
+            borderRadius: "16px",
+          })}
         >
           <PlayersSelect onChange={(e) => handleChange(e)} showAvatar={true} />
         </Box>
@@ -317,15 +341,19 @@ export default function PreMatchMOTM({ fixture }) {
         <AnimatePresence>
           {selectedPlayer && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
             >
               <Button
                 onClick={handlePlayerToWatchSubmit}
                 variant="contained"
                 fullWidth
-                startIcon={<CheckCircle />}
+                size="large"
+                startIcon={<CheckCircleRounded />}
+                sx={{
+                  fontWeight: 900,
+                }}
               >
                 LOCK IN WATCH
               </Button>
@@ -337,9 +365,9 @@ export default function PreMatchMOTM({ fixture }) {
   );
 }
 
+// Helper Logic
 const calculatePercentages = (preMatchMotm, preMatchMotmVotes, squadData) => {
   const totalVotes = parseInt(preMatchMotmVotes, 10);
-  // Ensure squadData exists and totalVotes is a valid positive number
   if (!totalVotes || totalVotes <= 0 || !squadData) return [];
 
   return Object.entries(preMatchMotm)
@@ -349,5 +377,5 @@ const calculatePercentages = (preMatchMotm, preMatchMotmVotes, squadData) => {
       votes,
       percentage: ((votes / totalVotes) * 100).toFixed(0),
     }))
-    .sort((a, b) => b.votes - a.votes); // Sort by votes (number) for accuracy
+    .sort((a, b) => b.votes - a.votes);
 };

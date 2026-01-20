@@ -10,11 +10,16 @@ import {
   useTheme,
   Fade,
 } from "@mui/material";
-import { Add, Remove, SportsSoccer, CheckCircle } from "@mui/icons-material";
+import {
+  AddRounded,
+  RemoveRounded,
+  SportsSoccerRounded,
+  CheckCircleRounded,
+} from "@mui/icons-material"; // Rounded Icons
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 
-// --- HOOKS & FIREBASE (Kept exactly as is) ---
+// --- HOOKS ---
 import useGroupData from "../../../../Hooks/useGroupsData";
 import { useAuth } from "../../../../Providers/AuthContext";
 import useGlobalData from "../../../../Hooks/useGlobalData";
@@ -26,18 +31,15 @@ import ScorePredictionResults from "../ScorePredictionResults";
 export default function ScorePrediction({ fixture }) {
   const dispatch = useDispatch();
 
-  // Data Selectors
   const { activeGroup } = useGroupData();
   const { user } = useAuth();
   const globalData = useGlobalData();
   const usersMatchData = useSelector(selectUserMatchData(fixture.id));
   const storedUsersPredictedScore = usersMatchData?.ScorePrediction;
 
-  // Local State
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
 
-  // --- HANDLERS ---
   const handleTeamScoreSubmit = async () => {
     if (!user) return;
     await handlePredictTeamScore({
@@ -59,21 +61,6 @@ export default function ScorePrediction({ fixture }) {
     );
   };
 
-  // --- STYLES ---
-  const glassCardStyles = {
-    // Layout & Spacing only
-    p: 3,
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "220px",
-
-    // REMOVED: background, backdropFilter, border, borderRadius, overflow, transition
-    // These are now inherited automatically from your Global Theme!
-  };
-
   if (storedUsersPredictedScore || !user) {
     return (
       <ScorePredictionResults
@@ -83,56 +70,59 @@ export default function ScorePrediction({ fixture }) {
     );
   }
 
-  // --- RENDER: COMPACT PREDICTION UI ---
   return (
-    <Paper sx={glassCardStyles} elevation={0}>
-      {/* Compact Header */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        gap={1}
-        sx={{ mb: 2, opacity: 0.7 }}
-      >
-        <SportsSoccer sx={{ fontSize: "1rem" }} color="primary" />
+    <Paper
+      elevation={0}
+      sx={(theme) => ({
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "220px",
+      })}
+    >
+      {/* Header */}
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+        <SportsSoccerRounded color="primary" sx={{ fontSize: 20 }} />
         <Typography
-          variant="caption"
+          variant="button"
           sx={{
-            letterSpacing: 1,
-            fontSize: "0.7rem",
+            letterSpacing: 1.5,
+            opacity: 0.8,
+            fontWeight: 900,
+            fontSize: "0.75rem",
           }}
         >
           SCORE PREDICTOR
         </Typography>
       </Stack>
 
-      {/* Main Scoreboard Area */}
+      {/* Main Scoreboard */}
       <Stack
         direction="row"
         justifyContent="center"
         alignItems="center"
-        spacing={1}
+        spacing={2}
         sx={{ width: "100%", mb: 3 }}
       >
-        {/* HOME TEAM */}
         <TeamScoreInputCompact
           team={fixture.teams.home}
           score={homeScore}
           setScore={setHomeScore}
         />
 
-        {/* VS Divider (Smaller) */}
         <Typography
-          variant="h5"
+          variant="h4"
           sx={{
             color: "text.disabled",
-            px: 1,
-            pb: 4, // Align with numbers
+            fontWeight: 300,
+            pb: 2, // Visual alignment
           }}
         >
           :
         </Typography>
 
-        {/* AWAY TEAM */}
         <TeamScoreInputCompact
           team={fixture.teams.away}
           score={awayScore}
@@ -140,13 +130,18 @@ export default function ScorePrediction({ fixture }) {
         />
       </Stack>
 
-      {/* Submit Button (Compact) */}
+      {/* Submit Button */}
       <Fade in={true}>
         <Button
           onClick={handleTeamScoreSubmit}
           variant="contained"
-          size="small" // Smaller button
-          startIcon={<CheckCircle sx={{ fontSize: "1rem !important" }} />}
+          size="large"
+          startIcon={<CheckCircleRounded />}
+          sx={{
+            // The Theme already handles the Clay Button styling for "contained"
+            minWidth: 200,
+            fontWeight: 900,
+          }}
         >
           CONFIRM {homeScore}-{awayScore}
         </Button>
@@ -155,31 +150,24 @@ export default function ScorePrediction({ fixture }) {
   );
 }
 
-// --- SUB-COMPONENT: COMPACT TEAM INPUT ---
+// --- SUB-COMPONENT ---
 const TeamScoreInputCompact = ({ team, score, setScore }) => {
   const theme = useTheme();
-  const btnSize = "32px"; // Fixed small size for buttons
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
+      sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
-      {/* Avatar & Name Stacked tightly */}
+      {/* Avatar */}
       <Avatar
         src={team.logo}
         alt={team.name}
         sx={{
-          width: 40, // Smaller avatar
-          height: 40,
-          mb: 0.5,
-          filter:
-            theme.palette.mode === "dark"
-              ? "drop-shadow(0 0 8px rgba(255,255,255,0.1))"
-              : "none",
+          width: 48,
+          height: 48,
+          mb: 1,
+          border: `2px solid ${theme.palette.background.default}`,
+          boxShadow: theme.clay.card.boxShadow, // Floating Sphere
         }}
       />
       <Typography
@@ -187,78 +175,82 @@ const TeamScoreInputCompact = ({ team, score, setScore }) => {
         noWrap
         sx={{
           maxWidth: "80px",
-          mb: 1.5,
-          opacity: 0.7,
+          mb: 2,
+          fontWeight: 800,
+          color: "text.secondary",
         }}
       >
         {team.code || team.name.substring(0, 3).toUpperCase()}
       </Typography>
 
-      {/* Horizontal Score Controls */}
+      {/* Score Controls */}
       <Stack
         direction="row"
-        spacing={1}
+        spacing={1.5}
         alignItems="center"
-        sx={{
-          bgcolor: theme.palette.background.paper,
+        sx={(theme) => ({
+          // Container background matches card, just layout here
           p: 0.5,
-          borderRadius: 3,
-          border: `1px solid ${theme.palette.divider}`,
-        }}
+        })}
       >
-        {/* Minus Button */}
+        {/* MINUS (Floating Clay Button) */}
         <IconButton
           onClick={() => setScore((prev) => Math.max(0, prev - 1))}
           disabled={score === 0}
-          sx={{
-            width: btnSize,
-            height: btnSize,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            opacity: score === 0 ? 0.3 : 1,
-            p: 0.5,
-          }}
+          sx={(theme) => ({
+            ...theme.clay.button,
+            width: 36,
+            height: 36,
+            borderRadius: "12px",
+            // Disabled state handled by opacity automatically
+          })}
         >
-          <Remove fontSize="small" />
+          <RemoveRounded fontSize="small" />
         </IconButton>
 
-        {/* Digital Number Display (Smaller) */}
+        {/* SCORE DISPLAY (Pressed Clay Well) */}
         <Box
           component={motion.div}
           key={score}
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
-          sx={{
-            lineHeight: 1,
-            minWidth: "40px",
-            textAlign: "center",
-            color: score > 0 ? "text.primary" : "text.disabled",
-            textShadow:
-              score > 0 && theme.palette.mode === "dark"
-                ? `0 0 15px ${theme.palette.primary.main}60`
-                : "none",
-          }}
+          sx={(theme) => ({
+            ...theme.clay.box, // Inset Shadow
+            width: 48,
+            height: 48,
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "background.default",
+          })}
         >
-          {score}
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 900,
+              color: score > 0 ? "text.primary" : "text.disabled",
+            }}
+          >
+            {score}
+          </Typography>
         </Box>
 
-        {/* Plus Button */}
+        {/* PLUS (Floating Clay Button) */}
         <IconButton
           onClick={() => setScore((prev) => prev + 1)}
-          sx={{
-            width: btnSize,
-            height: btnSize,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            p: 0.5,
+          sx={(theme) => ({
+            ...theme.clay.button,
+            width: 36,
+            height: 36,
+            borderRadius: "12px",
             "&:hover": {
-              bgcolor: theme.palette.primary.main,
-              color: "#000",
-              borderColor: "transparent",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
             },
-          }}
+          })}
         >
-          <Add fontSize="small" />
+          <AddRounded fontSize="small" />
         </IconButton>
       </Stack>
     </Box>
