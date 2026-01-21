@@ -87,7 +87,7 @@ export default function LineupShell({
   return (
     <Paper
       sx={{
-        maxWidth: 600,
+        maxWidth: 450,
         mx: "auto",
         borderRadius: "24px",
         overflow: "hidden",

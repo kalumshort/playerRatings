@@ -74,14 +74,15 @@ export default function LineupPredictor({ fixture, readOnly }) {
   // CASE A: VIEW MODE (Side-by-Side on Desktop, Stacked on Mobile)
   if (storedPrediction || readOnly) {
     return (
-      <Box className="containerMargin">
-        <Grid container alignItems="flex-start">
-          <Grid item xs={12} lg={6}>
+      <Box sx={{ flexGrow: 1, width: "100%", mt: 2 }}>
+        <Grid container spacing={4} alignItems="flex-start">
+          {/* LEFT: Lineup Tabs (50% on Web, 100% on Mobile) */}
+          <Grid item xs={12} md={6}>
             {storedPrediction && <LineupTabs fixture={fixture} />}
           </Grid>
 
-          {/* RIGHT: Community Stats */}
-          <Grid item xs={12} lg={6}>
+          {/* RIGHT: Community Stats (50% on Web, 100% on Mobile) */}
+          <Grid item xs={12} md={6}>
             <CommunityTeamStats fixture={fixture} />
           </Grid>
         </Grid>
