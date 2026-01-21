@@ -20,8 +20,6 @@ import { useAppNavigate } from "../../Hooks/useAppNavigate";
 import { useParams } from "react-router-dom";
 import useGroupData from "../../Hooks/useGroupsData";
 import useGlobalData from "../../Hooks/useGlobalData";
-
-// IMPORTANT: Double check this path matches where your action is defined
 import { fetchMatchPlayerRatings } from "../../Hooks/Fixtures_Hooks";
 
 export default function PlayerFormWidgets() {
@@ -46,14 +44,12 @@ export default function PlayerFormWidgets() {
       activeGroup?.groupId &&
       globalData?.currentYear
     ) {
-      // Get last 3 matches (Newest -> Oldest)
       const last3Matches = [...previousFixtures]
         .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp)
         .slice(0, 3);
 
       last3Matches.forEach((match) => {
         const matchId = match.fixture.id;
-        // Optimization: Only fetch if the match ID is missing from our ratings map
         if (!ratingsMap[matchId]) {
           dispatch(
             fetchMatchPlayerRatings({
@@ -69,7 +65,6 @@ export default function PlayerFormWidgets() {
 
   // --- 3. LOGIC ENGINE ---
   const { hotPlayer, coldPlayer, isLoading } = useMemo(() => {
-    // Basic Data Check
     if (!previousFixtures || !squadData) return { isLoading: true };
 
     const last3Matches = [...previousFixtures]
@@ -78,15 +73,12 @@ export default function PlayerFormWidgets() {
 
     if (last3Matches.length === 0) return { isLoading: false };
 
-    // Check if data is fully loaded for these 3 games
     const haveDataForRecentGames = last3Matches.every(
       (m) => ratingsMap[m.fixture.id],
     );
 
-    // If we are waiting for the fetch to finish, show Skeletons
     if (!haveDataForRecentGames) return { isLoading: true };
 
-    // --- CALCULATION LOGIC ---
     const formStats = {};
 
     last3Matches.forEach((match) => {
@@ -95,14 +87,9 @@ export default function PlayerFormWidgets() {
 
       if (matchData && matchData.players) {
         Object.values(matchData.players).forEach((pStats) => {
-          // Handle potential ID differences (api 'id' vs db 'player_id')
           const pId = pStats.id || pStats.player_id;
-
-          // Safety Check: Only process if ID exists in Squad Data
-          // This filters out Coaches (4720) or 'null' IDs
           if (!squadData[pId]) return;
 
-          // Rating Formula: Total Rating / Total Submits
           const validSubmits = pStats.totalSubmits || 1;
           const calculatedRating = pStats.totalRating / validSubmits;
 
@@ -123,17 +110,14 @@ export default function PlayerFormWidgets() {
         avgRating: stats.total / stats.count,
         matchesPlayed: stats.count,
       }))
-      // Filter: Player must have played at least 1 of the last 3 games
       .filter((p) => p.matchesPlayed >= 1);
 
     if (averages.length < 2) return { isLoading: false };
 
-    // Sort High -> Low
     averages.sort((a, b) => b.avgRating - a.avgRating);
 
     const hydrate = (item) => ({
       ...item,
-      // We know squadData exists because of the safety check above
       name: squadData[item.playerId].name,
       photo: squadData[item.playerId].photo,
     });
@@ -149,7 +133,7 @@ export default function PlayerFormWidgets() {
 
   // --- RENDER ---
 
-  // 1. Loading State (Skeletons)
+  // 1. Loading State
   if (isLoading) {
     return (
       <Paper elevation={0} sx={{ ...theme.clay.card, p: 2, mb: 3 }}>
@@ -167,12 +151,12 @@ export default function PlayerFormWidgets() {
         <Stack direction="row" spacing={2}>
           <Skeleton
             variant="rounded"
-            height={140}
+            height={180}
             sx={{ flex: 1, borderRadius: 4 }}
           />
           <Skeleton
             variant="rounded"
-            height={140}
+            height={180}
             sx={{ flex: 1, borderRadius: 4 }}
           />
         </Stack>
@@ -223,16 +207,19 @@ export default function PlayerFormWidgets() {
   );
 }
 
-// --- SUB-COMPONENT: TRADING CARD ---
+// --- SUB-COMPONENT: REDESIGNED WIDGET CARD ---
 const WidgetCard = ({ type, player, onClick }) => {
+  const theme = useTheme();
   const isHot = type === "hot";
 
-  const mainColor = isHot ? "#ff5722" : "#29b6f6";
-  const bgColor = isHot ? "#fbe9e7" : "#e1f5fe";
+  // Use vibrant colors
+  const mainColor = isHot ? "#FF3D00" : "#00B0FF"; // Deep Orange vs Light Blue
+
+  // Icon & Label
   const icon = isHot ? (
-    <WhatshotRounded fontSize="small" />
+    <WhatshotRounded sx={{ fontSize: 18 }} />
   ) : (
-    <AcUnitRounded fontSize="small" />
+    <AcUnitRounded sx={{ fontSize: 18 }} />
   );
   const label = isHot ? "ON FIRE" : "ICE COLD";
 
@@ -241,77 +228,87 @@ const WidgetCard = ({ type, player, onClick }) => {
       onClick={onClick}
       sx={{
         flex: 1,
-        borderRadius: "16px",
-        bgcolor: bgColor,
+        borderRadius: "24px",
+        cursor: "pointer",
+        position: "relative",
+        overflow: "hidden",
         border: `1px solid ${alpha(mainColor, 0.3)}`,
+
+        // --- NEW BACKGROUND: Subtle Gradient Glass ---
+        background: `linear-gradient(180deg, ${alpha(mainColor, 0.05)} 0%, ${alpha(mainColor, 0.15)} 100%)`,
+
         p: 2,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        cursor: "pointer",
-        position: "relative",
-        overflow: "hidden",
-        transition: "all 0.2s ease",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: `0 8px 16px ${alpha(mainColor, 0.2)}`,
+          boxShadow: `0 12px 24px -10px ${alpha(mainColor, 0.4)}`,
+          borderColor: mainColor,
         },
       }}
     >
+      {/* HEADER PILL */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           gap: 0.5,
-          color: mainColor,
-          mb: 1.5,
-          bgcolor: "white",
+          color: "white",
+          bgcolor: mainColor,
           px: 1.5,
           py: 0.5,
           borderRadius: "20px",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          boxShadow: `0 4px 12px ${alpha(mainColor, 0.4)}`,
+          mb: 2,
         }}
       >
         {icon}
-        <Typography
-          variant="caption"
-          fontWeight={900}
-          letterSpacing={1}
-          sx={{ fontSize: "0.65rem" }}
-        >
+        <Typography variant="caption" fontWeight={900} letterSpacing={1}>
           {label}
         </Typography>
       </Box>
 
+      {/* AVATAR WITH GLOW */}
       <Avatar
         src={player.photo}
         sx={{
-          width: 60,
-          height: 60,
-          border: `3px solid white`,
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          mb: 1.5,
+          width: 64,
+          height: 64,
+          border: `3px solid ${theme.palette.background.paper}`,
+          // Glow effect matching the type color
+          boxShadow: `0 0 20px ${alpha(mainColor, 0.4)}`,
+          mb: 1,
         }}
       />
 
+      {/* HUGE RATING */}
       <Typography
-        variant="subtitle2"
-        fontWeight={800}
-        noWrap
-        sx={{ maxWidth: "100%" }}
+        variant="h3"
+        sx={{
+          fontWeight: 900,
+          color: mainColor,
+          lineHeight: 1,
+          mt: 1,
+          mb: 0.5,
+          // Text Shadow to make it pop
+          textShadow: `0 2px 10px ${alpha(mainColor, 0.3)}`,
+        }}
       >
-        {player.name.split(" ").pop()}
+        {player.avgRating.toFixed(1)}
       </Typography>
 
-      <Typography variant="caption" color="text.secondary" fontWeight={700}>
-        Avg:{" "}
-        <Box
-          component="span"
-          sx={{ color: mainColor, fontSize: "0.9rem", fontWeight: 900 }}
-        >
-          {player.avgRating.toFixed(1)}
-        </Box>
+      {/* PLAYER NAME */}
+      <Typography
+        variant="body2"
+        fontWeight={700}
+        color="text.secondary"
+        noWrap
+        sx={{ maxWidth: "100%", opacity: 0.8 }}
+      >
+        {player.name.split(" ").pop()}
       </Typography>
     </Box>
   );

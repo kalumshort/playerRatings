@@ -30,6 +30,7 @@ import { selectSeasonSquadDataObject } from "../../Selectors/squadDataSelectors"
 
 import { useAppNavigate } from "../../Hooks/useAppNavigate";
 import PlayerFormWidgets from "./PlayerFormWidget";
+import { motion } from "framer-motion";
 
 // --- HELPERS ---
 const getRatingColor = (score, theme) => {
@@ -463,68 +464,141 @@ export default function AllPlayerStats() {
 const PodiumStep = ({ rank, player, onClick }) => {
   const theme = useTheme();
   const isFirst = rank === 1;
-  const height = isFirst ? 140 : rank === 2 ? 110 : 90;
 
-  if (!player) return <Box sx={{ width: isFirst ? 100 : 80 }} />;
+  // Taller heights for better separation
+  const height = isFirst ? 160 : rank === 2 ? 130 : 110;
+  const width = isFirst ? 110 : 90;
+
+  if (!player) return <Box sx={{ width }} />;
 
   return (
     <Stack
+      component={motion.div}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: rank * 0.1 }}
       alignItems="center"
+      onClick={onClick}
       sx={{
         cursor: "pointer",
         position: "relative",
-        width: isFirst ? 100 : 80,
+        width: width,
+        mx: 0.5,
+        "&:hover .podium-pillar": {
+          transform: "translateY(-4px)",
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 10px 30px -10px ${alpha(theme.palette.primary.main, 0.4)}`,
+        },
       }}
-      onClick={onClick}
     >
+      {/* 1. AVATAR (Floating Top) */}
       <Avatar
         src={player.playerImg}
+        alt={player.playerName}
         sx={{
-          width: isFirst ? 80 : 60,
-          height: isFirst ? 80 : 60,
-          mb: -2,
+          width: isFirst ? 80 : 64,
+          height: isFirst ? 80 : 64,
+          mb: -3, // Pulls it down into the pillar slightly
           zIndex: 2,
-          border: `4px solid ${theme.palette.background.paper}`,
-          boxShadow: theme.shadows[4],
+          border: `4px solid ${theme.palette.background.default}`, // Matches page bg to create "cutout" look
+          boxShadow: isFirst
+            ? `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+            : theme.shadows[3],
         }}
       />
+
+      {/* 2. THE PILLAR (Glass + Border) */}
       <Box
+        className="podium-pillar"
         sx={{
           width: "100%",
           height: height,
-          bgcolor: isFirst
-            ? "primary.main"
-            : alpha(theme.palette.primary.main, 0.1),
-          borderRadius: "16px 16px 0 0",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          pt: 4,
-          color: isFirst ? "white" : "text.primary",
+          justifyContent: "flex-start",
+          pt: 4.5, // Space for avatar overlap
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+
+          // Shape & Border Logic
+          borderRadius: "24px 24px 0 0",
+          border: isFirst
+            ? `3px solid ${theme.palette.primary.main}`
+            : `1px solid ${alpha(theme.palette.text.secondary, 0.1)}`,
+
+          // Background Logic (Gradient for 1st, subtle glass for others)
+          background: isFirst
+            ? `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.background.paper, 0.6)} 100%)`
+            : alpha(theme.palette.background.paper, 0.4),
+
+          // Glow for 1st Place
+          boxShadow: isFirst
+            ? `0 0 20px -5px ${alpha(theme.palette.primary.main, 0.2)}`
+            : "none",
         }}
       >
-        <Typography variant="h6" fontWeight={900}>
-          {rank}
-        </Typography>
+        {/* Player Name */}
         <Typography
-          variant="caption"
+          variant="body2"
           noWrap
-          sx={{ maxWidth: "90%", fontWeight: 700, opacity: 0.8 }}
+          sx={{
+            maxWidth: "90%",
+            fontWeight: 700,
+            color: isFirst ? "primary.main" : "text.secondary",
+            letterSpacing: 0.5,
+            mb: 0.5,
+          }}
         >
           {player.playerName.split(" ").pop()}
         </Typography>
-        <Box
+
+        {/* Rank Number (Large Watermark style) */}
+        <Typography
+          variant="h1"
           sx={{
-            mt: 1,
-            px: 1,
-            bgcolor: "background.paper",
-            borderRadius: 4,
+            fontSize: isFirst ? "4rem" : "3rem",
+            fontWeight: 900,
+            lineHeight: 1,
+            opacity: 0.1, // Very subtle background number
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
             color: "text.primary",
-            fontWeight: 800,
-            fontSize: "0.75rem",
           }}
         >
-          {player.rating.toFixed(1)}
+          {rank}
+        </Typography>
+
+        {/* RATING PILL (Larger & Bolder) */}
+        <Box
+          sx={{
+            mt: "auto", // Pushes to bottom
+            mb: 2,
+            px: 2,
+            py: 0.5,
+            borderRadius: "20px",
+            bgcolor: isFirst
+              ? "primary.main"
+              : alpha(theme.palette.text.primary, 0.1),
+            color: isFirst
+              ? theme.palette.primary.contrastText
+              : "text.primary",
+            boxShadow: isFirst
+              ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+              : "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }}
+        >
+          <Typography
+            variant={isFirst ? "h5" : "h6"}
+            sx={{ fontWeight: 800, lineHeight: 1 }}
+          >
+            {player.rating.toFixed(1)}
+          </Typography>
         </Box>
       </Box>
     </Stack>
