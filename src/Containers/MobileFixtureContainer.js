@@ -106,11 +106,6 @@ export default function MobileFixtureContainer({
             scrollButtons={false}
             // Hide default underline
             TabIndicatorProps={{ style: { display: "none" } }}
-            sx={{
-             
-             
-              "& .MuiTabs-flexContainer": { gap: 0.5 },
-            }}
           >
             {tabs.map((tab) => (
               <Tab
@@ -118,27 +113,6 @@ export default function MobileFixtureContainer({
                 label={tab.label}
                 value={tab.value}
                 disableRipple
-                sx={(theme) => ({
-                  textTransform: "none",
-                  fontWeight: 700,
-                  fontSize: "0.9rem",
-                  minHeight: "40px",
-                  borderRadius: "20px",
-                  color: "text.secondary",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  zIndex: 1,
-                  px: 2,
-
-                  // ACTIVE STATE -> Floating Pill
-                  "&.Mui-selected": {
-                    color: "primary.main",
-                    bgcolor: "background.paper", // White/Dark Grey
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)", // Floating shadow
-                    // Or use theme.clay.card if you want the full clay effect:
-                    // ...theme.clay.card,
-                    // p: 0, // reset padding if using clay card
-                  },
-                })}
               />
             ))}
           </Tabs>

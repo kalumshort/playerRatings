@@ -70,15 +70,11 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
     const primaryMain = accentColor;
 
     // --- 3. CLAY SHADOW GENERATOR ---
-    // Calculates the "Float" and the "Pressed" state based on color
     const getClayShadows = (baseColor) => {
       return {
-        // The "Marshmallow" Float
         float: isLight
           ? `10px 10px 20px ${colors.shadowDark}, -10px -10px 20px ${colors.shadowLight}`
           : `8px 8px 16px ${colors.shadowDark}, -8px -8px 16px ${colors.shadowLight}`,
-
-        // The "Pressed" Inset (Deep Groove)
         pressed: isLight
           ? `inset 6px 6px 12px ${darken(baseColor, 0.2)}, inset -6px -6px 12px ${lighten(baseColor, 0.4)}`
           : `inset 4px 4px 8px ${darken(baseColor, 0.5)}, inset -4px -4px 8px ${lighten(baseColor, 0.1)}`,
@@ -87,9 +83,9 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
 
     const primaryShadows = getClayShadows(primaryMain);
     const surfaceShadows = getClayShadows(colors.bg);
+
     return createTheme({
       clay: {
-        // 1. The Floating Container (Cards, Avatars)
         card: {
           backgroundColor: colors.bg,
           boxShadow: surfaceShadows.float,
@@ -97,7 +93,6 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
             ? "1px solid rgba(255,255,255,0.6)"
             : "1px solid rgba(255,255,255,0.05)",
         },
-        // 2. The Pressed Groove (Score Inputs, Result Boxes)
         box: {
           backgroundColor: colors.bg,
           boxShadow: surfaceShadows.pressed,
@@ -120,7 +115,7 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         background: { default: colors.bg, paper: colors.paper },
         text: { primary: colors.textPrimary, secondary: colors.textSecondary },
       },
-      shape: { borderRadius: "16px" }, // Slightly softer than 32 for clay
+      shape: { borderRadius: "16px" },
 
       typography: {
         fontFamily: "'Nunito', 'Quicksand', sans-serif",
@@ -135,9 +130,52 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
       components: {
         MuiCssBaseline: {
           styleOverrides: `
-        
             body { background-color: ${colors.bg}; transition: background-color 0.4s ease; }
           `,
+        },
+
+        // --- TABS (Global Styles) ---
+        MuiTabs: {
+          styleOverrides: {
+            root: {
+              minHeight: "unset", // Removes default huge height
+              padding: 0, // Removes padding
+            },
+            flexContainer: {
+              gap: "8px", // Maps to your gap: 0.5 (approx 4px-8px)
+              paddingBottom: 0, // Explicitly remove bottom padding
+            },
+            indicator: {
+              display: "none", // Hide the underline
+            },
+          },
+        },
+
+        // --- TAB (Global Styles) ---
+        MuiTab: {
+          styleOverrides: {
+            root: {
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              minHeight: "40px", // Matches your requested height
+              borderRadius: "20px",
+              color: colors.textSecondary,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              zIndex: 1,
+              padding: "6px 16px", // Horizontal padding
+              marginBottom: 0, // Ensure no margin pushes bottom
+
+              "&.Mui-selected": {
+                color: primaryMain, // Use the dynamic accent color
+                backgroundColor: colors.paper, // White/Dark Grey
+                // Soft floating shadow for the active pill
+                boxShadow: isLight
+                  ? "0 4px 12px rgba(0,0,0,0.08)"
+                  : "0 4px 12px rgba(0,0,0,0.4)",
+              },
+            },
+          },
         },
 
         // --- STANDARD BUTTON ---
@@ -153,27 +191,26 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
           styleOverrides: {
             root: {
               borderRadius: "50px",
-              padding: "14px 32px", // Thick padding for tactile feel
-              boxShadow: primaryShadows.float, // Apply Clay Shadow by default
+              padding: "14px 32px",
+              boxShadow: primaryShadows.float,
               transition: "box-shadow 0.2s ease, background-color 0.2s ease",
             },
             containedPrimary: {
               backgroundColor: primaryMain,
               color: "#3D3D3D",
               "&:hover": {
-                backgroundColor: primaryMain, // Motion handles the lift, color stays
+                backgroundColor: primaryMain,
                 boxShadow: primaryShadows.float,
               },
             },
             text: {
-              boxShadow: "none", // Text buttons stay flat
+              boxShadow: "none",
               backgroundColor: "transparent",
             },
           },
         },
 
-        // --- LOADING BUTTON (The New Logic) ---
-        // Requires @mui/lab to be installed
+        // --- LOADING BUTTON ---
         MuiLoadingButton: {
           styleOverrides: {
             root: {
@@ -182,30 +219,25 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
               boxShadow: primaryShadows.float,
               backgroundColor: primaryMain,
               color: "#3D3D3D",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", // Smooth morph
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 
-              // 1. THE PRESSED STATE
-              // When loading is true, we invert the shadows to look "stuck down"
               "&.Mui-loading": {
-                backgroundColor: primaryMain, // Keep color solid
-                opacity: 1, // Override default fade
-                boxShadow: primaryShadows.pressed, // <--- THE MAGIC
-                paddingLeft: "32px", // Prevent layout shift
+                backgroundColor: primaryMain,
+                opacity: 1,
+                boxShadow: primaryShadows.pressed,
+                paddingLeft: "32px",
               },
 
-              // 2. THE SPINNER
               "& .MuiLoadingButton-loadingIndicator": {
-                position: "absolute", // Center it
-                color: "#4A4A4A", // Dark spinner for visibility
+                position: "absolute",
+                color: "#4A4A4A",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
               },
 
-              // 3. TEXT HANDLING
-              // We make text transparent instead of removing it to keep size
               "&.Mui-loading .MuiButton-startIcon, &.Mui-loading .MuiButton-endIcon, &.Mui-loading .MuiButton-label":
                 {
-                  visibility: "hidden", // Or opacity: 0
+                  visibility: "hidden",
                 },
             },
           },
@@ -218,7 +250,6 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
               backgroundImage: "none",
               margin: "8px",
               border: "none",
-              // Soft Clay Float for Cards
               boxShadow: isLight
                 ? "20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff"
                 : "20px 20px 60px #1b1e28, -20px -20px 60px #262a38",

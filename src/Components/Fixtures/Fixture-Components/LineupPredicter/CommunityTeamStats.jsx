@@ -30,7 +30,7 @@ export function CommunityTeamStats({ fixture }) {
   // --- DATA PROCESSING ---
   const stats = useMemo(() => {
     if (!matchPredictions?.totalPlayersSubmits) return [];
-    console.log(matchPredictions);
+
     const totalVotes = matchPredictions.totalTeamSubmits || 1;
 
     return Object.entries(matchPredictions.totalPlayersSubmits)
@@ -59,8 +59,8 @@ export function CommunityTeamStats({ fixture }) {
         background: theme.palette.background.paper,
         borderRadius: "24px",
         p: 3, // More breathing room
+        margin: "0px",
       }}
-      className="CommunityTeamStats"
     >
       {/* HEADER */}
       <Box

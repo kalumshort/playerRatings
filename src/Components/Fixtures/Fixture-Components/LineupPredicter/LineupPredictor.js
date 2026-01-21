@@ -6,22 +6,18 @@ import { Box, Grid } from "@mui/material"; // Added Grid
 import { CommunityTeamStats } from "./CommunityTeamStats";
 
 // --- SELECTORS & HOOKS ---
-import { selectSquadDataObject } from "../../../../Selectors/squadDataSelectors";
+
 import { selectUserMatchData } from "../../../../Selectors/userDataSelectors";
-import ChosenLineup from "./chosenLineup";
+
 import EnhancedLineupPredictor from "./EnhancedLineupPredictor";
-import { useParams } from "react-router-dom";
+
+import LineupTabs from "./LineupTabs";
 
 export default function LineupPredictor({ fixture, readOnly }) {
-  const { clubSlug } = useParams(); // e.g., "man-united"
-  const squadData = useSelector((state) =>
-    selectSquadDataObject(state, clubSlug),
-  );
-  const usersMatchData = useSelector(selectUserMatchData(fixture.id));
+  const usersMatchPredictions = useSelector(selectUserMatchData(fixture.id));
 
   // Load existing prediction if available
-  const storedPrediction = usersMatchData?.chosenTeam;
-  const storedFormation = usersMatchData?.formation || "4-3-3";
+  const storedPrediction = usersMatchPredictions?.chosenTeam;
 
   // // Local state for the prediction being built
   // const [chosenTeam, setTeam] = useState({});
@@ -81,13 +77,7 @@ export default function LineupPredictor({ fixture, readOnly }) {
       <Box className="containerMargin">
         <Grid container alignItems="flex-start">
           <Grid item xs={12} lg={6}>
-            {storedPrediction && (
-              <ChosenLineup
-                chosenTeam={storedPrediction}
-                squadData={squadData}
-                formation={storedFormation}
-              />
-            )}
+            {storedPrediction && <LineupTabs fixture={fixture} />}
           </Grid>
 
           {/* RIGHT: Community Stats */}

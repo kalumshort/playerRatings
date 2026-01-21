@@ -1,295 +1,36 @@
-import React, { useRef, useState } from "react";
-import { Box, Typography, Stack, useTheme, Paper, Avatar } from "@mui/material";
-import { Download as DownloadIcon, SportsSoccer } from "@mui/icons-material";
-import html2canvas from "html2canvas";
+import React, { useMemo } from "react";
 
 import { FORMATIONS } from "./LineupPredictor";
+import LineupShell from "./lineupShell";
 
-// --- NEW IMPORT ---
-// Ensure this path matches where you saved the file!
-import { AsyncButton } from "../../../Inputs/AsyncButton";
+export default function ChosenLineup({ squadData, userPrediction }) {
+  // 1. Prepare Data for the Shell
+  // We transform your specific ID-based map into the Shell's expected format
+  const mappedTeam = useMemo(() => {
+    if (!userPrediction.chosenTeam || !squadData) return {};
 
-export default function ChosenLineup({
-  squadData,
-  chosenTeam,
-  formation = "4-3-3",
-}) {
-  const theme = useTheme();
-  const lineupRef = useRef();
+    const teamObj = {};
+    Object.entries(userPrediction.chosenTeam).forEach(([slotId, playerId]) => {
+      const player = squadData[playerId];
+      if (player) {
+        teamObj[slotId] = {
+          name: player.name,
+          photo: player.photo,
+          // You could add subText here if you wanted later
+        };
+      }
+    });
+    return teamObj;
+  }, [userPrediction.chosenTeam, squadData]);
 
-  // 1. NEW LOCAL STATE FOR LOADING
-  const [isSaving, setIsSaving] = useState(false);
-
-  // --- IMAGE SAVER LOGIC ---
-  const handleSaveImage = async () => {
-    const target = lineupRef.current;
-    if (!target) return;
-
-    // A. Start Loading (Triggers Clay "Pressed" State)
-    setIsSaving(true);
-
-    try {
-      // slight delay to let the UI update (optional, but feels better)
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const styles = getComputedStyle(target);
-      const radius = parseFloat(styles.borderRadius) || 0;
-
-      const canvas = await html2canvas(target, {
-        backgroundColor: null,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        scale: dpr,
-        ignoreElements: (el) => el?.dataset?.nosnap === "true", // hide buttons
-      });
-
-      const finalCanvas =
-        radius > 0 ? applyRoundMask(canvas, radius * dpr) : canvas;
-
-      const imgData = finalCanvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = imgData;
-      link.download = `11Votes-My-XI-${formation}.png`;
-      link.click();
-    } catch (err) {
-      console.error("Screenshot failed:", err);
-    } finally {
-      // B. End Loading (Button pops back up)
-      setIsSaving(false);
-    }
-  };
-
-  function applyRoundMask(srcCanvas, r) {
-    const masked = document.createElement("canvas");
-    masked.width = srcCanvas.width;
-    masked.height = srcCanvas.height;
-    const ctx = masked.getContext("2d");
-    ctx.drawImage(srcCanvas, 0, 0);
-    ctx.globalCompositeOperation = "destination-in";
-    roundRect(ctx, 0, 0, masked.width, masked.height, r);
-    ctx.fill();
-    ctx.globalCompositeOperation = "source-over";
-    return masked;
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
-    const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
-    ctx.beginPath();
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y, x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x, y + h, rr);
-    ctx.arcTo(x, y + h, x, y, rr);
-    ctx.arcTo(x, y, x + w, y, rr);
-    ctx.closePath();
-  }
-
-  // --- LAYOUT ---
-  const activeLayout = FORMATIONS[formation] || FORMATIONS["4-3-3"];
-
+  // 2. Render Shell
   return (
-    <Paper
-      sx={{
-        maxWidth: 600,
-        mx: "auto",
-        borderRadius: "24px", // Ensure outer paper matches theme
-        overflow: "hidden",
-      }}
-    >
-      {/* --- THE PITCH CONTAINER (Ref for Screenshot) --- */}
-      <Box
-        ref={lineupRef}
-        sx={{
-          position: "relative",
-          overflow: "hidden",
-          boxShadow: `0 15px 40px -10px ${theme.palette.common.black}80`,
-          aspectRatio: "0.70",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-evenly",
-        }}
-      >
-        {/* HEADER (Inside image) */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{ position: "absolute", bottom: 15, right: 15, opacity: 0.8 }}
-        >
-          <SportsSoccer sx={{ fontSize: 18, color: "white" }} />
-          <Typography
-            variant="caption"
-            sx={{ color: "white", fontWeight: 700 }}
-          >
-            {formation}
-          </Typography>
-        </Stack>
-
-        {/* VISUAL FIELD LINES */}
-        <PitchLines theme={theme} />
-
-        {/* PLAYERS LAYER */}
-        {activeLayout.map((row) => (
-          <Box
-            key={row.rowId}
-            sx={{
-              display: "flex",
-              justifyContent: "space-evenly",
-              alignItems: "center",
-              zIndex: 2,
-              position: "relative",
-              height: "100%",
-            }}
-          >
-            {row.slots.map((slotId) => {
-              const playerId = chosenTeam?.[slotId];
-              const player = squadData?.[playerId];
-
-              if (!player) return <Box key={slotId} sx={{ width: 60 }} />;
-
-              return (
-                <Box sx={{ position: "relative", textAlign: "center" }}>
-                  <Avatar
-                    src={player.photo}
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      border: "2px solid #FFF",
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: "block",
-                      color: "#FFF",
-                      fontWeight: 800,
-                      textShadow: "0px 1px 3px rgba(0,0,0,0.6)",
-                      fontSize: "0.65rem",
-                      lineHeight: 1,
-                      mt: 0.5,
-                    }}
-                  >
-                    {player.name ? player.name.split(" ").pop() : "Player"}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        ))}
-
-        {/* FOOTER */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 10,
-            left: 10,
-            width: "100%",
-            textAlign: "left",
-            opacity: 0.8,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ color: "white", fontWeight: 800 }}
-          >
-            11VOTES.COM
-          </Typography>
-        </Box>
-
-        {/* --- SAVE BUTTON --- */}
-        {/* 'data-nosnap' ensures this button is invisible in the downloaded image */}
-        <Box
-          data-nosnap="true"
-          sx={{
-            position: "absolute",
-            bottom: 20, // Moved up slightly
-            right: 8,
-            zIndex: 10,
-          }}
-        >
-          <AsyncButton
-            loading={isSaving}
-            onClick={handleSaveImage}
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            size="small"
-          ></AsyncButton>
-        </Box>
-      </Box>
-    </Paper>
+    <LineupShell
+      team={mappedTeam}
+      formation={userPrediction.formation}
+      formationConfig={FORMATIONS}
+      title="11VOTES.COM"
+      themeColor="#FFF"
+    />
   );
 }
-
-// --- PITCH LINES (Unchanged) ---
-const PitchLines = ({ theme }) => (
-  <Box
-    sx={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: "none",
-    }}
-  >
-    <Box
-      sx={{
-        position: "absolute",
-        top: "-10%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "40%",
-        height: "25%",
-        border: "2px solid rgba(255,255,255,0.3)",
-        borderRadius: "50%",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: "2px",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "70%",
-        height: "18%",
-        border: "2px solid rgba(255,255,255,0.3)",
-        borderBottom: "none",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "35%",
-        height: "7%",
-        border: "2px solid rgba(255,255,255,0.3)",
-        borderBottom: "none",
-      }}
-    />
-    <Box
-      sx={{
-        position: "absolute",
-        bottom: "12%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: 4,
-        height: 4,
-        border: "2px solid rgba(255,255,255,0.3)",
-        borderRadius: "50%",
-      }}
-    />
-  </Box>
-);
