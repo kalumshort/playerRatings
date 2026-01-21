@@ -123,9 +123,9 @@ export default function FixtureHeader({
       onClick={() => onClick?.(fixture.id)}
       className={addClass}
       elevation={0}
-      sx={{
+      sx={(theme) => ({
+        ...theme.clay.card,
         overflow: "hidden",
-        bgcolor: "background.paper",
         cursor: onClick ? "pointer" : "default",
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
         "&:hover": onClick
@@ -134,7 +134,7 @@ export default function FixtureHeader({
         ...(isLive && {
           background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)}, transparent 70%)`,
         }),
-      }}
+      })}
     >
       {/* Status / Live Badge */}
       <Box sx={{ display: "flex", justifyContent: "center", pt: 2, pb: 1 }}>
