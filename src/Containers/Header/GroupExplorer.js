@@ -2,282 +2,241 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  useTheme as useMuiTheme,
+  useTheme,
+  Avatar,
+  Tooltip,
+  Zoom,
   Dialog,
   DialogContent,
   TextField,
   InputAdornment,
-  Avatar,
   IconButton,
 } from "@mui/material";
-import {
-  Globe,
-  Lock,
-  Plus,
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Globe, Lock, Plus, Search, X } from "lucide-react";
 
 // Hooks & Firebase
 import useGroupData from "../../Hooks/useGroupsData";
+import useUserData from "../../Hooks/useUserData";
 import {
   updateUserField,
   handleAddUserToGroup,
 } from "../../Firebase/Auth_Functions";
-import useUserData from "../../Hooks/useUserData";
-
-// Redux Actions
-
 import { teamList } from "../../Hooks/Helper_Functions";
 
 /**
- * DrawerGroupSelector
- * A Paginated selection UI for the Header Drawer.
- * Optimized for Web/Desktop navigation.
+ * GroupExplorer
+ * Combined Group Switcher & Team Search Modal
+ * Architecture: Clean, Tactile, and Global Theme-compliant.
  */
-const DrawerGroupSelector = ({ setDrawerOpen }) => {
-  const muiTheme = useMuiTheme();
-
-  // userHomeGroup represents the active selection in 11Votes context
+const GroupExplorer = ({ setDrawerOpen }) => {
   const { groupData, userHomeGroup } = useGroupData();
   const { userData } = useUserData();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSelectChange = async (groupId) => {
     if (!userData?.uid) return;
-
     await updateUserField(userData.uid, "activeGroup", groupId);
-
     setDrawerOpen(false);
   };
 
-  // Logic: Transform object to array and sort userHomeGroup (Active) to index 0
   const groupsArray = groupData ? Object.values(groupData) : [];
-  const sortedGroups = [...groupsArray].sort((a, b) => {
-    if (a.groupId === userHomeGroup?.groupId) return -1;
-    if (b.groupId === userHomeGroup?.groupId) return 1;
-    return 0;
-  });
-
-  const privateGroups = sortedGroups.filter((g) => g.visibility === "private");
-  const publicGroups = sortedGroups.filter((g) => g.visibility === "public");
+  const sortedGroups = [...groupsArray].sort((a, b) =>
+    a.groupId === userHomeGroup?.groupId ? -1 : 1,
+  );
 
   return (
-    <Box sx={{ width: "100%", py: 1 }}>
-      <PaginatedGroupSection
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        mt: 2,
+      }}
+    >
+      {/* 1. PRIVATE GROUPS TRAY */}
+      <GroupTray
         title="Private Groups"
-        icon={Lock}
-        groups={privateGroups}
+        icon={<Lock size={14} />}
+        groups={sortedGroups.filter((g) => g.visibility === "private")}
+        activeId={userHomeGroup?.groupId}
         onSelect={handleSelectChange}
-        activeGroupId={userHomeGroup?.groupId}
-        muiTheme={muiTheme}
       />
 
-      <PaginatedGroupSection
+      {/* 2. FOLLOWED CLUBS TRAY */}
+      <GroupTray
         title="Followed Clubs"
-        icon={Globe}
-        groups={publicGroups}
-        showAdd={true}
+        icon={<Globe size={14} />}
+        groups={sortedGroups.filter((g) => g.visibility === "public")}
+        activeId={userHomeGroup?.groupId}
         onSelect={handleSelectChange}
-        onAddClick={() => setIsModalOpen(true)}
-        activeGroupId={userHomeGroup?.groupId}
-        muiTheme={muiTheme}
+        showAdd
+        onAdd={() => setIsModalOpen(true)}
       />
 
+      {/* 3. INTEGRATED TEAM SELECTION MODAL */}
       <TeamSelectionModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         userData={userData}
+        setDrawerOpen={setDrawerOpen}
       />
     </Box>
   );
 };
 
 /**
- * PaginatedGroupSection Component
- * Renders exactly 2 items per "page" using a Grid layout.
+ * GroupTray: The horizontal scrollable "Carved" track
  */
-const PaginatedGroupSection = ({
+const GroupTray = ({
   title,
-  icon: Icon,
+  icon,
   groups,
-  showAdd,
+  activeId,
   onSelect,
-  activeGroupId,
-  onAddClick,
-  muiTheme,
+  showAdd,
+  onAdd,
 }) => {
-  const [startIndex, setStartIndex] = useState(0);
-
-  // Combine groups with the "Add" card if applicable
-  const items = [...groups];
-  if (showAdd) items.push({ isAction: true });
-
-  const handleNext = () => {
-    if (startIndex + 2 < items.length) setStartIndex((prev) => prev + 2);
-  };
-
-  const handlePrev = () => {
-    if (startIndex > 0) setStartIndex((prev) => prev - 2);
-  };
-
-  if (items.length === 0) return null;
+  const theme = useTheme();
+  if (groups.length === 0 && !showAdd) return null;
 
   return (
-    <Box sx={{ mb: 4, px: 2 }}>
-      {/* Header with Navigation Controls */}
+    <Box sx={{ px: 1 }}>
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
+          gap: 1,
           mb: 1.5,
+          opacity: 0.8,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Icon size={14} color={muiTheme.palette.text.secondary} />
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: 1.5,
-              color: "text.secondary",
-              fontSize: "0.65rem",
-            }}
-          >
-            {title}
-          </Typography>
-        </Box>
-
-        {items.length > 2 && (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <IconButton
-              onClick={handlePrev}
-              disabled={startIndex === 0}
-              size="small"
-              sx={{ border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <ChevronLeft size={16} />
-            </IconButton>
-            <IconButton
-              onClick={handleNext}
-              disabled={startIndex + 2 >= items.length}
-              size="small"
-              sx={{ border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <ChevronRight size={16} />
-            </IconButton>
-          </Box>
-        )}
+        {icon}
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 900,
+            textTransform: "uppercase",
+            letterSpacing: 1.2,
+            color: "text.secondary",
+            fontSize: "0.65rem",
+          }}
+        >
+          {title}
+        </Typography>
       </Box>
 
-      {/* 2-Column Grid */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-        {items.slice(startIndex, startIndex + 2).map((item) => {
-          if (item.isAction) {
-            return (
-              <Box
-                key="add-action"
-                onClick={onAddClick}
-                sx={getActionCardStyle(muiTheme)}
-              >
-                <Plus
-                  size={24}
-                  style={{
-                    color: muiTheme.palette.text.secondary,
-                    marginBottom: "4px",
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: "text.secondary",
-                    fontSize: "0.6rem",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Add Team
-                </Typography>
-              </Box>
-            );
-          }
-
-          const isActive = activeGroupId === item.groupId;
-          const color = item.accentColor || muiTheme.palette.primary.main;
-          const cleanLogo = (item.logo || item.imageURL)?.replace(/"/g, "");
-
+      <Box
+        sx={{
+          ...theme.clay.box,
+          p: 1.5,
+          display: "flex",
+          gap: 2,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+          maskImage: "linear-gradient(to right, black 85%, transparent 100%)",
+        }}
+      >
+        {groups.map((group) => {
+          const isActive = group.groupId === activeId;
           return (
-            <Box
-              key={item.groupId}
-              onClick={() => onSelect(item.groupId)}
-              sx={getSquareStyle(color, isActive, muiTheme)}
+            <Tooltip
+              title={group.name}
+              key={group.groupId}
+              TransitionComponent={Zoom}
+              arrow
             >
-              {/* Ghost Logo Background */}
               <Box
-                component="img"
-                src={cleanLogo}
+                onClick={() => onSelect(group.groupId)}
                 sx={{
-                  position: "absolute",
-                  height: "110%",
-                  opacity: 0.2,
-                  filter: "grayscale(100%) ",
-                  pointerEvents: "none",
-                  zIndex: 0,
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  zIndex: 1,
-                  fontWeight: 800,
-                  px: 1,
-                  textAlign: "center",
+                  minWidth: 70,
+                  height: 70,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  borderRadius: "20px",
+                  transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  backgroundColor: "background.paper",
+                  ...(isActive
+                    ? {
+                        boxShadow:
+                          "inset 4px 4px 10px rgba(0,0,0,0.1), inset -4px -4px 10px #ffffff",
+                        bgcolor: "rgba(0,0,0,0.02)",
+                        transform: "scale(0.92)",
+                      }
+                    : {
+                        boxShadow:
+                          theme.palette.mode === "light"
+                            ? "6px 6px 12px #d1d9e6, -4px -4px 10px #ffffff"
+                            : "6px 6px 12px #1b1e28, -4px -4px 10px #2b303b",
+                        "&:hover": { transform: "translateY(-4px)" },
+                      }),
                 }}
               >
-                {item.name}
-              </Typography>
-
-              {isActive && (
-                <Box
+                <Avatar
+                  src={(group.logo || group.imageURL)?.replace(/"/g, "")}
+                  imgProps={{ style: { objectFit: "contain" } }}
                   sx={{
-                    position: "absolute",
-                    top: 8,
-                    right: 8,
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    bgcolor: color,
-                    boxShadow: `0 0 10px ${color}`,
+                    width: 44,
+                    height: 44,
+                    filter: isActive ? "none" : "grayscale(0.3)",
+                    opacity: isActive ? 1 : 0.8,
+                    borderRadius: "0px",
                   }}
                 />
-              )}
-            </Box>
+              </Box>
+            </Tooltip>
           );
         })}
+
+        {showAdd && (
+          <Box
+            onClick={onAdd}
+            sx={{
+              minWidth: 70,
+              height: 70,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "20px",
+              border: "2px dashed",
+              borderColor: "divider",
+              color: "text.secondary",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "background.paper",
+                borderColor: "primary.main",
+                color: "primary.main",
+                transform: "scale(1.05)",
+              },
+            }}
+          >
+            <Plus size={24} />
+          </Box>
+        )}
       </Box>
     </Box>
   );
 };
 
 /**
- * TeamSelectionModal Component
+ * TeamSelectionModal: The Search & Join UI
  */
-const TeamSelectionModal = ({ open, onClose, userData }) => {
+const TeamSelectionModal = ({ open, onClose, userData, setDrawerOpen }) => {
+  const theme = useTheme();
   const [search, setSearch] = useState("");
 
   const filteredTeams = teamList.filter((team) =>
-    team.name.toLowerCase().includes(search.toLowerCase())
+    team.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleJoin = async (group) => {
-    // teamList uses teamId as the primary identifier
     await handleAddUserToGroup({ userData, groupId: group.teamId });
     onClose();
+    setDrawerOpen(false);
   };
 
   return (
@@ -288,7 +247,9 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
       maxWidth="xs"
       PaperProps={{
         sx: {
-          backdropFilter: "blur(20px)",
+          borderRadius: "32px",
+          bgcolor: "background.default",
+          backgroundImage: "none",
         },
       }}
     >
@@ -300,13 +261,18 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6" sx={{ fontFamily: "'VT323', monospace" }}>
+        <Typography variant="h6" sx={{ fontWeight: 900 }}>
           FIND YOUR TEAM
         </Typography>
-        <IconButton onClick={onClose} size="small">
-          <X size={20} />
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{ bgcolor: "background.paper" }}
+        >
+          <X size={18} />
         </IconButton>
       </Box>
+
       <DialogContent sx={{ pt: 0 }}>
         <TextField
           fullWidth
@@ -314,7 +280,14 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
           placeholder="Search Club..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "20px",
+              bgcolor: "background.paper",
+              boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.05)",
+            },
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -323,7 +296,17 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
             ),
           }}
         />
-        <Box sx={{ maxHeight: "400px", overflowY: "auto" }}>
+
+        <Box
+          sx={{
+            maxHeight: "400px",
+            overflowY: "auto",
+            pr: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+          }}
+        >
           {filteredTeams.map((team) => (
             <Box
               key={team.teamId}
@@ -332,15 +315,21 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
                 display: "flex",
                 alignItems: "center",
                 p: 1.5,
-                mb: 1,
-                borderRadius: 2,
+                borderRadius: "20px",
                 cursor: "pointer",
-                "&:hover": { background: "rgba(255,255,255,0.1)" },
+                bgcolor: "background.paper",
+                boxShadow:
+                  theme.palette.mode === "light"
+                    ? "4px 4px 8px #d1d9e6"
+                    : "4px 4px 8px #1b1e28",
+                transition: "transform 0.2s",
+                "&:hover": { transform: "scale(1.02)" },
               }}
             >
               <Avatar
                 src={team.logo?.replace(/"/g, "")}
-                sx={{ width: 40, height: 40, mr: 2 }}
+                imgProps={{ style: { objectFit: "contain" } }}
+                sx={{ width: 40, height: 40, mr: 2, borderRadius: "0px" }}
               />
               <Typography sx={{ fontWeight: 700 }}>{team.name}</Typography>
             </Box>
@@ -351,43 +340,4 @@ const TeamSelectionModal = ({ open, onClose, userData }) => {
   );
 };
 
-// Component Styles
-const getSquareStyle = (accentColor, isActive, theme) => ({
-  height: 110,
-  position: "relative",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "16px",
-  overflow: "hidden",
-  cursor: "pointer",
-  border: "1px solid",
-  borderColor: isActive ? accentColor : "rgba(255,255,255,0.1)",
-  backgroundColor: `${accentColor}${isActive ? "30" : "20"}`,
-  backdropFilter: "blur(10px)",
-  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-  "&:hover": {
-    borderColor: accentColor,
-    backgroundColor: `${accentColor}40`,
-  },
-});
-
-const getActionCardStyle = (theme) => ({
-  height: 110,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "16px",
-  border: "2px dashed rgba(255,255,255,0.2)",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-  "&:hover": {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderColor: theme.palette.primary.main,
-    "& svg": { transform: "rotate(90deg)" },
-  },
-  "& svg": { transition: "transform 0.3s ease" },
-});
-
-export default DrawerGroupSelector;
+export default GroupExplorer;

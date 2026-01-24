@@ -8,26 +8,8 @@ import React, {
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
-  lighten,
-  darken,
 } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { motion } from "framer-motion";
-
-// --- 1. PHYSICS ENGINE (Framer Motion) ---
-const buttonMotionVariants = {
-  initial: { scale: 1, rotate: 0, y: 0 },
-  hover: {
-    scale: 1.02, // Subtle lift
-    y: -2,
-    transition: { type: "spring", stiffness: 300, damping: 15 },
-  },
-  tap: {
-    scale: 0.97, // Physical press
-    y: 1,
-    transition: { type: "spring", stiffness: 600, damping: 12 },
-  },
-};
 
 // --- 2. PALETTE ---
 const PALETTE = {
@@ -69,42 +51,46 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
     const colors = isLight ? PALETTE.light : PALETTE.dark;
     const primaryMain = accentColor;
 
-    // --- 3. CLAY SHADOW GENERATOR ---
-    const getClayShadows = (baseColor) => {
-      return {
-        float: isLight
-          ? `10px 10px 20px ${colors.shadowDark}, -10px -10px 20px ${colors.shadowLight}`
-          : `8px 8px 16px ${colors.shadowDark}, -8px -8px 16px ${colors.shadowLight}`,
-        pressed: isLight
-          ? `inset 6px 6px 12px ${darken(baseColor, 0.2)}, inset -6px -6px 12px ${lighten(baseColor, 0.4)}`
-          : `inset 4px 4px 8px ${darken(baseColor, 0.5)}, inset -4px -4px 8px ${lighten(baseColor, 0.1)}`,
-      };
-    };
-
-    const primaryShadows = getClayShadows(primaryMain);
-    const surfaceShadows = getClayShadows(colors.bg);
-
     return createTheme({
       clay: {
         card: {
           backgroundColor: colors.bg,
-          boxShadow: surfaceShadows.float,
+          borderRadius: "32px",
+          boxShadow: isLight
+            ? `12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff, inset 4px 4px 10px rgba(255,255,255,0.8), inset -4px -4px 10px rgba(0,0,0,0.02)`
+            : `12px 12px 24px #0e1014, -8px -8px 20px #2b303b, inset 2px 2px 4px rgba(255,255,255,0.05)`,
           border: isLight
-            ? "1px solid rgba(255,255,255,0.6)"
-            : "1px solid rgba(255,255,255,0.05)",
+            ? "1px solid rgba(255,255,255,0.7)"
+            : "1px solid rgba(255,255,255,0.03)",
         },
         box: {
-          backgroundColor: colors.bg,
-          boxShadow: surfaceShadows.pressed,
-          border: isLight ? "1px solid rgba(255,255,255,0.4)" : "none",
+          backgroundColor: isLight ? "#f0f3f7" : "#1a1d24",
+          borderRadius: "24px",
+          boxShadow: isLight
+            ? "inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff"
+            : "inset 8px 8px 16px #0e1014, inset -4px -4px 12px #2b303b",
+          border: "none",
         },
         button: {
           backgroundColor: colors.bg,
-          borderRadius: 20,
-          boxShadow: surfaceShadows.float,
+          borderRadius: 24,
           color: colors.textPrimary,
+          fontWeight: 700,
+          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: isLight
+            ? "6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff"
+            : "8px 8px 16px #0e1014, -4px -4px 12px #2b303b",
+          "&:hover": {
+            transform: "scale(1.02)",
+            boxShadow: isLight
+              ? "10px 10px 20px #c2cbd8, -10px -10px 20px #ffffff"
+              : "12px 12px 24px #0a0c0f, -6px -6px 15px #2b303b",
+          },
           "&:active": {
-            boxShadow: surfaceShadows.pressed,
+            transform: "scale(0.98)",
+            boxShadow: isLight
+              ? "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff"
+              : "inset 6px 6px 10px #0e1014, inset -4px -4px 10px #2b303b",
           },
         },
       },
@@ -116,7 +102,6 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         text: { primary: colors.textPrimary, secondary: colors.textSecondary },
       },
       shape: { borderRadius: "16px" },
-
       typography: {
         fontFamily: "'Nunito', 'Quicksand', sans-serif",
         button: {
@@ -126,133 +111,108 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
           textTransform: "none",
         },
       },
-
       components: {
         MuiCssBaseline: {
-          styleOverrides: `
-            body { background-color: ${colors.bg}; transition: background-color 0.4s ease; }
-          `,
+          styleOverrides: `body { background-color: ${colors.bg}; transition: background-color 0.4s ease; }`,
         },
 
-        // --- TABS (Global Styles) ---
-        MuiTabs: {
+        // --- DRAWER (Soft Panel) ---
+        MuiDrawer: {
           styleOverrides: {
-            root: {
-              minHeight: "unset", // Removes default huge height
-              padding: 0, // Removes padding
-            },
-            flexContainer: {
-              gap: "8px", // Maps to your gap: 0.5 (approx 4px-8px)
-              paddingBottom: 0, // Explicitly remove bottom padding
-            },
-            indicator: {
-              display: "none", // Hide the underline
+            paper: {
+              backgroundColor: colors.bg,
+              border: "none",
+              borderRadius: "40px 0 0 40px",
+              boxShadow: isLight
+                ? "-15px 0 30px #d1d9e6"
+                : "-15px 0 30px #0e1014",
+              backgroundImage: "none",
             },
           },
         },
-
-        // --- TAB (Global Styles) ---
-        MuiTab: {
+        // --- PAPER (Standard Clay Cards) ---
+        MuiPaper: {
           styleOverrides: {
             root: {
-              textTransform: "none",
-              fontWeight: 700,
-              fontSize: "0.9rem",
-              minHeight: "40px", // Matches your requested height
-              borderRadius: "20px",
-              color: colors.textSecondary,
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              zIndex: 1,
-              padding: "6px 16px", // Horizontal padding
-              marginBottom: 0, // Ensure no margin pushes bottom
-
-              "&.Mui-selected": {
-                color: primaryMain, // Use the dynamic accent color
-                backgroundColor: colors.paper, // White/Dark Grey
-                // Soft floating shadow for the active pill
+              margin: "8px",
+              backgroundImage: "none",
+              backgroundColor: colors.bg,
+              borderRadius: "32px",
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              boxShadow: isLight
+                ? "8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff, inset 3px 3px 6px rgba(255,255,255,0.8)"
+                : "10px 10px 20px #0e1014, -6px -6px 15px #2b303b, inset 2px 2px 4px rgba(255,255,255,0.05)",
+              "&:hover": {
+                transform: "translateY(-3px)",
                 boxShadow: isLight
-                  ? "0 4px 12px rgba(0,0,0,0.08)"
-                  : "0 4px 12px rgba(0,0,0,0.4)",
+                  ? "12px 12px 24px #c2cbd8, -10px -10px 24px #ffffff"
+                  : "14px 14px 28px #0a0c0f, -8px -8px 20px #2b303b",
               },
             },
           },
         },
-
-        // --- STANDARD BUTTON ---
+        // --- BUTTONS ( Marshmallow Action Keys) ---
         MuiButton: {
-          defaultProps: {
-            component: motion.button,
-            variants: buttonMotionVariants,
-            initial: "initial",
-            whilehover: "hover",
-            whiletap: "tap",
-            disableRipple: true,
-          },
           styleOverrides: {
             root: {
               borderRadius: "50px",
-              padding: "14px 32px",
-              boxShadow: primaryShadows.float,
-              transition: "box-shadow 0.2s ease, background-color 0.2s ease",
+              padding: "12px 28px",
+              transition: "all 0.2s ease",
+              boxShadow: isLight
+                ? "4px 4px 10px #d1d9e6, -4px -4px 10px #ffffff"
+                : "6px 6px 12px #0e1014, -4px -4px 12px #2b303b",
+              "&:active": { transform: "scale(0.96)" },
             },
             containedPrimary: {
               backgroundColor: primaryMain,
               color: "#3D3D3D",
-              "&:hover": {
-                backgroundColor: primaryMain,
-                boxShadow: primaryShadows.float,
-              },
-            },
-            text: {
-              boxShadow: "none",
-              backgroundColor: "transparent",
+              boxShadow: `6px 6px 15px ${primaryMain}40, -4px -4px 10px #ffffff`,
             },
           },
         },
-
-        // --- LOADING BUTTON ---
-        MuiLoadingButton: {
+        // --- TABS (Inset Tray & Floating Pill) ---
+        MuiTabs: {
           styleOverrides: {
             root: {
-              borderRadius: "50px",
-              padding: "14px 32px",
-              boxShadow: primaryShadows.float,
-              backgroundColor: primaryMain,
-              color: "#3D3D3D",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-
-              "&.Mui-loading": {
-                backgroundColor: primaryMain,
-                opacity: 1,
-                boxShadow: primaryShadows.pressed,
-                paddingLeft: "32px",
-              },
-
-              "& .MuiLoadingButton-loadingIndicator": {
-                position: "absolute",
-                color: "#4A4A4A",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-              },
-
-              "&.Mui-loading .MuiButton-startIcon, &.Mui-loading .MuiButton-endIcon, &.Mui-loading .MuiButton-label":
-                {
-                  visibility: "hidden",
-                },
-            },
-          },
-        },
-
-        // --- CLAY CARDS ---
-        MuiPaper: {
-          styleOverrides: {
-            root: {
-              backgroundImage: "none",
-              margin: "8px",
-              border: "none",
+              minHeight: "unset",
+              padding: "4px",
+              backgroundColor: isLight ? "#f0f3f7" : "#1a1d24",
+              borderRadius: "24px",
               boxShadow: isLight
-                ? "20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff"
-                : "20px 20px 60px #1b1e28, -20px -20px 60px #262a38",
+                ? "inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff"
+                : "inset 4px 4px 8px #0e1014",
+            },
+            indicator: { display: "none" },
+          },
+        },
+        MuiTab: {
+          styleOverrides: {
+            root: {
+              borderRadius: "20px",
+              transition: "all 0.3s ease",
+              "&.Mui-selected": {
+                backgroundColor: colors.bg,
+                boxShadow: isLight
+                  ? "4px 4px 10px rgba(0,0,0,0.08)"
+                  : "4px 4px 10px rgba(0,0,0,0.4)",
+                color: primaryMain,
+              },
+            },
+          },
+        },
+        // --- LIST ITEMS (Nav Sidebar Links) ---
+        MuiListItemButton: {
+          styleOverrides: {
+            root: {
+              borderRadius: "18px",
+              margin: "4px 8px",
+              "&.Mui-selected": {
+                backgroundColor: colors.bg,
+                boxShadow: isLight
+                  ? "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff"
+                  : "inset 6px 6px 12px #0e1014",
+                color: primaryMain,
+              },
             },
           },
         },

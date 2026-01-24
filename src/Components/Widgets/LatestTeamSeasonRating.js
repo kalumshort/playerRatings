@@ -205,7 +205,7 @@ export default function LatestTeamSeasonRating() {
 
         <Button
           component={Link}
-          to={getPath(`/season-stats`)}
+          to={getPath(`/player-stats`)}
           size="small"
           endIcon={<ArrowForwardIcon />}
           variant="contained"

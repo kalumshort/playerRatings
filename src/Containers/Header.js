@@ -80,7 +80,7 @@ export default function Header() {
   const { activeGroup } = useGroupData();
   const { isGroupAdmin } = useUserData();
 
-  const accentColor = activeGroup?.accentColor || theme.palette.primary.main;
+  const accentColor = theme.palette.primary.main;
 
   const handleLogout = async () => {
     try {
@@ -95,7 +95,11 @@ export default function Header() {
   const navItems = [
     { text: "Home", icon: <Home size={20} />, path: "/" },
     { text: "Schedule", icon: <Calendar size={20} />, path: "/schedule" },
-    { text: "Season Stats", icon: <Trophy size={20} />, path: "/season-stats" },
+    {
+      text: "Player Ratings",
+      icon: <Trophy size={20} />,
+      path: "/player-stats",
+    },
     { text: "Settings", icon: <User size={20} />, path: "/profile" },
   ];
 

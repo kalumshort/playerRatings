@@ -114,12 +114,7 @@ export default function LineupShell({
           sx={{ position: "absolute", bottom: 15, right: 15, opacity: 0.8 }}
         >
           <SportsSoccer sx={{ fontSize: 18, color: "white" }} />
-          <Typography
-            variant="caption"
-            sx={{ color: "white", fontWeight: 700 }}
-          >
-            {formation}
-          </Typography>
+          <Typography variant="caption">{formation}</Typography>
         </Stack>
 
         <PitchLines />
@@ -154,8 +149,6 @@ export default function LineupShell({
                       width: 60,
                       height: 60,
                       border: `2px solid ${themeColor}`,
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
-                      bgcolor: "#222",
                     }}
                   />
 
@@ -164,9 +157,9 @@ export default function LineupShell({
                     variant="caption"
                     sx={{
                       display: "block",
-                      color: "#FFF",
+
                       fontWeight: 800,
-                      textShadow: "0px 1px 3px rgba(0,0,0,0.6)",
+
                       fontSize: "0.65rem",
                       lineHeight: 1,
                       mt: 0.5,
@@ -184,7 +177,7 @@ export default function LineupShell({
                         right: -5,
                         bgcolor: themeColor,
                         color: "#000",
-                        fontSize: "0.6rem",
+                        fontSize: "0.7rem",
                         fontWeight: "bold",
                         px: 0.5,
                         borderRadius: 1,
@@ -210,12 +203,7 @@ export default function LineupShell({
             opacity: 0.8,
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{ color: "white", fontWeight: 800 }}
-          >
-            {title.toUpperCase()}
-          </Typography>
+          <Typography variant="caption">{title.toUpperCase()}</Typography>
         </Box>
 
         {/* SAVE BUTTON */}
@@ -263,7 +251,7 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: "40%",
         height: "25%",
-        border: "2px solid rgba(255,255,255,0.3)",
+
         borderRadius: "50%",
       }}
     />
@@ -278,7 +266,7 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: "70%",
         height: "18%",
-        border: "2px solid rgba(255,255,255,0.3)",
+
         borderBottom: "none",
       }}
     />
@@ -290,7 +278,7 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: "35%",
         height: "7%",
-        border: "2px solid rgba(255,255,255,0.3)",
+
         borderBottom: "none",
       }}
     />
@@ -302,7 +290,7 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: 4,
         height: 4,
-        border: "2px solid rgba(255,255,255,0.3)",
+
         borderRadius: "50%",
       }}
     />
