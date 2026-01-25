@@ -448,7 +448,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
   {
     schedule: "every 1 minutes",
     timeoutSeconds: 60,
-    memory: "256MiB", // Low memory needed, we are only processing active games
+    memory: "256MiB",
   },
   async (event) => {
     try {

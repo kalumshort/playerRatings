@@ -121,7 +121,7 @@ export default function Fixture() {
   // 6. Guards (Console logging mainly)
   if (predictionsError || ratingsError)
     console.error(predictionsError, ratingsError);
-
+console.log("Rendering Fixture Component for Match ID:", fixture);
   const isPreMatch =
     fixture?.fixture?.status?.short === "NS" ||
     fixture?.fixture?.status?.short === "TBD";

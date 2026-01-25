@@ -26,8 +26,8 @@ const fetchFootballApi = async (endpoint, params = {}) => {
       // or throw an error. Currently keeping your logic of throwing.
       throw new Error(
         `No data found for endpoint: ${endpoint} with params: ${JSON.stringify(
-          params
-        )}`
+          params,
+        )}`,
       );
     }
 
@@ -71,7 +71,7 @@ const fetchStatisticsData = async (fixtureId) => {
   } catch (error) {
     console.error(
       `Error in fetchStatisticsData for ${fixtureId}:`,
-      error.message
+      error.message,
     );
     throw error;
   }
@@ -100,24 +100,44 @@ const fetchLineupData = async (fixtureId) => {
 const fetchAllMatchData = async ({ fixtureId }) => {
   console.log(`Fetching all data for fixture: ${fixtureId}`);
   try {
-    // Run fetches in parallel for better performance
+    // Wrap each call in a catch to ensure one failure doesn't kill the whole process
     const [
       fixtureData,
       fixtureStatsData,
       fixtureLineupData,
       fixtureEventsData,
     ] = await Promise.all([
-      fetchFixtureData(fixtureId),
-      fetchStatisticsData(fixtureId),
-      fetchLineupData(fixtureId),
-      fetchEventsData(fixtureId),
+      fetchFixtureData(fixtureId).catch((err) => {
+        console.error(`Fixture basic data failed: ${err.message}`);
+        return null;
+      }),
+      fetchStatisticsData(fixtureId).catch((err) => {
+        console.error(`Stats failed: ${err.message}`);
+        return [];
+      }),
+      fetchLineupData(fixtureId).catch((err) => {
+        console.error(`Lineups failed: ${err.message}`);
+        return [];
+      }),
+      fetchEventsData(fixtureId).catch((err) => {
+        console.error(`Events failed: ${err.message}`);
+        return [];
+      }),
     ]);
+
+    // Safety Check: If the core fixture data is missing, we probably shouldn't save
+    if (!fixtureData) {
+      console.warn(
+        `Skipping save for ${fixtureId} because core fixture data is missing.`,
+      );
+      return;
+    }
 
     const combinedFixtureData = {
       ...fixtureData,
-      statistics: fixtureStatsData,
-      lineups: fixtureLineupData,
-      events: fixtureEventsData,
+      statistics: fixtureStatsData || [],
+      lineups: fixtureLineupData || [],
+      events: fixtureEventsData || [],
     };
 
     const year = combinedFixtureData?.league?.season;
@@ -133,11 +153,11 @@ const fetchAllMatchData = async ({ fixtureId }) => {
       .doc(fixtureId.toString())
       .set(combinedFixtureData, { merge: true });
 
-    console.log(`Successfully saved data for fixture ${fixtureId}`);
+    console.log(`Successfully saved available data for fixture ${fixtureId}`);
   } catch (error) {
     console.error(
-      `Error fetching or saving data for fixture ${fixtureId}:`,
-      error.stack
+      `Critical error in fetchAllMatchData for ${fixtureId}:`,
+      error.message,
     );
   }
 };
