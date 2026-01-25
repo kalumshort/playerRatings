@@ -17,14 +17,12 @@ export default function LineupAndPlayerRatings({ fixture }) {
       elevation={0}
       sx={{
         // 1. CLAY STYLE & LAYOUT FIXES
-        ...theme.clay.card, // Inherit soft edges/shadows
         width: "100%", // Force it to fit parent width
         overflow: "hidden", // Cut off anything that pushes wide
         display: "flex",
         flexDirection: "column",
         minHeight: 600, // Stable height for Tablet/Desktop
         p: 2, // Internal padding
-        borderRadius: "16px",
       }}
     >
       {/* --- CUSTOM CLAY TABS --- */}

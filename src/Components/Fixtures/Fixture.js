@@ -254,9 +254,9 @@ export default function Fixture() {
                   {fixture?.lineups && (
                     <>
                       {/* Add minWidth: 0 to PREVENT flex item from growing infinitely */}
-                      <Box sx={{ flex: 2, minWidth: 0 }}>
+                      <Stack sx={{ flex: 2, minWidth: 0 }}>
                         <LineupAndPlayerRatings fixture={fixture} />
-                      </Box>
+                      </Stack>
 
                       <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
                         <Statistics fixture={fixture} />

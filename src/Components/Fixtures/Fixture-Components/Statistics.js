@@ -69,7 +69,6 @@ export default function Statistics({ fixture }) {
       <Paper
         elevation={0}
         sx={(theme) => ({
-          ...theme.clay.card, // Clay Style
           p: 4,
           minHeight: 200,
           display: "flex",
@@ -94,13 +93,10 @@ export default function Statistics({ fixture }) {
     <Paper
       elevation={0}
       sx={(theme) => ({
-        ...theme.clay.card, // 1. Global Clay Style
-        p: 0, // Reset padding for header/content split
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         width: "100%",
-        margin: "0px",
       })}
     >
       {/* --- HEADER --- */}
@@ -111,10 +107,6 @@ export default function Statistics({ fixture }) {
           display: "flex",
           alignItems: "center",
           gap: 1.5,
-          bgcolor:
-            theme.palette.mode === "light"
-              ? "rgba(0,0,0,0.02)"
-              : "rgba(255,255,255,0.02)",
         }}
       >
         <BarChartRounded color="primary" />

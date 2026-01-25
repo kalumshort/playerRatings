@@ -130,6 +130,11 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
             },
           },
         },
+        MuiAvatar: {
+          styleOverrides: {
+            root: { objectFit: "contain" },
+          },
+        },
         // --- PAPER (Standard Clay Cards) ---
         MuiPaper: {
           styleOverrides: {
@@ -142,31 +147,64 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
               boxShadow: isLight
                 ? "8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff, inset 3px 3px 6px rgba(255,255,255,0.8)"
                 : "10px 10px 20px #0e1014, -6px -6px 15px #2b303b, inset 2px 2px 4px rgba(255,255,255,0.05)",
-              "&:hover": {
-                transform: "translateY(-3px)",
-                boxShadow: isLight
-                  ? "12px 12px 24px #c2cbd8, -10px -10px 24px #ffffff"
-                  : "14px 14px 28px #0a0c0f, -8px -8px 20px #2b303b",
-              },
             },
           },
         },
         // --- BUTTONS ( Marshmallow Action Keys) ---
         MuiButton: {
+          defaultProps: { disableElevation: true, disableRipple: true },
           styleOverrides: {
             root: {
-              borderRadius: "50px",
-              padding: "12px 28px",
-              transition: "all 0.2s ease",
+              borderRadius: "50px", // Restored your requested 50px
+              padding: "14px 32px", // Increased for better tactile "puff"
+              transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              textTransform: "none",
+              fontWeight: 800,
+
+              // THE CLAY STACK: [Outer Dark] [Outer Light] [Inner Light Rim] [Inner Dark Depth]
               boxShadow: isLight
-                ? "4px 4px 10px #d1d9e6, -4px -4px 10px #ffffff"
-                : "6px 6px 12px #0e1014, -4px -4px 12px #2b303b",
-              "&:active": { transform: "scale(0.96)" },
+                ? `10px 10px 20px #D1D9E6, 
+           -10px -10px 20px #FFFFFF, 
+           inset 2px 2px 5px rgba(255, 255, 255, 0.8), 
+           inset -2px -2px 5px rgba(209, 217, 230, 0.5)`
+                : `12px 12px 24px #1a1d29, 
+           -8px -8px 20px #3c4155, 
+           inset 2px 2px 5px rgba(255, 255, 255, 0.05), 
+           inset -2px -2px 5px rgba(0, 0, 0, 0.2)`,
+
+              "&:hover": {
+                transform: "translateY(-3px)",
+                boxShadow: isLight
+                  ? `14px 14px 28px #C1C9D6, -14px -14px 28px #FFFFFF`
+                  : `16px 16px 32px #151720, -10px -10px 25px #454b62`,
+              },
+
+              "&:active": {
+                transform: "scale(0.95)",
+                // Inset shadows become primary to look physically "squished"
+                boxShadow: isLight
+                  ? `inset 8px 8px 15px #D1D9E6, inset -8px -8px 15px #FFFFFF`
+                  : `inset 10px 10px 20px #1a1d29, inset -6px -6px 15px #3c4155`,
+              },
             },
             containedPrimary: {
               backgroundColor: primaryMain,
               color: "#3D3D3D",
-              boxShadow: `6px 6px 15px ${primaryMain}40, -4px -4px 10px #ffffff`,
+              // Colored Inner/Outer Clay Logic
+              boxShadow: isLight
+                ? `10px 10px 25px rgba(160, 232, 175, 0.5), 
+           -10px -10px 20px #FFFFFF, 
+           inset 4px 4px 10px rgba(255, 255, 255, 0.4), 
+           inset -4px -4px 10px rgba(0, 0, 0, 0.1)`
+                : `12px 12px 25px rgba(160, 232, 175, 0.15), 
+           -8px -8px 20px #3c4155, 
+           inset 4px 4px 10px rgba(255, 255, 255, 0.1), 
+           inset -4px -4px 10px rgba(0, 0, 0, 0.3)`,
+
+              "&:hover": {
+                backgroundColor: primaryMain,
+                filter: "brightness(1.04)", // Subtle glow on hover
+              },
             },
           },
         },

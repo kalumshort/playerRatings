@@ -56,10 +56,10 @@ export const setLocalStorageItem = (key, value) => {
 };
 
 export const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 450);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 750);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 450);
+    const handleResize = () => setIsMobile(window.innerWidth <= 750);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -96,9 +96,12 @@ export const footballClubsColours = {
 export const RatingBadge = styled("div")(({ score, theme }) => {
   // Determine color class
   let bgColor = theme.palette.grey[800]; // Default
-  if (score >= 8.0) bgColor = "#1b5e5aff"; // Deep Green
-  else if (score >= 7.0) bgColor = "#2e7d32"; // Green
-  else if (score >= 6.0) bgColor = "#ed6c02"; // Orange
+  if (score >= 8.0)
+    bgColor = "#1b5e5aff"; // Deep Green
+  else if (score >= 7.0)
+    bgColor = "#2e7d32"; // Green
+  else if (score >= 6.0)
+    bgColor = "#ed6c02"; // Orange
   else if (score > 0) bgColor = "#d32f2f"; // Red
 
   return {
@@ -336,7 +339,7 @@ export const blendColors = (color1, color2, weight) => {
 
   const r = Math.round((c1 >> 16) * (1 - weight) + (c2 >> 16) * weight);
   const g = Math.round(
-    ((c1 >> 8) & 0xff) * (1 - weight) + ((c2 >> 8) & 0xff) * weight
+    ((c1 >> 8) & 0xff) * (1 - weight) + ((c2 >> 8) & 0xff) * weight,
   );
   const b = Math.round((c1 & 0xff) * (1 - weight) + (c2 & 0xff) * weight);
 
@@ -375,7 +378,7 @@ export const useAppPaths = () => {
 
   // Access both the transient silo (activeGroup) and persistent home team (userHomeGroup)
   const { activeGroup, userHomeGroup } = useSelector(
-    (state) => state.groupData
+    (state) => state.groupData,
   );
 
   /**
