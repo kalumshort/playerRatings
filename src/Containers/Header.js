@@ -36,8 +36,8 @@ import { auth } from "../Firebase/Firebase";
 import useGroupData from "../Hooks/useGroupsData";
 import useUserData from "../Hooks/useUserData";
 import { useAuth } from "../Providers/AuthContext";
-import SiteIconText from "../assets/logo/11Votes_Text_Logo.png";
-import SiteIconOnly from "../assets/logo/11Votes_Icon_Logo.png";
+
+import SiteIconOnly from "../assets/logo/11Votes_Icon.png";
 
 // Components
 import ThemeToggle from "../Components/Theme/ThemeToggle";
@@ -111,7 +111,7 @@ export default function Header() {
             {/* Logo Logic */}
             <Box
               component="img"
-              src={isMobile ? SiteIconOnly : SiteIconText}
+              src={SiteIconOnly}
               alt="11Votes"
               sx={{
                 height: isMobile ? "40px" : "50px",

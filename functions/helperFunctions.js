@@ -50,11 +50,7 @@ const fetchFixtureData = async (fixtureId) => {
     const fixtureObj = data[0];
 
     return {
-      fixture: fixtureObj.fixture,
-      league: fixtureObj.league,
-      teams: fixtureObj.teams,
-      goals: fixtureObj.goals,
-      score: fixtureObj.score,
+      ...fixtureObj,
       matchDate: fixtureObj.fixture.timestamp,
     };
   } catch (error) {
@@ -103,26 +99,26 @@ const fetchAllMatchData = async ({ fixtureId }) => {
     // Wrap each call in a catch to ensure one failure doesn't kill the whole process
     const [
       fixtureData,
-      fixtureStatsData,
-      fixtureLineupData,
-      fixtureEventsData,
+      // fixtureStatsData,
+      // fixtureLineupData,
+      // fixtureEventsData,
     ] = await Promise.all([
       fetchFixtureData(fixtureId).catch((err) => {
         console.error(`Fixture basic data failed: ${err.message}`);
         return null;
       }),
-      fetchStatisticsData(fixtureId).catch((err) => {
-        console.error(`Stats failed: ${err.message}`);
-        return [];
-      }),
-      fetchLineupData(fixtureId).catch((err) => {
-        console.error(`Lineups failed: ${err.message}`);
-        return [];
-      }),
-      fetchEventsData(fixtureId).catch((err) => {
-        console.error(`Events failed: ${err.message}`);
-        return [];
-      }),
+      // fetchStatisticsData(fixtureId).catch((err) => {
+      //   console.error(`Stats failed: ${err.message}`);
+      //   return [];
+      // }),
+      // fetchLineupData(fixtureId).catch((err) => {
+      //   console.error(`Lineups failed: ${err.message}`);
+      //   return [];
+      // }),
+      // fetchEventsData(fixtureId).catch((err) => {
+      //   console.error(`Events failed: ${err.message}`);
+      //   return [];
+      // }),
     ]);
 
     // Safety Check: If the core fixture data is missing, we probably shouldn't save
@@ -135,9 +131,9 @@ const fetchAllMatchData = async ({ fixtureId }) => {
 
     const combinedFixtureData = {
       ...fixtureData,
-      statistics: fixtureStatsData || [],
-      lineups: fixtureLineupData || [],
-      events: fixtureEventsData || [],
+      // statistics: fixtureStatsData || [],
+      // lineups: fixtureLineupData || [],
+      // events: fixtureEventsData || [],
     };
 
     const year = combinedFixtureData?.league?.season;
