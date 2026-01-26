@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import Lottie from "react-lottie";
 import animationData from "../assets/animations/football-loader.json"; // Import the Lottie JSON data
-import whiteLogo from "../assets/logo/11votes-nobg-clear-white.png";
+import whiteLogo from "../assets/logo/11Votes_Icon_Blue.png";
 
 import { ChromePicker } from "react-color";
 import { Box, Button, Popover } from "@mui/material";

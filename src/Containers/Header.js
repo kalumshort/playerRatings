@@ -37,7 +37,7 @@ import useGroupData from "../Hooks/useGroupsData";
 import useUserData from "../Hooks/useUserData";
 import { useAuth } from "../Providers/AuthContext";
 
-import SiteIconOnly from "../assets/logo/11Votes_Icon.png";
+import SiteIconOnly from "../assets/logo/11Votes_Icon_Blue.png";
 
 // Components
 import ThemeToggle from "../Components/Theme/ThemeToggle";
