@@ -188,12 +188,13 @@ export const teamList = [
     accent: "#EF0107",
   },
   {
-    teamId: 746,
-    name: "Sunderland",
-    slug: "sunderland",
-    logo: "https://media.api-sports.io/football/teams/746.png",
-    accent: "#FF0000",
+    teamId: 40,
+    name: "Liverpool",
+    slug: "liverpool",
+    logo: "https://media.api-sports.io/football/teams/40.png",
+    accent: "#C8102E",
   },
+
   {
     teamId: 50,
     name: "Manchester City",
@@ -209,19 +210,20 @@ export const teamList = [
     accent: "#DA291C",
   },
   {
+    teamId: 746,
+    name: "Sunderland",
+    slug: "sunderland",
+    logo: "https://media.api-sports.io/football/teams/746.png",
+    accent: "#FF0000",
+  },
+  {
     teamId: 35,
     name: "Bournemouth",
     slug: "bournemouth",
     logo: "https://media.api-sports.io/football/teams/35.png",
     accent: "#B50E12",
   },
-  {
-    teamId: 40,
-    name: "Liverpool",
-    slug: "liverpool",
-    logo: "https://media.api-sports.io/football/teams/40.png",
-    accent: "#C8102E",
-  },
+
   {
     teamId: 47,
     name: "Tottenham",

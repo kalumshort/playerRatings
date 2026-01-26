@@ -14,25 +14,27 @@ import CssBaseline from "@mui/material/CssBaseline";
 // --- 2. PALETTE ---
 const PALETTE = {
   light: {
-    bg: "#FDFBF7", // Warm Off-White
-    paper: "#FFFFFF",
-    textPrimary: "#4A4A4A",
+    bg: "#FDFBF7", // Warm Off-White (Sunday Morning)
+    paper: "#FFFFFF", // Pure White for contrast
+    textPrimary: "#4A4A4A", // Deep Slate (Easy on the eyes)
     textSecondary: "#8C8C8C",
-    shadowLight: "#FFFFFF",
-    shadowDark: "#D1D9E6",
+    clayShadow: "#D1D9E6", // Soft Blue-Grey depth
+    highlight: "#FFFFFF", // Clean Light Source
+    accent: "#A0E8AF", // Matcha
   },
   dark: {
-    bg: "#2D3142",
-    paper: "#393D50",
-    textPrimary: "#F0F0F0",
+    bg: "#1A1C1E", // Deep Neutral Slate (Modern & Clean)
+    paper: "#24272B", // Elevated Dark Clay
+    textPrimary: "#ECECEC", // Off-White Text
     textSecondary: "#B0B3C7",
-    shadowLight: "#3c4155",
-    shadowDark: "#202330",
+    clayShadow: "#0D0E10", // Deep Void Shadow
+    highlight: "rgba(255, 255, 255, 0.05)", // Soft Rim Glow
+    accent: "#A0E8AF", // Matcha (Stays vibrant)
   },
-  primary: "#A0E8AF", // Matcha Green
-  secondary: "#A2D2FF", // Periwinkle
+  secondary: "#A0E8AF", // Matcha Green
+  primary: "#A2D2FF", // Periwinkle
+  coral: "#FFC8DD", // Soft Coral (For error/alerts)
 };
-
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
@@ -141,12 +143,15 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
             root: {
               margin: "8px",
               backgroundImage: "none",
-              backgroundColor: colors.bg,
+              backgroundColor: colors.paper,
               borderRadius: "32px",
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               boxShadow: isLight
-                ? "8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff, inset 3px 3px 6px rgba(255,255,255,0.8)"
-                : "10px 10px 20px #0e1014, -6px -6px 15px #2b303b, inset 2px 2px 4px rgba(255,255,255,0.05)",
+                ? `16px 16px 32px ${colors.clayShadow}, -16px -16px 32px ${colors.highlight}`
+                : `20px 20px 40px ${colors.clayShadow}, -8px -8px 25px rgba(255,255,255,0.03)`,
+              border: isLight
+                ? "1px solid rgba(255,255,255,0.8)"
+                : "1px solid rgba(255,255,255,0.1)",
             },
           },
         },
