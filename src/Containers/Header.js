@@ -55,11 +55,9 @@ const GlassAppBar = styled(AppBar)(({ theme }) => ({
   right: 0,
   width: "100%",
   background: theme.palette.background.paper, // Using the glass paper from ThemeContext
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  borderBottom: `1px solid ${theme.palette.divider}`,
   zIndex: theme.zIndex.appBar + 1,
   margin: "0!important",
+  borderRadius: 0,
 }));
 
 const NavContainer = styled(Box)({
