@@ -134,7 +134,16 @@ export const ThemeProvider = ({ children, accentColor = PALETTE.primary }) => {
         },
         MuiAvatar: {
           styleOverrides: {
-            root: { objectFit: "contain" },
+            root: {
+              // This ensures the container itself handles the shape
+              borderRadius: "8px",
+            },
+            img: {
+              // This targets the actual <img> tag inside the Avatar
+              objectFit: "contain",
+              width: "100%",
+              height: "100%",
+            },
           },
         },
         // --- PAPER (Standard Clay Cards) ---
