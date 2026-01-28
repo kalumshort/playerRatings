@@ -12,7 +12,6 @@ export default function LineupShell({
   formationConfig, // The FORMATIONS object imported from your config file
   title = "My XI", // Optional Title
   enableSave = true,
-  themeColor = "#FFF", // Optional accent color
 }) {
   const theme = useTheme();
   const lineupRef = useRef();
@@ -148,7 +147,7 @@ export default function LineupShell({
                     sx={{
                       width: 60,
                       height: 60,
-                      border: `2px solid ${themeColor}`,
+                      border: `3px solid ${theme.palette.primary.main}`,
                     }}
                   />
 
@@ -175,7 +174,7 @@ export default function LineupShell({
                         position: "absolute",
                         top: -5,
                         right: -5,
-                        bgcolor: themeColor,
+                        bgcolor: theme.palette.primary.main,
                         color: "#000",
                         fontSize: "0.7rem",
                         fontWeight: "bold",

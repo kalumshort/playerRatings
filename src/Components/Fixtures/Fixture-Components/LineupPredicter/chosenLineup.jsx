@@ -30,7 +30,6 @@ export default function ChosenLineup({ squadData, userPrediction }) {
       formation={userPrediction.formation}
       formationConfig={FORMATIONS}
       title="11VOTES.COM"
-      themeColor="#FFF"
     />
   );
 }

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Box, Collapse, IconButton, Typography } from "@mui/material";
+import { Box, Collapse, IconButton, Typography, useTheme } from "@mui/material";
 
 import { FORMATIONS } from "./LineupPredictor"; // Adjust path to your formations config
 
@@ -78,6 +78,7 @@ const calculateCommunityXI = (matchPredictions) => {
 
 export default function ConsensusLineup({ matchPredictions }) {
   // 1. Get Squad Data from Redux to map IDs -> Names/Photos
+  const theme = useTheme();
 
   const squadData = useSelector((state) => selectSquadDataObject(state));
 
@@ -148,8 +149,10 @@ export default function ConsensusLineup({ matchPredictions }) {
               sx={{ color: "text.secondary", display: "block" }}
             >
               Winning Formation:{" "}
-              <span style={{ color: "#00FF87" }}>{consensus.formation}</span> (
-              {consensus.formationStats.percentage}%)
+              <span style={{ color: theme.palette.primary.main }}>
+                {consensus.formation}
+              </span>{" "}
+              ({consensus.formationStats.percentage}%)
             </Typography>
           </Box>
 
