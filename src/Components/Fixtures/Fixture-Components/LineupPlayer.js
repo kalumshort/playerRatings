@@ -281,9 +281,7 @@ export default function LineupPlayer({
             px: 0.5,
             lineHeight: 1.1,
             // Text Shadow to ensure readability on grass
-            textShadow: "0 2px 4px rgba(0,0,0,0.9)",
             fontWeight: 700,
-            color: "white",
             fontSize: "0.75rem",
             letterSpacing: 0.3,
           }}
