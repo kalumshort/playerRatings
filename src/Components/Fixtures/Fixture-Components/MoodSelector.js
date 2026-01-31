@@ -7,7 +7,6 @@ import {
   IconButton,
   useTheme,
   Grid,
-  Fade,
   alpha,
 } from "@mui/material";
 import {
@@ -15,6 +14,8 @@ import {
   Area,
   ResponsiveContainer,
   YAxis,
+  XAxis,
+  ReferenceLine,
   Tooltip as RechartsTooltip,
 } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,13 +26,57 @@ import {
   handleFixtureMood,
 } from "../../../Firebase/Firebase";
 
+/**
+ * MOOD CONFIGURATION
+ * Weights define how much each emoji contributes to the 0-100 score.
+ */
+const PALETTE = {
+  EXCITED: "#B4E7B4", // Muted Matcha
+  HAPPY: "#F9E59B", // Soft Butter
+  NERVOUS: "#FFCC99", // Peach Clay
+  SAD: "#B8C9F2", // Dusty Periwinkle
+  ANGRY: "#F2B1B1", // Blushed Coral
+};
+
 const MOODS = [
-  { label: "excited", emoji: "🤩", color: "#FFD700", weight: 100 },
-  { label: "happy", emoji: "😄", color: "#4EFF4E", weight: 90 },
-  { label: "nervous", emoji: "😬", color: "#FF9100", weight: 50 },
-  { label: "sad", emoji: "😢", color: "#1E90FF", weight: 20 },
-  { label: "angry", emoji: "😡", color: "#FF4500", weight: 0 },
+  { label: "excited", emoji: "🤩", color: PALETTE.EXCITED, weight: 100 },
+  { label: "happy", emoji: "😄", color: PALETTE.HAPPY, weight: 75 },
+  { label: "nervous", emoji: "😬", color: PALETTE.NERVOUS, weight: 50 },
+  { label: "sad", emoji: "😢", color: PALETTE.SAD, weight: 25 },
+  { label: "angry", emoji: "😡", color: PALETTE.ANGRY, weight: 0 },
 ];
+
+const getStatus = (val) => {
+  if (val >= 80)
+    return {
+      label: "ECSTATIC",
+      color: PALETTE.EXCITED,
+      desc: "The stadium is rocking!",
+    };
+  if (val >= 60)
+    return {
+      label: "OPTIMISTIC",
+      color: PALETTE.HAPPY,
+      desc: "Fans are feeling confident.",
+    };
+  if (val >= 40)
+    return {
+      label: "TENSE",
+      color: PALETTE.NERVOUS,
+      desc: "You can feel the nerves.",
+    };
+  if (val >= 20)
+    return {
+      label: "DEFLATED",
+      color: PALETTE.SAD,
+      desc: "Silence in the stands.",
+    };
+  return {
+    label: "OUTRAGED",
+    color: PALETTE.ANGRY,
+    desc: "The atmosphere is toxic.",
+  };
+};
 
 export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
   const theme = useTheme();
@@ -58,7 +103,7 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
 
     fetchMoods();
     if (!matchNotStarted && !matchFinished) {
-      intervalId = setInterval(fetchMoods, 10000);
+      intervalId = setInterval(fetchMoods, 10000); // Poll every 10s during live match
     }
     return () => clearInterval(intervalId);
   }, [groupId, currentYear, matchId, matchNotStarted, matchFinished]);
@@ -66,6 +111,7 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
   const handleMoodClick = async (mood, e) => {
     if (matchFinished) return;
 
+    // Create particle effect
     const id = Date.now();
     setParticles((prev) => [
       ...prev,
@@ -76,6 +122,7 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
       1000,
     );
 
+    // Save to Firebase
     await handleFixtureMood({
       groupId,
       currentYear,
@@ -93,12 +140,23 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
         position: "relative",
         overflow: "hidden",
         backdropFilter: "blur(20px)",
+        borderRadius: 4,
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
       }}
       elevation={0}
     >
       <Grid container>
-        {/* LEFT: Chart Section */}
-        <Grid item xs={12} md={8} sx={{ height: 350, position: "relative" }}>
+        {/* LEFT: Visual Analytics */}
+        <Grid
+          item
+          xs={12}
+          md={8}
+          sx={{
+            height: 400,
+            position: "relative",
+            bgcolor: "rgba(0,0,0,0.15)",
+          }}
+        >
           {matchMoods ? (
             <MoodAreaChart matchMoods={matchMoods} />
           ) : (
@@ -113,15 +171,15 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ fontFamily: "Space Mono" }}
+                sx={{ fontFamily: "Space Mono", letterSpacing: 2 }}
               >
-                INITIALIZING PULSE...
+                INITIALIZING ATMOSPHERE ENGINE...
               </Typography>
             </Box>
           )}
         </Grid>
 
-        {/* RIGHT: Input Section (Glass Inset) */}
+        {/* RIGHT: User Interaction */}
         <Grid
           item
           xs={12}
@@ -134,76 +192,76 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
             borderLeft: {
               md: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
             },
-            bgcolor: alpha(theme.palette.background.default, 0.4),
+            bgcolor: alpha(theme.palette.background.paper, 0.5),
           }}
         >
           <Typography
-            variant="h5"
+            variant="h6"
             sx={{
               textAlign: "center",
               mb: 0.5,
-              color: theme.palette.primary.main,
-              letterSpacing: 2,
+              fontWeight: 800,
+              letterSpacing: 1,
             }}
           >
-            ATMOSPHERE
+            VIBE CHECK
           </Typography>
           <Typography
             variant="caption"
-            sx={{ textAlign: "center", mb: 4, display: "block", opacity: 0.7 }}
+            sx={{ textAlign: "center", mb: 4, display: "block", opacity: 0.6 }}
           >
-            LIVE FAN SENTIMENT TRACKER
+            SHARE YOUR EMOTION TO UPDATE THE PULSE
           </Typography>
 
           {!matchFinished && !matchNotStarted ? (
-            <Box sx={{ textAlign: "center" }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 2,
-                  justifyItems: "center",
-                }}
-              >
-                {MOODS.map((mood) => (
-                  <motion.div
-                    key={mood.label}
-                    whilehover={{ scale: 1.15 }}
-                    whiletap={{ scale: 0.9 }}
-                  >
-                    <IconButton
-                      onClick={(e) => handleMoodClick(mood, e)}
-                      sx={{
-                        fontSize: "2rem",
-                        background: alpha(mood.color, 0.1),
-                        border: `1px solid ${alpha(mood.color, 0.2)}`,
-                        width: 64,
-                        height: 64,
-                        "&:hover": {
-                          background: alpha(mood.color, 0.2),
-                          boxShadow: `0 0 20px ${alpha(mood.color, 0.4)}`,
-                          borderColor: mood.color,
-                        },
-                      }}
-                    >
-                      {mood.emoji}
-                    </IconButton>
-                  </motion.div>
-                ))}
-              </Box>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 2,
+                justifyItems: "center",
+              }}
+            >
+              {MOODS.map((mood) => (
+                <IconButton
+                  key={mood.label}
+                  component={motion.button}
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => handleMoodClick(mood, e)}
+                  sx={{
+                    fontSize: "2.2rem",
+                    background: alpha(mood.color, 0.1),
+                    border: `1px solid ${alpha(mood.color, 0.2)}`,
+                    width: 72,
+                    height: 72,
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      background: alpha(mood.color, 0.2),
+                      boxShadow: `0 0 25px ${alpha(mood.color, 0.4)}`,
+                      borderColor: mood.color,
+                    },
+                  }}
+                >
+                  {mood.emoji}
+                </IconButton>
+              ))}
             </Box>
           ) : (
             <Paper
               variant="outlined"
               sx={{
-                p: 2,
+                p: 3,
                 textAlign: "center",
-                bgcolor: alpha(theme.palette.action.disabledBackground, 0.05),
-                borderRadius: 2,
+                borderRadius: 3,
+                bgcolor: "transparent",
+                borderStyle: "dashed",
               }}
             >
               <Typography variant="button" color="text.secondary">
-                {matchNotStarted ? "PRE-MATCH LOBBY" : "MATCH ARCHIVED"}
+                {matchNotStarted
+                  ? "LOBBY OPEN - WAITING FOR KICKOFF"
+                  : "MATCH ARCHIVED"}
               </Typography>
             </Paper>
           )}
@@ -219,30 +277,25 @@ const MoodAreaChart = ({ matchMoods }) => {
 
   const chartData = useMemo(() => {
     if (!matchMoods) return [];
-    const data = [];
-    const minutes = Object.keys(matchMoods)
+    return Object.keys(matchMoods)
       .map(Number)
       .filter((n) => !isNaN(n))
-      .sort((a, b) => a - b);
-
-    minutes.forEach((minute) => {
-      const bucket = matchMoods[minute];
-      let totalScore = 0;
-      let totalVotes = 0;
-      MOODS.forEach((m) => {
-        const count = bucket[m.label] || 0;
-        totalScore += count * m.weight;
-        totalVotes += count;
-      });
-      if (totalVotes > 0) {
-        data.push({
-          minute,
-          sentiment: Math.round(totalScore / totalVotes),
-          totalVotes,
+      .sort((a, b) => a - b)
+      .map((minute) => {
+        const bucket = matchMoods[minute];
+        let totalScore = 0;
+        let totalVotes = 0;
+        MOODS.forEach((m) => {
+          const count = bucket[m.label] || 0;
+          totalScore += count * m.weight;
+          totalVotes += count;
         });
-      }
-    });
-    return data;
+        return {
+          minute,
+          sentiment: totalVotes > 0 ? Math.round(totalScore / totalVotes) : 50,
+          totalVotes,
+        };
+      });
   }, [matchMoods]);
 
   const lastPoint = chartData[chartData.length - 1] || {
@@ -250,92 +303,93 @@ const MoodAreaChart = ({ matchMoods }) => {
     totalVotes: 0,
   };
   const activePoint = hoveredData || lastPoint;
+  const status = getStatus(activePoint.sentiment);
 
-  const getStatus = (val) => {
-    if (val >= 75) return { label: "ECSTATIC", color: "#4EFF4E" };
-    if (val >= 55) return { label: "OPTIMISTIC", color: "#FFD700" };
-    if (val >= 35) return { label: "TENSE", color: "#FF9100" };
-    if (val >= 15) return { label: "DEFLATED", color: "#1E90FF" };
-    return { label: "OUTRAGED", color: "#FF4500" };
-  };
-
-  const currentStatus = getStatus(activePoint.sentiment);
-
+  // Define a fixed gradient so the "feeling" of the Y-axis is consistent
   return (
-    <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+    <Box sx={{ width: "100%", height: "100%", position: "relative", p: 2 }}>
       <Stack
+        spacing={0.5}
         sx={{
           position: "absolute",
-          top: 30,
-          left: 30,
+          top: 25,
+          left: 25,
           zIndex: 10,
           pointerEvents: "none",
         }}
       >
         <Typography
           variant="caption"
-          sx={{ letterSpacing: 3, color: "text.secondary" }}
+          sx={{ letterSpacing: 2, color: "text.secondary", fontWeight: 700 }}
         >
-          {hoveredData ? `T + ${hoveredData.minute}'` : "CURRENT PULSE"}
+          {hoveredData ? `MINUTE ${hoveredData.minute}'` : "LIVE STADIUM PULSE"}
         </Typography>
-        <Fade in={true} key={currentStatus.label}>
+
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
           <Typography
-            variant="h2"
-            sx={{
-              color: currentStatus.color,
-              textShadow: `0 0 30px ${alpha(currentStatus.color, 0.5)}`,
-              fontSize: { xs: "2rem", md: "3.5rem" },
-            }}
+            variant="h3"
+            sx={{ color: status.color, fontWeight: 900 }}
           >
-            {currentStatus.label}
+            {status.label}
           </Typography>
-        </Fade>
+          <Typography variant="h5" sx={{ color: status.color, opacity: 0.7 }}>
+            {activePoint.sentiment}%
+          </Typography>
+        </Box>
       </Stack>
 
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={chartData}
+          margin={{ top: 120, right: 0, left: 0, bottom: 0 }}
           onMouseMove={(s) =>
             s.activePayload && setHoveredData(s.activePayload[0].payload)
           }
           onMouseLeave={() => setHoveredData(null)}
         >
           <defs>
+            {/* This gradient stays fixed: Top is Green/Gold, Bottom is Red/Blue */}
             <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor={currentStatus.color}
-                stopOpacity={0.4}
-              />
-              <stop
-                offset="95%"
-                stopColor={currentStatus.color}
-                stopOpacity={0}
-              />
+              {/* Excited - Muted Matcha */}
+              <stop offset="0%" stopColor="#B4E7B4" stopOpacity={0.9} />
+
+              {/* Happy - Soft Butter */}
+              <stop offset="33%" stopColor="#F9E59B" stopOpacity={0.7} />
+
+              {/* Nervous - Peach Clay */}
+              <stop offset="66%" stopColor="#FFCC99" stopOpacity={0.5} />
+
+              {/* Angry - Blushed Coral */}
+              <stop offset="100%" stopColor="#F2B1B1" stopOpacity={0.2} />
             </linearGradient>
           </defs>
+
           <YAxis domain={[0, 100]} hide />
-          <RechartsTooltip
-            content={<CustomTooltip />}
-            cursor={{ stroke: alpha("#fff", 0.2), strokeWidth: 2 }}
+          <XAxis dataKey="minute" hide />
+          <ReferenceLine
+            y={50}
+            stroke="rgba(255,255,255,0.2)"
+            strokeDasharray="3 3"
           />
+
           <Area
             type="monotone"
             dataKey="sentiment"
-            stroke={currentStatus.color}
-            strokeWidth={4}
+            stroke={status.color} // The line color still changes to match the current vibe
+            strokeWidth={3}
             fill="url(#moodGradient)"
-            animationDuration={1000}
+            animationDuration={800}
+          />
+          <RechartsTooltip
+            content={<CustomTooltip />}
+            cursor={{ stroke: "#fff", strokeOpacity: 0.2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
     </Box>
   );
 };
-/**
- * ParticleOverlay handles the visual "pop" of emojis when a user votes.
- * It uses AnimatePresence to handle the exit animations as particles are filtered out.
- */
+
 const ParticleOverlay = ({ particles }) => {
   return (
     <AnimatePresence>
@@ -345,20 +399,20 @@ const ParticleOverlay = ({ particles }) => {
           initial={{ opacity: 1, scale: 0.5, x: 0, y: 0 }}
           animate={{
             opacity: 0,
-            y: -150, // Float upwards
-            x: (Math.random() - 0.5) * 100, // Slight horizontal drift
-            rotate: Math.random() * 50 - 25, // Random tilt
+            y: -180,
+            x: (Math.random() - 0.5) * 120,
+            rotate: Math.random() * 60 - 30,
           }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 1, ease: "easeOut" }}
           style={{
             position: "fixed",
             left: p.x,
             top: p.y,
-            fontSize: "2.5rem",
+            fontSize: "2.8rem",
             pointerEvents: "none",
             zIndex: 9999,
-            filter: "drop-shadow(0 0 10px rgba(255,255,255,0.3))",
+            filter: "drop-shadow(0 0 12px rgba(255,255,255,0.4))",
           }}
         >
           {p.emoji}
@@ -368,48 +422,52 @@ const ParticleOverlay = ({ particles }) => {
   );
 };
 
-/**
- * CustomTooltip aligns with the Glassmorphism theme of the site.
- */
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const info = getStatus(data.sentiment);
+
     return (
       <Box
         sx={{
-          bgcolor: "rgba(0,0,0,0.85)",
+          bgcolor: "rgba(10,10,10,0.9)",
           p: 2,
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: `1px solid ${alpha(info.color, 0.3)}`,
           borderRadius: 2,
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 15px 35px rgba(0,0,0,0.6)",
         }}
       >
         <Typography
           variant="caption"
-          sx={{ color: "rgba(255,255,255,0.5)", display: "block", mb: 0.5 }}
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mb: 1,
+            fontWeight: "bold",
+          }}
         >
-          MATCH MINUTE: {data.minute}'
+          MINUTE {data.minute}' REPORT
         </Typography>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
             sx={{
-              width: 8,
-              height: 8,
+              width: 12,
+              height: 12,
               borderRadius: "50%",
-              bgcolor: payload[0].color,
-              boxShadow: `0 0 10px ${payload[0].color}`,
+              bgcolor: info.color,
+              boxShadow: `0 0 10px ${info.color}`,
             }}
           />
-          <Typography
-            variant="body2"
-            sx={{ color: "#fff", fontWeight: "bold" }}
-          >
-            SENTIMENT: {data.sentiment}%
+          <Typography variant="body1" sx={{ color: "#fff", fontWeight: 800 }}>
+            {info.label} ({data.sentiment}%)
           </Typography>
         </Stack>
-        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)" }}>
-          {data.totalVotes} VOTES RECORDED
+        <Typography
+          variant="caption"
+          sx={{ color: alpha("#fff", 0.5), mt: 0.5, display: "block" }}
+        >
+          BASED ON {data.totalVotes} FAN REACTIONS
         </Typography>
       </Box>
     );
