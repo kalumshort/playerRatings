@@ -325,14 +325,34 @@ const MoodAreaChart = ({ matchMoods }) => {
           {hoveredData ? `MINUTE ${hoveredData.minute}'` : "LIVE STADIUM PULSE"}
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "baseline",
+            // Thinner gap on mobile (1), wider on tablet/desktop (1.5)
+            gap: { xs: 1, sm: 1.5 },
+          }}
+        >
           <Typography
-            variant="h3"
-            sx={{ color: status.color, fontWeight: 900 }}
+            // Responsive variant: h4 on mobile, h3 on larger screens
+            variant="h4"
+            sx={{
+              fontSize: { xs: "1.75rem", sm: "3rem" }, // Precise control
+              color: status.color,
+              fontWeight: 900,
+            }}
           >
             {status.label}
           </Typography>
-          <Typography variant="h5" sx={{ color: status.color, opacity: 0.7 }}>
+
+          <Typography
+            variant="h6" // Dropping from h5 for a better hierarchy
+            sx={{
+              fontSize: { xs: "1.1rem", sm: "1.5rem" },
+              color: status.color,
+              opacity: 0.7,
+            }}
+          >
             {activePoint.sentiment}%
           </Typography>
         </Box>
