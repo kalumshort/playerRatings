@@ -139,9 +139,6 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
         mb: 3,
         position: "relative",
         overflow: "hidden",
-        backdropFilter: "blur(20px)",
-        borderRadius: 4,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
       }}
       elevation={0}
     >
@@ -154,7 +151,6 @@ export const MoodSelector = ({ groupId, fixture, currentYear, matchId }) => {
           sx={{
             height: 400,
             position: "relative",
-            bgcolor: "rgba(0,0,0,0.15)",
           }}
         >
           {matchMoods ? (
