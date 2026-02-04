@@ -104,16 +104,16 @@ export default function Header() {
     { text: "Settings", icon: <User size={20} />, path: "/profile" },
   ];
   const guestNavItems = [
-    { text: "Home", icon: <Home size={20} />, path: `/${activeGroup.slug}` },
+    { text: "Home", icon: <Home size={20} />, path: `/${activeGroup?.slug}` },
     {
       text: "Schedule",
       icon: <Calendar size={20} />,
-      path: `/${activeGroup.slug}/schedule`,
+      path: `/${activeGroup?.slug}/schedule`,
     },
     {
       text: "Player Ratings",
       icon: <Trophy size={20} />,
-      path: `/${activeGroup.slug}/player-stats`,
+      path: `/${activeGroup?.slug}/player-stats`,
     },
   ];
 
