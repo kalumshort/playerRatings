@@ -44,6 +44,11 @@ export default function PlayerRatings({ fixture }) {
   const showAlert = useAlert();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
+  const isWeekOld = useMemo(() => {
+    const MS_PER_WEEK = 604800000;
+    return Date.now() - fixture.timestamp * 1000 >= MS_PER_WEEK;
+  }, [fixture.timestamp]);
+
   const { activeGroup } = useGroupData();
   const { clubSlug } = useParams();
   const { user } = useAuth();
@@ -184,7 +189,7 @@ export default function PlayerRatings({ fixture }) {
           <div style={{ textAlign: "center", padding: "10px" }}>
             Missing Lineup
           </div>
-        ) : isMatchRatingsSubmitted || !user ? (
+        ) : isMatchRatingsSubmitted || !user || isWeekOld ? (
           <SubmittedPlayerRatings
             motmPercentages={motmPercentages}
             fixture={fixture}
