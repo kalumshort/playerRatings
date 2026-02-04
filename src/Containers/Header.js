@@ -45,6 +45,7 @@ import Login from "../Components/Auth/Login";
 
 import { useAppNavigate } from "../Hooks/useAppNavigate";
 import GroupExplorer from "./Header/GroupExplorer";
+import { useNavigate } from "react-router-dom";
 // import { handleAddUserToGroup } from "../Firebase/Auth_Functions";
 
 // --- Styled Components (Glassmorphism) ---
@@ -74,6 +75,8 @@ export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const appNavigate = useAppNavigate();
+  const navigate = useNavigate();
+
   const { user } = useAuth();
   const { activeGroup } = useGroupData();
   const { isGroupAdmin } = useUserData();
@@ -99,6 +102,19 @@ export default function Header() {
       path: "/player-stats",
     },
     { text: "Settings", icon: <User size={20} />, path: "/profile" },
+  ];
+  const guestNavItems = [
+    { text: "Home", icon: <Home size={20} />, path: `/${activeGroup.slug}` },
+    {
+      text: "Schedule",
+      icon: <Calendar size={20} />,
+      path: `/${activeGroup.slug}/schedule`,
+    },
+    {
+      text: "Player Ratings",
+      icon: <Trophy size={20} />,
+      path: `/${activeGroup.slug}/player-stats`,
+    },
   ];
 
   return (
@@ -221,7 +237,36 @@ export default function Header() {
 
           {/* Auth State */}
           {!user ? (
-            <Login />
+            <>
+              {activeGroup && (
+                <List sx={{ mt: 2 }}>
+                  {guestNavItems.map((item) => (
+                    <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => {
+                          navigate(item.path);
+                          setDrawerOpen(false);
+                        }}
+                        sx={{
+                          borderRadius: "12px",
+                          "&:hover": { backgroundColor: `${accentColor}15` },
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 40, color: accentColor }}>
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={item.text}
+                          primaryTypographyProps={{ variant: "body2" }}
+                        />
+                        <ChevronRight size={16} style={{ opacity: 0.3 }} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+              <Login />
+            </>
           ) : (
             <Box sx={{ flexGrow: 1 }}>
               {/* <ProfileSection setDrawerOpen={setDrawerOpen} /> */}
@@ -252,8 +297,6 @@ export default function Header() {
                     </ListItemButton>
                   </Paper>
                 )}
-
-                {/* Standard Nav */}
                 {navItems.map((item) => (
                   <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
                     <ListItemButton
@@ -277,7 +320,6 @@ export default function Header() {
                     </ListItemButton>
                   </ListItem>
                 ))}
-
                 {user && <GroupExplorer setDrawerOpen={setDrawerOpen} />}
               </List>
             </Box>
