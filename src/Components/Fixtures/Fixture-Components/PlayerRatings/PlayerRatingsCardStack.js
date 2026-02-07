@@ -26,7 +26,7 @@ export default function PlayerRatingsCardStack({
   const [index, setIndex] = useState(0);
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),
-    [combinedPlayers]
+    [combinedPlayers],
   );
   if (!players.length) return null;
 

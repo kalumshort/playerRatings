@@ -453,9 +453,7 @@ const RatingInputSection = React.memo(
                       : "#FFC8DD",
               })}
             >
-              {sliderValue.toFixed(1).endsWith(".0")
-                ? sliderValue
-                : sliderValue.toFixed(1)}
+              {sliderValue.toFixed(1)}
             </Typography>
           </Box>
 
@@ -528,7 +526,7 @@ const ResultDisplay = ({ label, score }) => (
       })}
     >
       <Typography variant="h4" fontWeight="bold">
-        {score}
+        {score.toFixed(1)}
       </Typography>
     </Box>
   </Box>
