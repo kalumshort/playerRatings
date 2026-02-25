@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 // --- CONFIGURATION ---
 const API_KEY = "7074e7d716eac4f8b67251541d144aba";
@@ -228,6 +228,31 @@ const checkTeamsLatestFixture = async (teamId) => {
   }
 };
 
+const addMemberToGroupDoc = async (db, groupId, userId, userData) => {
+  const memberRef = db
+    .collection("groupUsers")
+    .doc(String(groupId))
+    .collection("members")
+    .doc(String(userId));
+
+  return memberRef.set({
+    ...userData,
+    joinedAt: FieldValue.serverTimestamp(),
+  });
+};
+
+const removeMemberFromGroupDoc = async (db, groupId, userId) => {
+  const memberRef = db
+    .collection("groupUsers")
+    .doc(String(groupId))
+    .collection("members")
+    .doc(String(userId));
+
+  return memberRef.delete();
+};
+
+module.exports = { addMemberToGroupDoc, removeMemberFromGroupDoc };
+
 module.exports = {
   fetchFootballApi, // Exported so you can use it elsewhere
   fetchFixtureData,
@@ -236,4 +261,6 @@ module.exports = {
   fetchEventsData,
   fetchAllMatchData,
   checkTeamsLatestFixture,
+  addMemberToGroupDoc,
+  removeMemberFromGroupDoc,
 };
