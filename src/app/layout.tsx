@@ -6,6 +6,7 @@ import Header from "@/components/client/Header";
 import Footer from "@/components/client/Footer/Footer";
 import { getAuthSession } from "@/lib/firebase/getAuth";
 import { cookies } from "next/headers";
+import { DrawerProvider } from "@/components/client/Header/DrawerContext";
 
 // Configure the fonts
 const outfit = Outfit({
@@ -55,17 +56,19 @@ export default async function RootLayout({
         <AuthProvider>
           <StoreProvider>
             <ThemeRegistry initialTheme={initialTheme}>
-              <Header serverIsLoggedIn={isLoggedIn} />
-              <main
-                style={{
-                  maxWidth: "1400px",
-                  margin: "auto",
-                  minHeight: "100vh",
-                }}
-              >
-                {children}
-              </main>
-              <Footer />
+              <DrawerProvider>
+                <Header />
+                <main
+                  style={{
+                    maxWidth: "1400px",
+                    margin: "auto",
+                    minHeight: "100vh",
+                  }}
+                >
+                  {children}
+                </main>
+                <Footer />
+              </DrawerProvider>
             </ThemeRegistry>
           </StoreProvider>
         </AuthProvider>

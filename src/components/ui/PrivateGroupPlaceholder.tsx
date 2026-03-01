@@ -5,6 +5,7 @@ import { Box, Typography, Button, Paper, Container } from "@mui/material";
 import LockTwoToneIcon from "@mui/icons-material/LockTwoTone";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { useRouter } from "next/navigation";
+import { useDrawer } from "../client/Header/DrawerContext";
 
 interface PrivateGroupPlaceholderProps {
   name: string;
@@ -14,6 +15,7 @@ export default function PrivateGroupPlaceholder({
   name,
 }: PrivateGroupPlaceholderProps) {
   const router = useRouter();
+  const { toggleDrawer } = useDrawer();
 
   return (
     <Container maxWidth="sm">
@@ -31,9 +33,7 @@ export default function PrivateGroupPlaceholder({
           elevation={0}
           sx={(theme) => ({
             p: 5,
-            borderRadius: "32px",
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: "background.paper",
+
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -51,7 +51,6 @@ export default function PrivateGroupPlaceholder({
               bgcolor: "primary.main",
               color: "primary.contrastText",
               mb: 1,
-              boxShadow: `0 8px 16px ${theme.palette.primary.main}33`,
             })}
           >
             <LockTwoToneIcon sx={{ fontSize: 40 }} />
@@ -72,15 +71,10 @@ export default function PrivateGroupPlaceholder({
               variant="outlined"
               startIcon={<ArrowBackRoundedIcon />}
               onClick={() => router.back()}
-              sx={{ borderRadius: "12px", px: 3 }}
             >
               Go Back
             </Button>
-            <Button
-              variant="contained"
-              onClick={() => router.push("/login")}
-              sx={{ borderRadius: "12px", px: 4 }}
-            >
+            <Button variant="contained" onClick={() => toggleDrawer(true)}>
               Sign In
             </Button>
           </Box>

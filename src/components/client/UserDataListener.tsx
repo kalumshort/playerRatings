@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-
-// Redux Actions
 import {
   fetchUserDataSuccess,
   fetchUserDataStart,
@@ -17,7 +15,6 @@ import {
   groupDataFailure,
 } from "@/lib/redux/slices/groupSlice";
 
-// Helper to sanitize Firebase Timestamps (Prevents Redux serialization errors)
 const sanitizeData = (data: any) => {
   const sanitized = { ...data };
   Object.keys(sanitized).forEach((key) => {
@@ -28,8 +25,13 @@ const sanitizeData = (data: any) => {
   return sanitized;
 };
 
+// Simple deep comparison to prevent unnecessary Redux dispatches
+const isDataEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+
 export const UserDataListener = ({ userId }: { userId: string | null }) => {
   const dispatch = useDispatch();
+  const lastUserData = useRef<any>(null);
+  const lastGroupData = useRef<any>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -46,47 +48,33 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
       const rawUserData = snapshot.data();
       const userData = { ...sanitizeData(rawUserData), uid: userId };
 
+      // 1. Only process if user data changed
+      if (isDataEqual(lastUserData.current, userData)) return;
+      lastUserData.current = userData;
+
       try {
-        if (userData.groups && userData.groups.length > 0) {
+        if (userData.groups?.length > 0) {
           dispatch(groupDataStart());
 
-          // Parallel fetch for all groups the user belongs to
           const groupPromises = userData.groups.map(async (groupId: string) => {
-            try {
-              const groupRef = doc(db, "groups", groupId);
-              const groupDoc = await getDoc(groupRef);
+            const groupRef = doc(db, "groups", groupId);
+            const [groupDoc, groupUserDoc] = await Promise.all([
+              getDoc(groupRef),
+              getDoc(doc(db, `groupUsers/${groupId}/members`, userId)),
+            ]);
 
-              if (!groupDoc.exists()) return null;
-
-              const groupData = sanitizeData(groupDoc.data());
-
-              // Fetch User Role in this specific group
-              const groupUserRef = doc(
-                db,
-                `groupUsers/${groupId}/members`,
-                userId,
-              );
-              const groupUserDoc = await getDoc(groupUserRef);
-              const role = groupUserDoc.exists()
-                ? groupUserDoc.data().role
-                : "user";
-
-              return {
-                id: groupId,
-                data: { ...groupData, groupId },
-                role,
-              };
-            } catch (err) {
-              console.error(`Error loading group ${groupId}`, err);
-              return null;
-            }
+            if (!groupDoc.exists()) return null;
+            return {
+              id: groupId,
+              data: { ...sanitizeData(groupDoc.data()), groupId },
+              role: groupUserDoc.exists() ? groupUserDoc.data().role : "user",
+            };
           });
 
           const results = await Promise.all(groupPromises);
 
           const groupObj: Record<string, any> = {};
           const groupPermissions: Record<string, any> = {};
-
           results.forEach((res) => {
             if (res) {
               groupObj[res.id] = res.data;
@@ -94,15 +82,17 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
             }
           });
 
-          dispatch(groupDataSuccess(groupObj));
+          // 2. Only dispatch if group data actually changed
+          if (!isDataEqual(lastGroupData.current, groupObj)) {
+            lastGroupData.current = groupObj;
+            dispatch(groupDataSuccess(groupObj));
+          }
           dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
         } else {
-          // No groups - finish loading user data
           dispatch(groupDataSuccess({}));
           dispatch(fetchUserDataSuccess(userData));
         }
       } catch (err: any) {
-        console.error("Listener Logic Error:", err);
         dispatch(groupDataFailure(err.message));
       }
     });

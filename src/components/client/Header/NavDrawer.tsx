@@ -28,6 +28,7 @@ import { getNavItems } from "./NavItems";
 import Login from "../Auth/Login";
 import ThemeToggle from "../Theme/ThemeToggle";
 import SwitcherTrigger from "../Groups/SwitcherTrigger";
+import useGroupData from "@/Hooks/useGroupData";
 
 // import GroupExplorer from "./GroupExplorer";
 
@@ -42,6 +43,10 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { clubSlug } = useParams();
+
+  const { activeGroup } = useGroupData();
+
+  console.log(activeGroup, "active group from nav drawer");
 
   //   const { activeGroup } = useGroupData();
   //   const { isGroupAdmin } = useUserData();

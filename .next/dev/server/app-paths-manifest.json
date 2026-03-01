@@ -1,5 +1,0 @@
-{
-  "/[clubSlug]/fixture/[matchId]/page": "app/[clubSlug]/fixture/[matchId]/page.js",
-  "/[clubSlug]/page": "app/[clubSlug]/page.js",
-  "/page": "app/page.js"
-}

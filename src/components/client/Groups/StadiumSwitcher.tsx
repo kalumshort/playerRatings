@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition, useMemo } from "react";
+import React, { useState, useTransition, useMemo, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -8,13 +8,11 @@ import {
   Dialog,
   IconButton,
   TextField,
-  InputAdornment,
   Grid,
   ButtonBase,
   Tab,
   Tabs,
   Button,
-  Divider,
   Paper,
   Chip,
   Fade,
@@ -27,6 +25,7 @@ import {
   X,
   Trophy,
   ArrowLeftRight,
+  Eye,
   Lock,
   CalendarClock,
   Plus,
@@ -35,13 +34,10 @@ import {
 } from "lucide-react";
 import { differenceInDays, addDays, formatDistanceToNow } from "date-fns";
 
-// Firebase Actions
 import {
   updateLeagueTeam,
   updateUserField,
 } from "@/lib/firebase/client-user-actions";
-
-// Static Data & Hooks
 import { teamList } from "@/lib/utils/teamList";
 import useGroupData from "@/Hooks/useGroupData";
 
@@ -56,9 +52,27 @@ export default function StadiumSwitcher({
   const [transferLeagueKey, setTransferLeagueKey] = useState<string | null>(
     null,
   );
-  const [pendingSelection, setPendingSelection] = useState<any | null>(null); // New: Track team click for confirmation
+  const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
+
+  // Unified Styling Helper
+  const sharedCardSx = (isActive: boolean) => ({
+    width: "100%",
+    p: 2,
+
+    border: "2px solid",
+    borderColor: isActive ? "primary.main" : "divider",
+    bgcolor: isActive ? "action.selected" : "background.paper",
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    transition: "all 0.2s ease-in-out",
+    "&:hover": {
+      borderColor: "primary.main",
+      bgcolor: "action.hover",
+    },
+  });
 
   const SUPPORTED_LEAGUES = [
     { id: "premier-league", name: "Premier League", active: true },
@@ -66,10 +80,20 @@ export default function StadiumSwitcher({
     { id: "serie-a", name: "Serie A", active: false },
   ];
 
+  // Auto-detect tab on mount based on activeGroup
+  useEffect(() => {
+    if (userData?.activeGroup) {
+      const clubData: any = groupData?.[userData.activeGroup];
+
+      const isPrivate = clubData.privateGroup;
+
+      setActiveTab(isPrivate ? 1 : 0);
+    }
+  }, [userData?.activeGroup, groups]);
+
   const privateCommunities = useMemo(() => {
     return Object.values(groups || {}).filter(
-      (g: any) =>
-        g.visibility === "private" && userData?.groups?.includes(g.groupId),
+      (g: any) => g.privateGroup && userData?.groups?.includes(g.groupId),
     );
   }, [groups, userData?.groups]);
 
@@ -88,14 +112,12 @@ export default function StadiumSwitcher({
 
   const handleConfirmTransfer = () => {
     if (isPending || !transferLeagueKey || !pendingSelection) return;
-
     startTransition(async () => {
       const result = await updateLeagueTeam({
         userData,
         groupId: String(pendingSelection.teamId),
         leagueKey: transferLeagueKey,
       });
-
       if (result.success) {
         setPendingSelection(null);
         setTransferLeagueKey(null);
@@ -134,7 +156,6 @@ export default function StadiumSwitcher({
         },
       }}
     >
-      {/* Dynamic Header */}
       <Box
         sx={{
           p: 3,
@@ -162,47 +183,42 @@ export default function StadiumSwitcher({
                 : "Manage Memberships"}
           </Typography>
         </Box>
-        <IconButton
-          onClick={() =>
-            pendingSelection
-              ? setPendingSelection(null)
-              : transferLeagueKey
-                ? setTransferLeagueKey(null)
-                : onClose()
-          }
-          disabled={isPending}
-        >
+        <IconButton onClick={closeDialog} disabled={isPending}>
           <X size={20} />
         </IconButton>
       </Box>
 
-      {/* Primary Navigation - Hide when confirming to focus user */}
-      {!pendingSelection && (
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => {
-            setActiveTab(v);
-            setTransferLeagueKey(null);
-          }}
-          variant="fullWidth"
-          sx={{ borderBottom: 1, borderColor: "divider" }}
-        >
-          <Tab
-            icon={<Trophy size={18} />}
-            label="My Teams"
-            iconPosition="start"
-            disabled={isPending}
-          />
-          <Tab
-            icon={<Lock size={18} />}
-            label="Private Groups"
-            iconPosition="start"
-            disabled={isPending}
-          />
-        </Tabs>
-      )}
-
       <Box sx={{ p: 3, minHeight: 450, position: "relative" }}>
+        {!pendingSelection && (
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => {
+              setActiveTab(v);
+              setTransferLeagueKey(null);
+            }}
+            variant="fullWidth"
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              marginBottom: 3,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <Tab
+              icon={<Trophy size={18} />}
+              label="My Teams"
+              iconPosition="start"
+              disabled={isPending}
+            />
+            <Tab
+              icon={<Lock size={18} />}
+              label="Private Groups"
+              iconPosition="start"
+              disabled={isPending}
+            />
+          </Tabs>
+        )}
         {isPending && (
           <Box
             sx={{
@@ -220,7 +236,6 @@ export default function StadiumSwitcher({
           </Box>
         )}
 
-        {/* NEW: Confirmation Screen */}
         {pendingSelection ? (
           <Fade in={true}>
             <Box sx={{ textAlign: "center", py: 2 }}>
@@ -249,7 +264,6 @@ export default function StadiumSwitcher({
                 <strong>{transferLeagueKey?.replace("-", " ")}</strong>{" "}
                 registration.
               </Typography>
-
               <Paper
                 sx={{
                   bgcolor: "warning.light",
@@ -272,7 +286,6 @@ export default function StadiumSwitcher({
                   <strong>locked from further transfers for 30 days.</strong>
                 </Typography>
               </Paper>
-
               <Stack direction="row" spacing={2}>
                 <Button
                   fullWidth
@@ -310,6 +323,7 @@ export default function StadiumSwitcher({
                 </Typography>
                 {SUPPORTED_LEAGUES.map((league) => {
                   const clubId = userData?.leagueTeams?.[league.id];
+                  const isActive = userData.activeGroup === clubId;
                   const clubData: any = groupData?.[clubId];
                   const lastTransfer =
                     userData?.lastTransferDates?.[league.id]?.toDate();
@@ -324,16 +338,14 @@ export default function StadiumSwitcher({
                     <Fade in key={league.id}>
                       <Paper
                         variant="outlined"
+                        onClick={() =>
+                          !isActive && clubId && handleActiveGroupChange(clubId)
+                        }
                         sx={{
-                          p: 2,
-                          borderRadius: "20px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
+                          ...sharedCardSx(isActive),
                           opacity: league.active ? 1 : 0.5,
-                          bgcolor: league.active
-                            ? "background.paper"
-                            : "action.disabledBackground",
+                          cursor:
+                            league.active && !isActive ? "pointer" : "default",
                         }}
                       >
                         <Avatar
@@ -343,7 +355,6 @@ export default function StadiumSwitcher({
                             height: 54,
                             borderRadius: "12px",
                             bgcolor: "white",
-                            p: 0.5,
                             border: "1px solid",
                             borderColor: "divider",
                           }}
@@ -355,12 +366,13 @@ export default function StadiumSwitcher({
                             variant="caption"
                             sx={{
                               fontWeight: 900,
-                              color: "text.secondary",
+                              color: isActive
+                                ? "primary.main"
+                                : "text.secondary",
                               textTransform: "uppercase",
-                              fontSize: "0.65rem",
                             }}
                           >
-                            {league.name}
+                            {isActive ? "Currently Viewing" : league.name}
                           </Typography>
                           <Typography
                             variant="subtitle1"
@@ -371,50 +383,50 @@ export default function StadiumSwitcher({
                                 ? "No Club Assigned"
                                 : "Opening Soon")}
                           </Typography>
-                          {!canChange && league.active && nextDate && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: "warning.main",
-                                fontWeight: 700,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <CalendarClock size={12} /> Window:{" "}
-                              {formatDistanceToNow(nextDate)}
-                            </Typography>
-                          )}
+                          {!canChange &&
+                            league.active &&
+                            isActive &&
+                            nextDate && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "warning.main",
+                                  fontWeight: 700,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
+                                <CalendarClock size={12} /> Window:{" "}
+                                {formatDistanceToNow(nextDate)}
+                              </Typography>
+                            )}
                         </Box>
-                        {league.active ? (
-                          <Button
-                            variant="contained"
+                        {league.active && (
+                          <IconButton
                             size="small"
-                            disabled={!canChange}
-                            onClick={() => setTransferLeagueKey(league.id)}
-                            startIcon={
-                              clubId ? (
-                                <ArrowLeftRight size={14} />
-                              ) : (
-                                <Plus size={14} />
-                              )
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              isActive
+                                ? setTransferLeagueKey(league.id)
+                                : handleActiveGroupChange(clubId);
+                            }}
                             sx={{
-                              borderRadius: "10px",
-                              fontWeight: 800,
-                              textTransform: "none",
+                              color: isActive
+                                ? "primary.main"
+                                : "text.secondary",
                             }}
                           >
-                            {clubId ? "Transfer" : "Join"}
-                          </Button>
-                        ) : (
-                          <Chip
-                            label="Locked"
-                            size="small"
-                            icon={<Lock size={12} />}
-                            sx={{ fontWeight: 700 }}
-                          />
+                            {isActive ? (
+                              clubId ? (
+                                <ArrowLeftRight size={22} />
+                              ) : (
+                                <Plus size={22} />
+                              )
+                            ) : (
+                              <Eye size={22} />
+                            )}
+                          </IconButton>
                         )}
                       </Paper>
                     </Fade>
@@ -422,7 +434,7 @@ export default function StadiumSwitcher({
                 })}
               </Stack>
             ) : (
-              /* TRANSFER MARKET VIEW */
+              /* MARKET VIEW */
               <Box sx={{ animation: "fadeIn 0.2s ease-in" }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <IconButton
@@ -447,7 +459,7 @@ export default function StadiumSwitcher({
                   {filteredMarket.map((team) => (
                     <Grid size={{ xs: 4, sm: 3 }} key={team.teamId}>
                       <ButtonBase
-                        onClick={() => setPendingSelection(team)} // Instead of calling handleTransfer directly
+                        onClick={() => setPendingSelection(team)}
                         sx={{
                           width: "100%",
                           p: 1.5,
@@ -498,38 +510,61 @@ export default function StadiumSwitcher({
               YOUR JOINED COMMUNITIES
             </Typography>
             <Stack spacing={1.5}>
-              {privateCommunities.map((group: any) => {
-                const isActive = userData.activeGroup === group.groupId;
-                return (
-                  <ButtonBase
-                    key={group.groupId}
-                    onClick={() => handleActiveGroupChange(group.groupId)}
-                    sx={{
-                      width: "100%",
-                      p: 2,
-                      borderRadius: "16px",
-                      border: "1px solid",
-                      borderColor: isActive ? "primary.main" : "divider",
-                      bgcolor: isActive
-                        ? "action.selected"
-                        : "background.paper",
-                      justifyContent: "flex-start",
-                      gap: 2,
-                    }}
-                  >
-                    <Avatar
-                      src={group.logo?.replace(/"/g, "")}
-                      sx={{ width: 40, height: 40, borderRadius: "8px" }}
-                    />
-                    <Typography
-                      sx={{ fontWeight: 700, flex: 1, textAlign: "left" }}
+              {privateCommunities
+                .sort((a: any, b: any) => {
+                  const aActive = userData.activeGroup === a.groupId;
+                  const bActive = userData.activeGroup === b.groupId;
+                  // Sort so true (active) comes before false (inactive)
+                  return aActive === bActive ? 0 : aActive ? -1 : 1;
+                })
+                .map((group: any) => {
+                  const isActive = userData.activeGroup === group.groupId;
+                  return (
+                    <Paper
+                      key={group.groupId}
+                      onClick={() => handleActiveGroupChange(group.groupId)}
+                      sx={{
+                        ...sharedCardSx(isActive),
+                        justifyContent: "flex-start",
+                      }}
                     >
-                      {group.name}
-                    </Typography>
-                    {isActive && <CheckCircle2 size={18} color="#4caf50" />}
-                  </ButtonBase>
-                );
-              })}
+                      <Avatar
+                        src={group.logo?.replace(/"/g, "")}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "8px",
+                          border: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      />
+                      <Box sx={{ flex: 1, textAlign: "left" }}>
+                        <Typography
+                          sx={{ fontWeight: 700, fontSize: "0.9rem" }}
+                        >
+                          {group.name}
+                        </Typography>
+                        {isActive && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "primary.main",
+                              fontWeight: 700,
+                              display: "block",
+                            }}
+                          >
+                            CURRENTLY VIEWING
+                          </Typography>
+                        )}
+                      </Box>
+                      {isActive ? (
+                        <CheckCircle2 size={18} color="#4caf50" />
+                      ) : (
+                        <Eye size={18} color="gray" />
+                      )}
+                    </Paper>
+                  );
+                })}
             </Stack>
           </Box>
         )}

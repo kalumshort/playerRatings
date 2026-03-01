@@ -11,7 +11,7 @@ export default function SwitcherTrigger() {
   const [open, setOpen] = useState(false);
   const { userData } = useUserData();
   const { groupData, userHomeGroup }: any = useGroupData();
-  console.log(userHomeGroup);
+
   // Use the team's accent color or fallback to primary
   const teamColor = userHomeGroup?.accentColor || "#1976d2";
 

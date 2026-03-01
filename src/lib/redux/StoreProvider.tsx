@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { makeStore, AppStore } from "./store";
 import { UserDataListener } from "@/components/client/UserDataListener";
 import { useAuth } from "@/context/AuthContext";
+import { GroupNavigationSync } from "@/components/client/Groups/GroupNavigationSync";
 
 export default function StoreProvider({
   children,
@@ -23,6 +24,7 @@ export default function StoreProvider({
     <Provider store={storeRef.current}>
       {/* The Listener lives inside the Provider so it has access to dispatch */}
       {user && <UserDataListener userId={user?.uid || null} />}
+      {user && <GroupNavigationSync />}
       {children}
     </Provider>
   );
