@@ -22,7 +22,7 @@ const StatusDot = styled(Box, {
     ? `0 0 8px ${type === "rated" ? ACCENT : theme.palette.primary.main}`
     : "none",
 }));
-// test
+
 interface ThumbnailProps {
   player: any;
   index: number;
