@@ -14,7 +14,6 @@ import { Download as DownloadIcon, SportsSoccer } from "@mui/icons-material";
 import html2canvas from "html2canvas";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { Icon } from "lucide-react";
-import { text } from "body-parser";
 
 interface LineupShellProps {
   team: Record<string, { name: string; photo: string; subText?: string }>;
