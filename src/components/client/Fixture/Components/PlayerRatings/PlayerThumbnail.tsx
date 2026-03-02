@@ -8,7 +8,6 @@ import { RootState } from "@/lib/redux/store";
 
 const ACCENT = "#4EFF4E";
 
-// --- STYLED COMPONENTS ---
 const StatusDot = styled(Box, {
   shouldForwardProp: (prop) => prop !== "active" && prop !== "type",
 })<{ active?: boolean; type: "rated" | "motm" }>(({ theme, active, type }) => ({
