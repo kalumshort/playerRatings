@@ -15,12 +15,20 @@ function getAdminApp(): admin.app.App {
     return globalForAdmin.adminApp;
   }
 
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  // Add this check inside your getAdminApp function
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
-  if (!projectId || !privateKey || !clientEmail) {
-    throw new Error("Missing Firebase Admin environment variables.");
+  // If we are in a build environment (CI), we might not have these keys.
+  // Return a dummy object if missing to prevent the build from crashing.
+  if (!projectId || !clientEmail || !privateKey) {
+    console.warn(
+      "Firebase Admin credentials missing. Admin SDK will not be available.",
+    );
+    return admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
   }
 
   const app = admin.initializeApp({
