@@ -1,3 +1,4 @@
+import "server-only"; // Add this line!
 import { Filter } from "firebase-admin/firestore";
 import { getAdminDb } from "./admin";
 import { Fixture } from "@/types/football";
