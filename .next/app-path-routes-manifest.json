@@ -1,0 +1,14 @@
+{
+  "/[clubSlug]/fixture/[matchId]/page": "/[clubSlug]/fixture/[matchId]",
+  "/[clubSlug]/page": "/[clubSlug]",
+  "/[clubSlug]/player-stats/page": "/[clubSlug]/player-stats",
+  "/[clubSlug]/players/[playerId]/page": "/[clubSlug]/players/[playerId]",
+  "/[clubSlug]/schedule/page": "/[clubSlug]/schedule",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/contact/page": "/contact",
+  "/page": "/",
+  "/privacy/page": "/privacy",
+  "/profile/page": "/profile",
+  "/terms/page": "/terms"
+}

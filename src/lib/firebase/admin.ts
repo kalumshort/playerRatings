@@ -1,40 +1,43 @@
 import "server-only";
 import * as admin from "firebase-admin";
 
-const privateKey = process.env.FIREBASE_PRIVATE_KEY
-  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-  : undefined;
+/**
+ * Singleton Pattern for Firebase Admin
+ * Ensures the SDK is initialized only once to prevent memory leaks
+ * and connection exhaustion in serverless environments.
+ */
 
-const firebaseAdminConfig = {
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: privateKey,
-};
+// Use a global to persist the app instance across function warm-starts
+const globalForAdmin = global as typeof global & { adminApp: admin.app.App };
 
-function initializeAdmin() {
-  // If an app already exists, use it. Otherwise, initialize.
-  if (admin.apps.length > 0) {
-    return admin.app();
+function getAdminApp(): admin.app.App {
+  if (globalForAdmin.adminApp) {
+    return globalForAdmin.adminApp;
   }
 
-  if (!firebaseAdminConfig.projectId || !firebaseAdminConfig.privateKey) {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+  if (!projectId || !privateKey || !clientEmail) {
     throw new Error("Missing Firebase Admin environment variables.");
   }
 
-  return admin.initializeApp({
-    credential: admin.credential.cert(
-      firebaseAdminConfig as admin.ServiceAccount,
-    ),
+  const app = admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    }),
   });
+
+  globalForAdmin.adminApp = app;
+  return app;
 }
 
-// Getters
-export const getAdminDb = () => {
-  const app = initializeAdmin();
-  return admin.firestore(app); // Passing the app instance is safer
-};
+// Initialize once at the module level
+const app = getAdminApp();
 
-export const getAdminAuth = () => {
-  const app = initializeAdmin();
-  return admin.auth(app);
-};
+// Export the instances
+export const getAdminDb = () => admin.firestore(app);
+export const getAdminAuth = () => admin.auth(app);

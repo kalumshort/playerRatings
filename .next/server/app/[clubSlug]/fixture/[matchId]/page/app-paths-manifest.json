@@ -1,0 +1,3 @@
+{
+  "/[clubSlug]/fixture/[matchId]/page": "app/[clubSlug]/fixture/[matchId]/page.js"
+}
