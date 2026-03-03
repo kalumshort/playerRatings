@@ -7,7 +7,7 @@ import { Box, Avatar, Tooltip, styled, alpha, Stack } from "@mui/material";
 import { RootState } from "@/lib/redux/store";
 
 const ACCENT = "#4EFF4E";
-//test
+
 const StatusDot = styled(Box, {
   shouldForwardProp: (prop) => prop !== "active" && prop !== "type",
 })<{ active?: boolean; type: "rated" | "motm" }>(({ theme, active, type }) => ({
