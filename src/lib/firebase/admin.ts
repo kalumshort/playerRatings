@@ -1,32 +1,21 @@
 import "server-only";
-import * as admin from "firebase-admin";
 
-// We use a singleton pattern that relies on native module resolution
-const getAdminApp = () => {
-  if (admin.apps.length > 0) {
-    return admin.app();
-  }
+// Force Node to ignore the bundler and use the runtime require
+const admin = eval("require('firebase-admin')");
 
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (!projectId || !clientEmail || !privateKey) {
-    return admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
-  }
+function getAppInstance() {
+  if (admin.apps.length > 0) return admin.app();
 
   return admin.initializeApp({
     credential: admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
   });
-};
+}
 
-const app = getAdminApp();
+const app = getAppInstance();
 
 export const getAdminDb = () => admin.firestore(app);
 export const getAdminAuth = () => admin.auth(app);

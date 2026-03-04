@@ -1,11 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    root: ".",
+  // Turbopack is getting confused by its own virtual graph.
+  // We will force it to ignore firebase-admin by NOT referencing it
+  // in the bundler config at all.
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+      },
+    ],
   },
-  // This explicitly prevents Turbopack from creating hashed modules
-  // for the Firebase Admin SDK.
-  serverExternalPackages: ["firebase-admin"],
 };
 
 export default nextConfig;
