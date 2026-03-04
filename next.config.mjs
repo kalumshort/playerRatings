@@ -9,6 +9,8 @@ const nextConfig = {
   // Turbopack handles server/client isolation automatically
   // via "server-only" and "use client" boundaries.
 
+  serverExternalPackages: ["firebase-admin"],
+
   images: {
     remotePatterns: [
       {
