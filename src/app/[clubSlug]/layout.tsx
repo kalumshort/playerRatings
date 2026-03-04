@@ -1,4 +1,4 @@
-import { getAdminDb } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
 import { notFound } from "next/navigation";
 import GroupClientInitializer from "@/components/client/GroupClientInitializer";
 import DataInitializer from "@/components/client/DataInitializer";
@@ -6,7 +6,7 @@ import { Group } from "@/lib/redux/slices/groupSlice";
 
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
-  const adminDb = getAdminDb();
+
   const groupQuery = await adminDb
     .collection("groups")
     .where("slug", "==", clubSlug)

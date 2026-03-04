@@ -1,5 +1,6 @@
 import { Filter } from "firebase-admin/firestore";
-import { getAdminDb } from "./admin";
+
+import { adminDb } from "@/lib/firebase/admin";
 import { Fixture } from "@/types/football";
 
 export async function getFixturesByClubServer(
@@ -7,11 +8,10 @@ export async function getFixturesByClubServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
     const teamIdNumber = Number(clubId);
 
     // Exact same path as your Redux logic
-    const fixturesRef = db
+    const fixturesRef = adminDb
       .collection("fixtures")
       .doc(currentYear)
       .collection("fixtures");
@@ -44,10 +44,8 @@ export async function getFixturesByClubServer(
 
 export async function getGroupBySlugServer(slug: string) {
   try {
-    const db = getAdminDb();
-
     // Query the groups collection for the matching slug
-    const snapshot = await db
+    const snapshot = await adminDb
       .collection("groups")
       .where("slug", "==", slug)
       .limit(1)
@@ -73,10 +71,8 @@ export async function getFixtureByIdServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
-
     // Path: fixtures -> {year} -> fixtures -> {matchId}
-    const fixtureRef = db
+    const fixtureRef = adminDb
       .collection("fixtures")
       .doc(currentYear)
       .collection("fixtures")
@@ -105,8 +101,7 @@ export async function getFixtureByIdServer(
  */
 export async function isGroupMemberServer(groupId: string, userId: string) {
   try {
-    const db = getAdminDb();
-    const memberDoc = await db
+    const memberDoc = await adminDb
       .collection("groupUsers")
       .doc(groupId)
       .collection("members")
@@ -129,9 +124,8 @@ export async function getMatchPredictionsServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
     // Path: groups/{groupId}/seasons/{year}/predictions/{matchId}
-    const doc = await db
+    const doc = await adminDb
       .collection("groups")
       .doc(groupId)
       .collection("seasons")
@@ -156,8 +150,7 @@ export async function getMatchPlayerRatingsServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
-    const baseRef = db
+    const baseRef = adminDb
       .collection("groups")
       .doc(groupId)
       .collection("seasons")

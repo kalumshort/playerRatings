@@ -1,6 +1,6 @@
 // app/page.tsx
 import { getAuthSession } from "@/lib/firebase/getAuth";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
 import RootPage from "@/components/client/RootPage";
 import { redirect } from "next/navigation";
 
@@ -15,8 +15,7 @@ export default async function Page() {
   let userData = null;
 
   try {
-    const db = getAdminDb();
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await adminDb.collection("users").doc(userId).get();
 
     if (userDoc.exists) {
       const rawData = userDoc.data();
@@ -33,7 +32,7 @@ export default async function Page() {
     }
 
     if (userData?.activeGroup) {
-      const groupDoc = await db
+      const groupDoc = await adminDb
         .collection("groups")
         .doc(userData.activeGroup)
         .get();
