@@ -1,18 +1,11 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
-    enabled: false,
+    root: ".",
   },
-
-  output: "standalone",
-
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
-      },
-    ],
-  },
+  // This explicitly prevents Turbopack from creating hashed modules
+  // for the Firebase Admin SDK.
+  serverExternalPackages: ["firebase-admin"],
 };
 
 export default nextConfig;
