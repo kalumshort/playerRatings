@@ -1,3 +1,5 @@
+import "server-only";
+
 import * as admin from "firebase-admin";
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Filter } from "firebase-admin/firestore";
 
 import { adminDb } from "@/lib/firebase/admin";
