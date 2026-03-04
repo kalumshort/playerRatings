@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { notFound } from "next/navigation";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import SeasonOverview from "@/components/client/Schedule/SeasonOverview";

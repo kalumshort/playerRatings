@@ -1,10 +1,14 @@
 import "server-only";
-
 import * as admin from "firebase-admin";
 
-if (!admin.apps.length) {
-  admin.initializeApp();
+function getAdminApp() {
+  if (!admin.apps.length) {
+    return admin.initializeApp();
+  }
+  return admin.app();
 }
 
-export const adminDb = admin.firestore();
-export const adminAuth = admin.auth();
+const app = getAdminApp();
+
+export const adminDb = app.firestore();
+export const adminAuth = app.auth();

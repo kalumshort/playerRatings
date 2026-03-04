@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import React from "react";
 import { Metadata } from "next";
 import { adminDb } from "@/lib/firebase/admin";
