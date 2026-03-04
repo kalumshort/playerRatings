@@ -13,7 +13,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
-
+if (typeof window !== "undefined") {
+  console.log(
+    "DEBUG_API_KEY_LENGTH:",
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.length,
+  );
+}
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);

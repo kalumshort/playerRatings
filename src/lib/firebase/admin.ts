@@ -1,33 +1,33 @@
 import "server-only";
 
 /**
- * Runtime-loaded Firebase Admin singleton
- * Safe for Next 16 + Firebase Hosting (no turbopack hashing)
+ * Fully safe Firebase Admin singleton
+ * Compatible with:
+ * - Next 16
+ * - Turbopack
+ * - ESM
+ * - Firebase Hosting
  */
 
-let adminModule: typeof import("firebase-admin") | null = null;
-let appInstance: any = null;
+let adminModule: any = null;
 
 async function getAdmin() {
   if (!adminModule) {
-    adminModule = await import("firebase-admin");
+    const imported = await import("firebase-admin");
+    adminModule = imported.default ?? imported; // <-- KEY FIX
   }
 
-  if (!appInstance) {
+  if (!adminModule.apps.length) {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
     if (!projectId || !clientEmail || !privateKey) {
-      console.warn(
-        "Firebase Admin credentials missing. Using applicationDefault().",
-      );
-
-      appInstance = adminModule.initializeApp({
+      adminModule.initializeApp({
         credential: adminModule.credential.applicationDefault(),
       });
     } else {
-      appInstance = adminModule.initializeApp({
+      adminModule.initializeApp({
         credential: adminModule.credential.cert({
           projectId,
           clientEmail,
@@ -42,10 +42,10 @@ async function getAdmin() {
 
 export async function getAdminDb() {
   const admin = await getAdmin();
-  return admin.firestore(appInstance);
+  return admin.firestore();
 }
 
 export async function getAdminAuth() {
   const admin = await getAdmin();
-  return admin.auth(appInstance);
+  return admin.auth();
 }
