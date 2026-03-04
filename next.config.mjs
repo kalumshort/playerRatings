@@ -10,11 +10,6 @@ const nextConfig = {
     root: path.resolve(__dirname),
   },
 
-  // 🔥 THIS FIXES firebase-admin SSR
-  experimental: {
-    serverExternalPackages: ["firebase-admin"],
-  },
-
   images: {
     remotePatterns: [
       {
