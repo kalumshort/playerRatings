@@ -2,13 +2,17 @@ import * as admin from "firebase-admin";
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
-if (!admin.apps.length) {
+function initializeAdmin() {
+  if (admin.apps.length) return;
+
   if (
     !process.env.FIREBASE_PROJECT_ID ||
     !process.env.FIREBASE_CLIENT_EMAIL ||
     !privateKey
   ) {
-    throw new Error("Missing Firebase Admin environment variables.");
+    // ❗ DO NOT throw during build
+    console.warn("Firebase Admin env vars missing — skipping init");
+    return;
   }
 
   admin.initializeApp({
@@ -20,5 +24,9 @@ if (!admin.apps.length) {
   });
 }
 
-export const adminDb = admin.firestore();
-export const adminAuth = admin.auth();
+initializeAdmin();
+
+export const adminDb =
+  admin.apps.length > 0 ? admin.firestore() : (null as any);
+
+export const adminAuth = admin.apps.length > 0 ? admin.auth() : (null as any);
