@@ -1,5 +1,4 @@
-import "server-only"; // Add this line!
-import { Filter } from "firebase-admin/firestore";
+import "server-only";
 import { getAdminDb } from "./admin";
 import { Fixture } from "@/types/football";
 
@@ -11,13 +10,15 @@ export async function getFixturesByClubServer(
     const db = await getAdminDb();
     const teamIdNumber = Number(clubId);
 
-    // Exact same path as your Redux logic
     const fixturesRef = db
       .collection("fixtures")
       .doc(currentYear)
       .collection("fixtures");
 
-    // Replicate: (homeTeamId == ID OR awayTeamId == ID)
+    // ✅ Get Filter safely from the admin module
+    const admin = await import("firebase-admin").then((m) => m.default ?? m);
+    const Filter = admin.firestore.Filter;
+
     const snapshot = await fixturesRef
       .where(
         Filter.or(
@@ -28,21 +29,17 @@ export async function getFixturesByClubServer(
       .orderBy("timestamp", "desc")
       .get();
 
-    return (
-      snapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        // Filter out those specific bugged fixture IDs
-        .filter((fixture: any) => !["1371777", "1402829"].includes(fixture.id))
-    );
+    return snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter((fixture: any) => !["1371777", "1402829"].includes(fixture.id));
   } catch (error) {
     console.error("❌ Server Fetch Error:", error);
     return [];
   }
 }
-
 export async function getGroupBySlugServer(slug: string) {
   try {
     const db = await getAdminDb();
