@@ -1,3 +1,5 @@
+"use client";
+
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { db } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
