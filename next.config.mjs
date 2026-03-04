@@ -10,7 +10,7 @@ const nextConfig = {
   // via "server-only" and "use client" boundaries.
 
   serverExternalPackages: ["firebase-admin"],
-
+  output: "standalone",
   images: {
     remotePatterns: [
       {
