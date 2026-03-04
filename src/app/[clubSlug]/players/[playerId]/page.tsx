@@ -10,7 +10,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { playerId } = await params;
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
 
   // Fetch player data for SEO
   const playerDoc = await adminDb.collection("players").doc(playerId).get();

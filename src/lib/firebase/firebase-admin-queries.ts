@@ -8,7 +8,7 @@ export async function getFixturesByClubServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const teamIdNumber = Number(clubId);
 
     // Exact same path as your Redux logic
@@ -45,8 +45,7 @@ export async function getFixturesByClubServer(
 
 export async function getGroupBySlugServer(slug: string) {
   try {
-    const db = getAdminDb();
-
+    const db = await getAdminDb();
     // Query the groups collection for the matching slug
     const snapshot = await db
       .collection("groups")
@@ -74,8 +73,7 @@ export async function getFixtureByIdServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
-
+    const db = await getAdminDb();
     // Path: fixtures -> {year} -> fixtures -> {matchId}
     const fixtureRef = db
       .collection("fixtures")
@@ -106,7 +104,7 @@ export async function getFixtureByIdServer(
  */
 export async function isGroupMemberServer(groupId: string, userId: string) {
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const memberDoc = await db
       .collection("groupUsers")
       .doc(groupId)
@@ -130,8 +128,7 @@ export async function getMatchPredictionsServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
-    // Path: groups/{groupId}/seasons/{year}/predictions/{matchId}
+    const db = await getAdminDb(); // Path: groups/{groupId}/seasons/{year}/predictions/{matchId}
     const doc = await db
       .collection("groups")
       .doc(groupId)
@@ -157,7 +154,7 @@ export async function getMatchPlayerRatingsServer(
   currentYear: string,
 ) {
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const baseRef = db
       .collection("groups")
       .doc(groupId)

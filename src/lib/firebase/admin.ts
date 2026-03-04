@@ -1,51 +1,51 @@
 import "server-only";
-import * as admin from "firebase-admin";
 
 /**
- * Singleton Pattern for Firebase Admin
- * Ensures the SDK is initialized only once to prevent memory leaks
- * and connection exhaustion in serverless environments.
+ * Runtime-loaded Firebase Admin singleton
+ * Safe for Next 16 + Firebase Hosting (no turbopack hashing)
  */
 
-// Use a global to persist the app instance across function warm-starts
-const globalForAdmin = global as typeof global & { adminApp: admin.app.App };
+let adminModule: typeof import("firebase-admin") | null = null;
+let appInstance: any = null;
 
-function getAdminApp(): admin.app.App {
-  if (globalForAdmin.adminApp) {
-    return globalForAdmin.adminApp;
+async function getAdmin() {
+  if (!adminModule) {
+    adminModule = await import("firebase-admin");
   }
 
-  // Add this check inside your getAdminApp function
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if (!appInstance) {
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
-  // If we are in a build environment (CI), we might not have these keys.
-  // Return a dummy object if missing to prevent the build from crashing.
-  if (!projectId || !clientEmail || !privateKey) {
-    console.warn(
-      "Firebase Admin credentials missing. Admin SDK will not be available.",
-    );
-    return admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
+    if (!projectId || !clientEmail || !privateKey) {
+      console.warn(
+        "Firebase Admin credentials missing. Using applicationDefault().",
+      );
+
+      appInstance = adminModule.initializeApp({
+        credential: adminModule.credential.applicationDefault(),
+      });
+    } else {
+      appInstance = adminModule.initializeApp({
+        credential: adminModule.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
+    }
   }
 
-  const app = admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    }),
-  });
-
-  globalForAdmin.adminApp = app;
-  return app;
+  return adminModule;
 }
 
-// Initialize once at the module level
-const app = getAdminApp();
+export async function getAdminDb() {
+  const admin = await getAdmin();
+  return admin.firestore(appInstance);
+}
 
-// Export the instances
-export const getAdminDb = () => admin.firestore(app);
-export const getAdminAuth = () => admin.auth(app);
+export async function getAdminAuth() {
+  const admin = await getAdmin();
+  return admin.auth(appInstance);
+}

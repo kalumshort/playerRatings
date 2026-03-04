@@ -15,7 +15,7 @@ export default async function Page() {
   let userData = null;
 
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const userDoc = await db.collection("users").doc(userId).get();
 
     if (userDoc.exists) {

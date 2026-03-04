@@ -19,7 +19,7 @@ interface Props {
 // --- STEP 1: DYNAMIC SEO (Replaces Helmet) ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { clubSlug } = await params;
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
 
   const groupQuery = await adminDb
     .collection("groups")

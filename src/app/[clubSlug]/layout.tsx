@@ -6,7 +6,7 @@ import { Group } from "@/lib/redux/slices/groupSlice";
 
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
   const groupQuery = await adminDb
     .collection("groups")
     .where("slug", "==", clubSlug)
