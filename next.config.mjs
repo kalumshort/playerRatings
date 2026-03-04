@@ -2,7 +2,7 @@
 const nextConfig = {
   // 1. This fixes the "workspace root" warning
   turbopack: {
-    root: ".",
+    enabled: false,
   },
 
   // 2. We remove the 'experimental' and 'webpack' blocks.
