@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase/client"; // Adjust to your clean path
+import { clientDB } from "@/lib/firebase/client"; // Adjust to your clean path
 
 // Types for the raw Firestore data
 interface PlayerMinuteData {
@@ -28,7 +28,7 @@ export default function useLiveMatchStats(
     if (!fixtureId || !groupId) return;
 
     const statsRef = doc(
-      db,
+      clientDB,
       `groups/${groupId}/seasons/${currentYear}/livePlayerStats`,
       String(fixtureId),
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 
 interface SquadState {
@@ -32,7 +32,7 @@ export const fetchTeamSquad = createAsyncThunk(
     try {
       // Path: teamSquads/[squadId]/season/[year]
       const docRef = doc(
-        db,
+        clientDB,
         "teamSquads",
         squadId,
         "season",

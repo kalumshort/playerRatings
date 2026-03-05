@@ -1,7 +1,7 @@
 "use client";
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 
 // --- TYPES ---
@@ -34,7 +34,7 @@ export const fetchMatchPredictionData = createAsyncThunk(
   ) => {
     try {
       const docRef = doc(
-        db,
+        clientDB,
         "groups",
         groupId,
         "seasons",

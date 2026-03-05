@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import {
   collection,
   getDocs,
@@ -30,7 +30,7 @@ export const fetchAllPlayersSeasonOverallRating = createAsyncThunk(
   ) => {
     try {
       const playersColRef = collection(
-        db,
+        clientDB,
         "groups",
         groupId,
         "seasons",
@@ -64,7 +64,7 @@ export const fetchMatchPlayerRatings = createAsyncThunk(
     try {
       const mid = String(matchId);
       const playersColRef = collection(
-        db,
+        clientDB,
         "groups",
         groupId,
         "seasons",
@@ -74,7 +74,7 @@ export const fetchMatchPlayerRatings = createAsyncThunk(
         "players",
       );
       const motmDocRef = doc(
-        db,
+        clientDB,
         "groups",
         groupId,
         "seasons",
@@ -125,7 +125,7 @@ export const fetchPlayerRatingsAllMatches = createAsyncThunk(
       if (!playerId || !groupId) return;
 
       const matchesColRef = collection(
-        db,
+        clientDB,
         "groups",
         groupId,
         "seasons",

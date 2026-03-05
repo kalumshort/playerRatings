@@ -12,7 +12,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { onSnapshot, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { motion } from "framer-motion";
 
 // Components
@@ -41,7 +41,7 @@ export const MoodSelector = ({
   // 1. LIVE LISTENER (Better than polling)
   useEffect(() => {
     const docRef = doc(
-      db,
+      clientDB,
       `groups/${groupId}/seasons/${currentYear}/fixtureMoods`,
       matchId,
     );

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import {
   fetchUserDataSuccess,
   fetchUserDataStart,
@@ -37,7 +37,7 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
     if (!userId) return;
 
     dispatch(fetchUserDataStart());
-    const userRef = doc(db, "users", String(userId));
+    const userRef = doc(clientDB, "users", String(userId));
 
     const unsubscribe = onSnapshot(userRef, async (snapshot) => {
       if (!snapshot.exists()) {
@@ -57,10 +57,10 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
           dispatch(groupDataStart());
 
           const groupPromises = userData.groups.map(async (groupId: string) => {
-            const groupRef = doc(db, "groups", groupId);
+            const groupRef = doc(clientDB, "groups", groupId);
             const [groupDoc, groupUserDoc] = await Promise.all([
               getDoc(groupRef),
-              getDoc(doc(db, `groupUsers/${groupId}/members`, userId)),
+              getDoc(doc(clientDB, `groupUsers/${groupId}/members`, userId)),
             ]);
 
             if (!groupDoc.exists()) return null;

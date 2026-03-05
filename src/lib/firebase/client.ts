@@ -21,7 +21,7 @@ if (typeof window !== "undefined") {
 }
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+export const clientDB = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 

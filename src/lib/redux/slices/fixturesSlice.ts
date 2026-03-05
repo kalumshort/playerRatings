@@ -1,6 +1,6 @@
 "use client";
 
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import {
   collection,
@@ -38,7 +38,12 @@ export const fetchFixtures = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const matchesRef = collection(db, "fixtures", currentYear, "fixtures");
+      const matchesRef = collection(
+        clientDB,
+        "fixtures",
+        currentYear,
+        "fixtures",
+      );
       const teamIdNumber = Number(clubId);
 
       const q = query(

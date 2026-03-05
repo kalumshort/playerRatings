@@ -1,4 +1,4 @@
-import { db, functions } from "./client";
+import { clientDB, functions } from "./client";
 import { doc, increment, setDoc, writeBatch } from "firebase/firestore";
 import { updateOrSet } from "./utils";
 import { httpsCallable } from "firebase/functions";
@@ -55,7 +55,7 @@ export const handlePredictWinningTeam = async ({
   // 1. Update Group Consensus
   const groupPath = `groups/${groupId}/seasons/${currentYear}/predictions`;
   await setDoc(
-    doc(db, groupPath, matchId),
+    doc(clientDB, groupPath, matchId),
     {
       result: { [choice]: increment(1), totalVotes: increment(1) },
     },
@@ -88,7 +88,7 @@ export const handlePredictTeamScore = async ({
     // 1. Update Group Consensus (Global Stats)
     // Path: groups/{groupId}/seasons/{year}/predictions/{matchId}
     const groupPredRef = doc(
-      db,
+      clientDB,
       `groups/${groupId}/seasons/${currentYear}/predictions`,
       matchId,
     );
@@ -133,7 +133,7 @@ export const handlePredictPreMatchMotm = async ({
   currentYear: string;
 }) => {
   const groupRef = doc(
-    db,
+    clientDB,
     `groups/${groupId}/seasons/${currentYear}/predictions`,
     matchId,
   );
@@ -162,7 +162,7 @@ export const handlePredictTeamSubmit = async ({
 }: TeamSubmitParams) => {
   try {
     const predictionRef = doc(
-      db,
+      clientDB,
       `groups/${groupId}/seasons/${currentYear}/predictions`,
       matchId,
     );
@@ -229,7 +229,7 @@ export const handleLivePlayerStats = async ({
     }
 
     const docRef = doc(
-      db,
+      clientDB,
       `groups/${groupId}/seasons/${currentYear}/livePlayerStats`,
       matchId,
     );
@@ -275,7 +275,7 @@ export const handleFixtureMood = async ({
   moodKey: string;
 }) => {
   const docRef = doc(
-    db,
+    clientDB,
     `groups/${groupId}/seasons/${currentYear}/fixtureMoods`,
     matchId,
   );
@@ -300,7 +300,7 @@ export const handleMatchMotmVote = async ({
   currentYear,
 }: any) => {
   const groupRef = doc(
-    db,
+    clientDB,
     `groups/${groupId}/seasons/${currentYear}/playerRatings`,
     matchId,
   );
@@ -322,7 +322,7 @@ export const handleMatchMotmVote = async ({
 };
 
 export const handlePlayerRatingSubmit = async (data: any) => {
-  const batch = writeBatch(db);
+  const batch = writeBatch(clientDB);
 
   // 1. Destructure and Guard
   const { groupId, currentYear, matchId, playerId, userId, rating } = data;
@@ -343,27 +343,31 @@ export const handlePlayerRatingSubmit = async (data: any) => {
 
   // A. Match-specific stats for the group
   const matchPlayerRef = doc(
-    db,
+    clientDB,
     `groups/${gId}/seasons/${year}/playerRatings/${mId}/players`,
     pId,
   );
 
   // B. User's personal match history
   const userMatchRef = doc(
-    db,
+    clientDB,
     `users/${uId}/groups/${gId}/seasons/${year}/matches`,
     mId,
   );
 
   // C. Player's historical match performance
   const playerMatchRef = doc(
-    db,
+    clientDB,
     `groups/${gId}/seasons/${year}/players/${pId}/matches`,
     mId,
   );
 
   // D. Player's overall season leaderboard stats
-  const playerSeasonRef = doc(db, `groups/${gId}/seasons/${year}/players`, pId);
+  const playerSeasonRef = doc(
+    clientDB,
+    `groups/${gId}/seasons/${year}/players`,
+    pId,
+  );
 
   // 4. ADD TO BATCH
   batch.set(

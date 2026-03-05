@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { fetchMatchPrediction } from "@/lib/redux/slices/predictionsSlice";
 
 interface GroupPredictionsListenerProps {
@@ -45,7 +45,7 @@ export const GroupPredictionsListener = ({
     );
 
     const predictionsRef = doc(
-      db,
+      clientDB,
       "groups",
       gid,
       "seasons",

@@ -1,5 +1,5 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db, functions } from "./client";
+import { clientDB, functions } from "./client";
 import { httpsCallable } from "firebase/functions";
 
 /**
@@ -30,7 +30,7 @@ export const updateUserField = async <T>(
   }
 
   try {
-    const userRef = doc(db, "users", userId);
+    const userRef = doc(clientDB, "users", userId);
 
     await updateDoc(userRef, {
       [field]: newValue,

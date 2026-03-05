@@ -1,4 +1,4 @@
-import { db } from "./client";
+import { clientDB } from "./client";
 import {
   doc,
   getDoc,
@@ -15,7 +15,7 @@ export async function getDocument<T>(
   path: string,
   id: string,
 ): Promise<T | null> {
-  const docRef = doc(db, path, id);
+  const docRef = doc(clientDB, path, id);
   const snap = await getDoc(docRef);
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as T) : null;
 }
@@ -24,7 +24,7 @@ export async function getDocument<T>(
  * Deep merges data into a document or creates it if it doesn't exist.
  */
 export async function setDocument(path: string, id: string, data: any) {
-  const docRef = doc(db, path, id);
+  const docRef = doc(clientDB, path, id);
   return await setDoc(docRef, data, { merge: true });
 }
 
@@ -32,7 +32,7 @@ export async function setDocument(path: string, id: string, data: any) {
  * Updates or sets a document with an initial timestamp if missing.
  */
 export async function updateOrSet(path: string, id: string, data: any) {
-  const docRef = doc(db, path, id);
+  const docRef = doc(clientDB, path, id);
   const snap = await getDoc(docRef);
   if (snap.exists()) {
     return await updateDoc(docRef, data);

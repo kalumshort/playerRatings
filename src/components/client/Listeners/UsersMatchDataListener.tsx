@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { getAuth } from "firebase/auth";
 import { fetchUserMatchData } from "@/lib/redux/slices/userDataSlice";
 
@@ -32,7 +32,7 @@ export const UsersMatchDataListener = ({
     if (!user || !groupId || !matchId) return;
 
     const matchRef = doc(
-      db,
+      clientDB,
       "users",
       user.uid,
       "groups",

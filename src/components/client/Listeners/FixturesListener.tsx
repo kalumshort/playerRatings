@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { clientDB } from "@/lib/firebase/client";
 import { updateSingleFixture } from "@/lib/redux/slices/fixturesSlice";
 
 /**
@@ -41,7 +41,7 @@ export const FixtureListener = ({
     const sClubId = String(clubId);
 
     // 2. Reference Construction
-    const fixtureRef = doc(db, "fixtures", sYear, "fixtures", sFixtureId);
+    const fixtureRef = doc(clientDB, "fixtures", sYear, "fixtures", sFixtureId);
 
     // 3. Listener Logic
     const unsubscribe = onSnapshot(
