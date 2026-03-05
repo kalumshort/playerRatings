@@ -17,7 +17,12 @@
     "source": ".",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
-      "region": "us-central1"
+      "region": "us-central1",
+      "environmentVariables": {
+        "FIREBASE_PROJECT_ID": "player-ratings-ef06c",
+        "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-v7qec@player-ratings-ef06c.iam.gserviceaccount.com",
+        "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUnKbpeL80EyPl\nwwhMluRS1CC7hizSSBnadbMYrGxLU2Eb5Yqbxxg/yjUoaKL3aQ3crwiJ3ZzdbEIw\nE9r4zZYSxrrAXWNPzagNlQqUZtS2J/qTmm/Ofwtey/bo7YcePQqQ7aQ8VJ4PzJIw\nQ59dr/V+qyGNy27bJE6r1ax9y0gDJFH8+pM7nM7DRmK+nivdd3rt5s2BfSDFaN4p\nkvy8/27zKkSjwWhv1lf32FJGs3O2ZXeRlFkgbVBNCEMJ6uaIDv7Js4IZMsjJXg4J\neSmKhRPluK9C/R5l/G6dLMBWbDlRGoOC+socAOxW8McRdRkxZpvFVBSDStijRFtW\nUIpCwH//AgMBAAECggEAFGF+lUDllfiuZ0Gz6PZJ+tqqLJpnGjKehSo6jzHwIPm5\nhF1o/8KCbj2prNmi+Ek8x/E2G1PVdrBVrprTUdMQq3TGGtdDmYx4VfJPP6c/2sT9\nqJU/BId52o4ozsP+QNrPHtIjp+418gPFO7/aZgu5DSRwefw3VeXRbiLJ1IveYlaL\nPpKMk9gTP+fLS8EKkTNuQVl4CI1UDzc6Yr1ezxFyaXbaEP7+zqZN3VesOGime3jB\nDH3BVUJu8J7ra1SrhgZPlHm7TsqOTDqofHO+QlZNZoPXdii8/gONELqe3Q2uAYQp\nGEL/NMXAwxj8h9KDog+D8soLehFnZ6jbeWlqclkx0QKBgQDrPrRR/SJrWtx99gea\nrJfDpeqKhoPCtIVhsmlrXBPqlGvut3UijI+KAmlWFDf6rrTjN9JFcnqt4E+GbEE6\nIXiNggstKVYLlsGAm2VHnyYCfSfrTLqSLXikKO4QfHgB6yTP8mJSlsuXRo0yN5O4\nYmhdaF4UNetnra/ZWs9EvwH9lwKBgQDnXsDPCQQFjLgqKDZ3rAuSFg09CzDspwKw\nbAjBijO7c/oGcO8dYk0EqJX5B23k5tmQyCfZLTePdeVbAuhFJ5wYeA4M89x6M4KD\nAd2aTmVsB00HFuRUVih3+tos3p40vdlXnhD07bfUhR5WKNLFefUFNO6S8L2+JjXb\nAipHHQst2QKBgHnMgXhh48xJwxfEprNC4WD/KqyGcPoClXy77zES/4zZQ/jZK+Cz\nfi4qiXd0CHfWtPlgEZK7byFPnl0u96atZcl+p2K+oDpn19BKpOmsUPXA70Y49/Bv\ncqMsPfZzO39izDCOgrHYOZkdgkWZ2PYCnZ6fRvaX5EZN+1pCVkZ1zwYJAoGBALnY\nkIM8uLBEgkHKn0WtOnYTpHqeHKRa2nwfq0Da5Ab0d6bo3Aj8RuUxDZZE827kR2pW\nfDukaHahuqNKSIwT7vxwosigsT6vVWwp+XjS9AC8NJE3QBzGQCdvpgRYpTe0L3qD\nixdSQ1E/xEhs7jCVb8zI4cHCAodUZfoPWSpaF/qxAoGBAN3JgKoFouNyUF5VKbIr\n3fBLMc4IjGj9QB1c92G8yIOx55sWUUw3x/d9ir1ZPw3Qfhec8WUQGwqNb+UyJRzh\n8cOKdH0oGy9ZAemd4AV0HezUnzrwqvIXD/mmKNtrt6rLZhJZIMuuct9aYutk9dbw\nXpKsyMCX650YoiUnC5DiQ1MI\n-----END PRIVATE KEY-----\n"
+      }
     }
   },
   "firestore": {
