@@ -5,7 +5,7 @@ import {
 } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { auth, db } from "./client";
+import { auth, clientDB } from "./client";
 
 // --- Cloud Function Helpers ---
 const getAuthFunctions = () => {
@@ -51,7 +51,7 @@ export const handleGoogleSignIn = async (groupId?: string) => {
   const result = await signInWithPopup(auth, provider);
   const { uid: userId, email, displayName, photoURL } = result.user;
 
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(clientDB, "users", userId);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
