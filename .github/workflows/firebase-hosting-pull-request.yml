@@ -41,3 +41,8 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PLAYER_RATINGS_EF06C }}
           projectId: player-ratings-ef06c
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+          # These must be passed to the deployer so they persist in the Cloud Run container
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
