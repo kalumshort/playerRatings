@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Inject secrets here so they are available to both build and deploy
-      FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+      ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
       FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
       NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
       NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
@@ -44,5 +44,5 @@ jobs:
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
           # These must be passed to the deployer so they persist in the Cloud Run container
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          ADMIN_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
