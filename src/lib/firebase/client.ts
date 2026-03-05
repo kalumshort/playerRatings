@@ -1,8 +1,13 @@
-// lib/firebase/client.ts  (or wherever this file lives)
-// This file should ONLY be imported in client components / pages / hooks
+// lib/firebase/client.ts
+// Only import in client-side code ('use client' components/hooks/pages)
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager, // ← Import this for multi-tab sync
+  CACHE_SIZE_UNLIMITED,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
@@ -15,47 +20,58 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL:
+    process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ||
+    (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+      ? `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`
+      : undefined),
 };
 
-// Optional but very helpful: validate config in development
+// Dev-time config validation
 if (process.env.NODE_ENV !== "production") {
   const missing = Object.entries(firebaseConfig)
-    .filter(([_, value]) => !value)
+    .filter(([key, value]) => key !== "databaseURL" && !value)
     .map(([key]) => key);
 
   if (missing.length > 0) {
     console.warn(
-      "[Firebase Client] Missing config values:",
+      "[Firebase Client] Missing required config values:",
       missing.join(", "),
-      "\nMake sure NEXT_PUBLIC_FIREBASE_* variables are set in .env.local or App Hosting environment variables.",
+      "\nCheck .env.local or App Hosting environment variables.",
     );
   }
 }
 
-// Debug in browser console (only runs client-side)
+// Client debug logging
 if (typeof window !== "undefined") {
-  console.log(
-    "[Firebase Client] API Key length:",
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.length ?? "undefined",
-  );
-  console.log(
-    "[Firebase Client] Project ID:",
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "undefined",
-  );
-  console.log(
-    "[Firebase Client] Auth Domain:",
-    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "undefined",
-  );
+  console.log("[Firebase Client] Config loaded:", {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+      ? `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY.slice(0, 6)}... (length: ${process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.length ?? 0})`
+      : "missing",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "missing",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "missing",
+    databaseURL: firebaseConfig.databaseURL ?? "not set",
+  });
 }
 
-// Initialize (singleton pattern - safe in Next.js)
+// Singleton app
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Client-side services
-export const clientDB = getFirestore(app);
+// Modern Firestore init with offline persistence + multi-tab support
+export const clientDB = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED, // or e.g. 100 * 1024 * 1024 for 100 MB
+    tabManager: persistentMultipleTabManager(), // ← Enables automatic multi-tab synchronization
+  }),
+});
+
+console.log(
+  "[Firebase Client] Initialized with PersistentLocalCache (multi-tab support enabled)",
+);
+
+// Other services
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, "us-central1");
 
-// Optional: export the app itself if needed elsewhere
 export default app;
