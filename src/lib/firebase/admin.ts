@@ -24,7 +24,7 @@ function getAppInstance() {
 
   return admin.initializeApp({
     credential: admin.credential.cert({
-      projectId: process.env.PROJECT_ID,
+      projectId: process.env.ADMIN_PROJECT_ID,
       clientEmail: process.env.ADMIN_CLIENT_EMAIL,
       privateKey: process.env.ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
