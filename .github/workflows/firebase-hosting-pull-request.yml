@@ -13,11 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
+      - name: Build
+        run: npm ci && npm run build
+        env:
+          # This ensures your secrets are available to Next.js during build
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          # Add any other variables your code reads via process.env
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PLAYER_RATINGS_EF06C }}
           projectId: player-ratings-ef06c
-        env:
-          FIREBASE_CLI_EXPERIMENTS: webframeworks

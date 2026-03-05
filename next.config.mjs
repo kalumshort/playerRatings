@@ -1,18 +1,10 @@
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. Move from experimental.turbo to top-level turbopack
-  turbopack: {
-    // 2. Set the application root directory as an absolute path
-    root: path.resolve(__dirname),
-  },
+  // REQUIRED: This tells Next.js to create a minimal, standalone folder
+  // containing only what is needed for production.
+  output: "standalone",
 
-  // 3. Keep your other standard configs here
+  // Your existing image configuration
   images: {
     remotePatterns: [
       {
@@ -20,6 +12,13 @@ const nextConfig = {
         hostname: "firebasestorage.googleapis.com",
       },
     ],
+  },
+
+  // Turbopack usually works fine without manual path resolution.
+  // If you don't specifically need this for a custom monorepo setup,
+  // you can simplify it to:
+  experimental: {
+    turbopack: true,
   },
 };
 
