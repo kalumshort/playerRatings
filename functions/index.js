@@ -1,265 +1,1363 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and triggers.
 const { logger } = require("firebase-functions");
-const admin = require("firebase-admin");
+// const admin = require("firebase-admin");
 
-const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-
-const axios = require("axios");
 
 // const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 
 // The Firebase Admin SDK to access Firestore.
 const { initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
 const {
-  fetchFixtureData,
-  fetchStatisticsData,
-  fetchLineupData,
-  fetchEventsData,
+  getFirestore,
+  FieldValue,
+  Timestamp,
+} = require("firebase-admin/firestore");
+const {
+  fetchAllMatchData,
+  fetchFootballApi,
+  addMemberToGroupDoc,
+  removeMemberFromGroupDoc,
 } = require("./helperFunctions");
+const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
+
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "kalum@11votes.com", // Your Workspace email
+    pass: "zqhj rrzb olyj athr", // The 16-char App Password (spaces don't matter)
+  },
+});
 
 initializeApp();
 
-// Your Football API Key
-// const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
-const BASE_URL = "https://v3.football.api-sports.io";
+const db = getFirestore(); // Initialize once
 
-const headers = {
-  "x-rapidapi-host": "v3.football.api-sports.io",
-  "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-};
+exports.createUserDoc = onCall(async (request, context) => {
+  const { data } = request;
+  const { userId, email, displayName, photoURL, providerId } = data;
 
-prevIds = [
-  1208202, 1208190, 1314296, 1208178, 1299226, 1208170, 1208154, 1208148,
-  1299212, 1208138, 1208128, 1299196, 1208117, 1309282, 1208112, 1299176,
-  1208095, 1208082, 1299158, 1208077, 1299134, 1208063, 1298643, 1208058,
-  1208047, 1208033, 1208021, 1222610, 1225638, 1219972, 1217973, 1210218,
-  1208854,
-];
+  if (!userId || !email) {
+    throw new HttpsError("invalid-argument", "Missing userId or email");
+  }
 
-// Fetch and Save Fixtures
-exports.updateFixtures = onSchedule("every day 00:00", async (event) => {
   try {
-    // Fetch fixtures from API
-    const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures`,
-      {
-        params: {
-          team: 33, // Example: Manchester United team ID
-          season: 2024, // Example: 2024 season
-        },
-        headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key here
-        },
-      }
-    );
-    const fixtures = response.data.response;
+    const db = getFirestore();
+    const userRef = db.collection("users").doc(userId);
 
-    for (const fixtureObj of fixtures) {
-      const year = fixtureObj.league.season;
-      const fixtureId = fixtureObj.fixture.id;
+    await userRef.set({
+      email: email,
+      createdAt: Timestamp.now(),
+      isActive: true,
+      lastLogin: Timestamp.now(),
+      role: "user",
+      displayName: displayName || null, // Optional field
+      photoURL: photoURL || null, // Optional field
+      providerId: providerId || null, // Optional field
+    });
 
-      const fixtureData = {
-        fixture: fixtureObj.fixture,
-        league: fixtureObj.league,
-        teams: fixtureObj.teams,
-        goals: fixtureObj.goals,
-        score: fixtureObj.score,
-        matchDate: fixtureObj.fixture.timestamp, // Add match date to the data
-      };
-
-      await getFirestore()
-        .collection("fixtures")
-        .doc(year.toString())
-        .collection("data")
-        .doc(fixtureId.toString())
-        .set(fixtureData, { merge: true });
-    }
-
-    logger.info(`Successfully updated ${fixtures.length} fixtures.`);
-    res.status(200).send(`Successfully updated ${fixtures.length} fixtures.`);
+    return {
+      success: true,
+      message: `User document for ${userId} created successfully.`,
+    };
   } catch (error) {
-    logger.error("Error updating fixtures:", error);
-    res.status(500).send("Failed to update fixtures");
+    console.error("Error creating user document:", error);
+    throw new HttpsError("internal", "Unable to create user document");
+  }
+});
+exports.addUserToGroup = onCall(async (request) => {
+  const { groupId, userId, userData } = request.data;
+  const db = getFirestore();
+
+  try {
+    await addMemberToGroupDoc(db, groupId, userId, userData);
+
+    await db
+      .collection("users")
+      .doc(userId)
+      .update({
+        groups: FieldValue.arrayUnion(String(groupId)),
+        activeGroup: String(groupId),
+      });
+
+    return { success: true, message: "Joined successfully" };
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
   }
 });
 
-exports.updateFixturesRequest = onRequest(async (req, res) => {
+// 2. REMOVE USER (Standard Leave)
+exports.removeUserFromGroup = onCall(async (request) => {
+  const { groupId, userId } = request.data;
+  const db = getFirestore();
+
   try {
-    const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures`,
-      {
-        params: {
-          team: 33, // Example: Manchester United team ID
-          season: 2024, // Example: 2024 season
-        },
-        headers: {
-          "x-rapidapi-host": "v3.football.api-sports.io",
-          "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key here
-        },
-      }
-    );
-    const fixtures = response.data.response;
+    await removeMemberFromGroupDoc(db, groupId, userId);
 
-    for (const fixtureObj of fixtures) {
-      const year = fixtureObj.league.season;
-      const fixtureId = fixtureObj.fixture.id;
+    await db
+      .collection("users")
+      .doc(userId)
+      .update({
+        groups: FieldValue.arrayRemove(String(groupId)),
+      });
 
-      const fixtureData = {
-        fixture: fixtureObj.fixture,
-        league: fixtureObj.league,
-        teams: fixtureObj.teams,
-        goals: fixtureObj.goals,
-        score: fixtureObj.score,
-        matchDate: fixtureObj.fixture.timestamp,
-      };
-
-      await getFirestore()
-        .collection("fixtures")
-        .doc(year.toString())
-        .collection("data")
-        .doc(fixtureId.toString())
-        .set(fixtureData, { merge: true });
-    }
-
-    logger.info(`Successfully updated ${fixtures.length} fixtures.`);
-
-    res.status(200).send(`Successfully updated ${fixtures.length} fixtures.`);
+    return { success: true, message: "Left successfully" };
   } catch (error) {
-    logger.error("Error updating fixtures:", error);
-    res.status(500).send("Failed to update fixtures");
+    throw new HttpsError("internal", error.message);
   }
 });
 
-exports.prevIds = onRequest(async (req, res) => {
-  const prevIds = [1208210];
-  // events
-  // statistics
-  // lineups
-  for (const fixtureId of prevIds) {
+// 3. TRANSFER USER (The Coordinator)
+exports.transferLeagueTeam = onCall(async (request) => {
+  const {
+    newGroupId,
+    userId,
+    userData,
+    leagueKey = "premier-league",
+  } = request.data;
+  const db = getFirestore();
+  const userRef = db.collection("users").doc(userId);
+
+  try {
+    const userDoc = await userRef.get();
+    const currentData = userDoc.data();
+    const oldGroupId = currentData?.leagueTeams?.[leagueKey];
+
+    // If they already have a team in this league, remove them from it
+    if (oldGroupId && oldGroupId !== String(newGroupId)) {
+      await removeMemberFromGroupDoc(db, oldGroupId, userId);
+    }
+
+    // Add them to the new team
+    await addMemberToGroupDoc(db, newGroupId, userId, userData);
+
+    // Update the User document with the new league structure
+    await userRef.update({
+      [`leagueTeams.${leagueKey}`]: String(newGroupId),
+      activeGroup: String(newGroupId),
+      [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
+      // Clean up the groups array
+      groups: FieldValue.arrayUnion(String(newGroupId)),
+    });
+
+    if (oldGroupId) {
+      await userRef.update({
+        groups: FieldValue.arrayRemove(String(oldGroupId)),
+      });
+    }
+
+    return { success: true, message: `Transferred to ${newGroupId}` };
+  } catch (error) {
+    console.error("Transfer Error:", error);
+    throw new HttpsError("internal", "Failed to complete transfer");
+  }
+});
+// exports.backfillFixtures = onCall(
+//   {
+//     timeoutSeconds: 540,
+//     memory: "512MiB",
+//   },
+//   async (request) => {
+//     // 1. Get arguments from the client call
+//     // We default to Jan 7th, but this allows you to pass any date from the frontend later
+//     const dateToFetch = request.data.date || "2026-01-07";
+
+//     logger.info(`Starting backfill for ${dateToFetch}...`);
+
+//     try {
+//       // 2. Fetch fixture list
+//       const fixtures = await fetchFootballApi("fixtures", {
+//         league: 39,
+//         season: 2025,
+//         date: dateToFetch,
+//       });
+
+//       if (!fixtures || fixtures.length === 0) {
+//         return { success: false, message: "No matches found for this date." };
+//       }
+
+//       // 3. Loop and fetch details
+//       const results = [];
+//       for (const game of fixtures) {
+//         const fixtureId = game.fixture.id;
+//         const matchTitle = `${game.teams.home.name} vs ${game.teams.away.name}`;
+
+//         try {
+//           await fetchAllMatchData({ fixtureId: fixtureId });
+//           results.push(`✅ Success: ${matchTitle}`);
+//         } catch (err) {
+//           logger.error(`Failed to process ${matchTitle}`, err);
+//           results.push(`❌ Failed: ${matchTitle}`);
+//         }
+//       }
+
+//       // 4. Return JSON response to client
+//       return {
+//         success: true,
+//         message: `Processed ${fixtures.length} matches.`,
+//         logs: results,
+//       };
+//     } catch (error) {
+//       logger.error("Critical error in backfillFixtures:", error);
+//       // Throwing structured error sends a clean 500 to the client SDK
+//       throw new Error(`Backfill failed: ${error.message}`);
+//     }
+//   }
+// );
+// exports.updateFixtures = onSchedule(
+//   {
+//     schedule: "every day 00:00",
+//     timeoutSeconds: 240, // ⏱️ 4 minutes
+//     memory: "512MiB", // Optional: increase memory if needed
+//   },
+//   async (event) => {
+//     try {
+//       const SEASON = 2025;
+//       const LEAGUE_ID = 39; // Premier League
+
+//       // Step 1: Get all teams in the Premier League
+//       const teamsResponse = await axios.get(
+//         `https://api-football-v1.p.rapidapi.com/v3/teams`,
+//         {
+//           params: {
+//             league: LEAGUE_ID,
+//             season: SEASON,
+//           },
+//           headers: {
+//             "x-rapidapi-key":
+//               "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//             // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//           },
+//         }
+//       );
+
+//       const teams = teamsResponse.data.response;
+
+//       for (const teamObj of teams) {
+//         const teamId = teamObj.team.id;
+//         const teamName = teamObj.team.name;
+//         // if (teamId !== 33) {
+//         //   continue; // Skip teams that are not Manchester United
+//         // }
+
+//         logger.info(`Processing team: ${teamName} (${teamId})`);
+
+//         // Step 2: Fetch fixtures
+//         const fixturesResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
+//           {
+//             params: {
+//               team: teamId,
+//               season: SEASON,
+//             },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const fixtures = fixturesResponse.data.response;
+
+//         for (const fixtureObj of fixtures) {
+//           const fixtureId = fixtureObj.fixture.id;
+
+//           const fixtureData = {
+//             fixture: fixtureObj.fixture,
+//             league: fixtureObj.league,
+//             teams: fixtureObj.teams,
+//             goals: fixtureObj.goals,
+//             score: fixtureObj.score,
+//             matchDate: fixtureObj.fixture.timestamp,
+//           };
+
+//           await getFirestore()
+//             .collection(`fixtures/${SEASON}/fixtures`)
+//             .doc(fixtureId.toString())
+//             .set(fixtureData, { merge: true });
+//         }
+
+//         logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
+
+//         // Step 3: Fetch squad
+//         const squadResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
+//           {
+//             params: { team: teamId },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const squadPlayers = squadResponse.data.response[0]?.players;
+
+//         const playerIds = squadPlayers.map((player) => player.id);
+
+//         // Fetch the existing teamSquads document from Firestore
+//         const teamSquadsDoc = await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .get();
+
+//         // Get the existing seasonSquad if it exists, or initialize an empty array
+//         const existingSeasonSquad = teamSquadsDoc.exists
+//           ? teamSquadsDoc.data().seasonSquad || []
+//           : [];
+
+//         // Merge the new players with the existing seasonSquad (prevent duplicates)
+//         const updatedSeasonSquad = [
+//           ...existingSeasonSquad,
+//           ...squadPlayers.filter(
+//             (newPlayer) =>
+//               !existingSeasonSquad.some(
+//                 (existingPlayer) => existingPlayer.id === newPlayer.id
+//               )
+//           ),
+//         ];
+
+//         // Save both squad and manager into teamSquads
+//         await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .set(
+//             {
+//               activeSquad: squadPlayers,
+//               playerIds: playerIds,
+//               seasonSquad: updatedSeasonSquad,
+//             },
+//             { merge: true }
+//           );
+
+//         logger.info(`Saved squad and manager for ${teamName}`);
+//       }
+
+//       logger.info(`Finished processing all Premier League teams`);
+//     } catch (error) {
+//       logger.error("Error updating data:", error.message, error);
+//     }
+//   }
+// );
+
+exports.updateFixtures = onSchedule(
+  {
+    schedule: "every day 00:00",
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async (event) => {
     try {
-      const response = await axios.get(
-        `https://v3.football.api-sports.io/fixtures/events?fixture=${fixtureId}`,
-        {
-          headers: {
-            "x-rapidapi-host": "v3.football.api-sports.io",
-            "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
-          },
+      const SEASON = 2025;
+      const LEAGUE_ID = 39;
+
+      // ======================================================
+      // PART 1: GET THE LIST OF TEAMS
+      // ======================================================
+      logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
+
+      // REFACTORED: Use shared helper
+      const teams = await fetchFootballApi("teams", {
+        league: LEAGUE_ID,
+        season: SEASON,
+      });
+
+      const uniqueMatchesMap = {};
+
+      logger.info(`Processing ${teams.length} teams...`);
+
+      // ======================================================
+      // PART 2: LOOP TEAMS (Fixtures + Squads)
+      // ======================================================
+      for (const teamObj of teams) {
+        const teamId = teamObj.team.id;
+        const teamName = teamObj.team.name;
+
+        // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
+        try {
+          // --- A. FETCH FIXTURES ---
+          // REFACTORED: Use shared helper. It returns the "response" array directly.
+          const teamFixtures =
+            (await fetchFootballApi("fixtures", {
+              team: teamId,
+              season: SEASON,
+            })) || [];
+
+          // Add to map (Deduplication happens here automatically)
+          teamFixtures.forEach((fixtureObj) => {
+            const matchId = fixtureObj.fixture.id;
+            uniqueMatchesMap[matchId] = {
+              matchId: matchId.toString(),
+              homeTeamId: fixtureObj.teams.home.id,
+              awayTeamId: fixtureObj.teams.away.id,
+              status: fixtureObj.fixture.status.short,
+              kickoffTime: fixtureObj.fixture.date,
+              timestamp: fixtureObj.fixture.timestamp,
+              leagueId: fixtureObj.league.id,
+              leagueName: fixtureObj.league.name,
+              fixture: fixtureObj.fixture,
+              league: fixtureObj.league,
+              teams: fixtureObj.teams,
+              goals: fixtureObj.goals,
+              score: fixtureObj.score,
+            };
+          });
+
+          // --- B. FETCH SQUADS ---
+          // REFACTORED: Use shared helper
+          const squadData = await fetchFootballApi("players/squads", {
+            team: teamId,
+          });
+
+          // 🛡️ Safety: Default to empty array if undefined
+          const squadPlayers = squadData[0]?.players || [];
+          const playerIds = squadPlayers.map((player) => player.id);
+
+          const teamSquadsRef = db
+            .collection(`teamSquads/${teamId}/season`)
+            .doc(SEASON.toString());
+
+          const teamSquadsDoc = await teamSquadsRef.get();
+
+          const existingSeasonSquad = teamSquadsDoc.exists
+            ? teamSquadsDoc.data().seasonSquad || []
+            : [];
+
+          const updatedSeasonSquad = [
+            ...existingSeasonSquad,
+            ...squadPlayers.filter(
+              (newPlayer) =>
+                !existingSeasonSquad.some((p) => p.id === newPlayer.id),
+            ),
+          ];
+
+          await teamSquadsRef.set(
+            {
+              activeSquad: squadPlayers,
+              playerIds: playerIds,
+              seasonSquad: updatedSeasonSquad,
+              lastUpdated: new Date(),
+            },
+            { merge: true },
+          );
+
+          logger.info(`Processed ${teamName} (Fixtures & Squad)`);
+        } catch (teamError) {
+          logger.error(`Error processing team ${teamName}:`, teamError.message);
+          // Loop continues!
         }
+      }
+
+      // ======================================================
+      // PART 3: BATCH WRITE MATCHES
+      // ======================================================
+      const uniqueMatchesArray = Object.values(uniqueMatchesMap);
+      logger.info(
+        `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`,
       );
 
-      const events = response.data.response;
+      // Note: If array is huge (>500), consider batching this properly.
+      // Promise.all is fine for smaller sets but can hit limits.
+      const writePromises = uniqueMatchesArray.map((matchData) => {
+        return db
+          .collection(`fixtures/${SEASON}/fixtures`)
+          .doc(matchData.matchId)
+          .set(matchData, { merge: true });
+      });
 
-      await getFirestore()
-        .collection("fixtures")
-        .doc("2024")
-        .collection("data")
-        .doc(fixtureId.toString())
-        .set({ events }, { merge: true });
+      await Promise.all(writePromises);
+      logger.info(`Done. Matches and Squads updated.`);
     } catch (error) {
-      console.error(`Error for fixture ${fixtureId}:`, error.message);
+      logger.error("Critical error in daily update:", error.message, error);
     }
-  }
+  },
+);
 
-  res.send("Lineups added to Firebase.");
-});
+exports.scheduledLiveMatchUpdate = onSchedule(
+  {
+    schedule: "every 1 minutes",
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
+  async (event) => {
+    try {
+      const now = Math.floor(Date.now() / 1000); // Current Unix Timestamp
 
-exports.fetchSingleFixtureData = onRequest(async (req, res) => {
-  const fixtureId = 1208218;
-  if (!fixtureId) {
-    return res.status(400).send("Fixture ID is required.");
-  }
+      // 1. DEFINE THE "HOT ZONE"
+      // We look back 4 hours (active games/just finished) and ahead 1 hour (lineups)
+      const LOOKBACK_SECONDS = 4 * 60 * 60;
+      const LOOKAHEAD_SECONDS = 60 * 60;
 
-  try {
-    // Fetch data from various sources
-    const fixtureData = await fetchFixtureData(fixtureId);
+      const minTime = now - LOOKBACK_SECONDS;
+      const maxTime = now + LOOKAHEAD_SECONDS;
 
-    const fixtureStatsData = await fetchStatisticsData(fixtureId);
+      // 2. QUERY FIRESTORE
+      // Find matches scheduled in this window
+      // Make sure this matches your path structure in updateFixtures
+      const snapshot = await db
+        .collection("fixtures/2025/fixtures")
+        .where("timestamp", ">=", minTime)
+        .where("timestamp", "<=", maxTime)
+        .get();
 
-    const fixtureLineupData = await fetchLineupData(fixtureId);
+      if (snapshot.empty) {
+        logger.info("No active matches found in the Hot Zone.");
+        return;
+      }
 
-    const fixtureEventsData = await fetchEventsData(fixtureId);
+      const matchesToUpdate = [];
 
-    // Combine the data into one object
-    const combinedFixtureData = {
-      ...fixtureData,
-      statistics: fixtureStatsData,
-      lineups: fixtureLineupData,
-      events: fixtureEventsData,
-    };
+      // 3. FILTER LOGIC (Decide what actually needs an API call)
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const status = data.fixture.status.short; // e.g., 'NS', 'FT', '1H', '2H'
+        const matchTime = data.timestamp;
 
-    const year = combinedFixtureData?.league?.season;
+        // A. Is the match already marked as FINISHED in our DB?
+        // If yes, we don't need to check it again every minute.
+        if (["FT", "AET", "PEN"].includes(status)) {
+          return; // Skip it
+        }
 
-    if (!year) {
-      throw new Error("League season not found in the fixture data.");
+        // B. Is it NOT STARTED yet?
+        if (status === "NS") {
+          // Only update if it starts within 60 mins (for Lineups)
+          const timeUntilKickoff = matchTime - now;
+          if (timeUntilKickoff <= 3600) {
+            matchesToUpdate.push(doc.id);
+          }
+          return;
+        }
+
+        // C. If we are here, the status is likely LIVE (1H, 2H, HT, ET, etc.)
+        // OR the status is 'NS' but the time has passed (Kickoff just happened)
+        matchesToUpdate.push(doc.id);
+      });
+
+      if (matchesToUpdate.length === 0) {
+        logger.info(
+          "Matches found in window, but none require updates (all finished or too early).",
+        );
+        return;
+      }
+
+      logger.info(
+        `Updating ${
+          matchesToUpdate.length
+        } active/upcoming matches: ${matchesToUpdate.join(", ")}`,
+      );
+
+      // 4. FETCH DATA (Parallel Execution)
+      // REFACTORED: This now uses the fetchAllMatchData from the previous step
+      // which handles the centralized key and new endpoints internally.
+      const updatePromises = matchesToUpdate.map(async (fixtureId) => {
+        try {
+          await fetchAllMatchData({ fixtureId });
+        } catch (err) {
+          logger.error(`Failed to update fixture ${fixtureId}`, err);
+        }
+      });
+
+      await Promise.all(updatePromises);
+      logger.info("Live update cycle completed.");
+    } catch (error) {
+      logger.error("Error in scheduledLiveMatchUpdate:", error);
     }
+  },
+);
 
-    // Save to Firestore
-    await getFirestore()
-      .collection("fixtures")
-      .doc(year.toString())
-      .collection("data")
-      .doc(fixtureId.toString())
-      .set(combinedFixtureData, { merge: true });
+exports.sitemap = onRequest(
+  { timeoutSeconds: 60, memory: "256MiB" },
+  async (req, res) => {
+    try {
+      const db = getFirestore();
+      const baseUrl = "https://11votes.com";
+      const currentYear = "2025";
 
-    console.log(`Successfully updated fixture ${fixtureId}.`);
-    res.status(200).send(`Successfully updated fixture.`);
-  } catch (error) {
-    console.error(
-      `Error fetching or saving data for fixture ${fixtureId}:`,
-      error.stack
+      // 1. Fetch BOTH collections in parallel
+      const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
+        db.collection("groups").get(),
+        db.collection(`fixtures/${currentYear}/fixtures`).get(),
+      ]);
+
+      const urls = [
+        { loc: `${baseUrl}/`, changefreq: "daily", priority: "1.0" },
+      ];
+
+      // ==================================================================
+      // STEP 2: BUILD THE LOOKUP MAP (The "Rosetta Stone")
+      // We map the numeric API ID (e.g., 33) to your string Slug (e.g., 'man-united')
+      // ==================================================================
+      const clubIdToSlugMap = {};
+
+      groupsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.visibility === "private") {
+          return;
+        }
+        // Ensure the group has a slug and a mapped club ID
+        if (data.slug && data.groupClubId) {
+          // Example: clubIdToSlugMap[33] = "man-united"
+          clubIdToSlugMap[data.groupClubId] = data.slug;
+
+          // Add the Group Landing Page while we are here
+          urls.push({
+            loc: `${baseUrl}/${data.slug}`,
+            changefreq: "weekly",
+            priority: "0.8",
+          });
+        }
+      });
+
+      // ==================================================================
+      // STEP 3: PROCESS FIXTURES USING THE MAP
+      // Check if Home or Away team matches a known Group
+      // ==================================================================
+      fixturesSnapshot.forEach((doc) => {
+        const fixtureData = doc.data();
+        const fixtureId = doc.id;
+
+        // Access the raw API IDs stored in your fixture doc
+        const homeTeamId = fixtureData.teams?.home?.id;
+        const awayTeamId = fixtureData.teams?.away?.id;
+
+        // SCENARIO A: Is the HOME team one of our groups?
+        if (clubIdToSlugMap[homeTeamId]) {
+          urls.push({
+            loc: `${baseUrl}/${clubIdToSlugMap[homeTeamId]}/fixture/${fixtureId}`,
+            changefreq: "always", // Match stats change often
+            priority: "0.9",
+          });
+        }
+
+        // SCENARIO B: Is the AWAY team one of our groups?
+        // (This allows you to generate a URL for the away fans if you have a group for them too)
+        if (clubIdToSlugMap[awayTeamId]) {
+          urls.push({
+            loc: `${baseUrl}/${clubIdToSlugMap[awayTeamId]}/fixture/${fixtureId}`,
+            changefreq: "always",
+            priority: "0.9",
+          });
+        }
+      });
+
+      // ==================================================================
+      // STEP 4: GENERATE XML
+      // ==================================================================
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+      urls.forEach((url) => {
+        xml += `
+  <url>
+    <loc>${url.loc}</loc>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`;
+      });
+
+      xml += `
+</urlset>`;
+
+      res.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
+      res.set("Content-Type", "application/xml");
+      res.status(200).send(xml);
+    } catch (error) {
+      logger.error("Sitemap generation failed", error);
+      res.status(500).end();
+    }
+  },
+);
+
+// exports.updateFixturesonCall = onRequest(async (req, res) => {
+//   try {
+//     const SEASON = 2025;
+//     const LEAGUE_ID = 39;
+//     const API_KEY = "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6";
+//     const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
+
+//     // ======================================================
+//     // PART 1: GET THE LIST OF TEAMS
+//     // ======================================================
+//     logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
+
+//     const teamsResponse = await axios.get(`${BASE_URL}/teams`, {
+//       params: { league: LEAGUE_ID, season: SEASON },
+//       headers: { "x-rapidapi-key": API_KEY },
+//     });
+
+//     const teams = teamsResponse.data.response;
+//     const uniqueMatchesMap = {};
+
+//     logger.info(`Processing ${teams.length} teams...`);
+
+//     // ======================================================
+//     // PART 2: LOOP TEAMS (Fixtures + Squads)
+//     // ======================================================
+//     for (const teamObj of teams) {
+//       const teamId = teamObj.team.id;
+//       const teamName = teamObj.team.name;
+
+//       // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
+//       try {
+//         // --- A. FETCH FIXTURES ---
+//         const fixturesResponse = await axios.get(`${BASE_URL}/fixtures`, {
+//           params: { team: teamId, season: SEASON },
+//           headers: { "x-rapidapi-key": API_KEY },
+//         });
+
+//         const teamFixtures = fixturesResponse.data.response || [];
+
+//         // Add to map (Deduplication happens here automatically)
+//         teamFixtures.forEach((fixtureObj) => {
+//           const matchId = fixtureObj.fixture.id;
+//           uniqueMatchesMap[matchId] = {
+//             matchId: matchId.toString(),
+//             homeTeamId: fixtureObj.teams.home.id,
+//             awayTeamId: fixtureObj.teams.away.id,
+//             status: fixtureObj.fixture.status.short,
+//             kickoffTime: fixtureObj.fixture.date,
+//             timestamp: fixtureObj.fixture.timestamp,
+//             leagueId: fixtureObj.league.id,
+//             leagueName: fixtureObj.league.name,
+//             fixture: fixtureObj.fixture,
+//             league: fixtureObj.league,
+//             teams: fixtureObj.teams,
+//             goals: fixtureObj.goals,
+//             score: fixtureObj.score,
+//           };
+//         });
+
+//         // --- B. FETCH SQUADS ---
+//         const squadResponse = await axios.get(`${BASE_URL}/players/squads`, {
+//           params: { team: teamId },
+//           headers: { "x-rapidapi-key": API_KEY },
+//         });
+
+//         // 🛡️ Safety: Default to empty array if undefined
+//         const squadPlayers = squadResponse.data.response[0]?.players || [];
+//         const playerIds = squadPlayers.map((player) => player.id);
+
+//         const teamSquadsRef = db
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString());
+//         const teamSquadsDoc = await teamSquadsRef.get();
+
+//         const existingSeasonSquad = teamSquadsDoc.exists
+//           ? teamSquadsDoc.data().seasonSquad || []
+//           : [];
+
+//         const updatedSeasonSquad = [
+//           ...existingSeasonSquad,
+//           ...squadPlayers.filter(
+//             (newPlayer) =>
+//               !existingSeasonSquad.some((p) => p.id === newPlayer.id)
+//           ),
+//         ];
+
+//         await teamSquadsRef.set(
+//           {
+//             activeSquad: squadPlayers,
+//             playerIds: playerIds,
+//             seasonSquad: updatedSeasonSquad,
+//             lastUpdated: new Date(),
+//           },
+//           { merge: true }
+//         );
+
+//         logger.info(`Processed ${teamName} (Fixtures & Squad)`);
+//       } catch (teamError) {
+//         logger.error(`Error processing team ${teamName}:`, teamError.message);
+//         // Loop continues!
+//       }
+//     }
+
+//     // ======================================================
+//     // PART 3: BATCH WRITE MATCHES
+//     // ======================================================
+//     const uniqueMatchesArray = Object.values(uniqueMatchesMap);
+//     logger.info(
+//       `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`
+//     );
+
+//     const writePromises = uniqueMatchesArray.map((matchData) => {
+//       return db
+//         .collection(`fixtures/${SEASON}/fixtures`)
+//         .doc(matchData.matchId)
+//         .set(matchData, { merge: true });
+//     });
+
+//     await Promise.all(writePromises);
+//     logger.info(`Done. Matches and Squads updated.`);
+//     res.status(200).send("Successful");
+//   } catch (error) {
+//     logger.error("Critical error in daily update:", error.message, error);
+//     res.status(500).send("Successful");
+//   }
+// });
+// exports.fixtureDataConversion = onRequest(
+//   {
+//     timeoutSeconds: 540, // ⏱️ 9 minutes
+//     memory: "512MiB",
+//   },
+//   async (req, res) => {
+//     try {
+//       logger.info("Starting conversion: Fetching matches from Firestore...");
+
+//       // 1. Get ALL matches
+//       const snapshot = await db.collection("fixtures/2025/fixtures").get();
+
+//       if (snapshot.empty) {
+//         res.status(404).send("No matches found to process.");
+//         return;
+//       }
+
+//       const totalMatches = snapshot.size;
+//       const now = Math.floor(Date.now() / 1000); // Current time in UNIX seconds
+
+//       logger.info(`Found ${totalMatches} matches. Filtering...`);
+
+//       let processedCount = 0;
+//       let futureSkippedCount = 0;
+//       let alreadyDoneCount = 0;
+
+//       // 2. Loop through the documents
+//       for (const doc of snapshot.docs) {
+//         const fixtureId = doc.id;
+//         const data = doc.data();
+
+//         // 🛑 CHECK 1: DATA EXISTENCE
+//         // If 'events' field exists, we assume we already ran the detailed fetch.
+//         // We skip this to save API calls.
+//         if (data.events) {
+//           alreadyDoneCount++;
+//           continue;
+//         }
+
+//         // 🕒 CHECK 2: TIME (Past matches only)
+//         const matchTime = data.timestamp || data.matchDate;
+
+//         // If no timestamp, or if match is in the future (> now), skip it.
+//         if (!matchTime || matchTime > now) {
+//           futureSkippedCount++;
+//           continue;
+//         }
+
+//         try {
+//           // If we reach here: Match is in the past AND has no events data.
+//           // Fetch the data!
+//           await fetchAllMatchData({ fixtureId });
+//           processedCount++;
+
+//           // Log progress periodically
+//           if (processedCount % 20 === 0) {
+//             logger.info(
+//               `Processed ${processedCount} new matches... (Skipped ${alreadyDoneCount} existing)`
+//             );
+//           }
+//         } catch (matchError) {
+//           logger.error(
+//             `Error processing match ${fixtureId}:`,
+//             matchError.message
+//           );
+//         }
+//       }
+
+//       const summary = `Finished. Processed: ${processedCount} | Already Done: ${alreadyDoneCount} | Future Skipped: ${futureSkippedCount}`;
+//       logger.info(summary);
+//       res.status(200).send(summary);
+//     } catch (error) {
+//       logger.error(
+//         "Critical error in fixture conversion:",
+//         error.message,
+//         error
+//       );
+//       res.status(500).send("Internal Server Error");
+//     }
+//   }
+// );
+
+// exports.fetchLatestMatchStats = onRequest(async (req, res) => {
+//   try {
+//     const now = Math.floor(Date.now() / 1000);
+
+//     // Query the next match
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
+//     const nextFixture = await matchesRef
+//       .where("matchDate", ">=", now)
+//       .orderBy("matchDate", "asc")
+//       .limit(1)
+//       .get();
+
+//     const lastFixture = await matchesRef
+//       .where("matchDate", "<=", now)
+//       .orderBy("matchDate", "desc")
+//       .limit(1)
+//       .get();
+
+//     if (nextFixture.empty || lastFixture.empty) {
+//       console.log("Fixture was empty");
+//       res.status(404).send("No match found.");
+//       return;
+//     }
+
+//     const nextFixtureData = nextFixture.docs[0].data();
+//     const lastFixtureData = lastFixture.docs[0].data();
+
+//     let latestFixture = null;
+
+//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+//     if (lastFixtureData.matchDate.seconds * 1000 < twentyFourHoursAgo) {
+//       latestFixture = nextFixtureData;
+//     } else {
+//       latestFixture = lastFixtureData;
+//     }
+
+//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+//     const latestFixtureId = latestFixture?.fixture?.id;
+
+//     if (!latestFixtureId) {
+//       console.error("Error: No latest Fixture Id");
+//       res.status(500).send("Error fetching match data: No latest Fixture Id.");
+//       return;
+//     }
+
+//     await fetchAllMatchData(latestFixtureId);
+
+//     console.log("Successful");
+//     res.status(200).send("Successful");
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     res.status(500).send(`Error fetching match data: ${error.message}`);
+//   }
+// });
+
+// exports.eventsFunction = onRequest(async (req, res) => {
+//   try {
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
+//     const snapshot = await matchesRef.get();
+
+//     if (snapshot.empty) {
+//       console.log("No documents found in collection.");
+//       res.status(404).send("No documents found.");
+//       return;
+//     }
+
+//     snapshot.forEach(async (doc) => {
+//       const fixtureData = doc.data();
+//       const latestFixtureId = fixtureData?.fixture?.id;
+
+//       if (!latestFixtureId) {
+//         console.error(`Error: No fixture id found for document ${doc.id}`);
+//         return;
+//       }
+
+//       await fetchAllMatchData(latestFixtureId);
+//       console.log(`Fetched data for fixture: ${latestFixtureId}`);
+//     });
+
+//     console.log("Successfully fetched all match data.");
+//     res.status(200).send("Successfully fetched all match data.");
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     res.status(500).send(`Error fetching match data: ${error.message}`);
+//   }
+// });
+
+// Your Football API Key
+// const FOOTBALL_API_KEY = "e1cea611a4d193af4f01c7a61969b778"; // Replace with your API key
+// const BASE_URL = "https://api-football-v1.p.rapidapi.com/v3";
+// exports.conversionFunction = onRequest(async (req, res) => {
+//   try {
+//     const sourcePath = "fixtures/2025/data";
+//     const destinationPath = "fixtures/2025/33";
+
+//     if (!sourcePath || !destinationPath) {
+//       return res.status(400).send("Missing source or destination path.");
+//     }
+
+//     const db = getFirestore();
+//     await copyCollection(db, sourcePath, destinationPath);
+
+//     res
+//       .status(200)
+//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
+//   } catch (error) {
+//     console.error("Error copying Firestore data:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// async function copyCollection(db, sourcePath, destinationPath) {
+//   const sourceCollection = await db.collection(sourcePath).get();
+
+//   for (const doc of sourceCollection.docs) {
+//     const newDocRef = db.collection(destinationPath).doc(doc.id);
+//     await newDocRef.set(doc.data());
+
+//     // Recursively copy subcollections
+//     const subcollections = await doc.ref.listCollections();
+//     for (const subcollection of subcollections) {
+//       await copyCollection(
+//         db,
+//         `${sourcePath}/${doc.id}/${subcollection.id}`,
+//         `${destinationPath}/${doc.id}/${subcollection.id}`
+//       );
+//     }
+//   }
+// }
+
+// exports.tetttt = onRequest(async (req, res) => {
+//   try {
+//     const squadResponse = await axios.get(
+//       `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
+//       {
+//         params: { team: 33 },
+//         headers: {
+//   "x-rapidapi-key":
+//   "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+// "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+// },
+//       }
+//     );
+
+//     const squadPlayers = squadResponse.data.response[0]?.players;
+
+//     const playerIds = squadPlayers.map((player) => player.id);
+
+//     // Fetch the existing teamSquads document from Firestore
+//     const teamSquadsDoc = await getFirestore()
+//       .collection("teamSquads")
+//       .doc("33")
+//       .get();
+
+//     // Get the existing seasonSquad if it exists, or initialize an empty array
+//     const existingSeasonSquad = teamSquadsDoc.exists
+//       ? teamSquadsDoc.data().seasonSquad || []
+//       : [];
+
+//     // Merge the new players with the existing seasonSquad (prevent duplicates)
+//     const updatedSeasonSquad = [
+//       ...existingSeasonSquad,
+//       ...squadPlayers.filter(
+//         (newPlayer) =>
+//           !existingSeasonSquad.some(
+//             (existingPlayer) => existingPlayer.id === newPlayer.id
+//           )
+//       ),
+//     ];
+
+//     // Save both squad and manager into teamSquads
+//     await getFirestore().collection("teamSquads").doc("33").set(
+//       {
+//         activeSquad: squadPlayers,
+//         playerIds: playerIds,
+//         seasonSquad: updatedSeasonSquad,
+//       },
+//       { merge: true }
+//     );
+
+//     logger.info(`Saved squad and manager for uniited`);
+//     res
+//       .status(200)
+//       .send(`Successfully copied ${sourcePath} to ${destinationPath}`);
+//   } catch (error) {
+//     console.error("Error copying Firestore data:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
+// exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
+//   const now = Math.floor(Date.now() / 1000);
+
+//   try {
+//     // Query the next match
+//     const matchesRef = getFirestore().collection(`fixtures/2025/33`);
+//     const nextFixture = await matchesRef
+//       .where("matchDate", ">=", now)
+//       .orderBy("matchDate", "asc")
+//       .limit(1)
+//       .get();
+
+//     const lastFixture = await matchesRef
+//       .where("matchDate", "<=", now)
+//       .orderBy("matchDate", "desc")
+//       .limit(1)
+//       .get();
+
+//     if (nextFixture.empty || lastFixture.empty) {
+//       console.log("Fixture was empty");
+//       return null;
+//     }
+
+//     const nextFixtureData = nextFixture.docs[0].data();
+//     const lastFixtureData = lastFixture.docs[0].data();
+
+//     let latestFixture = null;
+
+//     const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+//     if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
+//       latestFixture = nextFixtureData;
+//     } else {
+//       latestFixture = lastFixtureData;
+//     }
+
+//     const matchStartingTimestamp = latestFixture?.fixture?.timestamp;
+//     const latestFixtureId = latestFixture?.fixture?.id;
+
+//     if (!latestFixtureId) {
+//       return res.status(500).send(`Error: No latest Fixture Id`);
+//     }
+
+//     // Calculate the difference in seconds
+//     const timeDifference = Math.abs(now - matchStartingTimestamp);
+
+//     // Check if the difference is within 1 hour (3600 seconds)
+//     if (timeDifference <= 3600) {
+//       console.log("The timestamp is within an hour of the starting time.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else if (
+//       latestFixture.fixture.status.long !== "Match Finished" &&
+//       latestFixture.fixture.status.long !== "Not Started"
+//     ) {
+//       console.log("Match Inplay.");
+//       await fetchAllMatchData(latestFixtureId);
+//     } else {
+//       console.log("Match is not within 1 hour and is not in play");
+//     }
+
+//     res.status(200).send(`Sucessful`);
+//   } catch (error) {
+//     console.error("Error fetching match data:", error);
+//     return res
+//       .status(500)
+//       .send(`Error fetching fixture data: ${error.message}`);
+//   }
+// });
+// const headers = {
+//   "x-rapidapi-host": "v3.football.api-sports.io",
+//   "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+// };
+
+// Fetch and Save Fixtures
+// exports.updateFixturesRequest = onRequest(async (req, res) => {
+//   try {
+//     const response = await axios.get(
+//       `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
+//       {
+//         params: {
+//           team: 33, // Example: Manchester United team ID
+//           season: 2025, // Example: 2025 season
+//         },
+//         headers: {
+//           "x-rapidapi-host": "v3.football.api-sports.io",
+//           "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778", // Your API key here
+//         },
+//       }
+//     );
+//     const fixtures = response.data.response;
+
+//     for (const fixtureObj of fixtures) {
+//       const year = fixtureObj.league.season;
+//       const fixtureId = fixtureObj.fixture.id;
+
+//       const fixtureData = {
+//         fixture: fixtureObj.fixture,
+//         league: fixtureObj.league,
+//         teams: fixtureObj.teams,
+//         goals: fixtureObj.goals,
+//         score: fixtureObj.score,
+//         matchDate: fixtureObj.fixture.timestamp,
+//       };
+
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc(year.toString())
+//         .collection("data")
+//         .doc(fixtureId.toString())
+//         .set(fixtureData, { merge: true });
+//     }
+
+//     logger.info(`Successfully updated ${fixtures.length} fixtures.`);
+
+//     res.status(200).send(`Successfully updated ${fixtures.length} fixtures.`);
+//   } catch (error) {
+//     logger.error("Error updating fixtures:", error);
+//     res.status(500).send("Failed to update fixtures");
+//   }
+// });
+
+// exports.prevIds = onRequest(async (req, res) => {
+//   const prevIds = [1208210];
+//   // events
+//   // statistics
+//   // lineups
+//   for (const fixtureId of prevIds) {
+//     try {
+//       const response = await axios.get(
+//         `https://api-football-v1.p.rapidapi.com/v3/fixtures/events?fixture=${fixtureId}`,
+//         {
+//           headers: {
+//             "x-rapidapi-host": "v3.football.api-sports.io",
+//             "x-rapidapi-key": "e1cea611a4d193af4f01c7a61969b778",
+//           },
+//         }
+//       );
+
+//       const events = response.data.response;
+
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc("2025")
+//         .collection("data")
+//         .doc(fixtureId.toString())
+//         .set({ events }, { merge: true });
+//     } catch (error) {
+//       console.error(`Error for fixture ${fixtureId}:`, error.message);
+//     }
+//   }
+
+//   res.send("Lineups added to Firebase.");
+// });
+
+// exports.fetchSingleFixtureData = onRequest(async (req, res) => {
+//   const preIds = [];
+//   for (const fixtureId of preIds) {
+//     if (!fixtureId) {
+//       return res.status(400).send("Fixture ID is required");
+//     }
+
+//     try {
+//       const fixtureData = await fetchFixtureData(fixtureId);
+
+//       const fixtureStatsData = await fetchStatisticsData(fixtureId);
+
+//       const fixtureLineupData = await fetchLineupData(fixtureId);
+
+//       const fixtureEventsData = await fetchEventsData(fixtureId);
+
+//       const combinedFixtureData = {
+//         ...fixtureData,
+//         statistics: fixtureStatsData,
+//         lineups: fixtureLineupData,
+//         events: fixtureEventsData,
+//       };
+
+//       const year = combinedFixtureData?.league?.season;
+
+//       if (!year) {
+//         throw new Error("League season not found in the fixture data.");
+//       }
+
+//       await getFirestore()
+//         .collection("fixtures")
+//         .doc(year.toString())
+//         .collection("33")
+//         .doc(fixtureId.toString())
+//         .set(combinedFixtureData, { merge: true });
+
+//       console.log(`Finished ${fixtureId} `);
+//     } catch (error) {
+//       console.error(
+//         `Error fetching or saving data for fixture ${fixtureId}:`,
+//         error.stack
+//       );
+//       return res
+//         .status(500)
+//         .send(`Error fetching fixture data: ${error.message}`);
+//     }
+//   }
+//   res.status(200).send(`Successfull`);
+// });
+
+// --- Add this to functions/index.js ---
+
+exports.submitContactForm = onCall(async (request) => {
+  const { data, auth } = request;
+  const { email, subject, message, userId } = data;
+
+  // --- VALIDATION ---
+  if (!email || !message) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Email and Message are required fields.",
     );
-    return res
-      .status(500)
-      .send(`Error fetching fixture data: ${error.message}`);
   }
-});
 
-exports.scheduledLatestTeamDataFetch = onRequest(async (req, res) => {
-  const now = Math.floor(Date.now() / 1000);
+  // --- PREPARE DATA ---
+  const contactEntry = {
+    email: email,
+    subject: subject || "No Subject",
+    message: message,
+    status: "new",
+    createdAt: Timestamp.now(),
+    source: "web_form",
+  };
+
+  // --- ATTACH USER ID ---
+  if (auth && auth.uid) {
+    contactEntry.userId = auth.uid;
+    contactEntry.userEmail = auth.token.email || null;
+  } else if (userId) {
+    contactEntry.reportedUserId = userId;
+    contactEntry.isGuest = true;
+  } else {
+    contactEntry.isGuest = true;
+  }
+
+  const db = getFirestore();
 
   try {
-    // Query the next match
-    const matchesRef = getFirestore().collection(`fixtures/2024/data`);
-    const nextFixture = await matchesRef
-      .where("matchDate", ">=", now)
-      .orderBy("matchDate", "asc")
-      .limit(1)
-      .get();
+    // 1. Save to Database (Critical Step)
+    await db.collection("contact_messages").add(contactEntry);
 
-    const lastFixture = await matchesRef
-      .where("matchDate", "<=", now)
-      .orderBy("matchDate", "desc")
-      .limit(1)
-      .get();
+    // 2. Send Email Notification (Side Effect)
+    // We wrap this in its own try/catch so email failure doesn't crash the user response
+    try {
+      const mailOptions = {
+        from: '"11Votes Contact Form" <noreply@11votes.com>',
+        to: "kalum@11votes.com", // Where you want to receive it
+        subject: `[New Contact] ${subject || "No Subject"}`,
+        text: `
+New message from 11Votes Contact Form:
 
-    if (nextFixture.empty || lastFixture.empty) {
-      console.log("Fixture was empty");
-      return null;
+From: ${email}
+User ID: ${contactEntry.userId || "Guest"}
+Subject: ${subject}
+
+Message:
+${message}
+        `,
+        html: `
+<h3>New Contact Form Submission</h3>
+<p><strong>From:</strong> ${email}</p>
+<p><strong>User ID:</strong> ${contactEntry.userId || "Guest"}</p>
+<p><strong>Subject:</strong> ${subject}</p>
+<br/>
+<p><strong>Message:</strong></p>
+<p style="padding: 10px; background-color: #f4f4f4; border-left: 4px solid #00FF87;">${message}</p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log("Notification email sent to kalum@11votes.com");
+    } catch (emailError) {
+      // Log it, but don't fail the request. Data is already safe in DB.
+      console.error("Failed to send notification email:", emailError);
     }
 
-    const nextFixtureData = nextFixture.docs[0].data();
-    const lastFixtureData = lastFixture.docs[0].data();
-
-    let latestFixture = null;
-
-    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-    if (lastFixtureData.matchDate * 1000 < twentyFourHoursAgo) {
-      latestFixture = nextFixtureData;
-    } else {
-      latestFixture = lastFixtureData;
-    }
-
-    console.log("latestFixture", latestFixture);
-
-    res.status(200).send(`Fixture data saved for latest match`);
+    return {
+      success: true,
+      message: "Contact form submitted successfully.",
+    };
   } catch (error) {
-    console.error("Error fetching match data:", error);
-    return res
-      .status(500)
-      .send(`Error fetching fixture data: ${error.message}`);
+    console.error("Error submitting contact form:", error);
+    throw new HttpsError("internal", "Unable to submit message at this time.");
   }
 });
