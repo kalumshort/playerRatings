@@ -3,7 +3,7 @@ import { getAuthSession } from "@/lib/firebase/getAuth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import RootPage from "@/components/client/RootPage";
 import { redirect } from "next/navigation";
-
+//test
 export default async function Page() {
   const { isLoggedIn, userId } = await getAuthSession();
 
