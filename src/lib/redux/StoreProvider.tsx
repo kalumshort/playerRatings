@@ -3,10 +3,26 @@
 
 import { useRef } from "react";
 import { Provider } from "react-redux";
+import dynamic from "next/dynamic";
 import { makeStore, AppStore } from "./store";
-import { UserDataListener } from "@/components/client/UserDataListener";
 import { useAuth } from "@/context/AuthContext";
-import { GroupNavigationSync } from "@/components/client/Groups/GroupNavigationSync";
+
+// Ensure BOTH listeners are only loaded on the client
+const UserDataListener = dynamic(
+  () =>
+    import("@/components/client/UserDataListener").then(
+      (mod) => mod.UserDataListener,
+    ),
+  { ssr: false },
+);
+
+const GroupNavigationSync = dynamic(
+  () =>
+    import("@/components/client/Groups/GroupNavigationSync").then(
+      (mod) => mod.GroupNavigationSync,
+    ),
+  { ssr: false },
+);
 
 export default function StoreProvider({
   children,
@@ -14,7 +30,7 @@ export default function StoreProvider({
   children: React.ReactNode;
 }) {
   const storeRef = useRef<AppStore>(undefined);
-  const { user } = useAuth(); // Get the current logged-in user
+  const { user } = useAuth();
 
   if (!storeRef.current) {
     storeRef.current = makeStore();
@@ -22,9 +38,11 @@ export default function StoreProvider({
 
   return (
     <Provider store={storeRef.current}>
-      {/* The Listener lives inside the Provider so it has access to dispatch */}
-      {user && <UserDataListener userId={user?.uid || null} />}
-      {user && <GroupNavigationSync />}
+      {/* These components will now only execute once the code 
+          has reached the browser, preventing SSR Firebase errors.
+      */}
+      {user?.uid && <UserDataListener userId={user.uid} />}
+      {user?.uid && <GroupNavigationSync />}
       {children}
     </Provider>
   );
