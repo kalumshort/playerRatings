@@ -2,13 +2,12 @@
 const nextConfig = {
   output: "standalone",
   serverExternalPackages: ["firebase-admin"],
+  // This is the most reliable way to disable Turbopack in v16
+  webpack: (config) => {
+    return config;
+  },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
-      },
-    ],
+    remotePatterns: [{ hostname: "firebasestorage.googleapis.com" }],
   },
 };
 
