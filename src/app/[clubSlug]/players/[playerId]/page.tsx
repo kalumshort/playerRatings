@@ -1,8 +1,9 @@
 // src/app/[clubSlug]/players/[playerId]/page.tsx
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAdminDb } from "@/lib/firebase/admin";
+
 import PlayerPageClient from "@/components/client/PlayerPage/PlayerPageClient";
+import { adminDb } from "@/lib/firebase/admin";
 
 interface Props {
   params: Promise<{ clubSlug: string; playerId: string }>;
@@ -10,7 +11,6 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { playerId } = await params;
-  const adminDb = await getAdminDb();
 
   // Fetch player data for SEO
   const playerDoc = await adminDb.collection("players").doc(playerId).get();

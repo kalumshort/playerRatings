@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
 import { notFound } from "next/navigation";
 
 // Sub-components (We will migrate these next)
@@ -19,7 +19,6 @@ interface Props {
 // --- STEP 1: DYNAMIC SEO (Replaces Helmet) ---
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { clubSlug } = await params;
-  const adminDb = await getAdminDb();
 
   const groupQuery = await adminDb
     .collection("groups")

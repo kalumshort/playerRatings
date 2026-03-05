@@ -1,37 +1,39 @@
 import "server-only";
+import * as admin from "firebase-admin";
 
-// Force Node to ignore the bundler and use the runtime require
-const admin = eval("require('firebase-admin')");
+/**
+ * We use a dedicated function to initialize the app only once.
+ * By using the standard import, we ensure the library is loaded
+ * by the Node.js runtime correctly.
+ */
 function getAppInstance() {
-  // DIAGNOSTIC: Check if secrets are actually loaded in the Cloud environment
-  const hasKey = !!process.env.ADMIN_PRIVATE_KEY;
-  const hasEmail = !!process.env.ADMIN_CLIENT_EMAIL;
-  const hasId = !!process.env.ADMIN_PROJECT_ID;
-
-  console.log("--- FIREBASE ADMIN DIAGNOSTICS ---");
-  console.log("Has Private Key:", hasKey);
-  console.log("Has Client Email:", hasEmail);
-  console.log("Has Project ID:", hasId);
-  console.log("----------------------------------");
-
-  if (admin.apps.length > 0) return admin.app();
-
-  if (!hasKey || !hasEmail || !hasId) {
-    throw new Error(
-      `Firebase Admin failed to init: Missing env vars (Key:${hasKey}, Email:${hasEmail}, ID:${hasId})`,
-    );
+  // Check if already initialized
+  if (admin.apps.length > 0) {
+    return admin.app();
   }
+
+  // Use a temporary variable to hold the formatted key
+  // Replace ONLY if the key exists and contains escaped newlines
+  const rawKey = process.env.ADMIN_PRIVATE_KEY;
+  if (!rawKey) {
+    throw new Error("Missing ADMIN_PRIVATE_KEY environment variable.");
+  }
+
+  const privateKey = rawKey.includes("\\n")
+    ? rawKey.replace(/\\n/g, "\n")
+    : rawKey;
 
   return admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.ADMIN_PROJECT_ID,
       clientEmail: process.env.ADMIN_CLIENT_EMAIL,
-      privateKey: process.env.ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      privateKey: privateKey,
     }),
   });
 }
 
+// Initialize and export the services
 const app = getAppInstance();
 
-export const getAdminDb = () => admin.firestore(app);
-export const getAdminAuth = () => admin.auth(app);
+export const adminDb = admin.firestore(app);
+export const adminAuth = admin.auth(app);

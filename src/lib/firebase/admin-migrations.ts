@@ -1,8 +1,8 @@
-// import { getAdminDb } from "./admin";
+// import { adminDb } from "./admin";
 
 // export const migrateToLeagueTeams = async () => {
-//   const db = getAdminDb();
-//   const usersRef = db.collection("users");
+
+//   const usersRef = adminDb.collection("users");
 //   const snapshot = await usersRef.get();
 
 //   // Firestore batches have a limit of 500 operations.
