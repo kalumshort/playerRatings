@@ -6,7 +6,7 @@ function getAppInstance() {
   // DIAGNOSTIC: Check if secrets are actually loaded in the Cloud environment
   const hasKey = !!process.env.ADMIN_PRIVATE_KEY;
   const hasEmail = !!process.env.ADMIN_CLIENT_EMAIL;
-  const hasId = !!process.env.PROJECT_ID;
+  const hasId = !!process.env.ADMIN_PROJECT_ID;
 
   console.log("--- FIREBASE ADMIN DIAGNOSTICS ---");
   console.log("Has Private Key:", hasKey);
@@ -24,7 +24,7 @@ function getAppInstance() {
 
   return admin.initializeApp({
     credential: admin.credential.cert({
-      projectId: process.env.PROJECT_ID,
+      projectId: process.env.ADMIN_PROJECT_ID,
       clientEmail: process.env.ADMIN_CLIENT_EMAIL,
       privateKey: process.env.ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
