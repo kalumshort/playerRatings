@@ -13,7 +13,12 @@ const {
   FieldValue,
   Timestamp,
 } = require("firebase-admin/firestore");
-const { fetchAllMatchData, fetchFootballApi } = require("./helperFunctions");
+const {
+  fetchAllMatchData,
+  fetchFootballApi,
+  addMemberToGroupDoc,
+  removeMemberFromGroupDoc,
+} = require("./helperFunctions");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 
 const nodemailer = require("nodemailer");
@@ -62,63 +67,91 @@ exports.createUserDoc = onCall(async (request, context) => {
     throw new HttpsError("internal", "Unable to create user document");
   }
 });
-exports.addUserToGroup = onCall(async (request, context) => {
-  const { data } = request; // Now we can access the `data` object correctly
-
-  const { groupId, userId, userData } = data; // Destructure the data correctly
+exports.addUserToGroup = onCall(async (request) => {
+  const { groupId, userId, userData } = request.data;
+  const db = getFirestore();
 
   try {
-    const db = getFirestore(); // Use getFirestore to access Firestore
-    console.log("1");
-    const groupRef = db
-      .collection("groupUsers")
-      .doc(String(groupId))
-      .collection("members")
-      .doc(String(userId));
-    console.log("groupRef", groupRef);
-    // Add user data (could include username, email, etc.)
-    await groupRef.set(userData);
-    // Reference for the user data document
-    const userDocRef = db.collection("users").doc(userId);
+    await addMemberToGroupDoc(db, groupId, userId, userData);
 
-    // Update the user document to include the groupId in the groups array
-    await userDocRef.update({
-      groups: FieldValue.arrayUnion(String(groupId)), // Add groupId to the array
-      activeGroup: String(groupId), // Set the activeGroup field
-    });
+    await db
+      .collection("users")
+      .doc(userId)
+      .update({
+        groups: FieldValue.arrayUnion(String(groupId)),
+        activeGroup: String(groupId),
+      });
 
-    return {
-      success: true,
-      message: `User ${userId} added to group ${groupId} and updated user data`,
-    };
+    return { success: true, message: "Joined successfully" };
   } catch (error) {
-    console.error("Error adding user to group: ", error);
-    throw new HttpsError("internal", "Unable to add user to group");
+    throw new HttpsError("internal", error.message);
   }
 });
-exports.removeUserFromGroup = onCall(async (request, context) => {
-  const { data } = request; // Accessing the data from the request
 
-  const { groupId, userId } = data; // Destructure groupId and userId from the data
+// 2. REMOVE USER (Standard Leave)
+exports.removeUserFromGroup = onCall(async (request) => {
+  const { groupId, userId } = request.data;
+  const db = getFirestore();
 
   try {
-    const db = getFirestore(); // Use getFirestore to access Firestore
-    const groupRef = db
-      .collection("groupUsers")
-      .doc(groupId)
-      .collection("members")
-      .doc(userId);
+    await removeMemberFromGroupDoc(db, groupId, userId);
 
-    // Remove the user from the group by deleting their document
-    await groupRef.delete();
+    await db
+      .collection("users")
+      .doc(userId)
+      .update({
+        groups: FieldValue.arrayRemove(String(groupId)),
+      });
 
-    return {
-      success: true,
-      message: `User ${userId} removed from group ${groupId}`,
-    };
+    return { success: true, message: "Left successfully" };
   } catch (error) {
-    console.error("Error removing user from group: ", error);
-    throw new HttpsError("internal", "Unable to remove user from group");
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+// 3. TRANSFER USER (The Coordinator)
+exports.transferLeagueTeam = onCall(async (request) => {
+  const {
+    newGroupId,
+    userId,
+    userData,
+    leagueKey = "premier-league",
+  } = request.data;
+  const db = getFirestore();
+  const userRef = db.collection("users").doc(userId);
+
+  try {
+    const userDoc = await userRef.get();
+    const currentData = userDoc.data();
+    const oldGroupId = currentData?.leagueTeams?.[leagueKey];
+
+    // If they already have a team in this league, remove them from it
+    if (oldGroupId && oldGroupId !== String(newGroupId)) {
+      await removeMemberFromGroupDoc(db, oldGroupId, userId);
+    }
+
+    // Add them to the new team
+    await addMemberToGroupDoc(db, newGroupId, userId, userData);
+
+    // Update the User document with the new league structure
+    await userRef.update({
+      [`leagueTeams.${leagueKey}`]: String(newGroupId),
+      activeGroup: String(newGroupId),
+      [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
+      // Clean up the groups array
+      groups: FieldValue.arrayUnion(String(newGroupId)),
+    });
+
+    if (oldGroupId) {
+      await userRef.update({
+        groups: FieldValue.arrayRemove(String(oldGroupId)),
+      });
+    }
+
+    return { success: true, message: `Transferred to ${newGroupId}` };
+  } catch (error) {
+    console.error("Transfer Error:", error);
+    throw new HttpsError("internal", "Failed to complete transfer");
   }
 });
 // exports.backfillFixtures = onCall(
@@ -398,7 +431,7 @@ exports.updateFixtures = onSchedule(
             ...existingSeasonSquad,
             ...squadPlayers.filter(
               (newPlayer) =>
-                !existingSeasonSquad.some((p) => p.id === newPlayer.id)
+                !existingSeasonSquad.some((p) => p.id === newPlayer.id),
             ),
           ];
 
@@ -409,7 +442,7 @@ exports.updateFixtures = onSchedule(
               seasonSquad: updatedSeasonSquad,
               lastUpdated: new Date(),
             },
-            { merge: true }
+            { merge: true },
           );
 
           logger.info(`Processed ${teamName} (Fixtures & Squad)`);
@@ -424,7 +457,7 @@ exports.updateFixtures = onSchedule(
       // ======================================================
       const uniqueMatchesArray = Object.values(uniqueMatchesMap);
       logger.info(
-        `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`
+        `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`,
       );
 
       // Note: If array is huge (>500), consider batching this properly.
@@ -441,7 +474,7 @@ exports.updateFixtures = onSchedule(
     } catch (error) {
       logger.error("Critical error in daily update:", error.message, error);
     }
-  }
+  },
 );
 
 exports.scheduledLiveMatchUpdate = onSchedule(
@@ -507,7 +540,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
 
       if (matchesToUpdate.length === 0) {
         logger.info(
-          "Matches found in window, but none require updates (all finished or too early)."
+          "Matches found in window, but none require updates (all finished or too early).",
         );
         return;
       }
@@ -515,7 +548,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
       logger.info(
         `Updating ${
           matchesToUpdate.length
-        } active/upcoming matches: ${matchesToUpdate.join(", ")}`
+        } active/upcoming matches: ${matchesToUpdate.join(", ")}`,
       );
 
       // 4. FETCH DATA (Parallel Execution)
@@ -534,7 +567,7 @@ exports.scheduledLiveMatchUpdate = onSchedule(
     } catch (error) {
       logger.error("Error in scheduledLiveMatchUpdate:", error);
     }
-  }
+  },
 );
 
 exports.sitemap = onRequest(
@@ -637,7 +670,7 @@ exports.sitemap = onRequest(
       logger.error("Sitemap generation failed", error);
       res.status(500).end();
     }
-  }
+  },
 );
 
 // exports.updateFixturesonCall = onRequest(async (req, res) => {
@@ -1253,7 +1286,7 @@ exports.submitContactForm = onCall(async (request) => {
   if (!email || !message) {
     throw new HttpsError(
       "invalid-argument",
-      "Email and Message are required fields."
+      "Email and Message are required fields.",
     );
   }
 
