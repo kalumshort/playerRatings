@@ -226,8 +226,8 @@ export const handleFixtureMood = async (params: {
   timeElapsed: number;
   moodKey: string;
 }) => {
-  validateParams({ groupId, currentYear, matchId, moodKey });
   const { groupId, currentYear, matchId, timeElapsed, moodKey } = params;
+  validateParams({ groupId, currentYear, matchId, moodKey });
 
   const docRef = doc(
     clientDB,
