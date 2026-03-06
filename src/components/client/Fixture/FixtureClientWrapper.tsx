@@ -46,8 +46,9 @@ export default function FixtureClientWrapper({
   // otherwise fallback to initialFixture (Server Side Props)
   const fixture = liveFixture || initialFixture;
 
-  // 3. Initial Data Hydration (Ran once on mount)
-  if (!hasHydrated.current) {
+  useEffect(() => {
+    if (hasHydrated.current) return;
+
     if (initialPredictions) {
       dispatch(
         fetchMatchPrediction({ groupId, matchId, data: initialPredictions }),
@@ -63,15 +64,12 @@ export default function FixtureClientWrapper({
         }),
       );
       dispatch(
-        matchMotmVotesAction({
-          groupId,
-          matchId,
-          data: initialRatings.motm,
-        }),
+        matchMotmVotesAction({ groupId, matchId, data: initialRatings.motm }),
       );
     }
+
     hasHydrated.current = true;
-  }
+  }, [dispatch, initialPredictions, initialRatings, groupId, matchId]);
 
   // Derived state based on the merged fixture
   const isPreMatch = ["NS", "TBD"].includes(fixture?.fixture?.status?.short);
