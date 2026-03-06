@@ -113,8 +113,6 @@ const fixturesSlice = createSlice({
       const clubIdStr = String(clubId);
       const fixtureIdStr = String(id);
 
-      console.log(`🔄 [Reducer] Processing update for Match ${fixtureIdStr}`);
-
       // 1. Ensure the nested structure exists so we don't fail silently
       if (!state.byClubId[clubIdStr]) {
         state.byClubId[clubIdStr] = {};
@@ -138,14 +136,12 @@ const fixturesSlice = createSlice({
           ...data,
           id: fixtureIdStr, // Keep ID consistent as a string
         };
-        console.log(`✅ [Reducer] Updated existing fixture at index ${index}`);
       } else {
         // 4. Insert new: If it's a live match that wasn't in the initial list
         clubFixtures.push({
           ...data,
           id: fixtureIdStr,
         });
-        console.log(`➕ [Reducer] Added new fixture to state`);
       }
     },
   },

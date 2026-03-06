@@ -1,6 +1,5 @@
 // src/app/[clubSlug]/players/[playerId]/page.tsx
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import PlayerPageClient from "@/components/client/PlayerPage/PlayerPageClient";
 import { adminDb } from "@/lib/firebase/admin";

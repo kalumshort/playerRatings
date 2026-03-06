@@ -39,11 +39,6 @@ export const GroupPredictionsListener = ({
     const mid = String(matchId);
     const year = String(currentYear);
 
-    console.log(
-      `%c🔮 [PredictionsListener] Subscribing: groups/${gid}/seasons/${year}/predictions/${mid}`,
-      "color: #8b5cf6; font-weight: bold;",
-    );
-
     const predictionsRef = doc(
       clientDB,
       "groups",
@@ -63,12 +58,6 @@ export const GroupPredictionsListener = ({
 
           // Only dispatch if data changed to save CPU/Renders
           if (lastDataRef.current !== fingerprint) {
-            console.log(
-              `%c📈 [PredictionsListener] Update for Group ${gid}:`,
-              "color: #10b981; font-weight: bold;",
-              data,
-            );
-
             lastDataRef.current = fingerprint;
 
             dispatch(
@@ -96,10 +85,6 @@ export const GroupPredictionsListener = ({
     );
 
     return () => {
-      console.log(
-        `%c🧹 [PredictionsListener] Unsubscribing from match ${mid}`,
-        "color: #f59e0b;",
-      );
       unsubscribe();
     };
   }, [groupId, matchId, currentYear, dispatch]);

@@ -28,7 +28,6 @@ export const GroupNavigationSync = () => {
       activeGroupData.slug &&
       activeGroupData.slug !== lastNavigatedSlug.current
     ) {
-      console.log("[Sync] Navigating to active group:", activeGroupData.slug);
       lastNavigatedSlug.current = activeGroupData.slug;
       router.push(`/${activeGroupData.slug}`);
     }

@@ -10,6 +10,8 @@ import {
   Button,
   useTheme,
   alpha,
+  CircularProgress,
+  Skeleton,
 } from "@mui/material";
 import {
   StarRounded,
@@ -36,7 +38,14 @@ export function PlayerRatingCard({
 }: any) {
   const theme = useTheme() as any;
   const matchId = String(fixture.id);
-  console.log(matchRatings, "matchRatings in PlayerRatingCard");
+
+  // 1. SAFE DATA ACCESS: Ensure matchRatings is an array
+  const ratingsArray = useMemo(
+    () => (Array.isArray(matchRatings) ? matchRatings : []),
+    [matchRatings],
+  );
+  const isDataLoading = matchRatings === undefined || matchRatings === null;
+
   const playerEvents = useMemo(() => {
     if (!fixture?.events) return [];
     return fixture.events
@@ -67,9 +76,11 @@ export function PlayerRatingCard({
   }, [fixture.events, player.id]);
 
   const avgRating = useMemo(() => {
-    const stats = matchRatings?.find((r: any) => r.id === String(player.id));
-    return stats ? (stats.totalRating / stats.totalSubmits).toFixed(1) : null;
-  }, [matchRatings, player.id]);
+    const stats = ratingsArray.find((r: any) => r.id === String(player.id));
+    return stats
+      ? (stats.totalRating / (stats.totalSubmits || 1)).toFixed(1)
+      : null;
+  }, [ratingsArray, player.id]);
 
   const isMOTM = storedMotmId === player.id;
 
@@ -83,83 +94,39 @@ export function PlayerRatingCard({
         overflow: "hidden",
         border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
         transition: "all 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: theme.shadows[8],
-        },
         minHeight: isMobile ? 480 : 520,
         p: isMobile ? 2.5 : 3.5,
       }}
     >
-      {/* MOTM STAR – bigger hit area, premium feel */}
       <Box sx={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
         <IconButton
           size="large"
-          sx={{
-            bgcolor: isMOTM
-              ? alpha(theme.palette.secondary.main, 0.9)
-              : alpha(theme.palette.background.default, 0.7),
-            backdropFilter: "blur(8px)",
-            color: isMOTM ? "#fff" : theme.palette.text.secondary,
-            borderRadius: "50%",
-            border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
-            width: 56,
-            height: 56,
-            transition: "all 0.2s ease",
-            "&:hover": {
-              transform: "scale(1.12)",
-              bgcolor: isMOTM
-                ? theme.palette.secondary.dark
-                : alpha(theme.palette.primary.main, 0.12),
-            },
-          }}
           onClick={() => setStoredMotmId(isMOTM ? null : player.id)}
-          aria-label={
-            isMOTM ? "Remove Man of the Match" : "Set as Man of the Match"
-          }
         >
           {isMOTM ? (
-            <StarRounded fontSize="large" />
+            <StarRounded color="secondary" fontSize="large" />
           ) : (
             <StarOutlineRounded fontSize="large" />
           )}
         </IconButton>
       </Box>
 
-      {/* HEADER */}
       <Stack alignItems="center" spacing={2} sx={{ mb: 3 }}>
         <Avatar
           src={
             player.photo ||
             `https://media.api-sports.io/football/players/${player.id}.png`
           }
-          sx={{
-            width: isMobile ? 100 : 120,
-            height: isMobile ? 100 : 120,
-            boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.18)}`,
-            border: `3px solid ${theme.palette.background.paper}`,
-          }}
+          sx={{ width: 100, height: 100 }}
         />
-
-        <Typography
-          variant="h5"
-          component="h3"
-          fontWeight={800}
-          letterSpacing={0.5}
-          color="text.primary"
-          textAlign="center"
-          sx={{ textShadow: `0 1px 2px ${alpha("#000", 0.08)}` }}
-        >
+        <Typography variant="h5" fontWeight={800}>
           {getInitialSurname(player.name).toUpperCase()}
         </Typography>
-
-        {/* Events – nicer spacing */}
         <Stack
           direction="row"
           spacing={1.2}
           flexWrap="wrap"
           justifyContent="center"
-          sx={{ minHeight: 36, mt: 0.5 }}
         >
           {playerEvents.map((ev: any, i: number) => (
             <EventBadge key={i} {...ev} />
@@ -167,7 +134,6 @@ export function PlayerRatingCard({
         </Stack>
       </Stack>
 
-      {/* RATING AREA – main focal point */}
       <Box
         sx={{
           flexGrow: 1,
@@ -177,7 +143,14 @@ export function PlayerRatingCard({
           px: 1,
         }}
       >
-        {usersMatchPlayerRating ? (
+        {isDataLoading ? (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={100}
+            sx={{ borderRadius: "20px" }}
+          />
+        ) : usersMatchPlayerRating ? (
           <Stack
             direction="row"
             spacing={3}
@@ -214,13 +187,8 @@ export function PlayerRatingCard({
   );
 }
 
-// ──────────────────────────────────────────────
-//   Modernized sub-components
-// ──────────────────────────────────────────────
-
 const ClayScoreDisplay = ({ label, score, color }: any) => {
   const theme = useTheme() as any;
-
   return (
     <Box
       sx={{
@@ -232,25 +200,10 @@ const ClayScoreDisplay = ({ label, score, color }: any) => {
         border: `1px solid ${alpha(color, 0.18)}`,
       }}
     >
-      <Typography
-        variant="caption"
-        fontWeight={700}
-        color="text.secondary"
-        sx={{ letterSpacing: 0.8, textTransform: "uppercase" }}
-      >
+      <Typography variant="caption" fontWeight={700} color="text.secondary">
         {label}
       </Typography>
-
-      <Typography
-        variant="h4"
-        fontWeight={900}
-        sx={{
-          color,
-          mt: 0.5,
-          lineHeight: 1,
-          textShadow: `0 2px 8px ${alpha(color, 0.3)}`,
-        }}
-      >
+      <Typography variant="h4" fontWeight={900} sx={{ color, mt: 0.5 }}>
         {score ? Number(score).toFixed(1) : "–"}
       </Typography>
     </Box>
@@ -260,10 +213,6 @@ const ClayScoreDisplay = ({ label, score, color }: any) => {
 const ClayRatingInput = ({ onSubmit }: any) => {
   const [val, setVal] = useState(6.0);
   const theme = useTheme() as any;
-
-  const increment = () => setVal((prev) => Math.min(10, prev + 0.5));
-  const decrement = () => setVal((prev) => Math.max(1, prev - 0.5));
-
   return (
     <Stack
       spacing={4}
@@ -278,17 +227,10 @@ const ClayRatingInput = ({ onSubmit }: any) => {
       >
         <IconButton
           size="large"
-          onClick={decrement}
-          sx={{
-            ...theme.clay?.button,
-            bgcolor: alpha(theme.palette.background.default, 0.6),
-            backdropFilter: "blur(8px)",
-          }}
+          onClick={() => setVal((p) => Math.max(1, p - 0.5))}
         >
-          <RemoveRounded fontSize="large" />
+          <RemoveRounded />
         </IconButton>
-
-        {/* Big circular rating display */}
         <Box
           sx={{
             width: 140,
@@ -297,55 +239,25 @@ const ClayRatingInput = ({ onSubmit }: any) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            bgcolor: alpha(theme.palette.background.paper, 0.8),
-            backdropFilter: "blur(16px)",
             border: `3px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-            boxShadow: `inset 0 4px 12px ${alpha("#000", 0.1)},
-                        0 8px 32px ${alpha(theme.palette.primary.main, 0.15)}`,
-            position: "relative",
           }}
         >
-          <Typography
-            variant="h2"
-            component="div"
-            fontWeight={900}
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              lineHeight: 1,
-            }}
-          >
+          <Typography variant="h2" fontWeight={900}>
             {val.toFixed(1)}
           </Typography>
         </Box>
-
         <IconButton
           size="large"
-          onClick={increment}
-          sx={{
-            ...theme.clay?.button,
-            bgcolor: alpha(theme.palette.background.default, 0.6),
-            backdropFilter: "blur(8px)",
-          }}
+          onClick={() => setVal((p) => Math.min(10, p + 0.5))}
         >
-          <AddRounded fontSize="large" />
+          <AddRounded />
         </IconButton>
       </Stack>
-
       <Button
         fullWidth
         variant="contained"
         size="large"
-        startIcon={<CheckCircleRounded />}
         onClick={() => onSubmit(val)}
-        sx={{
-          py: 1.8,
-          borderRadius: "20px",
-          fontWeight: 700,
-          letterSpacing: 0.6,
-          boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
-        }}
       >
         CONFIRM RATING
       </Button>

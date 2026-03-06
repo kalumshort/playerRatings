@@ -100,7 +100,7 @@ export default function FixtureHeader({
   addClass,
 }: any) {
   const theme = useTheme();
-  console.log(fixture, "fixture in header");
+
   if (!fixture) {
     return <FixtureHeaderSkeleton className={addClass} />;
   }

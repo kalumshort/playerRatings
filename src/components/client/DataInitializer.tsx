@@ -51,21 +51,16 @@ export default function DataInitializer({
 
     // 3. Fetch Fixtures
     if (!hasFixtures) {
-      console.log(
-        `[Data] 📥 Fetching Fixtures for: ${clubId} (${currentYear})`,
-      );
       dispatch(fetchFixtures({ clubId, currentYear }));
     }
 
     // 4. Fetch Squad
     if (!hasSquad) {
-      console.log(`[Data] 📥 Fetching Squad for: ${clubId} (${currentYear})`);
       dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
     }
 
     // 5. Fetch Ratings (Only if groupId exists)
     if (groupId && !hasSeasonRatings) {
-      console.log(`[Data] 📥 Fetching Season Ratings for Group: ${groupId}`);
       dispatch(fetchAllPlayersSeasonOverallRating({ groupId, currentYear }));
     }
   }, [

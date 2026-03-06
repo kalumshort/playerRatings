@@ -34,7 +34,7 @@ export default function LatestFixtureItem() {
       </Paper>
     );
   }
-  console.log(latestFixture, "latest fixture in header");
+
   // 1. Get Team Colors
   const homeTeamId = latestFixture.teams.home.id;
   const awayTeamId = latestFixture.teams.away.id;
