@@ -1,44 +1,48 @@
-// src/app/[clubSlug]/players/[playerId]/PlayerMatchRow.tsx
 "use client";
-import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
-import {
-  Paper,
-  Box,
-  Avatar,
-  Typography,
-  Stack,
-  alpha,
-  useTheme,
-} from "@mui/material";
+import { useMemo } from "react";
+import { useParams } from "next/navigation";
+import { Paper, Box, Avatar, Typography, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
 
 export default function PlayerMatchRow({
   fixture,
   ratingData,
   index,
-  playerId,
   clubId,
 }: any) {
   const theme = useTheme() as any;
-
   const { clubSlug } = useParams();
+  const myClubId = Number(clubId);
 
-  const rating = ratingData.totalRating / (ratingData.totalSubmits || 1);
+  const { opponent, result, rating } = useMemo(() => {
+    // Determine who the opponent is
+    const isHome = fixture.teams.home.id === myClubId;
+    const opponentData = isHome ? fixture.teams.away : fixture.teams.home;
 
-  const clubIdNum = Number(clubId);
+    // Determine Match Result (W/L/D) based on user's club
+    const homeWin = fixture.teams.home.winner;
+    const awayWin = fixture.teams.away.winner;
 
-  // 1. Result Logic
-  const isHome = fixture.teams.home.id === clubIdNum;
-  const homeWin = fixture.teams.home.winner;
-  const awayWin = fixture.teams.away.winner;
+    let res = "D"; // Default to Draw
+    if (isHome) {
+      if (homeWin) res = "W";
+      else if (awayWin) res = "L";
+    } else {
+      if (awayWin) res = "W";
+      else if (homeWin) res = "L";
+    }
 
-  let result = "D";
-  if ((isHome && homeWin) || (!isHome && awayWin)) result = "W";
-  else if ((isHome && awayWin) || (!isHome && homeWin)) result = "L";
+    return {
+      opponent: opponentData,
+      result: res,
+      rating: ratingData.totalRating / (ratingData.totalSubmits || 1),
+    };
+  }, [fixture, myClubId, ratingData]);
 
   const statusColor = getResultColor(result, theme);
+  const date = new Date(fixture.fixture.timestamp * 1000);
 
   return (
     <motion.div
@@ -56,7 +60,7 @@ export default function PlayerMatchRow({
             display: "flex",
             alignItems: "center",
             p: 2,
-            borderLeft: `6px solid ${statusColor}`,
+            borderLeft: `3px solid ${statusColor}`,
             transition: "transform 0.2s",
             "&:hover": { transform: "translateX(5px)" },
           }}
@@ -65,24 +69,21 @@ export default function PlayerMatchRow({
             <Typography
               variant="caption"
               fontWeight={800}
-              display="block"
               color="text.secondary"
             >
-              {new Date(fixture.fixture.timestamp * 1000).toLocaleDateString(
-                "en-GB",
-                { weekday: "short" },
-              )}
+              {date.toLocaleDateString("en-GB", { weekday: "short" })}
             </Typography>
             <Typography variant="body2" fontWeight={900}>
-              {new Date(fixture.fixture.timestamp * 1000).toLocaleDateString(
-                "en-GB",
-                { day: "numeric", month: "short" },
-              )}
+              {date.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+              })}
             </Typography>
           </Box>
 
+          {/* Opponent Badge */}
           <Avatar
-            src={fixture.teams.away.logo}
+            src={opponent.logo}
             variant="rounded"
             sx={{
               width: 40,
@@ -94,7 +95,7 @@ export default function PlayerMatchRow({
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle2" fontWeight={800}>
-              vs {fixture.teams.away.name}
+              vs {opponent.name}
             </Typography>
             <Typography
               variant="caption"
@@ -107,7 +108,12 @@ export default function PlayerMatchRow({
 
           <Box
             sx={{
+              // Keep your dynamic background color
               bgcolor: getRatingColor(rating),
+
+              // Automatically select black or white text based on the background
+              color: theme.palette.getContrastText(getRatingColor(rating)),
+
               px: 1.5,
               py: 0.5,
               borderRadius: "8px",
