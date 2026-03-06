@@ -34,13 +34,13 @@ export default function LatestFixtureItem() {
       </Paper>
     );
   }
-
+  console.log(latestFixture, "latest fixture in header");
   // 1. Get Team Colors
   const homeTeamId = latestFixture.teams.home.id;
   const awayTeamId = latestFixture.teams.away.id;
   const homeColor = "#1727b5";
   const awayColor = "#b92525";
-  console.log(latestFixture);
+
   // 2. Generate Gradient (Modern MUI approach)
   const fixtureGradient = `linear-gradient(95deg, ${alpha(homeColor, 0.9)} 40%, ${alpha(awayColor, 0.9)} 60%)`;
 

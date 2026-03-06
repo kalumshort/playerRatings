@@ -46,8 +46,6 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
 
   const { activeGroup } = useGroupData();
 
-  console.log(activeGroup, "active group from nav drawer");
-
   //   const { activeGroup } = useGroupData();
   //   const { isGroupAdmin } = useUserData();
   const navItems = getNavItems(clubSlug);

@@ -7,6 +7,7 @@ import { Toolbar, IconButton, Box, Typography, useTheme } from "@mui/material";
 import { Menu as MenuIcon } from "lucide-react";
 import { GlassAppBar, NavContainer } from "./Header.styles";
 import { useAuth } from "@/context/AuthContext";
+import BackButton from "./BackButton";
 // import useGroupData from "@/hooks/useGroupsData";
 
 interface NavbarProps {
@@ -43,6 +44,7 @@ export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
               height={50}
               priority
             />
+            <BackButton />
           </Box>
 
           {/* Actions */}

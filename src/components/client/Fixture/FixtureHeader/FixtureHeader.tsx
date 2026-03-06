@@ -16,6 +16,8 @@ import {
   StadiumRounded,
   SportsRounded,
   SportsSoccerRounded,
+  CalendarMonthRounded,
+  EmojiEventsRounded,
 } from "@mui/icons-material";
 
 // --- HELPERS ---
@@ -98,7 +100,7 @@ export default function FixtureHeader({
   addClass,
 }: any) {
   const theme = useTheme();
-
+  console.log(fixture, "fixture in header");
   if (!fixture) {
     return <FixtureHeaderSkeleton className={addClass} />;
   }
@@ -296,10 +298,43 @@ export default function FixtureHeader({
         >
           <Stack
             direction="row"
-            spacing={4}
+            spacing={2}
             justifyContent="center"
-            sx={{ opacity: 0.75 }}
+            flexWrap="wrap"
+            useFlexGap
+            sx={{ opacity: 0.75, rowGap: 1 }}
           >
+            {/* League */}
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <EmojiEventsRounded sx={{ fontSize: 15 }} />
+              <Typography variant="caption" fontWeight={700}>
+                {fixture.league.name}
+              </Typography>
+            </Stack>
+
+            {/* Date & Time */}
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <CalendarMonthRounded sx={{ fontSize: 15 }} />
+              <Typography variant="caption" fontWeight={700}>
+                {new Date(fixData.timestamp * 1000).toLocaleDateString(
+                  "en-GB",
+                  {
+                    day: "numeric",
+                    month: "short",
+                  },
+                )}
+                {" • "}
+                {new Date(fixData.timestamp * 1000).toLocaleTimeString(
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  },
+                )}
+              </Typography>
+            </Stack>
+
+            {/* Venue */}
             {fixData.venue?.name && (
               <Stack direction="row" spacing={0.75} alignItems="center">
                 <StadiumRounded sx={{ fontSize: 15 }} />
@@ -308,6 +343,8 @@ export default function FixtureHeader({
                 </Typography>
               </Stack>
             )}
+
+            {/* Referee */}
             {fixData.referee && (
               <Stack direction="row" spacing={0.75} alignItems="center">
                 <SportsRounded sx={{ fontSize: 15 }} />
@@ -343,8 +380,6 @@ const TeamColumn = ({ team }: any) => {
           bgcolor: "background.paper",
           display: "grid",
           placeItems: "center",
-          border: `4px solid ${theme.palette.background.default}`,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.14)",
           overflow: "hidden",
         }}
       >
