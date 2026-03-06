@@ -37,13 +37,24 @@ export const fetchFixtures = createAsyncThunk(
     { clubId, currentYear }: { clubId: string; currentYear: string },
     { rejectWithValue },
   ) => {
+    // 1. Defensive Guard: Ensure path-critical variables are present
+    if (!clubId || !currentYear) {
+      console.error("[Fixtures Thunk] Aborted: clubId or currentYear missing", {
+        clubId,
+        currentYear,
+      });
+      return rejectWithValue("Invalid parameters provided to fetchFixtures");
+    }
+
     try {
+      // 2. Safe path construction
       const matchesRef = collection(
         clientDB,
         "fixtures",
         currentYear,
         "fixtures",
       );
+
       const teamIdNumber = Number(clubId);
 
       const q = query(
@@ -59,7 +70,6 @@ export const fetchFixtures = createAsyncThunk(
 
       const fixtures = querySnapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        // Filter out specific unwanted match IDs
         .filter(
           (fixture: any) =>
             !["1371777", "1402829"].includes(String(fixture.id)),
@@ -67,6 +77,7 @@ export const fetchFixtures = createAsyncThunk(
 
       return { clubId, year: currentYear, fixtures };
     } catch (error: any) {
+      console.error("[Fixtures Thunk] Firestore error:", error);
       return rejectWithValue(error.message);
     }
   },

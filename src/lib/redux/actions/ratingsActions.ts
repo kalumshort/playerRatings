@@ -28,15 +28,26 @@ export const fetchAllPlayersSeasonOverallRating = createAsyncThunk(
     { groupId, currentYear }: { groupId: string; currentYear: string },
     { rejectWithValue },
   ) => {
+    // 1. Strict Guard: Stop invalid paths before they are created
+    if (!groupId?.trim() || !currentYear?.trim()) {
+      console.error("[Ratings Thunk] Aborted: Missing groupId or currentYear", {
+        groupId,
+        currentYear,
+      });
+      return rejectWithValue("Missing or invalid parameters");
+    }
+
     try {
+      // 2. Safe path construction
       const playersColRef = collection(
         clientDB,
         "groups",
-        groupId,
+        groupId.trim(),
         "seasons",
-        currentYear,
+        currentYear.trim(),
         "players",
       );
+
       const querySnapshot = await getDocs(playersColRef);
 
       const sanitizedRatings: Record<string, any> = {};
@@ -46,6 +57,7 @@ export const fetchAllPlayersSeasonOverallRating = createAsyncThunk(
 
       return { groupId, players: sanitizedRatings };
     } catch (error: any) {
+      console.error("[Ratings Thunk] Error:", error);
       return rejectWithValue(error.message);
     }
   },

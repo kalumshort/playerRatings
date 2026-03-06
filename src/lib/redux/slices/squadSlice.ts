@@ -27,26 +27,30 @@ export const fetchTeamSquad = createAsyncThunk(
     { squadId, currentYear }: { squadId: string; currentYear: string },
     { rejectWithValue },
   ) => {
-    if (!squadId || !currentYear) return rejectWithValue("Missing params");
+    // 1. Strict guard: ensure values are not undefined, null, or empty strings
+    if (!squadId?.trim() || !currentYear?.trim()) {
+      console.warn("[Squad Thunk] Aborted: Empty squadId or currentYear");
+      return rejectWithValue("Missing or empty parameters");
+    }
 
     try {
-      // Path: teamSquads/[squadId]/season/[year]
+      // 2. Safe document reference construction
       const docRef = doc(
         clientDB,
         "teamSquads",
-        squadId,
+        squadId.trim(),
         "season",
-        currentYear.toString(),
+        currentYear.trim(),
       );
+
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) return null;
 
       const teamSquadData = { ...docSnap.data() };
 
-      // 🛡️ YOUR SANITIZATION LOGIC
+      // 3. Sanitization (using imported Timestamp)
       if (teamSquadData.lastUpdated) {
-        // Handle Firestore Timestamp conversion
         if (typeof teamSquadData.lastUpdated.toDate === "function") {
           teamSquadData.lastUpdated = teamSquadData.lastUpdated
             .toDate()
@@ -60,7 +64,7 @@ export const fetchTeamSquad = createAsyncThunk(
 
       return {
         clubId: squadId,
-        year: currentYear.toString(),
+        year: currentYear,
         data: teamSquadData,
       };
     } catch (error: any) {
