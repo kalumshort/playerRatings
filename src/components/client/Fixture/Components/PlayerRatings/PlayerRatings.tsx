@@ -36,6 +36,7 @@ export default function PlayerRatings({
   const { userId } = useAuth();
 
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [storedMotmId, setStoredMotmId] = useState<string | null>(null);
   const matchId = String(fixture.id);
 
   // 1. DATA SELECTORS
@@ -44,7 +45,6 @@ export default function PlayerRatings({
   );
 
   const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
-  const storedMotmId = usersMatchData?.motmVote;
 
   // 2. PLAYER LOGIC (Consolidated)
   // Extracts starters, subs who actually played, and the coach
@@ -156,6 +156,8 @@ export default function PlayerRatings({
         usersMatchPlayerRatings={usersMatchData?.players}
         storedUsersMatchMOTM={storedMotmId}
         userId={userId}
+        setStoredMotmId={setStoredMotmId}
+        storedMotmId={storedMotmId}
       />
 
       <Box sx={{ mt: 4, textAlign: "center" }}>

@@ -27,6 +27,8 @@ interface CardStackProps {
   usersMatchPlayerRatings: any;
   currentYear: string;
   storedUsersMatchMOTM: string | null;
+  setStoredMotmId: React.Dispatch<React.SetStateAction<string | null>>;
+  storedMotmId: string | null;
 }
 
 export default function PlayerRatingsCardStack({
@@ -37,6 +39,8 @@ export default function PlayerRatingsCardStack({
   usersMatchPlayerRatings,
   currentYear,
   storedUsersMatchMOTM,
+  setStoredMotmId,
+  storedMotmId,
 }: CardStackProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -46,7 +50,7 @@ export default function PlayerRatingsCardStack({
   const matchRatings = useSelector((state: RootState) =>
     selectMatchRatingsById(fixture.id)(state),
   );
-  console.log(matchRatings, "Match Ratings in Card Stack");
+
   // 1. DATA SANITIZATION
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),
@@ -131,6 +135,8 @@ export default function PlayerRatingsCardStack({
                 // Pass ref to child so it can lock/unlock swiping during slider drag
                 swiperRef={swiperRef}
                 matchRatings={matchRatings}
+                setStoredMotmId={setStoredMotmId}
+                storedMotmId={storedMotmId}
               />
             </SwiperSlide>
           ))}
