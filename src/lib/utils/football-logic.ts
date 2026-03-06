@@ -71,7 +71,18 @@ export const getResultColor = (result, theme) => {
   return theme.palette.error.main;
 };
 export const getRatingColor = (r: number) => {
-  if (r >= 7.5) return "#A0E8AF"; // Matcha
-  if (r >= 4.5) return "#FFD6A5"; // Warning/Apricot
-  return "#FFADAD"; // Coral/Error
+  // World Class / Elite
+  if (r >= 9.0) return "#7AE582"; // Vivid Green
+  // Excellent
+  if (r >= 8.0) return "#A0E8AF"; // Soft Matcha
+  // Good / Solid
+  if (r >= 7.0) return "#C4EBC8"; // Light Mint
+  // Average
+  if (r >= 6.0) return "#FFF2AF"; // Mellow Yellow
+  // Below Average
+  if (r >= 5.0) return "#FFD6A5"; // Apricot
+  // Poor
+  if (r >= 4.0) return "#FFADAD"; // Coral
+  // Disastrous
+  return "#FF8585"; // Deep Red
 };

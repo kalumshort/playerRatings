@@ -22,7 +22,7 @@ import {
 } from "@mui/icons-material";
 import { handlePlayerRatingSubmit } from "@/lib/firebase/client-actions";
 import EventBadge from "./EventBadge";
-import { getInitialSurname } from "@/lib/utils/football-logic";
+import { getInitialSurname, getRatingColor } from "@/lib/utils/football-logic";
 
 export function PlayerRatingCard({
   player,
@@ -39,7 +39,6 @@ export function PlayerRatingCard({
   const theme = useTheme() as any;
   const matchId = String(fixture.id);
 
-  // 1. SAFE DATA ACCESS: Ensure matchRatings is an array
   const ratingsArray = useMemo(
     () => (Array.isArray(matchRatings) ? matchRatings : []),
     [matchRatings],
@@ -157,15 +156,10 @@ export function PlayerRatingCard({
             justifyContent="center"
             sx={{ width: "100%", maxWidth: 360 }}
           >
-            <ClayScoreDisplay
-              label="TEAM AVG"
-              score={avgRating}
-              color={theme.palette.primary.main}
-            />
+            <ClayScoreDisplay label="TEAM AVG" score={avgRating} />
             <ClayScoreDisplay
               label="YOUR VOTE"
               score={usersMatchPlayerRating}
-              color={theme.palette.secondary.main}
             />
           </Stack>
         ) : (
@@ -187,8 +181,8 @@ export function PlayerRatingCard({
   );
 }
 
-const ClayScoreDisplay = ({ label, score, color }: any) => {
-  const theme = useTheme() as any;
+const ClayScoreDisplay = ({ label, score }: any) => {
+  const ratingColor = score ? getRatingColor(Number(score)) : "#ccc";
   return (
     <Box
       sx={{
@@ -196,14 +190,18 @@ const ClayScoreDisplay = ({ label, score, color }: any) => {
         textAlign: "center",
         p: 2.5,
         borderRadius: "20px",
-        bgcolor: alpha(color, 0.07),
-        border: `1px solid ${alpha(color, 0.18)}`,
+        bgcolor: alpha(ratingColor, 0.07),
+        border: `1px solid ${alpha(ratingColor, 0.5)}`,
       }}
     >
       <Typography variant="caption" fontWeight={700} color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="h4" fontWeight={900} sx={{ color, mt: 0.5 }}>
+      <Typography
+        variant="h4"
+        fontWeight={900}
+        sx={{ color: ratingColor, mt: 0.5 }}
+      >
         {score ? Number(score).toFixed(1) : "–"}
       </Typography>
     </Box>
@@ -212,7 +210,8 @@ const ClayScoreDisplay = ({ label, score, color }: any) => {
 
 const ClayRatingInput = ({ onSubmit }: any) => {
   const [val, setVal] = useState(6.0);
-  const theme = useTheme() as any;
+  const dynamicColor = getRatingColor(val);
+
   return (
     <Stack
       spacing={4}
@@ -227,10 +226,11 @@ const ClayRatingInput = ({ onSubmit }: any) => {
       >
         <IconButton
           size="large"
-          onClick={() => setVal((p) => Math.max(1, p - 0.5))}
+          onClick={() => setVal((p) => Math.max(0.5, p - 0.5))}
         >
           <RemoveRounded />
         </IconButton>
+
         <Box
           sx={{
             width: 140,
@@ -239,13 +239,37 @@ const ClayRatingInput = ({ onSubmit }: any) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: `3px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+            position: "relative",
           }}
         >
-          <Typography variant="h2" fontWeight={900}>
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={140}
+            thickness={4}
+            sx={{ position: "absolute", color: alpha("#000", 0.05) }}
+          />
+          <CircularProgress
+            variant="determinate"
+            value={val * 10}
+            size={160}
+            thickness={1}
+            sx={{
+              position: "absolute",
+              color: dynamicColor,
+              transition: "color 0.3s ease",
+              "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
+            }}
+          />
+          <Typography
+            variant="h2"
+            fontWeight={800}
+            sx={{ color: dynamicColor, transition: "color 0.3s ease" }}
+          >
             {val.toFixed(1)}
           </Typography>
         </Box>
+
         <IconButton
           size="large"
           onClick={() => setVal((p) => Math.min(10, p + 0.5))}
@@ -253,6 +277,7 @@ const ClayRatingInput = ({ onSubmit }: any) => {
           <AddRounded />
         </IconButton>
       </Stack>
+
       <Button
         fullWidth
         variant="contained"

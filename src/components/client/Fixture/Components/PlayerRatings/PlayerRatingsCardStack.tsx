@@ -106,7 +106,6 @@ export default function PlayerRatingsCardStack({
           effect="cards"
           grabCursor
           modules={[EffectCards, Navigation]}
-          navigation
           onSwiper={(s) => (swiperRef.current = s)}
           onSlideChange={(s) => setCurrentIndex(s.activeIndex)}
           /* IMPORTANT: These classes prevent the Swiper from moving 
