@@ -36,7 +36,7 @@ export function PlayerRatingCard({
 }: any) {
   const theme = useTheme() as any;
   const matchId = String(fixture.id);
-
+  console.log(matchRatings, "matchRatings in PlayerRatingCard");
   const playerEvents = useMemo(() => {
     if (!fixture?.events) return [];
     return fixture.events

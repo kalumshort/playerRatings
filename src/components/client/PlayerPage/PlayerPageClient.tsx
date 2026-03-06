@@ -53,25 +53,28 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
   );
   const previousFixtures = useSelector(selectPreviousFixtures);
 
-  const { activeGroup: group } = useGroupData();
+  const { activeGroup } = useGroupData();
 
   const currentYear = "2025";
 
   // 2. FETCHING
   useEffect(() => {
-    if (playerId && group?.id) {
+    if (playerId && activeGroup?.groupId) {
       dispatch(
         fetchPlayerRatingsAllMatches({
           playerId,
-          groupId: group.id,
+          groupId: activeGroup?.groupId,
           currentYear,
         }),
       );
       dispatch(
-        fetchAllPlayersSeasonOverallRating({ groupId: group.id, currentYear }),
+        fetchAllPlayersSeasonOverallRating({
+          groupId: activeGroup?.groupId,
+          currentYear,
+        }),
       );
     }
-  }, [dispatch, playerId, group?.id]);
+  }, [dispatch, playerId, activeGroup]);
 
   // 3. CALCS
   const seasonAverage = useMemo(() => {
@@ -275,7 +278,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
               <Paper sx={{ ...theme.clay?.card, p: 3, height: 350 }}>
                 <PlayerRatingsLineGraph
                   allPlayerRatings={allPlayerRatings}
-                  clubId={group?.groupClubId}
+                  clubId={activeGroup?.groupClubId}
                 />
               </Paper>
             </Box>
@@ -295,7 +298,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                         ratingData={matchRating}
                         index={index}
                         playerId={playerId}
-                        clubId={group?.groupClubId}
+                        clubId={activeGroup?.groupClubId}
                       />
                     );
                   })}
