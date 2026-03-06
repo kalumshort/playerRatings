@@ -76,18 +76,41 @@ export const getTheme = (
     shape: { borderRadius: 16 },
 
     typography: {
-      // 1. Defaulting to Outfit via the CSS variable from layout.tsx
+      // Global default: Outfit
       fontFamily: "var(--font-outfit), sans-serif",
-      h1: { fontFamily: "var(--font-jakarta), sans-serif" },
-      h2: { fontFamily: "var(--font-jakarta), sans-serif" },
-      h3: { fontFamily: "var(--font-jakarta), sans-serif" },
-      button: {
-        // 2. Setting buttons to Outfit (extending your 800 weight requirement)
-        fontFamily: "var(--font-outfit), sans-serif",
+
+      h1: {
+        fontFamily: "var(--font-jakarta), sans-serif",
         fontWeight: 800,
-        fontSize: "1rem",
-        letterSpacing: "0.02em",
+        letterSpacing: "-0.025em", // Tighten for a premium, bold feel
+      },
+      h2: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+        letterSpacing: "-0.015em",
+      },
+      h3: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+      },
+
+      // UI Element Styling
+      button: {
+        fontFamily: "var(--font-outfit), sans-serif",
+        fontWeight: 700, // Reduced from 800 to prevent 'heavy' look
+        fontSize: "0.95rem",
+        letterSpacing: "0.01em",
         textTransform: "none",
+      },
+
+      // Standardizing body readability
+      body1: {
+        fontSize: "1rem",
+        lineHeight: 1.6,
+      },
+      body2: {
+        fontSize: "0.875rem",
+        lineHeight: 1.5,
       },
     },
 
@@ -95,41 +118,44 @@ export const getTheme = (
       card: {
         backgroundColor: colors.bg,
         borderRadius: "32px",
+        // Softer, wider shadows for a "puffy" clay feel
         boxShadow: isLight
-          ? `12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff, inset 4px 4px 10px rgba(255,255,255,0.8), inset -4px -4px 10px rgba(0,0,0,0.02)`
-          : `12px 12px 24px #0e1014, -8px -8px 20px #2b303b, inset 2px 2px 4px rgba(255,255,255,0.05)`,
-        border: isLight
-          ? "1px solid rgba(255,255,255,0.7)"
-          : "1px solid rgba(255,255,255,0.03)",
+          ? `8px 8px 16px ${colors.clayShadow}, -8px -8px 16px #FFFFFF, inset 0 0 0 1px rgba(255,255,255,0.8)`
+          : `8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.03), inset 0 0 0 1px rgba(255,255,255,0.05)`,
+        border: "none", // Using inner border highlight instead
       },
       box: {
-        backgroundColor: isLight ? "#f0f3f7" : "#1a1d24",
+        // Subtle background shift for the "recessed" look
+        backgroundColor: isLight ? "#E8EDF2" : "#14171D",
         borderRadius: "24px",
+        // Softer inset shadow for depth without "staining" the interior
         boxShadow: isLight
-          ? "inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff"
-          : "inset 8px 8px 16px #0e1014, inset -4px -4px 12px #2b303b",
+          ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
+          : "inset 4px 4px 8px #0B0E12",
         border: "none",
       },
       button: {
         backgroundColor: colors.bg,
-        borderRadius: 24,
+        borderRadius: "24px",
         color: colors.textPrimary,
         fontWeight: 700,
-        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
+        // Balanced, light-touch elevation
         boxShadow: isLight
-          ? "6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff"
-          : "8px 8px 16px #0e1014, -4px -4px 12px #2b303b",
+          ? "6px 6px 12px #C6CEDA, -6px -6px 12px #FFFFFF"
+          : "6px 6px 12px #0B0E12, -6px -6px 12px rgba(255,255,255,0.03)",
         "&:hover": {
-          transform: "scale(1.02)",
+          transform: "translateY(-2px)", // Vertical lift feels more natural than scaling
           boxShadow: isLight
-            ? "10px 10px 20px #c2cbd8, -10px -10px 20px #ffffff"
-            : "12px 12px 24px #0a0c0f, -6px -6px 15px #2b303b",
+            ? "8px 8px 16px #C6CEDA, -8px -8px 16px #FFFFFF"
+            : "8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.05)",
         },
         "&:active": {
           transform: "scale(0.98)",
+          // Use inset shadow only on active to signal a "click"
           boxShadow: isLight
-            ? "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff"
-            : "inset 6px 6px 10px #0e1014, inset -4px -4px 10px #2b303b",
+            ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
+            : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.05)",
         },
       },
     },
@@ -171,13 +197,16 @@ export const getTheme = (
             backgroundImage: "none",
             backgroundColor: colors.paper,
             borderRadius: "32px",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            // Modernized transition for a "weightier" feel
+            transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
+            // Use subtle, diffused shadows rather than harsh offsets
             boxShadow: isLight
-              ? `16px 16px 32px ${colors.clayShadow}, -16px -16px 32px ${colors.highlight}`
-              : `20px 20px 40px ${colors.clayShadow}, -8px -8px 25px rgba(255,255,255,0.03)`,
+              ? `10px 10px 20px ${colors.clayShadow}, -10px -10px 20px ${colors.highlight}`
+              : `12px 12px 24px ${colors.clayShadow}, -6px -6px 15px rgba(255, 255, 255, 0.03)`,
+            // Subtle border for definition without visual clutter
             border: isLight
-              ? "1px solid rgba(255,255,255,0.8)"
-              : "1px solid rgba(255,255,255,0.1)",
+              ? "1px solid rgba(255, 255, 255, 0.9)"
+              : "1px solid rgba(255, 255, 255, 0.05)",
           },
         },
       },
@@ -185,38 +214,39 @@ export const getTheme = (
         defaultProps: { disableElevation: true, disableRipple: true },
         styleOverrides: {
           root: {
-            borderRadius: "50px",
-            padding: "14px 32px",
-            transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+            borderRadius: "24px",
+            padding: "12px 28px",
             textTransform: "none",
-            fontWeight: 800,
-            // 4. Specifically ensuring buttons use Jakarta for a clean UI
+            fontWeight: 700,
             fontFamily: "var(--font-jakarta), sans-serif",
+            // Smooth, responsive transition
+            transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
+            // Modern Clay: Soft outer shadow + thin inner highlight border
             boxShadow: isLight
-              ? `10px 10px 20px #D1D9E6, -10px -10px 20px #FFFFFF, inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -2px -2px 5px rgba(209, 217, 230, 0.5)`
-              : `12px 12px 24px #1a1d29, -8px -8px 20px #3c4155, inset 2px 2px 5px rgba(255, 255, 255, 0.05), inset -2px -2px 5px rgba(0, 0, 0, 0.2)`,
+              ? `6px 6px 12px ${colors.clayShadow}, -6px -6px 12px ${colors.highlight}, inset 0 0 0 1px rgba(255,255,255,0.5)`
+              : `6px 6px 12px #0B0E12, -6px -6px 12px rgba(255,255,255,0.03), inset 0 0 0 1px rgba(255,255,255,0.05)`,
             "&:hover": {
-              transform: "translateY(-3px)",
+              transform: "translateY(-2px)",
               boxShadow: isLight
-                ? `14px 14px 28px #C1C9D6, -14px -14px 28px #FFFFFF`
-                : `16px 16px 32px #151720, -10px -10px 25px #454b62`,
+                ? `8px 8px 16px ${colors.clayShadow}, -8px -8px 16px ${colors.highlight}`
+                : `8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.05)`,
             },
             "&:active": {
-              transform: "scale(0.95)",
+              transform: "scale(0.98)",
               boxShadow: isLight
-                ? `inset 8px 8px 15px #D1D9E6, inset -8px -8px 15px #FFFFFF`
-                : `inset 10px 10px 20px #1a1d29, inset -6px -6px 15px #3c4155`,
+                ? `inset 4px 4px 8px ${colors.clayShadow}, inset -4px -4px 8px ${colors.highlight}`
+                : `inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.05)`,
             },
           },
           containedPrimary: {
             backgroundColor: accentColor,
-            color: "#3D3D3D",
-            boxShadow: isLight
-              ? `10px 10px 25px rgba(160, 232, 175, 0.5), -10px -10px 20px #FFFFFF, inset 4px 4px 10px rgba(255, 255, 255, 0.4), inset -4px -4px 10px rgba(0, 0, 0, 0.1)`
-              : `12px 12px 25px rgba(160, 232, 175, 0.15), -8px -8px 20px #3c4155, inset 4px 4px 10px rgba(255, 255, 255, 0.1), inset -4px -4px 10px rgba(0, 0, 0, 0.3)`,
+            color: "#1A1C1E",
+            // Soft, diffuse glow for action buttons
+            boxShadow: `0 8px 16px ${accentColor}40`,
             "&:hover": {
               backgroundColor: accentColor,
-              filter: "brightness(1.04)",
+              filter: "brightness(1.05)",
+              boxShadow: `0 12px 20px ${accentColor}60`,
             },
           },
         },
@@ -224,27 +254,14 @@ export const getTheme = (
       MuiTabs: {
         styleOverrides: {
           root: {
-            minHeight: "unset",
-            padding: "4px",
-            backgroundColor: isLight ? "#f0f3f7" : "#1a1d24",
+            minHeight: "48px",
+            padding: "6px",
+            backgroundColor: isLight ? "#E8EDF2" : "#14171D", // Using new palette base
             borderRadius: "24px",
+            // Recessed track effect
             boxShadow: isLight
-              ? "inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff"
-              : "inset 4px 4px 8px #0e1014",
-            width: "100%",
-            "& .MuiTab-root": {
-              borderRadius: "20px",
-              minHeight: "40px",
-              margin: "0 4px",
-              transition: "0.3s",
-              // 5. Using Jakarta for Tabs
-              fontFamily: "var(--font-jakarta), sans-serif",
-              fontWeight: 600,
-              "&.Mui-selected": {
-                backgroundColor: "primary.main",
-                color: "white",
-              },
-            },
+              ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
+              : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.03)",
           },
           indicator: { display: "none" },
         },
@@ -253,14 +270,20 @@ export const getTheme = (
         styleOverrides: {
           root: {
             borderRadius: "20px",
-            transition: "all 0.3s ease",
+            minHeight: "36px",
+            margin: "0 4px",
+            transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
             fontFamily: "var(--font-jakarta), sans-serif",
+            fontWeight: 600,
+            textTransform: "none",
+            color: colors.textSecondary,
             "&.Mui-selected": {
-              backgroundColor: colors.bg,
-              boxShadow: isLight
-                ? "4px 4px 10px rgba(0,0,0,0.08)"
-                : "4px 4px 10px rgba(0,0,0,0.4)",
+              // Floating "clay" card look
+              backgroundColor: colors.paper,
               color: accentColor,
+              boxShadow: isLight
+                ? "4px 4px 8px #C6CEDA, -4px -4px 8px #FFFFFF"
+                : "4px 4px 8px #0B0E12, -4px -4px 8px rgba(255,255,255,0.05)",
             },
           },
         },
