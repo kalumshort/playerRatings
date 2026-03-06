@@ -11,23 +11,28 @@ export const GroupNavigationSync = () => {
   const { userData } = useUserData();
   const { groupData }: any = useGroupData();
 
-  // Use a ref to track the last navigated group to prevent infinite loops
   const lastNavigatedSlug = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!userData?.activeGroup || !groupData) return;
+    // 1. HARD GUARD: Ensure we have the necessary data
+    // If userData or groupData are loading/undefined, abort immediately
+    if (!userData || !userData.activeGroup || !groupData) return;
 
     const activeGroupData = groupData[userData.activeGroup];
 
-    // Only navigate if we have the slug and it's different from the last one
+    // 2. SAFETY CHECK: Ensure the group exists in our data dictionary
+    if (!activeGroupData) return;
+
+    // 3. LOGIC: Navigate only if we have a valid slug and it differs from state
     if (
-      activeGroupData?.slug &&
+      activeGroupData.slug &&
       activeGroupData.slug !== lastNavigatedSlug.current
     ) {
+      console.log("[Sync] Navigating to active group:", activeGroupData.slug);
       lastNavigatedSlug.current = activeGroupData.slug;
       router.push(`/${activeGroupData.slug}`);
     }
-  }, [userData?.activeGroup, groupData, router]);
+  }, [userData, groupData, router]); // Keep dependencies stable
 
   return null;
 };

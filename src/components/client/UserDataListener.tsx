@@ -57,13 +57,32 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
           dispatch(groupDataStart());
 
           const groupPromises = userData.groups.map(async (groupId: string) => {
+            // 1. EXTRA GUARD: Check for valid groupId and userId
+            if (!groupId || !userId) {
+              console.error("[UserDataListener] Skipping invalid path:", {
+                groupId,
+                userId,
+              });
+              return null;
+            }
+
+            // 2. Use safe references
             const groupRef = doc(clientDB, "groups", groupId);
+            const memberRef = doc(
+              clientDB,
+              "groupUsers",
+              groupId,
+              "members",
+              userId,
+            );
+
             const [groupDoc, groupUserDoc] = await Promise.all([
               getDoc(groupRef),
-              getDoc(doc(clientDB, `groupUsers/${groupId}/members`, userId)),
+              getDoc(memberRef),
             ]);
 
             if (!groupDoc.exists()) return null;
+
             return {
               id: groupId,
               data: { ...sanitizeData(groupDoc.data()), groupId },
