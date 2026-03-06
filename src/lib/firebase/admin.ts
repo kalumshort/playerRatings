@@ -1,39 +1,19 @@
-import "server-only";
 import * as admin from "firebase-admin";
 
-/**
- * We use a dedicated function to initialize the app only once.
- * By using the standard import, we ensure the library is loaded
- * by the Node.js runtime correctly.
- */
-function getAppInstance() {
-  // Check if already initialized
-  if (admin.apps.length > 0) {
-    return admin.app();
-  }
-
-  // Use a temporary variable to hold the formatted key
-  // Replace ONLY if the key exists and contains escaped newlines
-  const rawKey = process.env.ADMIN_PRIVATE_KEY;
-  if (!rawKey) {
-    throw new Error("Missing ADMIN_PRIVATE_KEY environment variable.");
-  }
-
-  const privateKey = rawKey.includes("\\n")
-    ? rawKey.replace(/\\n/g, "\n")
-    : rawKey;
-
-  return admin.initializeApp({
+// Check if an app is already initialized to prevent errors during HMR
+if (!admin.apps.length) {
+  admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.ADMIN_PROJECT_ID,
       clientEmail: process.env.ADMIN_CLIENT_EMAIL,
-      privateKey: privateKey,
+      // Firebase Admin expects the private key with actual newlines.
+      // If your env var is a single line, replace the escaped \n:
+      privateKey: process.env.ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
   });
 }
 
-// Initialize and export the services
-const app = getAppInstance();
+const adminDb = admin.firestore();
+const adminAuth = admin.auth();
 
-export const adminDb = admin.firestore(app);
-export const adminAuth = admin.auth(app);
+export { adminDb, adminAuth };
