@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager, // ← Import this for multi-tab sync
+  persistentMultipleTabManager,
   CACHE_SIZE_UNLIMITED,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -20,17 +20,12 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  databaseURL:
-    process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ||
-    (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      ? `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`
-      : undefined),
 };
 
 // Dev-time config validation
 if (process.env.NODE_ENV !== "production") {
   const missing = Object.entries(firebaseConfig)
-    .filter(([key, value]) => key !== "databaseURL" && !value)
+    .filter(([_, value]) => !value)
     .map(([key]) => key);
 
   if (missing.length > 0) {
@@ -46,11 +41,10 @@ if (process.env.NODE_ENV !== "production") {
 if (typeof window !== "undefined") {
   console.log("[Firebase Client] Config loaded:", {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
-      ? `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY.slice(0, 6)}... (length: ${process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.length ?? 0})`
+      ? `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY.slice(0, 6)}...`
       : "missing",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "missing",
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "missing",
-    databaseURL: firebaseConfig.databaseURL ?? "not set",
   });
 }
 
@@ -60,14 +54,10 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 // Modern Firestore init with offline persistence + multi-tab support
 export const clientDB = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED, // or e.g. 100 * 1024 * 1024 for 100 MB
-    tabManager: persistentMultipleTabManager(), // ← Enables automatic multi-tab synchronization
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    tabManager: persistentMultipleTabManager(),
   }),
 });
-
-console.log(
-  "[Firebase Client] Initialized with PersistentLocalCache (multi-tab support enabled)",
-);
 
 // Other services
 export const auth = getAuth(app);
