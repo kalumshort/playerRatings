@@ -255,6 +255,7 @@ export const getTheme = (
         styleOverrides: {
           root: {
             minHeight: "48px",
+            width: "100%",
             padding: "6px",
             backgroundColor: isLight ? "#E8EDF2" : "#14171D", // Using new palette base
             borderRadius: "24px",
