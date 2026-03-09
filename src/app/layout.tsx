@@ -7,6 +7,7 @@ import Footer from "@/components/client/Footer/Footer";
 import { getAuthSession } from "@/lib/firebase/getAuth";
 import { cookies } from "next/headers";
 import { DrawerProvider } from "@/components/client/Header/DrawerContext";
+import { Toaster } from "sonner";
 
 // Configure the fonts
 const outfit = Outfit({
@@ -66,6 +67,12 @@ export default async function RootLayout({
                   }}
                 >
                   {children}
+                  <Toaster
+                    richColors
+                    position="top-right"
+                    closeButton
+                    duration={4000}
+                  />
                 </main>
                 <Footer />
               </DrawerProvider>

@@ -1,44 +1,136 @@
-"use client"; // Required for Firebase listeners and React Context
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase/client"; // Ensure your firebase config is exported
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  ReactNode,
+} from "react";
+import {
+  User,
+  getAuth,
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 
-const AuthContext = createContext({
+// ────────────────────────────────────────────────
+// Types
+// ────────────────────────────────────────────────
+
+interface AuthContextType {
+  user: User | null;
+  userLoading: boolean;
+  userId: string | null;
+  hasPasswordProvider: boolean;
+  isSocialOnly: boolean;
+  signOut: () => Promise<void>;
+}
+
+const defaultContext: AuthContextType = {
   user: null,
   userLoading: true,
   userId: null,
-});
+  hasPasswordProvider: false,
+  isSocialOnly: true,
+  signOut: async () => {
+    console.warn("signOut called outside AuthProvider");
+  },
+};
 
-export const useAuth = () => useContext(AuthContext);
+// ────────────────────────────────────────────────
+// Context
+// ────────────────────────────────────────────────
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+const AuthContext = createContext<AuthContextType>(defaultContext);
+
+// ────────────────────────────────────────────────
+// Custom Hook
+// ────────────────────────────────────────────────
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+
+  if (context === defaultContext) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
+};
+
+// ────────────────────────────────────────────────
+// Provider
+// ────────────────────────────────────────────────
+
+interface AuthProviderProps {
+  children: ReactNode;
+  enableCookieSync?: boolean; // default: true – disable if using server-side cookies
+}
+
+export const AuthProvider = ({
+  children,
+  enableCookieSync = true,
+}: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // 1. Update User State
-      setUser(currentUser);
+  // Derived state – updates whenever user changes
+  const hasPasswordProvider = useMemo(
+    () => user?.providerData?.some((p) => p.providerId === "password") ?? false,
+    [user],
+  );
 
-      // 2. Sync Cookie (Crucial for Server Components)
-      if (currentUser) {
-        document.cookie = `uid=${currentUser.uid}; path=/; max-age=3600; SameSite=Lax`;
-      } else {
+  const isSocialOnly = !hasPasswordProvider;
+
+  // Sign-out helper – centralized and typed
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+      if (enableCookieSync) {
         document.cookie =
           "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
       }
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
 
-      // 3. ONLY set loading to false once we have a definitive answer
+  useEffect(() => {
+    // Listen to auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+
+      // Optional cookie sync (useful for Next.js middleware / server components)
+      if (enableCookieSync) {
+        if (currentUser) {
+          document.cookie = `uid=${currentUser.uid}; path=/; max-age=3600; SameSite=Lax`;
+        } else {
+          document.cookie =
+            "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        }
+      }
+
+      // Only stop loading once we have the initial state
       setUserLoading(false);
     });
 
+    // Cleanup
     return () => unsubscribe();
-  }, []);
+  }, [enableCookieSync]);
 
-  return (
-    <AuthContext.Provider value={{ user, userLoading, userId: user?.uid }}>
-      {children}
-    </AuthContext.Provider>
+  const value: AuthContextType = useMemo(
+    () => ({
+      user,
+      userLoading,
+      userId: user?.uid ?? null,
+      hasPasswordProvider,
+      isSocialOnly,
+      signOut: handleSignOut,
+    }),
+    [user, userLoading, hasPasswordProvider, isSocialOnly],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

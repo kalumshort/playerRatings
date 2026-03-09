@@ -28,7 +28,7 @@ export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
         <NavContainer>
           {/* Logo */}
           <Box
-            onClick={() => router.push(`/${clubSlug}`)}
+            onClick={() => router.push(clubSlug ? `/${clubSlug}` : `/`)}
             sx={{
               cursor: "pointer",
               display: "flex",

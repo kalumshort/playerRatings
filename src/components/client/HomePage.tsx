@@ -89,42 +89,59 @@ export default function HomePage() {
       {/* 1. HERO SECTION */}
       <Container
         maxWidth="md"
-        sx={{ pt: { xs: 8, md: 15 }, pb: 8, textAlign: "center" }}
+        sx={{
+          pt: { xs: 10, md: 20 },
+          pb: { xs: 8, md: 12 },
+          textAlign: "center",
+        }}
       >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <Stack spacing={4} alignItems="center">
+          <Stack spacing={3} alignItems="center">
+            {/* 1. Smaller, sleeker label */}
             <Chip
-              label="FAN CONSENSUS NETWORK"
-              icon={<Bolt />}
+              label="THE FAN CONSENSUS NETWORK"
+              icon={<Bolt sx={{ fontSize: 16 }} />}
               sx={{
-                bgcolor: "primary.main",
-                color: "white",
-                fontWeight: 900,
-                px: 2,
-                height: 42,
-                boxShadow: theme.shadows[4],
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: "primary.main",
+                fontWeight: 800,
+                borderRadius: 2,
+                px: 1,
               }}
             />
+
+            {/* 2. Higher impact, slightly tighter headline */}
             <Typography
               variant="h1"
-              sx={{ fontSize: { xs: "3.2rem", md: "5.5rem" }, lineHeight: 1 }}
+              sx={{
+                fontSize: { xs: "3rem", md: "5rem" },
+                lineHeight: 0.9,
+                letterSpacing: -1,
+                fontWeight: 900,
+              }}
             >
-              JOIN YOUR <br />
+              OWN YOUR <br />
               <Box component="span" sx={{ color: "secondary.main" }}>
-                CLUB HUB
+                CLUB'S PULSE
               </Box>
             </Typography>
+
+            {/* 3. Punchier sub-headline */}
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ maxWidth: 600, opacity: 0.8 }}
+              sx={{
+                maxWidth: 500,
+                fontWeight: 500,
+                lineHeight: 1.5,
+              }}
             >
-              Predict scores, rate players, and define the official fan
-              consensus for your team.
+              Predict, rate, and define the official consensus. Your voice,
+              codified.
             </Typography>
           </Stack>
         </motion.div>
@@ -178,74 +195,97 @@ export default function HomePage() {
       </Container>
 
       {/* 3. FEATURES SECTION */}
-      <Box
-        sx={{
-          py: 12,
-          bgcolor: alpha(theme.palette.primary.main, 0.03),
-          borderTop: `1px solid ${theme.palette.divider}`,
-        }}
-      >
+      <Box sx={{ py: 12 }}>
         <Container maxWidth="lg">
           <Typography
             variant="h3"
             align="center"
             sx={{ mb: 10, fontWeight: 900 }}
           >
-            The Second Screen Experience
+            The Ultimate Matchday Companion
           </Typography>
-          <Grid container spacing={4}>
-            {features.map((feature, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+
+          <Stack spacing={12}>
+            {/* Feature 1: The Live Pitch */}
+            <Grid container spacing={6} alignItems="center">
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
+                  Real-Time Consensus
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ fontSize: "1.2rem" }}
+                >
+                  Watch the fan-built lineup shift as the match evolves. See
+                  exactly what the community thinks about tactical changes and
+                  substitutions in real-time.
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                {/* REPLACE THIS WITH A REAL SCREENSHOT OF YOUR LINEUP COMPONENT */}
                 <Paper
-                  elevation={0}
                   sx={{
                     ...theme.clay?.card,
-                    height: "100%",
-                    p: 4,
-                    bgcolor: "background.paper",
-                    transition: "transform 0.3s ease",
-                    "&:hover": { transform: "translateY(-5px)" },
+                    p: 2,
+                    height: 300,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 3,
-                      mb: 3,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    sx={{ fontWeight: 800 }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ lineHeight: 1.6 }}
-                  >
-                    {feature.desc}
+                  <Typography color="text.disabled">
+                    [Screenshot of Lineup.tsx]
                   </Typography>
                 </Paper>
               </Grid>
-            ))}
-          </Grid>
+            </Grid>
+
+            {/* Feature 2: The Fan Mood */}
+            <Grid
+              container
+              spacing={6}
+              alignItems="center"
+              direction="row-reverse"
+            >
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
+                  Visualizing Fan Emotion
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ fontSize: "1.2rem" }}
+                >
+                  The Pulse tracker aggregates sentiment across thousands of
+                  fans. When the stadium goes quiet, our charts tell the story.
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                {/* REPLACE THIS WITH A SCREENSHOT OF MOODSELECTOR/CHART */}
+                <Paper
+                  sx={{
+                    ...theme.clay?.card,
+                    p: 2,
+                    height: 300,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography color="text.disabled">
+                    [Screenshot of MoodAreaChart.tsx]
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Stack>
         </Container>
       </Box>
     </Box>
   );
 }
 
-// --- SUB-COMPONENT: CLUB CARD ---
 const ClubCard = ({ team }: { team: any }) => {
   const theme = useTheme() as any;
 
@@ -255,17 +295,18 @@ const ClubCard = ({ team }: { team: any }) => {
         elevation={0}
         sx={{
           ...theme.clay?.card,
-          p: 4,
+          p: 3, // Reduced from 4 for better mobile density
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
           height: "100%",
-          cursor: "pointer",
-          border: `1px solid transparent`,
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", // Smoother transition
+          border: `2px solid transparent`, // Added thickness for clay feel
           "&:hover": {
             borderColor: theme.palette.primary.main,
-            bgcolor: alpha(theme.palette.primary.main, 0.02),
+            transform: "translateY(-4px)", // Add lift on hover
+            boxShadow: theme.shadows[4], // Elevated look
           },
         }}
       >
@@ -273,36 +314,43 @@ const ClubCard = ({ team }: { team: any }) => {
           src={team.logo}
           alt={team.name}
           sx={{
-            width: 90,
-            height: 90,
-            mb: 3,
+            width: { xs: 64, md: 80 }, // Dynamic size for mobile
+            height: { xs: 64, md: 80 },
+            mb: 2,
             bgcolor: "transparent",
-            borderRadius: 0,
           }}
           imgProps={{ style: { objectFit: "contain" } }}
         />
+
         <Typography
-          variant="h6"
+          variant="subtitle1" // Slightly smaller, cleaner text
           sx={{
-            mb: 3,
-            fontWeight: 800,
-            flexGrow: 1,
-            minHeight: "3em",
+            mb: 2,
+            fontWeight: 900,
+            lineHeight: 1.2,
+            minHeight: "2.4em", // Ensures alignment even if names are short
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {team.name}
         </Typography>
+
         <Button
           variant="contained"
           color="primary"
           fullWidth
           disableElevation
-          endIcon={<ArrowForward />}
-          sx={{ borderRadius: 4, py: 1, fontWeight: 900 }}
+          endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+          sx={{
+            borderRadius: 3,
+            py: 1,
+            fontWeight: 900,
+            fontSize: "0.85rem", // Compact button text
+          }}
         >
-          Enter Hub
+          Enter
         </Button>
       </Paper>
     </Link>
