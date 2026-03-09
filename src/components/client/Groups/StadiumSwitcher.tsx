@@ -319,9 +319,9 @@ export default function StadiumSwitcher({
                     letterSpacing: 1,
                   }}
                 >
-                  YOUR REGISTERED LEAGUE SLOTS
+                  YOUR LEAGUE TEAMS
                 </Typography>
-                {SUPPORTED_LEAGUES.map((league) => {
+                {userData?.leagueTeams?.map((league) => {
                   const clubId = userData?.leagueTeams?.[league.id];
                   const isActive = userData.activeGroup === clubId;
                   const clubData: any = groupData?.[clubId];
@@ -432,6 +432,7 @@ export default function StadiumSwitcher({
                     </Fade>
                   );
                 })}
+                {!userData?.leagueTeams && <Box></Box>}
               </Stack>
             ) : (
               /* MARKET VIEW */

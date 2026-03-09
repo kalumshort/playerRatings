@@ -185,7 +185,8 @@ export default function ProfileSettings() {
       </Typography>
       <Paper sx={{ p: 3, mb: 3, mt: 1 }}>
         <Stack spacing={3}>
-          <SwitcherTrigger />
+          {userData.groups && <SwitcherTrigger />}
+
           <Divider />
           <Box
             sx={{

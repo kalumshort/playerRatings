@@ -29,6 +29,7 @@ import Login from "../Auth/Login";
 import ThemeToggle from "../Theme/ThemeToggle";
 import SwitcherTrigger from "../Groups/SwitcherTrigger";
 import useGroupData from "@/Hooks/useGroupData";
+import useUserData from "@/Hooks/useUserData";
 
 // import GroupExplorer from "./GroupExplorer";
 
@@ -43,7 +44,8 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { clubSlug } = useParams();
-
+  const { userData } = useUserData();
+  console.log(userData.activeGroup);
   const { activeGroup } = useGroupData();
 
   //   const { activeGroup } = useGroupData();
@@ -152,7 +154,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
               ))}
             </List>
             <Divider sx={{ my: 2, opacity: 0.5 }} />
-            <SwitcherTrigger />
+            {userData.groups && <SwitcherTrigger />}
           </Box>
         )}
 
