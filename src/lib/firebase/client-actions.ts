@@ -372,10 +372,12 @@ export const handleAddUserToGroup = async ({
   userData,
   groupId,
   role = "user",
+  leagueKey,
 }: {
   userData: any;
   groupId: string;
   role?: string;
+  leagueKey?: string;
 }) => {
   try {
     // 1. Guard: Ensure we have the required IDs
@@ -395,6 +397,7 @@ export const handleAddUserToGroup = async ({
         role: role,
         joinedAt: new Date().toISOString(),
       },
+      leagueKey: leagueKey,
     });
 
     return {

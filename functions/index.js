@@ -68,7 +68,7 @@ exports.createUserDoc = onCall(async (request, context) => {
   }
 });
 exports.addUserToGroup = onCall(async (request) => {
-  const { groupId, userId, userData } = request.data;
+  const { groupId, userId, userData, leagueKey } = request.data;
   const db = getFirestore();
 
   try {
@@ -77,10 +77,19 @@ exports.addUserToGroup = onCall(async (request) => {
     await db
       .collection("users")
       .doc(userId)
-      .update({
-        groups: FieldValue.arrayUnion(String(groupId)),
-        activeGroup: String(groupId),
-      });
+      .update(
+        leagueKey
+          ? {
+              groups: FieldValue.arrayUnion(String(groupId)),
+              activeGroup: String(groupId),
+              [`leagueTeams.${leagueKey}`]: String(groupId),
+              [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
+            }
+          : {
+              groups: FieldValue.arrayUnion(String(groupId)),
+              activeGroup: String(groupId),
+            },
+      );
 
     return { success: true, message: "Joined successfully" };
   } catch (error) {
