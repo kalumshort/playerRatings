@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import GroupClientInitializer from "@/components/client/GroupClientInitializer";
 import DataInitializer from "@/components/client/DataInitializer";
 import { Group } from "@/lib/redux/slices/groupSlice";
+import ClubBanner from "@/components/client/Widgets/ClubBanner";
 
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
@@ -34,7 +35,7 @@ export default async function ClubLayout({ children, params }) {
         currentYear={currentYear}
         groupId={groupData?.id}
       />
-
+      <ClubBanner groupData={groupData} />
       {children}
     </>
   );

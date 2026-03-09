@@ -45,7 +45,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
   const { user } = useAuth();
   const { clubSlug } = useParams();
   const { userData } = useUserData();
-  console.log(userData.activeGroup);
+
   const { activeGroup } = useGroupData();
 
   //   const { activeGroup } = useGroupData();
