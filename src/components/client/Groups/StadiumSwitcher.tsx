@@ -321,94 +321,86 @@ export default function StadiumSwitcher({
                 >
                   YOUR LEAGUE TEAMS
                 </Typography>
-                {userData?.leagueTeams?.map((league) => {
-                  const clubId = userData?.leagueTeams?.[league.id];
-                  const isActive = userData.activeGroup === clubId;
-                  const clubData: any = groupData?.[clubId];
-                  const lastTransfer =
-                    userData?.lastTransferDates?.[league.id]?.toDate();
-                  const nextDate = lastTransfer
-                    ? addDays(lastTransfer, 30)
-                    : null;
-                  const canChange =
-                    !lastTransfer ||
-                    differenceInDays(new Date(), lastTransfer) >= 30;
 
-                  return (
-                    <Fade in key={league.id}>
-                      <Paper
-                        variant="outlined"
-                        onClick={() =>
-                          !isActive && clubId && handleActiveGroupChange(clubId)
-                        }
-                        sx={{
-                          ...sharedCardSx(isActive),
-                          opacity: league.active ? 1 : 0.5,
-                          cursor:
-                            league.active && !isActive ? "pointer" : "default",
-                        }}
-                      >
-                        <Avatar
-                          src={clubData?.logo}
+                {Object.entries(userData?.leagueTeams || {}).map(
+                  ([leagueId, clubId]: [string, string]) => {
+                    // Now you have access to both the leagueId string and the clubId string
+                    const isActive = userData?.activeGroup === clubId;
+                    const clubData: any = groupData?.[clubId];
+                    // Handle Firestore Timestamp safely
+                    const transferTimestamp =
+                      userData?.lastTransferDates?.[leagueId];
+                    const lastTransfer = transferTimestamp?.toDate
+                      ? transferTimestamp.toDate()
+                      : null;
+
+                    const nextDate = lastTransfer
+                      ? addDays(lastTransfer, 30)
+                      : null;
+                    const canChange =
+                      !lastTransfer ||
+                      differenceInDays(new Date(), lastTransfer) >= 30;
+
+                    return (
+                      <Fade in key={leagueId}>
+                        <Paper
+                          variant="outlined"
+                          onClick={() =>
+                            !isActive &&
+                            clubId &&
+                            handleActiveGroupChange(clubId)
+                          }
                           sx={{
-                            width: 54,
-                            height: 54,
-                            borderRadius: "12px",
-                            bgcolor: "white",
-                            border: "1px solid",
-                            borderColor: "divider",
+                            ...sharedCardSx(isActive),
+                            // Ensure your sharedCardSx is theme-aware
+                            opacity: 1, // Adjusted based on your logic
+                            cursor: !isActive ? "pointer" : "default",
                           }}
                         >
-                          <Globe size={24} />
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="caption"
+                          <Avatar
+                            src={clubData?.logo}
                             sx={{
-                              fontWeight: 900,
-                              color: isActive
-                                ? "primary.main"
-                                : "text.secondary",
-                              textTransform: "uppercase",
+                              width: 54,
+                              height: 54,
+                              borderRadius: "12px",
+                              bgcolor: "background.paper", // Use theme tokens
+                              border: (theme) =>
+                                `1px solid ${theme.palette.divider}`,
                             }}
                           >
-                            {isActive ? "Currently Viewing" : league.name}
-                          </Typography>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontWeight: 900, lineHeight: 1.2 }}
-                          >
-                            {clubData?.name ||
-                              (league.active
-                                ? "No Club Assigned"
-                                : "Opening Soon")}
-                          </Typography>
-                          {!canChange &&
-                            league.active &&
-                            isActive &&
-                            nextDate && (
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "warning.main",
-                                  fontWeight: 700,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 0.5,
-                                }}
-                              >
-                                <CalendarClock size={12} /> Window:{" "}
-                                {formatDistanceToNow(nextDate)}
-                              </Typography>
-                            )}
-                        </Box>
-                        {league.active && (
+                            <Globe size={24} />
+                          </Avatar>
+
+                          <Box sx={{ flex: 1, ml: 2 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 900,
+                                color: isActive
+                                  ? "primary.main"
+                                  : "text.secondary",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {isActive
+                                ? "Currently Viewing"
+                                : leagueId.replace("-", " ")}
+                            </Typography>
+
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 900, lineHeight: 1.2 }}
+                            >
+                              {clubData?.name || "Loading..."}
+                            </Typography>
+                          </Box>
+
                           <IconButton
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
                               isActive
-                                ? setTransferLeagueKey(league.id)
+                                ? setTransferLeagueKey(leagueId)
                                 : handleActiveGroupChange(clubId);
                             }}
                             sx={{
@@ -418,20 +410,16 @@ export default function StadiumSwitcher({
                             }}
                           >
                             {isActive ? (
-                              clubId ? (
-                                <ArrowLeftRight size={22} />
-                              ) : (
-                                <Plus size={22} />
-                              )
+                              <ArrowLeftRight size={22} />
                             ) : (
                               <Eye size={22} />
                             )}
                           </IconButton>
-                        )}
-                      </Paper>
-                    </Fade>
-                  );
-                })}
+                        </Paper>
+                      </Fade>
+                    );
+                  },
+                )}
                 {!userData?.leagueTeams && <Box></Box>}
               </Stack>
             ) : (
