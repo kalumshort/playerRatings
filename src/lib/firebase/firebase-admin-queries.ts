@@ -1,6 +1,7 @@
 import "server-only";
 import { adminDb } from "./admin";
 import { Fixture } from "@/types/football";
+import { cache } from "react";
 
 export async function getFixturesByClubServer(
   clubId: string,
@@ -179,3 +180,18 @@ export async function getMatchPlayerRatingsServer(
     return { players: [], motm: null };
   }
 }
+
+export const getUserData = cache(async (userId: string) => {
+  const userDoc = await adminDb.collection("users").doc(userId).get();
+  if (!userDoc.exists) return null;
+
+  const rawData = userDoc.data();
+  // Return plain object to avoid serialization errors with Firestore Timestamps
+  return JSON.parse(
+    JSON.stringify({
+      ...rawData,
+      lastLogin: rawData?.lastLogin?.toMillis() || null,
+      createdAt: rawData?.createdAt?.toMillis() || null,
+    }),
+  );
+});

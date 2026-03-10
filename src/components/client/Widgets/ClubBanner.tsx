@@ -1,16 +1,10 @@
 "use client";
 
 import React from "react";
-import useUserData from "@/Hooks/useUserData";
+
 import { Box, Typography, Button } from "@mui/material"; // Assuming MUI based on your file structure
 
-export default function GuestClubBanner({ groupData }) {
-  const { userData } = useUserData();
-
-  const isUsersClub =
-    userData?.leagueTeams?.[groupData.league] === groupData.id;
-  const isGuestView = !isUsersClub;
-
+export default function GuestClubBanner({ groupData, isGuestView }) {
   if (!isGuestView) return null;
 
   return (

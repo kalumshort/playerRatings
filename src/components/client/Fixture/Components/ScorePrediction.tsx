@@ -25,6 +25,7 @@ import { handlePredictTeamScore } from "@/lib/firebase/client-actions";
 import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
 import ScorePredictionResults from "./ScorePredictionResults";
+import { useClubView } from "@/context/ClubViewProvider";
 
 interface ScorePredictionProps {
   fixture: any;
@@ -44,6 +45,8 @@ export default function ScorePrediction({
   const { user } = useAuth();
   const matchId = String(fixture.id);
   const theme = useTheme() as any;
+
+  const { isGuestView } = useClubView();
 
   const usersMatchData = useSelector(
     (state: RootState) => state.userData?.matches?.[matchId],
@@ -67,7 +70,7 @@ export default function ScorePrediction({
     });
   };
 
-  if (!isPreMatch || storedUsersPredictedScore || !user) {
+  if (isGuestView || !isPreMatch || storedUsersPredictedScore || !user) {
     return (
       <ScorePredictionResults
         fixture={fixture}

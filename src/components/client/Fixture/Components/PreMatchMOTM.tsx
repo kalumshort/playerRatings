@@ -27,6 +27,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
 import PlayersSelect from "../../Widgets/PlayersSelect";
 import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
+import { useClubView } from "@/context/ClubViewProvider";
 
 interface PreMatchMOTMProps {
   fixture: any;
@@ -45,6 +46,8 @@ export default function PreMatchMOTM({
 }: PreMatchMOTMProps) {
   const theme = useTheme() as any;
   const { user } = useAuth();
+  const { isGuestView } = useClubView();
+
   const matchId = String(fixture.id);
 
   const activeSquad = useSelector((state: RootState) =>
@@ -92,7 +95,7 @@ export default function PreMatchMOTM({
   };
 
   // --- RESULTS VIEW ---
-  if (!isPreMatch || storedUsersPlayerToWatch || !user) {
+  if (isGuestView || !isPreMatch || storedUsersPlayerToWatch || !user) {
     return (
       <Paper
         elevation={0}

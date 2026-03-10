@@ -11,6 +11,7 @@ import { RootState } from "@/lib/redux/store";
 import { CommunityTeamStats } from "./LineupPredictorPlayerData";
 import LineupPredictorResults from "./LineupPredictorResults";
 import EnhancedLineupPredictor from "./EnhancedLineupPredictor";
+import { useClubView } from "@/context/ClubViewProvider";
 
 interface LineupPredictorProps {
   fixture: any;
@@ -29,6 +30,8 @@ export default function LineupPredictor({
 }: LineupPredictorProps) {
   const matchId = String(fixture.id);
 
+  const { isGuestView } = useClubView();
+
   // 1. SELECTOR: Access saved user prediction
   const usersMatchData = useSelector(
     (state: RootState) => state.userData?.matches?.[matchId],
@@ -40,20 +43,19 @@ export default function LineupPredictor({
 
   // CASE A: VIEW MODE
   // Triggered if the user has already submitted a team or if the prop is forced
-  if (storedPrediction || readOnly) {
+  if (isGuestView || storedPrediction || readOnly) {
     return (
       <Box sx={{ flexGrow: 1, width: "100%", mt: 2 }}>
         <Grid container spacing={4} alignItems="flex-start">
           {/* LEFT: User's Saved XI / Tabs */}
           <Grid size={{ xs: 12, md: 6 }}>
-            {storedPrediction && (
-              <LineupPredictorResults
-                fixture={fixture}
-                groupId={groupId}
-                currentYear={currentYear}
-                groupData={groupData}
-              />
-            )}
+            <LineupPredictorResults
+              fixture={fixture}
+              groupId={groupId}
+              currentYear={currentYear}
+              groupData={groupData}
+              isGuestView={isGuestView}
+            />
           </Grid>
 
           {/* RIGHT: Community Consensus Stats */}

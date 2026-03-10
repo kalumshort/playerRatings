@@ -20,6 +20,7 @@ import { StatusBadge, StatusLegend } from "./LineupStatusUI";
 import useLiveMatchStats from "@/Hooks/useLiveMatchStats";
 import PlayerActionModal from "./PlayerActionModal";
 import LineupPlayer from "./LineupPlayer";
+import { useClubView } from "@/context/ClubViewProvider";
 
 export default function Lineup({
   fixture,
@@ -39,6 +40,8 @@ export default function Lineup({
   const isMatchLive = ["1H", "HT", "2H", "ET", "P"].includes(
     fixture?.fixture?.status?.short,
   );
+
+  const { isGuestView } = useClubView();
 
   // 1. DATA & STATE
   const { playerStatus, liveStats } = useLiveMatchStats(
@@ -200,19 +203,20 @@ export default function Lineup({
         ))}
       </Box>
 
-      {!isMatchLive && showLiveStatus && (
-        <PlayerActionModal
-          open={!!selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
-          player={selectedPlayer}
-          fixtureId={fixtureId}
-          substitutes={finalSubsList}
-          elapsedTime={elapsed}
-          liveData={liveStats}
-          groupId={groupId}
-          currentYear={currentYear}
-        />
-      )}
+      {!!isGuestView ||
+        (!isMatchLive && showLiveStatus && (
+          <PlayerActionModal
+            open={!!selectedPlayer}
+            onClose={() => setSelectedPlayer(null)}
+            player={selectedPlayer}
+            fixtureId={fixtureId}
+            substitutes={finalSubsList}
+            elapsedTime={elapsed}
+            liveData={liveStats}
+            groupId={groupId}
+            currentYear={currentYear}
+          />
+        ))}
     </Paper>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
   Box,
@@ -14,9 +14,7 @@ import {
 import { PersonRounded, GroupsRounded } from "@mui/icons-material";
 import { useParams } from "next/navigation";
 
-// --- CHILD COMPONENTS ---
-
-// --- TYPES ---
+// TYPES
 import { RootState } from "@/lib/redux/store";
 import ChosenLineup from "./LineupPredictorUserSquad";
 import ConsensusLineup from "./LineupPredictorConsensusLineup";
@@ -27,6 +25,7 @@ interface LineupTabsProps {
   groupId: string;
   currentYear: string;
   groupData: any;
+  isGuestView: any;
 }
 
 export default function LineupPredictorResults({
@@ -34,13 +33,14 @@ export default function LineupPredictorResults({
   groupId,
   currentYear,
   groupData,
+  isGuestView,
 }: LineupTabsProps) {
   const theme = useTheme() as any;
-  const { clubSlug } = useParams();
-  const [activeTab, setActiveTab] = useState(0);
+
+  const [activeTab, setActiveTab] = useState(isGuestView ? 1 : 0);
   const matchId = String(fixture.id);
 
-  // 1. SELECTORS (Strictly typed & safe for Next.js)
+  // SELECTORS
   const squadData = useSelector((state: RootState) =>
     selectActiveSquadMapped(state, groupData.groupClubId, currentYear),
   );
@@ -59,56 +59,42 @@ export default function LineupPredictorResults({
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mb: 4 }}>
-      {/* --- NAVIGATION TABS --- */}
-      <Paper
-        elevation={0}
-        sx={{
-          ...theme.clay?.box, // Inset "well" for the tabs
-          display: "flex",
-          alignItems: "center",
-          borderRadius: "24px",
-          overflow: "hidden",
-          mb: 3,
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          // sx={{
-          //   width: "100%",
-          //   "& .MuiTab-root": {
-          //     borderRadius: "20px",
-          //     minHeight: "40px",
-          //     margin: "0 4px",
-          //     transition: "0.3s",
-          //     "&.Mui-selected": {
-          //       backgroundColor: "primary.main",
-          //       color: "white",
-          //     },
-          //   },
-          // }}
+      {/* --- CONDITIONAL TABS --- */}
+      {!isGuestView && (
+        <Paper
+          elevation={0}
+          sx={{
+            ...theme.clay?.box,
+            display: "flex",
+            borderRadius: "24px",
+            overflow: "hidden",
+            mb: 3,
+          }}
         >
-          <Tab
-            icon={<PersonRounded fontSize="small" />}
-            iconPosition="start"
-            label="My XI"
-            disableRipple
-          />
-          <Tab
-            icon={<GroupsRounded fontSize="small" />}
-            iconPosition="start"
-            label="Group XI"
-            disableRipple
-          />
-        </Tabs>
-      </Paper>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+          >
+            <Tab
+              icon={<PersonRounded fontSize="small" />}
+              iconPosition="start"
+              label="My XI"
+            />
+            <Tab
+              icon={<GroupsRounded fontSize="small" />}
+              iconPosition="start"
+              label="Group XI"
+            />
+          </Tabs>
+        </Paper>
+      )}
 
-      {/* --- TAB CONTENT AREA --- */}
+      {/* --- CONTENT AREA --- */}
       <Box sx={{ position: "relative", minHeight: 400 }}>
-        {/* TAB 0: USER PREDICTION */}
-        {activeTab === 0 && userPrediction && (
-          <Fade in={activeTab === 0} timeout={400}>
+        {/* TAB 0: USER PREDICTION (Only shown if NOT a guest) */}
+        {!isGuestView && activeTab === 0 && (
+          <Fade in={true} timeout={400}>
             <Box>
               <ChosenLineup
                 squadData={squadData}
@@ -118,9 +104,9 @@ export default function LineupPredictorResults({
           </Fade>
         )}
 
-        {/* TAB 1: COMMUNITY CONSENSUS */}
-        {activeTab === 1 && (
-          <Fade in={activeTab === 1} timeout={400}>
+        {/* TAB 1: COMMUNITY CONSENSUS (Shown for everyone) */}
+        {(isGuestView || activeTab === 1) && (
+          <Fade in={true} timeout={400}>
             <Box>
               {matchPredictions ? (
                 <ConsensusLineup

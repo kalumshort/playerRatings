@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
 import { handlePredictWinningTeam } from "@/lib/firebase/client-actions";
+import { useClubView } from "@/context/ClubViewProvider";
 
 interface WinnerPredictProps {
   fixture: any;
@@ -35,6 +36,7 @@ export default function WinnerPredict({
 }: WinnerPredictProps) {
   const theme = useTheme();
   const { user } = useAuth();
+  const { isGuestView } = useClubView();
   const matchId = String(fixture.id);
 
   const usersMatchData = useSelector(
@@ -46,7 +48,7 @@ export default function WinnerPredict({
   );
 
   const userChoice = usersMatchData?.result;
-  const showResults = !isPreMatch || !user || !!userChoice;
+  const showResults = isGuestView || !isPreMatch || !user || !!userChoice;
 
   const {
     totalVotes = 0,

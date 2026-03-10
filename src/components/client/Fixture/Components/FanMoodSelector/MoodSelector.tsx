@@ -21,6 +21,8 @@ import { handleFixtureMood } from "@/lib/firebase/client-actions";
 import MoodAreaChart from "./MoodAreaChart";
 import { MOODS } from "./moodConfig";
 import ParticleOverlay from "./ParticleOverlay";
+import { useClubView } from "@/context/ClubViewProvider";
+import { useAuth } from "@/context/AuthContext";
 
 // Config
 
@@ -33,6 +35,9 @@ export const MoodSelector = ({
   const theme = useTheme();
   const [matchMoods, setMatchMoods] = useState<any>(null);
   const [particles, setParticles] = useState<any[]>([]);
+  const { user } = useAuth();
+
+  const { isGuestView } = useClubView();
 
   const matchId = String(fixture.fixture.id);
   const matchFinished = fixture.fixture.status.short === "FT";
@@ -53,7 +58,7 @@ export const MoodSelector = ({
 
   // 2. INTERACTION HANDLER
   const handleMoodClick = async (mood: any, e: React.MouseEvent) => {
-    if (matchFinished) return;
+    if (isGuestView || !user || matchFinished) return;
 
     // Trigger local particle animation immediately
     const id = Date.now();
@@ -113,55 +118,58 @@ export const MoodSelector = ({
         </Grid>
 
         {/* INTERACTION PANEL */}
-        <Grid
-          size={{ xs: 12, md: 4 }}
-          sx={{
-            p: 4,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            borderLeft: { md: `1px solid ${theme.palette.divider}` },
-          }}
-        >
-          <Box sx={{ mb: 4, textAlign: "center" }}>
-            <Typography variant="h6" fontWeight={900}>
-              VIBE CHECK
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              TAP TO UPDATE THE LIVE TREND
-            </Typography>
-          </Box>
-
-          <Box
+        {(!isGuestView || !user || !matchFinished) && (
+          <Grid
+            size={{ xs: 12, md: 4 }}
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 2,
+              p: 4,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              borderLeft: { md: `1px solid ${theme.palette.divider}` },
             }}
           >
-            {MOODS.map((mood) => (
-              <IconButton
-                key={mood.label}
-                component={motion.button}
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => handleMoodClick(mood, e)}
-                sx={{
-                  fontSize: "2rem",
-                  width: 70,
-                  height: 70,
-                  bgcolor: alpha(mood.color, 0.1),
-                  border: `2px solid ${alpha(mood.color, 0.2)}`,
-                  "&:hover": {
-                    borderColor: mood.color,
-                    bgcolor: alpha(mood.color, 0.2),
-                  },
-                }}
-              >
-                {mood.emoji}
-              </IconButton>
-            ))}
-          </Box>
-        </Grid>
+            <Box sx={{ mb: 4, textAlign: "center" }}>
+              <Typography variant="h6" fontWeight={900}>
+                VIBE CHECK
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                TAP TO UPDATE THE LIVE TREND
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 2,
+              }}
+            >
+              {MOODS.map((mood) => (
+                <IconButton
+                  key={mood.label}
+                  component={motion.button}
+                  disabled={isGuestView || !user}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => handleMoodClick(mood, e)}
+                  sx={{
+                    fontSize: "2rem",
+                    width: 70,
+                    height: 70,
+                    bgcolor: alpha(mood.color, 0.1),
+                    border: `2px solid ${alpha(mood.color, 0.2)}`,
+                    "&:hover": {
+                      borderColor: mood.color,
+                      bgcolor: alpha(mood.color, 0.2),
+                    },
+                  }}
+                >
+                  {mood.emoji}
+                </IconButton>
+              ))}
+            </Box>
+          </Grid>
+        )}
       </Grid>
       <ParticleOverlay particles={particles} />
     </Paper>

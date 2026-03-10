@@ -42,9 +42,10 @@ export default function MobileFixtureContainer({
     const arr: { label: string; value: string }[] = [];
 
     if (isPreMatch) {
-      if (showPredictions) arr.push({ label: "Predicts", value: "Predicts" });
+      if (showPredictions)
+        arr.push({ label: "Predictions", value: "Predicts" });
       if (!hasLineups && showPredictions)
-        arr.push({ label: "Your XI", value: "Predict-XI" });
+        arr.push({ label: "Fans XI", value: "Predict-XI" });
       if (hasLineups) arr.push({ label: "Lineup", value: "Lineup" });
     } else if (isLive) {
       arr.push(

@@ -10,6 +10,7 @@ export interface Group {
   headerImage?: string;
   visibility: "public" | "private";
   groupName?: string;
+  league?: string;
 }
 
 interface GroupState {

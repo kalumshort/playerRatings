@@ -26,6 +26,7 @@ import MotmConfirmDialog from "./MotmConfirmDialog";
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
 import RatingLineup from "./RatingLineup";
 import { updateOrSet } from "@/lib/firebase/utils";
+import { useClubView } from "@/context/ClubViewProvider";
 
 export default function PlayerRatings({
   fixture,
@@ -38,6 +39,8 @@ export default function PlayerRatings({
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [storedMotmId, setStoredMotmId] = useState<string | null>(null);
   const matchId = String(fixture.id);
+
+  const { isGuestView } = useClubView();
 
   // 1. DATA SELECTORS
   const usersMatchData = useSelector(
@@ -135,7 +138,7 @@ export default function PlayerRatings({
   }
 
   // C. VIEW MODE (Submitted or Read Only)
-  if (isMatchRatingsSubmitted || !userId) {
+  if (isGuestView || isMatchRatingsSubmitted || !userId) {
     return (
       <RatingLineup
         fixture={fixture}
