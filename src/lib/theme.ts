@@ -27,6 +27,10 @@ export const PALETTE = {
   success: "#A0E8AF",
   error: "#FFADAD",
   warning: "#FFD6A5",
+  progress: {
+    main: "#A2D2FF", // Match primary or use a distinct action color
+    height: "3px",
+  },
 } as const;
 
 // ─── TYPE AUGMENTATION ──────────────────────────────────────────────────────

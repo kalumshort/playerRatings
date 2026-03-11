@@ -8,6 +8,8 @@ import { getAuthSession } from "@/lib/firebase/getAuth";
 import { cookies } from "next/headers";
 import { DrawerProvider } from "@/components/client/Header/DrawerContext";
 import { Toaster } from "sonner";
+import NavigationLoader from "@/components/client/Widgets/NavigationLoader";
+import { Suspense } from "react";
 
 // Configure the fonts
 const outfit = Outfit({
@@ -59,6 +61,9 @@ export default async function RootLayout({
             <ThemeRegistry initialTheme={initialTheme}>
               <DrawerProvider>
                 <Header />
+                <Suspense fallback={null}>
+                  <NavigationLoader />
+                </Suspense>
                 <main
                   style={{
                     maxWidth: "1400px",
