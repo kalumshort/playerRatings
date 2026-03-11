@@ -261,12 +261,26 @@ export const getTheme = (
             minHeight: "48px",
             width: "100%",
             padding: "6px",
-            backgroundColor: isLight ? "#E8EDF2" : "#14171D", // Using new palette base
+            backgroundColor: isLight ? "#E8EDF2" : "#14171D",
             borderRadius: "24px",
-            // Recessed track effect
             boxShadow: isLight
               ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
               : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.03)",
+            // Ensure the root itself doesn't hide the overflow logic of the scroller
+            overflow: "hidden",
+          },
+          scroller: {
+            // This allows the actual scrolling mechanism to function
+            overflow: "auto !important",
+            borderRadius: "24px",
+            "&::-webkit-scrollbar": { display: "none" }, // Hide scrollbar for clean clay look
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          },
+          flexContainer: {
+            // Allows tabs to maintain their size and push past the container width
+            display: "inline-flex",
+            minWidth: "100%",
           },
           indicator: { display: "none" },
         },

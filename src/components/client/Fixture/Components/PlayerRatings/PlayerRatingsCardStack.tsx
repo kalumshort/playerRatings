@@ -101,6 +101,9 @@ export default function PlayerRatingsCardStack({
           // Clay Container Shadow
           filter: "drop-shadow(0px 20px 30px rgba(0,0,0,0.15))",
         }}
+        style={{
+          overflow: "hidden",
+        }}
       >
         <Swiper
           effect="cards"
