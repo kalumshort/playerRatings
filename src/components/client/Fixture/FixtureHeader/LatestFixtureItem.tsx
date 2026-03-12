@@ -35,28 +35,17 @@ export default function LatestFixtureItem() {
     );
   }
 
-  // 1. Get Team Colors
-  const homeTeamId = latestFixture.teams.home.id;
-  const awayTeamId = latestFixture.teams.away.id;
-  const homeColor = "#1727b5";
-  const awayColor = "#b92525";
-
   // 2. Generate Gradient (Modern MUI approach)
-  const fixtureGradient = `linear-gradient(95deg, ${alpha(homeColor, 0.9)} 40%, ${alpha(awayColor, 0.9)} 60%)`;
 
   const handleFixtureClick = () => {
     router.push(`${clubSlug}/fixture/${latestFixture.fixture.id}`);
   };
 
   return (
-    <div onClick={handleFixtureClick}>
-      <FixtureHeader
-        fixture={latestFixture}
-        showDate={true}
-        // Pass colors down if FixtureHeader needs them
-        homeColor={homeColor}
-        awayColor={awayColor}
-      />
-    </div>
+    <FixtureHeader
+      fixture={latestFixture}
+      showDate={true}
+      onClick={handleFixtureClick}
+    />
   );
 }
