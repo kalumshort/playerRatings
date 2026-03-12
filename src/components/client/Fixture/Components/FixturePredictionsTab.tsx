@@ -12,6 +12,7 @@ interface FixturePredictionsTabProps {
   currentYear: string;
   groupData: any;
   isPreMatch: boolean;
+  isGuestView: boolean;
 }
 
 const FixturePredictionsTab = ({
@@ -20,6 +21,7 @@ const FixturePredictionsTab = ({
   currentYear,
   groupData,
   isPreMatch,
+  isGuestView,
 }: FixturePredictionsTabProps) => {
   return (
     <Stack
@@ -60,6 +62,7 @@ const FixturePredictionsTab = ({
               currentYear={currentYear}
               groupData={groupData}
               isPreMatch={isPreMatch}
+              isGuestView={isGuestView}
             />
           </Box>
         ),

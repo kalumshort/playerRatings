@@ -33,14 +33,13 @@ export default function PlayerRatings({
   groupId,
   currentYear,
   groupData,
+  isGuestView,
 }: any) {
   const { userId } = useAuth();
 
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [storedMotmId, setStoredMotmId] = useState<string | null>(null);
   const matchId = String(fixture.id);
-
-  const { isGuestView } = useClubView();
 
   // 1. DATA SELECTORS
   const usersMatchData = useSelector(
@@ -138,7 +137,7 @@ export default function PlayerRatings({
   }
 
   // C. VIEW MODE (Submitted or Read Only)
-  if (isGuestView || isMatchRatingsSubmitted || !userId) {
+  if (isGuestView || isMatchRatingsSubmitted) {
     return (
       <RatingLineup
         fixture={fixture}

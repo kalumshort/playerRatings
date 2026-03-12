@@ -47,9 +47,11 @@ const EVENT_THEMES: Record<string, any> = {
 export default function Events({
   events,
   groupData,
+  isGuestView,
 }: {
   events: any[];
   groupData: any;
+  isGuestView: boolean;
 }) {
   const theme = useTheme() as any;
   const [selectedType, setSelectedType] = useState("All");

@@ -31,13 +31,12 @@ export const MoodSelector = ({
   fixture,
   currentYear,
   groupData,
+  isGuestView,
 }: any) => {
   const theme = useTheme();
   const [matchMoods, setMatchMoods] = useState<any>(null);
   const [particles, setParticles] = useState<any[]>([]);
   const { user } = useAuth();
-
-  const { isGuestView } = useClubView();
 
   const matchId = String(fixture.fixture.id);
   const matchFinished = fixture.fixture.status.short === "FT";
@@ -118,7 +117,7 @@ export const MoodSelector = ({
         </Grid>
 
         {/* INTERACTION PANEL */}
-        {(!isGuestView || !user || !matchFinished) && (
+        {!isGuestView && !matchFinished && (
           <Grid
             size={{ xs: 12, md: 4 }}
             sx={{

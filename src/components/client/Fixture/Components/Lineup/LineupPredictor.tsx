@@ -19,6 +19,7 @@ interface LineupPredictorProps {
   currentYear: string;
   groupId: string;
   groupData: any;
+  isGuestView: boolean;
 }
 
 export default function LineupPredictor({
@@ -27,10 +28,9 @@ export default function LineupPredictor({
   currentYear,
   groupId,
   groupData,
+  isGuestView,
 }: LineupPredictorProps) {
   const matchId = String(fixture.id);
-
-  const { isGuestView } = useClubView();
 
   // 1. SELECTOR: Access saved user prediction
   const usersMatchData = useSelector(

@@ -38,7 +38,7 @@ export default async function ClubLayout({ children, params }) {
 
   const isUsersClub =
     userData?.leagueTeams?.[groupData?.league] === groupData.id;
-  const isGuestView = !isUsersClub;
+  const isGuestView = !isUsersClub || !userId;
 
   return (
     <ClubViewProvider isGuestView={isGuestView}>

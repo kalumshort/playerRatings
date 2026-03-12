@@ -25,6 +25,7 @@ interface WinnerPredictProps {
   currentYear: string;
   groupData: any;
   isPreMatch: boolean;
+  isGuestView: boolean;
 }
 
 export default function WinnerPredict({
@@ -33,10 +34,11 @@ export default function WinnerPredict({
   currentYear,
   groupData,
   isPreMatch,
+  isGuestView,
 }: WinnerPredictProps) {
   const theme = useTheme();
   const { user } = useAuth();
-  const { isGuestView } = useClubView();
+
   const matchId = String(fixture.id);
 
   const usersMatchData = useSelector(

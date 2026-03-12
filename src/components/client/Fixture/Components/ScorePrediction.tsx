@@ -33,6 +33,7 @@ interface ScorePredictionProps {
   currentYear: string;
   groupData: any;
   isPreMatch: boolean;
+  isGuestView: boolean;
 }
 
 export default function ScorePrediction({
@@ -41,12 +42,11 @@ export default function ScorePrediction({
   currentYear,
   groupData,
   isPreMatch,
+  isGuestView,
 }: ScorePredictionProps) {
   const { user } = useAuth();
   const matchId = String(fixture.id);
   const theme = useTheme() as any;
-
-  const { isGuestView } = useClubView();
 
   const usersMatchData = useSelector(
     (state: RootState) => state.userData?.matches?.[matchId],

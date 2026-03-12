@@ -39,9 +39,11 @@ const parseValue = (val: string | number | null): number => {
 export default function Statistics({
   fixture,
   groupData,
+  isGuestView,
 }: {
   fixture: any;
   groupData: any;
+  isGuestView: boolean;
 }) {
   const theme = useTheme() as any;
 

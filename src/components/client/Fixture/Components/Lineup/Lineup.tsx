@@ -27,11 +27,13 @@ export default function Lineup({
   groupId,
   currentYear,
   groupData,
+  isGuestView,
 }: {
   fixture: any;
   groupId: string;
   currentYear: string;
   groupData: any;
+  isGuestView: boolean;
 }) {
   const fixtureId = fixture?.fixture?.id;
   const elapsed = fixture?.fixture?.status?.elapsed;
@@ -40,8 +42,6 @@ export default function Lineup({
   const isMatchLive = ["1H", "HT", "2H", "ET", "P"].includes(
     fixture?.fixture?.status?.short,
   );
-
-  const { isGuestView } = useClubView();
 
   // 1. DATA & STATE
   const { playerStatus, liveStats } = useLiveMatchStats(

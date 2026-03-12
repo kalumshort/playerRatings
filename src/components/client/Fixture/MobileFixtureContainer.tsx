@@ -12,6 +12,7 @@ import Events from "./Components/Events";
 import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
+import { useClubView } from "@/context/ClubViewProvider";
 
 // Components (Ensure these paths match your new Next.js structure)
 
@@ -30,6 +31,8 @@ export default function MobileFixtureContainer({
   groupId,
   groupData,
 }: MobileFixtureContainerProps) {
+  const { isGuestView } = useClubView();
+  console.log(isGuestView);
   // 1. Match Status Helpers
   const status = fixture?.fixture?.status?.short;
   const isPreMatch = ["NS", "TBD"].includes(status);
@@ -146,6 +149,7 @@ export default function MobileFixtureContainer({
                 currentYear={currentYear}
                 groupData={groupData}
                 isPreMatch={isPreMatch}
+                isGuestView={isGuestView}
               />
             )}
 
@@ -155,6 +159,7 @@ export default function MobileFixtureContainer({
                 groupId={groupId}
                 currentYear={currentYear}
                 groupData={groupData}
+                isGuestView={isGuestView}
               />
             )}
 
@@ -164,6 +169,7 @@ export default function MobileFixtureContainer({
                 groupId={groupId}
                 currentYear={currentYear}
                 groupData={groupData}
+                isGuestView={isGuestView}
               />
             )}
 
@@ -173,6 +179,7 @@ export default function MobileFixtureContainer({
                 groupId={groupId}
                 currentYear={currentYear}
                 groupData={groupData}
+                isGuestView={isGuestView}
               />
             )}
 
@@ -182,15 +189,24 @@ export default function MobileFixtureContainer({
                 groupId={groupId}
                 currentYear={currentYear}
                 groupData={groupData}
+                isGuestView={isGuestView}
               />
             )}
 
             {selectedTab === "Stats" && (
-              <Statistics fixture={fixture} groupData={groupData} />
+              <Statistics
+                fixture={fixture}
+                groupData={groupData}
+                isGuestView={isGuestView}
+              />
             )}
 
             {selectedTab === "Events" && (
-              <Events events={fixture?.events} groupData={groupData} />
+              <Events
+                events={fixture?.events}
+                groupData={groupData}
+                isGuestView={isGuestView}
+              />
             )}
 
             {selectedTab === "PostPredicts" && (
@@ -200,6 +216,7 @@ export default function MobileFixtureContainer({
                 currentYear={currentYear}
                 groupData={groupData}
                 isPreMatch={isPreMatch}
+                isGuestView={isGuestView}
               />
             )}
           </Box>

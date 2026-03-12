@@ -35,6 +35,7 @@ interface PreMatchMOTMProps {
   currentYear: string;
   groupData: any;
   isPreMatch: boolean;
+  isGuestView: boolean;
 }
 
 export default function PreMatchMOTM({
@@ -43,10 +44,10 @@ export default function PreMatchMOTM({
   currentYear,
   groupData,
   isPreMatch,
+  isGuestView,
 }: PreMatchMOTMProps) {
   const theme = useTheme() as any;
   const { user } = useAuth();
-  const { isGuestView } = useClubView();
 
   const matchId = String(fixture.id);
 
