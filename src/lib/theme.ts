@@ -197,6 +197,7 @@ export const getTheme = (
       MuiPaper: {
         styleOverrides: {
           root: {
+            padding: "6px",
             margin: "8px",
             backgroundImage: "none",
             backgroundColor: colors.paper,

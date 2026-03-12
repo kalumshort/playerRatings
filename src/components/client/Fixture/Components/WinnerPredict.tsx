@@ -81,16 +81,12 @@ export default function WinnerPredict({
     <Paper
       elevation={0}
       sx={{
-        p: 3,
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        // Space items out evenly to fill the parent height
+
         justifyContent: "space-between",
-        height: "100%",
-        width: "100%",
-        boxSizing: "border-box",
       }}
     >
       {/* --- HEADER --- */}

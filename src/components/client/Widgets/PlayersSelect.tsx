@@ -12,7 +12,6 @@ import {
   ListItemAvatar,
   ListItemText,
   ListSubheader,
-  useTheme,
   alpha,
   Stack,
   styled,
@@ -56,7 +55,6 @@ export default function PlayersSelect({
   playersMap = {},
   onChange,
 }: PlayersSelectProps) {
-  const theme = useTheme() as any;
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | string | null>(null);
 
@@ -92,15 +90,6 @@ export default function PlayersSelect({
         onClick={() => setOpen(true)}
         variant="outlined"
         endIcon={<KeyboardArrowDown />}
-        sx={{
-          justifyContent: "space-between",
-          px: 2,
-          py: 1.5,
-          borderRadius: "12px",
-          borderColor: alpha(theme.palette.divider, 0.1),
-          color: "text.primary",
-          ...theme.clay?.button,
-        }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5}>
           {selectedPlayer ? (

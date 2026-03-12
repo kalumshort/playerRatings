@@ -101,15 +101,10 @@ export default function PreMatchMOTM({
       <Paper
         elevation={0}
         sx={{
-          p: 3,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "space-between", // Shared with voting view
-          height: "100%",
-          width: "100%",
-          borderRadius: "32px",
-          boxSizing: "border-box",
         }}
       >
         <Stack direction="row" spacing={1} alignItems="center">
@@ -252,15 +247,10 @@ export default function PreMatchMOTM({
     <Paper
       elevation={0}
       sx={{
-        p: 3,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
-        height: "100%",
-        width: "100%",
-        borderRadius: "32px",
-        boxSizing: "border-box",
       }}
     >
       <Stack direction="row" spacing={1} alignItems="center">
@@ -286,19 +276,10 @@ export default function PreMatchMOTM({
         >
           Who will influence the result today?
         </Typography>
-        <Box
-          sx={{
-            ...theme.clay?.box,
-            p: 0.5,
-            borderRadius: "16px",
-            bgcolor: "background.default",
-          }}
-        >
-          <PlayersSelect
-            onChange={(e: any) => setSelectedPlayer(e.target.value)}
-            playersMap={activeSquad}
-          />
-        </Box>
+        <PlayersSelect
+          onChange={(e: any) => setSelectedPlayer(e.target.value)}
+          playersMap={activeSquad}
+        />
       </Box>
 
       <Box sx={{ width: "100%", minHeight: 48 }}>
