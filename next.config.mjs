@@ -11,6 +11,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/__/auth/:path*",
+        destination: `https://player-ratings-ef06c.firebaseapp.com.firebaseapp.com/__/auth/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

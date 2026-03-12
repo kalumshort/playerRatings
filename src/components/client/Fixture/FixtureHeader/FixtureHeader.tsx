@@ -138,6 +138,7 @@ export default function FixtureHeader({
       className={addClass}
       elevation={0}
       sx={{
+        padding: "0px",
         overflow: "hidden",
         cursor: onClick ? "pointer" : "default",
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
