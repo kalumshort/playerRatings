@@ -86,3 +86,54 @@ export const getRatingColor = (r: number) => {
   // Disastrous
   return "#FF8585"; // Deep Red
 };
+
+export type MatchStatus = "prematch" | "inplay" | "postmatch" | "cancelled";
+
+/**
+ * Returns the match state based on API-Football short status codes.
+ * https://www.api-football.com/documentation-v3#operation/get-fixtures
+ */
+export const getFixtureState = (fixtureData: any): MatchStatus => {
+  const status = fixtureData?.fixture?.status?.short;
+
+  switch (status) {
+    // --- PRE-MATCH ---
+    case "TBD": // Time To Be Defined
+    case "NS": // Not Started
+      return "prematch";
+
+    // --- IN-PLAY ---
+    case "1H": // First Half, Kick Off
+    case "HT": // Halftime
+    case "2H": // Second Half, 2nd Half Started
+    case "ET": // Extra Time
+    case "BT": // Break Time (Extra time start)
+    case "P": // Penalty In Progress
+    case "SUSP": // Match Suspended
+    case "INT": // Match Interrupted
+    case "LIVE": // In Play (Used when events are not available)
+      return "inplay";
+
+    // --- POST-MATCH ---
+    case "FT": // Full Time
+    case "AET": // After Extra Time
+    case "PEN": // After Penalties
+      return "postmatch";
+
+    // --- CANCELLED / ABNORMAL ---
+    case "PST": // Match Postponed
+    case "CANC": // Match Cancelled
+    case "ABD": // Match Abandoned
+    case "AWD": // Technical Loss (Awarded)
+    case "WO": // WalkOver
+      return "cancelled";
+
+    default:
+      return "prematch";
+  }
+};
+export const isLive = (fixture: any) => getFixtureState(fixture) === "inplay";
+export const isFinished = (fixture: any) =>
+  getFixtureState(fixture) === "postmatch";
+export const isPostponed = (fixture: any) =>
+  fixture?.fixture?.status?.short === "PST";

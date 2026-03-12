@@ -242,6 +242,36 @@ export const handleFixtureMood = async (params: {
   );
 };
 
+export const handleEventReaction = async (params: {
+  groupId: string;
+  currentYear: string;
+  matchId: string;
+  event: any; // The full event object
+  moodKey: string;
+  eventKey: string;
+}) => {
+  const { groupId, currentYear, matchId, event, moodKey, eventKey } = params;
+
+  // 1. Create the unique identifier
+
+  // 2. Reference the new path
+  const docRef = doc(
+    clientDB,
+    `groups/${groupId}/seasons/${currentYear}/eventsReactions`,
+    matchId,
+  );
+
+  return await setDoc(
+    docRef,
+    {
+      [eventKey]: {
+        [moodKey]: increment(1),
+      },
+    },
+    { merge: true },
+  );
+};
+
 export const handleMatchMotmVote = async (params: {
   matchId: string;
   playerId: string;

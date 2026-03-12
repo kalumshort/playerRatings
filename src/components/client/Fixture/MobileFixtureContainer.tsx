@@ -206,6 +206,9 @@ export default function MobileFixtureContainer({
                 events={fixture?.events}
                 groupData={groupData}
                 isGuestView={isGuestView}
+                fixture={fixture}
+                groupId={groupId}
+                currentYear={currentYear}
               />
             )}
 
