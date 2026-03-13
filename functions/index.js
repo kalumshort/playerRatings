@@ -408,13 +408,13 @@ exports.addUserToGroup = onCall(async (request) => {
     );
   }
 
-  const { groupId, userData, leagueKey } = request.data;
+  const { groupId, role } = request.data;
   const db = getFirestore();
 
   try {
     // 2. Delegate all logic to the atomic service
     // This ensures consistency and keeps your onCall function readable.
-    await addMemberToGroup(db, groupId, uid, userData, leagueKey);
+    await addMemberToGroup(db, groupId, uid, role);
 
     return {
       success: true,

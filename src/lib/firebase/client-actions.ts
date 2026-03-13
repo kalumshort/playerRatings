@@ -401,13 +401,11 @@ export const submitContactForm = async ({
 export const handleAddUserToGroup = async ({
   userData,
   groupId,
-  role = "user",
-  leagueKey,
+  role = "member",
 }: {
   userData: any;
   groupId: string;
   role?: string;
-  leagueKey?: string;
 }) => {
   try {
     // 1. Guard: Ensure we have the required IDs
@@ -421,13 +419,7 @@ export const handleAddUserToGroup = async ({
     // 3. Execute call
     await addUserToGroup({
       groupId: groupId,
-      userId: userData.uid,
-      userData: {
-        email: userData.email,
-        role: role,
-        joinedAt: new Date().toISOString(),
-      },
-      leagueKey: leagueKey,
+      role,
     });
 
     return {

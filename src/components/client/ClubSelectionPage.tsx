@@ -48,7 +48,6 @@ export default function ClubSelectionPage() {
       await handleAddUserToGroup({
         userData: user,
         groupId: team.teamId,
-        leagueKey: "premier-league",
       });
       // Redirect handled by RootPage/Server logic
     } catch (e) {
