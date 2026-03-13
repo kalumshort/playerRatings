@@ -19,6 +19,17 @@ interface TransferRequest {
   leagueKey: string; // e.g., 'premier-league'
   userId: string; // The UID of the user making the transfer
 }
+interface JoinGroupRequest {
+  inviteCode: string;
+}
+
+/**
+ * Interface for the Function response
+ */
+interface JoinGroupResponse {
+  success: boolean;
+  message: string;
+}
 export const updateUserField = async <T>(
   userId: string | undefined,
   field: string,
@@ -89,5 +100,23 @@ export const updateLeagueTeam = async ({
       message:
         err.message || "The transfer window is closed. Please try again.",
     };
+  }
+};
+
+export const joinGroupByCodeClient = async (
+  data: JoinGroupRequest,
+): Promise<JoinGroupResponse> => {
+  try {
+    const joinFunction = httpsCallable<JoinGroupRequest, JoinGroupResponse>(
+      functions,
+      "joinGroupByCode",
+    );
+
+    const result = await joinFunction(data);
+    return result.data;
+  } catch (error: any) {
+    console.error("Error in joinGroupByCodeClient:", error);
+    // Propagate the specific Firebase HttpsError message to the UI
+    throw new Error(error.message || "Failed to join group.");
   }
 };

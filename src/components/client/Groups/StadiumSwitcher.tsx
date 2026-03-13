@@ -35,6 +35,7 @@ import {
 import { differenceInDays, addDays, formatDistanceToNow } from "date-fns";
 
 import {
+  joinGroupByCodeClient,
   updateLeagueTeam,
   updateUserField,
 } from "@/lib/firebase/client-user-actions";
@@ -55,6 +56,31 @@ export default function StadiumSwitcher({
   const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
+  console.log(groupData);
+  // Inside StadiumSwitcher component
+  const [inviteCode, setInviteCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleJoinByCode = async () => {
+    if (!inviteCode || isJoining) return;
+
+    setIsJoining(true);
+    try {
+      // Reference your new Cloud Function via client-actions.ts
+      const result = await joinGroupByCodeClient({
+        inviteCode: inviteCode,
+      });
+
+      if (result.success) {
+        setInviteCode("");
+        onClose(); // Close hub on success
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   // Unified Styling Helper
   const sharedCardSx = (isActive: boolean) => ({
@@ -92,10 +118,8 @@ export default function StadiumSwitcher({
   }, [userData?.activeGroup, groups]);
 
   const privateCommunities = useMemo(() => {
-    return Object.values(groups || {}).filter(
-      (g: any) => g.privateGroup && userData?.groups?.includes(g.groupId),
-    );
-  }, [groups, userData?.groups]);
+    return Object.values(groups || {}).filter((g: any) => g.privateGroup);
+  }, [groups]);
 
   const filteredMarket = useMemo(() => {
     return teamList.filter((team) => {
@@ -555,6 +579,53 @@ export default function StadiumSwitcher({
                   );
                 })}
             </Stack>
+            <Box
+              sx={{
+                mt: 4,
+                pt: 3,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  mb: 2,
+                  display: "block",
+                  fontWeight: 800,
+                  color: "text.secondary",
+                }}
+              >
+                HAVE AN INVITE CODE?
+              </Typography>
+
+              <Stack direction="row" spacing={1}>
+                <TextField
+                  fullWidth
+                  placeholder="E.G. RED-DEVILS-2024"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  disabled={isJoining}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "12px",
+                      bgcolor: "background.paper",
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleJoinByCode}
+                  disabled={!inviteCode || isJoining}
+                  sx={{
+                    borderRadius: "12px",
+                    fontWeight: 900,
+                    px: 3,
+                    minWidth: "100px",
+                  }}
+                >
+                  {isJoining ? <CircularProgress size={20} /> : "JOIN"}
+                </Button>
+              </Stack>
+            </Box>
           </Box>
         )}
       </Box>

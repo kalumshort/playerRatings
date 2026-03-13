@@ -2,7 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  getDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { clientDB } from "@/lib/firebase/client";
 import {
   fetchUserDataSuccess,
@@ -30,93 +36,101 @@ const isDataEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
 export const UserDataListener = ({ userId }: { userId: string | null }) => {
   const dispatch = useDispatch();
-  const lastUserData = useRef<any>(null);
-  const lastGroupData = useRef<any>(null);
+
+  // Track IDs from both sources to determine when a re-fetch is actually needed
+  const lastIdSet = useRef<string>("");
 
   useEffect(() => {
     if (!userId) return;
 
     dispatch(fetchUserDataStart());
-    const userRef = doc(clientDB, "users", String(userId));
 
-    const unsubscribe = onSnapshot(userRef, async (snapshot) => {
-      if (!snapshot.exists()) {
-        dispatch(fetchUserDataFailure("User profile not found"));
+    const userRef = doc(clientDB, "users", String(userId));
+    const joinedGroupsRef = collection(userRef, "joinedGroups");
+
+    // Helper: Fetches full group data once we have the combined IDs
+    const syncGroups = async (
+      legacyIds: string[],
+      subCollectionDocs: any[],
+    ) => {
+      const subMetadata = subCollectionDocs.reduce(
+        (acc, d) => {
+          acc[d.id] = d.data();
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+
+      const allIds = Array.from(
+        new Set([...legacyIds, ...Object.keys(subMetadata)]),
+      );
+      const idString = allIds.sort().join(",");
+
+      // PERFORMANCE: Only fetch if the set of IDs has changed
+      if (lastIdSet.current === idString) return;
+      lastIdSet.current = idString;
+
+      if (allIds.length === 0) {
+        dispatch(groupDataSuccess({}));
         return;
       }
 
-      const rawUserData = snapshot.data();
-      const userData = { ...sanitizeData(rawUserData), uid: userId };
+      dispatch(groupDataStart());
+      const promises = allIds.map(async (groupId) => {
+        try {
+          const groupDoc = await getDoc(doc(clientDB, "groups", groupId));
+          if (!groupDoc.exists()) return null;
 
-      // 1. Only process if user data changed
-      if (isDataEqual(lastUserData.current, userData)) return;
-      lastUserData.current = userData;
-
-      try {
-        if (userData.groups?.length > 0) {
-          dispatch(groupDataStart());
-
-          const groupPromises = userData.groups.map(async (groupId: string) => {
-            // 1. EXTRA GUARD: Check for valid groupId and userId
-            if (!groupId || !userId) {
-              console.error("[UserDataListener] Skipping invalid path:", {
-                groupId,
-                userId,
-              });
-              return null;
-            }
-
-            // 2. Use safe references
-            const groupRef = doc(clientDB, "groups", groupId);
-            const memberRef = doc(
-              clientDB,
-              "groupUsers",
-              groupId,
-              "members",
-              userId,
-            );
-
-            const [groupDoc, groupUserDoc] = await Promise.all([
-              getDoc(groupRef),
-              getDoc(memberRef),
-            ]);
-
-            if (!groupDoc.exists()) return null;
-
-            return {
-              id: groupId,
-              data: { ...sanitizeData(groupDoc.data()), groupId },
-              role: groupUserDoc.exists() ? groupUserDoc.data().role : "user",
-            };
-          });
-
-          const results = await Promise.all(groupPromises);
-
-          const groupObj: Record<string, any> = {};
-          const groupPermissions: Record<string, any> = {};
-          results.forEach((res) => {
-            if (res) {
-              groupObj[res.id] = res.data;
-              groupPermissions[res.id] = res.role;
-            }
-          });
-
-          // 2. Only dispatch if group data actually changed
-          if (!isDataEqual(lastGroupData.current, groupObj)) {
-            lastGroupData.current = groupObj;
-            dispatch(groupDataSuccess(groupObj));
-          }
-          dispatch(fetchUserDataSuccess({ ...userData, groupPermissions }));
-        } else {
-          dispatch(groupDataSuccess({}));
-          dispatch(fetchUserDataSuccess(userData));
+          return {
+            id: groupId,
+            data: { ...sanitizeData(groupDoc.data()), groupId },
+            role: subMetadata[groupId]?.role || "member",
+          };
+        } catch (e) {
+          return null;
         }
-      } catch (err: any) {
-        dispatch(groupDataFailure(err.message));
-      }
+      });
+
+      const results = await Promise.all(promises);
+      const groupObj: Record<string, any> = {};
+      const groupPermissions: Record<string, any> = {};
+
+      results.forEach((res) => {
+        if (res) {
+          groupObj[res.id] = res.data;
+          groupPermissions[res.id] = res.role;
+        }
+      });
+
+      dispatch(groupDataSuccess(groupObj));
+      return groupPermissions;
+    };
+
+    // 1. Listen to the User Doc
+    const unsubscribeUser = onSnapshot(userRef, async (snap) => {
+      if (!snap.exists()) return;
+      const userData = { ...sanitizeData(snap.data()), uid: userId };
+
+      // We still need to fetch the sub-collection to do the merge
+      const subSnap = await getDocs(joinedGroupsRef);
+      const perms = await syncGroups(userData.groups || [], subSnap.docs);
+
+      dispatch(fetchUserDataSuccess({ ...userData, groupPermissions: perms }));
     });
 
-    return () => unsubscribe();
+    // 2. Listen to the JoinedGroups (Ensures instant role updates)
+    const unsubscribeSub = onSnapshot(joinedGroupsRef, async (subSnap) => {
+      // Re-fetch the user doc to get the latest legacy array for the merge
+      const userSnap = await getDoc(userRef);
+      const legacyIds = userSnap.exists() ? userSnap.data().groups || [] : [];
+
+      await syncGroups(legacyIds, subSnap.docs);
+    });
+
+    return () => {
+      unsubscribeUser();
+      unsubscribeSub();
+    };
   }, [userId, dispatch]);
 
   return null;

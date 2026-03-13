@@ -16,8 +16,8 @@ const {
 const {
   fetchAllMatchData,
   fetchFootballApi,
-  addMemberToGroupDoc,
-  removeMemberFromGroupDoc,
+  addMemberToGroup,
+  removeMemberFromGroup,
 } = require("./helperFunctions");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 
@@ -67,291 +67,6 @@ exports.createUserDoc = onCall(async (request, context) => {
     throw new HttpsError("internal", "Unable to create user document");
   }
 });
-exports.addUserToGroup = onCall(async (request) => {
-  const { groupId, userId, userData, leagueKey } = request.data;
-  const db = getFirestore();
-
-  try {
-    await addMemberToGroupDoc(db, groupId, userId, userData);
-
-    await db
-      .collection("users")
-      .doc(userId)
-      .update(
-        leagueKey
-          ? {
-              groups: FieldValue.arrayUnion(String(groupId)),
-              activeGroup: String(groupId),
-              [`leagueTeams.${leagueKey}`]: String(groupId),
-              [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
-            }
-          : {
-              groups: FieldValue.arrayUnion(String(groupId)),
-              activeGroup: String(groupId),
-            },
-      );
-
-    return { success: true, message: "Joined successfully" };
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-
-// 2. REMOVE USER (Standard Leave)
-exports.removeUserFromGroup = onCall(async (request) => {
-  const { groupId, userId } = request.data;
-  const db = getFirestore();
-
-  try {
-    await removeMemberFromGroupDoc(db, groupId, userId);
-
-    await db
-      .collection("users")
-      .doc(userId)
-      .update({
-        groups: FieldValue.arrayRemove(String(groupId)),
-      });
-
-    return { success: true, message: "Left successfully" };
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-
-// 3. TRANSFER USER (The Coordinator)
-exports.transferLeagueTeam = onCall(async (request) => {
-  const {
-    newGroupId,
-    userId,
-    userData,
-    leagueKey = "premier-league",
-  } = request.data;
-  const db = getFirestore();
-  const userRef = db.collection("users").doc(userId);
-
-  try {
-    const userDoc = await userRef.get();
-    const currentData = userDoc.data();
-    const oldGroupId = currentData?.leagueTeams?.[leagueKey];
-
-    // If they already have a team in this league, remove them from it
-    if (oldGroupId && oldGroupId !== String(newGroupId)) {
-      await removeMemberFromGroupDoc(db, oldGroupId, userId);
-    }
-
-    // Add them to the new team
-    await addMemberToGroupDoc(db, newGroupId, userId, userData);
-
-    // Update the User document with the new league structure
-    await userRef.update({
-      [`leagueTeams.${leagueKey}`]: String(newGroupId),
-      activeGroup: String(newGroupId),
-      [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
-      // Clean up the groups array
-      groups: FieldValue.arrayUnion(String(newGroupId)),
-    });
-
-    if (oldGroupId) {
-      await userRef.update({
-        groups: FieldValue.arrayRemove(String(oldGroupId)),
-      });
-    }
-
-    return { success: true, message: `Transferred to ${newGroupId}` };
-  } catch (error) {
-    console.error("Transfer Error:", error);
-    throw new HttpsError("internal", "Failed to complete transfer");
-  }
-});
-// exports.backfillFixtures = onCall(
-//   {
-//     timeoutSeconds: 540,
-//     memory: "512MiB",
-//   },
-//   async (request) => {
-//     // 1. Get arguments from the client call
-//     // We default to Jan 7th, but this allows you to pass any date from the frontend later
-//     const dateToFetch = request.data.date || "2026-01-07";
-
-//     logger.info(`Starting backfill for ${dateToFetch}...`);
-
-//     try {
-//       // 2. Fetch fixture list
-//       const fixtures = await fetchFootballApi("fixtures", {
-//         league: 39,
-//         season: 2025,
-//         date: dateToFetch,
-//       });
-
-//       if (!fixtures || fixtures.length === 0) {
-//         return { success: false, message: "No matches found for this date." };
-//       }
-
-//       // 3. Loop and fetch details
-//       const results = [];
-//       for (const game of fixtures) {
-//         const fixtureId = game.fixture.id;
-//         const matchTitle = `${game.teams.home.name} vs ${game.teams.away.name}`;
-
-//         try {
-//           await fetchAllMatchData({ fixtureId: fixtureId });
-//           results.push(`✅ Success: ${matchTitle}`);
-//         } catch (err) {
-//           logger.error(`Failed to process ${matchTitle}`, err);
-//           results.push(`❌ Failed: ${matchTitle}`);
-//         }
-//       }
-
-//       // 4. Return JSON response to client
-//       return {
-//         success: true,
-//         message: `Processed ${fixtures.length} matches.`,
-//         logs: results,
-//       };
-//     } catch (error) {
-//       logger.error("Critical error in backfillFixtures:", error);
-//       // Throwing structured error sends a clean 500 to the client SDK
-//       throw new Error(`Backfill failed: ${error.message}`);
-//     }
-//   }
-// );
-// exports.updateFixtures = onSchedule(
-//   {
-//     schedule: "every day 00:00",
-//     timeoutSeconds: 240, // ⏱️ 4 minutes
-//     memory: "512MiB", // Optional: increase memory if needed
-//   },
-//   async (event) => {
-//     try {
-//       const SEASON = 2025;
-//       const LEAGUE_ID = 39; // Premier League
-
-//       // Step 1: Get all teams in the Premier League
-//       const teamsResponse = await axios.get(
-//         `https://api-football-v1.p.rapidapi.com/v3/teams`,
-//         {
-//           params: {
-//             league: LEAGUE_ID,
-//             season: SEASON,
-//           },
-//           headers: {
-//             "x-rapidapi-key":
-//               "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//             // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//           },
-//         }
-//       );
-
-//       const teams = teamsResponse.data.response;
-
-//       for (const teamObj of teams) {
-//         const teamId = teamObj.team.id;
-//         const teamName = teamObj.team.name;
-//         // if (teamId !== 33) {
-//         //   continue; // Skip teams that are not Manchester United
-//         // }
-
-//         logger.info(`Processing team: ${teamName} (${teamId})`);
-
-//         // Step 2: Fetch fixtures
-//         const fixturesResponse = await axios.get(
-//           `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
-//           {
-//             params: {
-//               team: teamId,
-//               season: SEASON,
-//             },
-//             headers: {
-//               "x-rapidapi-key":
-//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//             },
-//           }
-//         );
-
-//         const fixtures = fixturesResponse.data.response;
-
-//         for (const fixtureObj of fixtures) {
-//           const fixtureId = fixtureObj.fixture.id;
-
-//           const fixtureData = {
-//             fixture: fixtureObj.fixture,
-//             league: fixtureObj.league,
-//             teams: fixtureObj.teams,
-//             goals: fixtureObj.goals,
-//             score: fixtureObj.score,
-//             matchDate: fixtureObj.fixture.timestamp,
-//           };
-
-//           await getFirestore()
-//             .collection(`fixtures/${SEASON}/fixtures`)
-//             .doc(fixtureId.toString())
-//             .set(fixtureData, { merge: true });
-//         }
-
-//         logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
-
-//         // Step 3: Fetch squad
-//         const squadResponse = await axios.get(
-//           `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
-//           {
-//             params: { team: teamId },
-//             headers: {
-//               "x-rapidapi-key":
-//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
-//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-//             },
-//           }
-//         );
-
-//         const squadPlayers = squadResponse.data.response[0]?.players;
-
-//         const playerIds = squadPlayers.map((player) => player.id);
-
-//         // Fetch the existing teamSquads document from Firestore
-//         const teamSquadsDoc = await getFirestore()
-//           .collection(`teamSquads/${teamId}/season`)
-//           .doc(SEASON.toString())
-//           .get();
-
-//         // Get the existing seasonSquad if it exists, or initialize an empty array
-//         const existingSeasonSquad = teamSquadsDoc.exists
-//           ? teamSquadsDoc.data().seasonSquad || []
-//           : [];
-
-//         // Merge the new players with the existing seasonSquad (prevent duplicates)
-//         const updatedSeasonSquad = [
-//           ...existingSeasonSquad,
-//           ...squadPlayers.filter(
-//             (newPlayer) =>
-//               !existingSeasonSquad.some(
-//                 (existingPlayer) => existingPlayer.id === newPlayer.id
-//               )
-//           ),
-//         ];
-
-//         // Save both squad and manager into teamSquads
-//         await getFirestore()
-//           .collection(`teamSquads/${teamId}/season`)
-//           .doc(SEASON.toString())
-//           .set(
-//             {
-//               activeSquad: squadPlayers,
-//               playerIds: playerIds,
-//               seasonSquad: updatedSeasonSquad,
-//             },
-//             { merge: true }
-//           );
-
-//         logger.info(`Saved squad and manager for ${teamName}`);
-//       }
-
-//       logger.info(`Finished processing all Premier League teams`);
-//     } catch (error) {
-//       logger.error("Error updating data:", error.message, error);
-//     }
-//   }
-// );
 
 exports.updateFixtures = onSchedule(
   {
@@ -681,6 +396,466 @@ exports.sitemap = onRequest(
     }
   },
 );
+
+exports.addUserToGroup = onCall(async (request) => {
+  // 1. Contextual Security: Strict UID check
+  const uid = request.auth?.uid;
+
+  if (!uid) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated.",
+    );
+  }
+
+  const { groupId, userData, leagueKey } = request.data;
+  const db = getFirestore();
+
+  try {
+    // 2. Delegate all logic to the atomic service
+    // This ensures consistency and keeps your onCall function readable.
+    await addMemberToGroup(db, groupId, uid, userData, leagueKey);
+
+    return {
+      success: true,
+      message: "Joined successfully",
+      groupId: String(groupId),
+    };
+  } catch (error) {
+    console.error("Error joining group:", error);
+    // Be careful with error.message in production; keep it generic for the client
+    throw new HttpsError("internal", "Failed to join group. Please try again.");
+  }
+});
+
+// 2. REMOVE USER (Standard Leave)
+exports.removeUserFromGroup = onCall(async (request) => {
+  // 1. Security: Strict UID check from the auth context
+  const uid = request.auth?.uid;
+
+  if (!uid) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated.",
+    );
+  }
+
+  const { groupId } = request.data;
+  const db = getFirestore();
+
+  try {
+    // 2. Execute the atomic removal service
+    // This handles the role-check, global delete, and user doc update
+    await removeMemberFromGroup(db, groupId, uid);
+
+    return {
+      success: true,
+      message: "Successfully removed from group",
+    };
+  } catch (error) {
+    console.error("Error in removeUserFromGroup:", error);
+    // Keep error messages professional for production
+    throw new HttpsError(
+      "internal",
+      error.message || "Failed to process group removal.",
+    );
+  }
+});
+
+exports.joinGroupByCode = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const { inviteCode } = request.data;
+  const db = getFirestore();
+
+  if (!inviteCode) {
+    throw new HttpsError("invalid-argument", "Invite code is required.");
+  }
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      // 1. REFS
+      const inviteRef = db.collection("groupInvites").doc(inviteCode);
+      const userRef = db.collection("users").doc(uid);
+
+      // 2. READS
+      const [inviteSnap, userSnap] = await Promise.all([
+        transaction.get(inviteRef),
+        transaction.get(userRef),
+      ]);
+
+      if (!inviteSnap.exists || !inviteSnap.data().active) {
+        throw new Error("This invite code is invalid or has expired.");
+      }
+      if (!userSnap.exists) throw new Error("User profile not found.");
+
+      const inviteData = inviteSnap.data();
+      const { groupId } = inviteData;
+      const role = inviteData.role || "member";
+
+      const groupRef = db.collection("groups").doc(String(groupId));
+      const groupSnap = await transaction.get(groupRef);
+      if (!groupSnap.exists) {
+        throw new Error("The associated group no longer exists.");
+      }
+
+      const groupData = groupSnap.data();
+      const userData = userSnap.data();
+      const leagueKey = groupData.league;
+
+      // 3. PREPARE PATHS
+      const roleCollection = `${role}s`;
+      const globalMemberRef = db
+        .collection("groupUsers")
+        .doc(String(groupId))
+        .collection(roleCollection)
+        .doc(uid);
+
+      const userJoinedGroupRef = userRef
+        .collection("joinedGroups")
+        .doc(String(groupId));
+
+      // 4. DATA PREPARATION
+      const globalMemberData = {
+        uid: uid,
+        email: userData.email || "",
+        displayName: userData.displayName || userData.name || "Fan",
+        joinedAt: FieldValue.serverTimestamp(),
+        role: role,
+      };
+
+      const userGroupMetadata = {
+        groupId: String(groupId),
+        groupName: groupData.name || "Unknown Group",
+        role: role,
+        joinedAt: FieldValue.serverTimestamp(),
+        leagueKey: leagueKey || null,
+      };
+
+      const userUpdate = {
+        activeGroup: String(groupId),
+      };
+
+      // Handle League Logic
+      if (leagueKey) {
+        userUpdate[`leagueTeams.${leagueKey}`] = String(groupId);
+        userUpdate[`lastTransferDates.${leagueKey}`] =
+          FieldValue.serverTimestamp();
+      }
+
+      // 5. TRANSACTIONAL WRITES
+      transaction.set(globalMemberRef, globalMemberData);
+      transaction.set(userJoinedGroupRef, userGroupMetadata);
+      transaction.update(userRef, userUpdate);
+      transaction.update(inviteRef, { usageCount: FieldValue.increment(1) });
+
+      // 11votes Twist: Sync ownerId to the group doc if the role is 'owner'
+      if (role === "owner") {
+        transaction.update(groupRef, {
+          ownerId: uid,
+          ownerName: userData.displayName || userData.name || "Fan",
+        });
+      }
+    });
+
+    return { success: true, message: "Successfully joined!" };
+  } catch (error) {
+    console.error("Join By Code Error:", error);
+    throw new HttpsError("internal", error.message || "Failed to join group.");
+  }
+});
+
+// 3. TRANSFER USER (The Coordinator)
+exports.transferLeagueTeam = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
+
+  const { newGroupId } = request.data; // Only need the ID
+  const db = getFirestore();
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      // 1. REFS
+      const userRef = db.collection("users").doc(uid);
+      const newGroupRef = db.collection("groups").doc(String(newGroupId));
+      const newUserJoinedGroupRef = userRef
+        .collection("joinedGroups")
+        .doc(String(newGroupId));
+
+      // 2. READ: Get User and New Group info
+      const [userDoc, newGroupDoc] = await Promise.all([
+        transaction.get(userRef),
+        transaction.get(newGroupRef),
+      ]);
+
+      if (!userDoc.exists) throw new Error("User not found.");
+      if (!newGroupDoc.exists) throw new Error("Target group not found.");
+
+      const userData = userDoc.data();
+      const newGroupData = newGroupDoc.data();
+
+      // DISCOVER: Get the leagueKey from the target group
+      const leagueKey = newGroupData.league;
+      if (!leagueKey) {
+        throw new Error("This group is not associated with a league.");
+      }
+
+      // DISCOVER: Check if user already has a team in THIS specific league
+      const oldGroupId = userData?.leagueTeams?.[leagueKey];
+
+      // 3. ATOMIC REMOVAL (If they have an old team in the SAME league)
+      if (oldGroupId && String(oldGroupId) !== String(newGroupId)) {
+        const oldJoinedGroupRef = userRef
+          .collection("joinedGroups")
+          .doc(String(oldGroupId));
+        const oldJoinedGroupDoc = await transaction.get(oldJoinedGroupRef);
+
+        if (oldJoinedGroupDoc.exists) {
+          const { role: oldRole } = oldJoinedGroupDoc.data();
+          const oldGlobalMemberRef = db
+            .collection("groupUsers")
+            .doc(String(oldGroupId))
+            .collection(`${oldRole}s`)
+            .doc(uid);
+
+          transaction.delete(oldGlobalMemberRef);
+          transaction.delete(oldJoinedGroupRef);
+        }
+      }
+
+      // 4. ATOMIC ADDITION
+      const newGlobalMemberRef = db
+        .collection("groupUsers")
+        .doc(String(newGroupId))
+        .collection("members")
+        .doc(uid);
+
+      const memberData = {
+        uid: uid,
+        email: userData.email || "",
+        displayName: userData.displayName || userData.name || "Fan",
+        joinedAt: FieldValue.serverTimestamp(),
+      };
+
+      const userGroupMetadata = {
+        groupId: String(newGroupId),
+        groupName: newGroupData.name || "Unknown Group",
+        role: "member",
+        joinedAt: FieldValue.serverTimestamp(),
+        leagueKey: leagueKey, // Persist discovered leagueKey for easier removal later
+      };
+
+      // 5. UPDATE USER DOC (Syncing leagueTeams and activeGroup)
+      const userUpdate = {
+        activeGroup: String(newGroupId),
+        [`leagueTeams.${leagueKey}`]: String(newGroupId),
+        [`lastTransferDates.${leagueKey}`]: FieldValue.serverTimestamp(),
+      };
+
+      // 6. COMMIT EVERYTHING
+      transaction.set(newGlobalMemberRef, memberData);
+      transaction.set(newUserJoinedGroupRef, userGroupMetadata);
+      transaction.update(userRef, userUpdate);
+    });
+
+    return { success: true, message: "Transfer complete" };
+  } catch (error) {
+    console.error("Transfer Error:", error);
+    throw new HttpsError("internal", error.message || "Transfer failed.");
+  }
+});
+// exports.backfillFixtures = onCall(
+//   {
+//     timeoutSeconds: 540,
+//     memory: "512MiB",
+//   },
+//   async (request) => {
+//     // 1. Get arguments from the client call
+//     // We default to Jan 7th, but this allows you to pass any date from the frontend later
+//     const dateToFetch = request.data.date || "2026-01-07";
+
+//     logger.info(`Starting backfill for ${dateToFetch}...`);
+
+//     try {
+//       // 2. Fetch fixture list
+//       const fixtures = await fetchFootballApi("fixtures", {
+//         league: 39,
+//         season: 2025,
+//         date: dateToFetch,
+//       });
+
+//       if (!fixtures || fixtures.length === 0) {
+//         return { success: false, message: "No matches found for this date." };
+//       }
+
+//       // 3. Loop and fetch details
+//       const results = [];
+//       for (const game of fixtures) {
+//         const fixtureId = game.fixture.id;
+//         const matchTitle = `${game.teams.home.name} vs ${game.teams.away.name}`;
+
+//         try {
+//           await fetchAllMatchData({ fixtureId: fixtureId });
+//           results.push(`✅ Success: ${matchTitle}`);
+//         } catch (err) {
+//           logger.error(`Failed to process ${matchTitle}`, err);
+//           results.push(`❌ Failed: ${matchTitle}`);
+//         }
+//       }
+
+//       // 4. Return JSON response to client
+//       return {
+//         success: true,
+//         message: `Processed ${fixtures.length} matches.`,
+//         logs: results,
+//       };
+//     } catch (error) {
+//       logger.error("Critical error in backfillFixtures:", error);
+//       // Throwing structured error sends a clean 500 to the client SDK
+//       throw new Error(`Backfill failed: ${error.message}`);
+//     }
+//   }
+// );
+// exports.updateFixtures = onSchedule(
+//   {
+//     schedule: "every day 00:00",
+//     timeoutSeconds: 240, // ⏱️ 4 minutes
+//     memory: "512MiB", // Optional: increase memory if needed
+//   },
+//   async (event) => {
+//     try {
+//       const SEASON = 2025;
+//       const LEAGUE_ID = 39; // Premier League
+
+//       // Step 1: Get all teams in the Premier League
+//       const teamsResponse = await axios.get(
+//         `https://api-football-v1.p.rapidapi.com/v3/teams`,
+//         {
+//           params: {
+//             league: LEAGUE_ID,
+//             season: SEASON,
+//           },
+//           headers: {
+//             "x-rapidapi-key":
+//               "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//             // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//           },
+//         }
+//       );
+
+//       const teams = teamsResponse.data.response;
+
+//       for (const teamObj of teams) {
+//         const teamId = teamObj.team.id;
+//         const teamName = teamObj.team.name;
+//         // if (teamId !== 33) {
+//         //   continue; // Skip teams that are not Manchester United
+//         // }
+
+//         logger.info(`Processing team: ${teamName} (${teamId})`);
+
+//         // Step 2: Fetch fixtures
+//         const fixturesResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/fixtures`,
+//           {
+//             params: {
+//               team: teamId,
+//               season: SEASON,
+//             },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const fixtures = fixturesResponse.data.response;
+
+//         for (const fixtureObj of fixtures) {
+//           const fixtureId = fixtureObj.fixture.id;
+
+//           const fixtureData = {
+//             fixture: fixtureObj.fixture,
+//             league: fixtureObj.league,
+//             teams: fixtureObj.teams,
+//             goals: fixtureObj.goals,
+//             score: fixtureObj.score,
+//             matchDate: fixtureObj.fixture.timestamp,
+//           };
+
+//           await getFirestore()
+//             .collection(`fixtures/${SEASON}/fixtures`)
+//             .doc(fixtureId.toString())
+//             .set(fixtureData, { merge: true });
+//         }
+
+//         logger.info(`Saved ${fixtures.length} fixtures for team ${teamName}`);
+
+//         // Step 3: Fetch squad
+//         const squadResponse = await axios.get(
+//           `https://api-football-v1.p.rapidapi.com/v3/players/squads`,
+//           {
+//             params: { team: teamId },
+//             headers: {
+//               "x-rapidapi-key":
+//                 "094b48b189mshadfe2267d2aa592p18a8efjsn02511bf918c6",
+//               // "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+//             },
+//           }
+//         );
+
+//         const squadPlayers = squadResponse.data.response[0]?.players;
+
+//         const playerIds = squadPlayers.map((player) => player.id);
+
+//         // Fetch the existing teamSquads document from Firestore
+//         const teamSquadsDoc = await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .get();
+
+//         // Get the existing seasonSquad if it exists, or initialize an empty array
+//         const existingSeasonSquad = teamSquadsDoc.exists
+//           ? teamSquadsDoc.data().seasonSquad || []
+//           : [];
+
+//         // Merge the new players with the existing seasonSquad (prevent duplicates)
+//         const updatedSeasonSquad = [
+//           ...existingSeasonSquad,
+//           ...squadPlayers.filter(
+//             (newPlayer) =>
+//               !existingSeasonSquad.some(
+//                 (existingPlayer) => existingPlayer.id === newPlayer.id
+//               )
+//           ),
+//         ];
+
+//         // Save both squad and manager into teamSquads
+//         await getFirestore()
+//           .collection(`teamSquads/${teamId}/season`)
+//           .doc(SEASON.toString())
+//           .set(
+//             {
+//               activeSquad: squadPlayers,
+//               playerIds: playerIds,
+//               seasonSquad: updatedSeasonSquad,
+//             },
+//             { merge: true }
+//           );
+
+//         logger.info(`Saved squad and manager for ${teamName}`);
+//       }
+
+//       logger.info(`Finished processing all Premier League teams`);
+//     } catch (error) {
+//       logger.error("Error updating data:", error.message, error);
+//     }
+//   }
+// );
 
 // exports.updateFixturesonCall = onRequest(async (req, res) => {
 //   try {

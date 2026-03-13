@@ -36,8 +36,9 @@ export default async function ClubLayout({ children, params }) {
 
   const currentYear = "2025";
 
-  const isUsersClub =
-    userData?.leagueTeams?.[groupData?.league] === groupData.id;
+  const isUsersClub = groupData.league
+    ? userData?.leagueTeams?.[groupData?.league] === groupData.id
+    : true;
   const isGuestView = !isUsersClub || !userId;
 
   return (

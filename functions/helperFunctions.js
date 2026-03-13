@@ -228,30 +228,133 @@ const checkTeamsLatestFixture = async (teamId) => {
   }
 };
 
-const addMemberToGroupDoc = async (db, groupId, userId, userData) => {
-  const memberRef = db
+const addMemberToGroup = async (db, groupId, uid, role = "member") => {
+  const groupRef = db.collection("groups").doc(String(groupId));
+  const userRef = db.collection("users").doc(uid);
+
+  // User's private record for UI and permission checks
+  const userJoinedGroupRef = userRef
+    .collection("joinedGroups")
+    .doc(String(groupId));
+
+  // Dynamic global collection based on role (members, admins, or owners)
+  // This allows for path-based Firestore Security Rules
+  const roleCollection = `${role}s`;
+
+  const globalMemberRef = db
     .collection("groupUsers")
     .doc(String(groupId))
-    .collection("members")
-    .doc(String(userId));
+    .collection(roleCollection)
+    .doc(String(uid));
 
-  return memberRef.set({
-    ...userData,
-    joinedAt: FieldValue.serverTimestamp(),
-  });
+  try {
+    await db.runTransaction(async (transaction) => {
+      // 1. READ: Fetch Group and User data
+      const [groupDoc, userDoc] = await Promise.all([
+        transaction.get(groupRef),
+        transaction.get(userRef),
+      ]);
+
+      if (!groupDoc.exists) throw new Error("Group does not exist.");
+      if (!userDoc.exists) throw new Error("User does not exist.");
+
+      const groupData = groupDoc.data();
+      const fullUserData = userDoc.data();
+      const leagueKey = groupData.league;
+
+      // 2. PREPARE: Global Data (Stored in groupUsers/{groupId}/{role}s/{uid})
+      const globalMemberData = {
+        uid: uid,
+        email: fullUserData.email || "",
+        displayName: fullUserData.displayName || fullUserData.name || "Fan",
+        joinedAt: FieldValue.serverTimestamp(),
+        // We keep the role string here for easy querying if needed later
+        role: role,
+      };
+
+      // 3. PREPARE: Private Metadata (Stored in users/{uid}/joinedGroups/{groupId})
+      const userGroupMetadata = {
+        groupId: String(groupId),
+        groupName: groupData.name || "Unknown Group",
+        role: role,
+        joinedAt: FieldValue.serverTimestamp(),
+        leagueKey: leagueKey || null,
+      };
+
+      // 4. PREPARE: User Profile Updates
+      const userUpdate = {
+        activeGroup: String(groupId),
+      };
+
+      if (leagueKey) {
+        userUpdate[`leagueTeams.${leagueKey}`] = String(groupId);
+        userUpdate[`lastTransferDates.${leagueKey}`] =
+          FieldValue.serverTimestamp();
+      }
+
+      // 5. WRITE: Execute all updates atomically
+      // If any of these fail, none of them happen.
+      transaction.set(globalMemberRef, globalMemberData);
+      transaction.set(userJoinedGroupRef, userGroupMetadata);
+      transaction.update(userRef, userUpdate);
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Transaction Join Error:", error);
+    throw new Error(error.message || "Failed to join group.");
+  }
 };
 
-const removeMemberFromGroupDoc = async (db, groupId, userId) => {
-  const memberRef = db
-    .collection("groupUsers")
-    .doc(String(groupId))
-    .collection("members")
-    .doc(String(userId));
+const removeMemberFromGroup = async (db, groupId, uid) => {
+  const userRef = db.collection("users").doc(uid);
+  const userJoinedGroupRef = userRef
+    .collection("joinedGroups")
+    .doc(String(groupId));
 
-  return memberRef.delete();
+  try {
+    await db.runTransaction(async (transaction) => {
+      // 1. READ: We must know the role and league before we can delete
+      const userJoinedGroupDoc = await transaction.get(userJoinedGroupRef);
+
+      if (!userJoinedGroupDoc.exists) {
+        throw new Error("User record not found in this group.");
+      }
+
+      const { role, leagueKey } = userJoinedGroupDoc.data();
+
+      // 2. REF: Construct the path to the global collection (members/admins/owners)
+      const roleCollection = `${role}s`;
+      const globalMemberRef = db
+        .collection("groupUsers")
+        .doc(String(groupId))
+        .collection(roleCollection)
+        .doc(String(uid));
+
+      // 3. PREPARE: User profile updates
+      const userUpdate = {
+        activeGroup: FieldValue.delete(), // Remove active status
+      };
+
+      // 11votes Logic: If this was their league-specific team, clear that slot
+      if (leagueKey) {
+        userUpdate[`leagueTeams.${leagueKey}`] = FieldValue.delete();
+        // NOTE: We keep lastTransferDates.${leagueKey} as a "paper trail"
+        // to prevent immediate re-joining/spamming.
+      }
+
+      // 4. WRITE: Atomic Cleanup
+      transaction.delete(globalMemberRef); // Wipe from the global role list
+      transaction.delete(userJoinedGroupRef); // Wipe from user's private list
+      transaction.update(userRef, userUpdate); // Update the user document
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Transaction Removal Error:", error);
+    throw new Error(error.message || "Failed to remove member safely.");
+  }
 };
-
-module.exports = { addMemberToGroupDoc, removeMemberFromGroupDoc };
 
 module.exports = {
   fetchFootballApi, // Exported so you can use it elsewhere
@@ -261,6 +364,6 @@ module.exports = {
   fetchEventsData,
   fetchAllMatchData,
   checkTeamsLatestFixture,
-  addMemberToGroupDoc,
-  removeMemberFromGroupDoc,
+  addMemberToGroup,
+  removeMemberFromGroup,
 };
