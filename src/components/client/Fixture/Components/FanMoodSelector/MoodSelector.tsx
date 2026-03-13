@@ -23,6 +23,7 @@ import { MOODS } from "./moodConfig";
 import ParticleOverlay from "./ParticleOverlay";
 import { useClubView } from "@/context/ClubViewProvider";
 import { useAuth } from "@/context/AuthContext";
+import { isLive } from "@/lib/utils/football-logic";
 
 // Config
 
@@ -37,9 +38,10 @@ export const MoodSelector = ({
   const [matchMoods, setMatchMoods] = useState<any>(null);
   const [particles, setParticles] = useState<any[]>([]);
   const { user } = useAuth();
+  const isMatchLive = isLive(fixture);
 
   const matchId = String(fixture.fixture.id);
-  const matchFinished = fixture.fixture.status.short === "FT";
+
   const timeElapsed = fixture.fixture.status.elapsed || 0;
 
   // 1. LIVE LISTENER (Better than polling)
@@ -57,7 +59,7 @@ export const MoodSelector = ({
 
   // 2. INTERACTION HANDLER
   const handleMoodClick = async (mood: any, e: React.MouseEvent) => {
-    if (isGuestView || !user || matchFinished) return;
+    if (isGuestView || !user || !isMatchLive) return;
 
     // Trigger local particle animation immediately
     const id = Date.now();
@@ -117,7 +119,7 @@ export const MoodSelector = ({
         </Grid>
 
         {/* INTERACTION PANEL */}
-        {!isGuestView && !matchFinished && (
+        {!isGuestView && isMatchLive && (
           <Grid
             size={{ xs: 12, md: 4 }}
             sx={{

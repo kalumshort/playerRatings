@@ -32,7 +32,7 @@ export default function MobileFixtureContainer({
   groupData,
 }: MobileFixtureContainerProps) {
   const { isGuestView } = useClubView();
-  console.log(isGuestView);
+
   // 1. Match Status Helpers
   const status = fixture?.fixture?.status?.short;
   const isPreMatch = ["NS", "TBD"].includes(status);
