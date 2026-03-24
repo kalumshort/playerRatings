@@ -56,7 +56,7 @@ export default function StadiumSwitcher({
   const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
-  console.log(groupData);
+
   // Inside StadiumSwitcher component
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
@@ -111,7 +111,7 @@ export default function StadiumSwitcher({
     if (userData?.activeGroup) {
       const clubData: any = groupData?.[userData.activeGroup];
 
-      const isPrivate = clubData.privateGroup;
+      const isPrivate = clubData?.privateGroup;
 
       setActiveTab(isPrivate ? 1 : 0);
     }

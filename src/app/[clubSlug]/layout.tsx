@@ -1,6 +1,6 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { notFound } from "next/navigation";
-import { getAuthSession } from "@/lib/firebase/getAuth"; // Import this
+import { getAuthSession } from "@/lib/firebase/getAuth";
 
 import GroupClientInitializer from "@/components/client/GroupClientInitializer";
 import DataInitializer from "@/components/client/DataInitializer";
@@ -12,13 +12,10 @@ import { ClubViewProvider } from "@/context/ClubViewProvider";
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
 
-  // 1. Get Auth session
   const { userId } = await getAuthSession();
 
-  // 2. Fetch User Data (will use cache if called elsewhere in the same request)
   const userData = userId ? await getUserData(userId) : null;
 
-  // 3. Fetch Group Data
   const groupQuery = await adminDb
     .collection("groups")
     .where("slug", "==", clubSlug)
@@ -28,11 +25,15 @@ export default async function ClubLayout({ children, params }) {
   if (groupQuery.empty) notFound();
 
   const doc = groupQuery.docs[0];
+  const rawData = doc.data();
+
   const groupData = {
+    ...rawData,
     id: doc.id,
     groupId: doc.id,
-    ...doc.data(),
-  } as Group;
+    updatedAt: rawData.updatedAt?.toMillis?.() || rawData.updatedAt || null,
+    createdAt: rawData.createdAt?.toMillis?.() || rawData.createdAt || null,
+  } as any;
 
   const currentYear = "2025";
 

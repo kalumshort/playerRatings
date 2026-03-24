@@ -361,10 +361,7 @@ export const handlePlayerRatingSubmit = async (data: any) => {
     throw new Error(error.message);
   }
 };
-/**
- * Calls the 'submitContactForm' Firebase Cloud Function.
- * Logic: Sends user inquiry to Firestore and triggers an email notification.
- */
+
 export const submitContactForm = async ({
   email,
   subject,

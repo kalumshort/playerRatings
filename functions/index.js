@@ -568,7 +568,154 @@ exports.joinGroupByCode = onCall(async (request) => {
   }
 });
 
-// 3. TRANSFER USER (The Coordinator)
+exports.createInviteCode = onCall(async (request) => {
+  // 1. Auth Guard
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { groupId, role = "member" } = request.data;
+  const db = getFirestore();
+
+  if (!groupId) {
+    throw new HttpsError("invalid-argument", "Missing groupId.");
+  }
+
+  try {
+    // 2. Ownership Verification
+    // We check the group document directly to see if this user is the owner
+    const groupRef = db.collection("groups").doc(String(groupId));
+    const groupSnap = await groupRef.get();
+
+    if (!groupSnap.exists) {
+      throw new HttpsError("not-found", "Group not found.");
+    }
+
+    const groupData = groupSnap.data();
+
+    // Critical: Only the owner (or potentially an admin) should generate codes
+    if (groupData.ownerId !== uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Unauthorized. Only owners can create codes.",
+      );
+    }
+
+    // 3. Unique Code Generation (Collision Guard)
+    let inviteCode = "";
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 5) {
+      // Generate a 6-character uppercase alphanumeric code
+      inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      const checkRef = await db
+        .collection("groupInvites")
+        .doc(inviteCode)
+        .get();
+      if (!checkRef.exists) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      throw new HttpsError(
+        "internal",
+        "Failed to generate a unique code. Try again.",
+      );
+    }
+
+    // 4. Data Payload
+    const invitePayload = {
+      inviteCode,
+      groupId: String(groupId),
+      groupName: groupData.name || "Unnamed Group", // Helpful for the joiner's UI
+      createdBy: uid,
+      role: role,
+      active: true,
+      usageCount: 0,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    // 5. Atomic Write
+    await db.collection("groupInvites").doc(inviteCode).set(invitePayload);
+
+    return {
+      success: true,
+      inviteCode: inviteCode,
+    };
+  } catch (error) {
+    console.error("Create Invite Error:", error);
+    // Re-throw if it's already an HttpsError, otherwise wrap it
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Internal server error.");
+  }
+});
+
+exports.updateGroupPrivacy = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  const { groupId, mode } = request.data;
+  const db = getFirestore();
+
+  // Validate the 3 modes we defined for 11votes
+  const validModes = ["public", "restricted", "private"];
+  if (!groupId || !validModes.includes(mode)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Missing groupId or invalid privacy mode (must be public, restricted, or private).",
+    );
+  }
+
+  try {
+    const groupRef = db.collection("groups").doc(String(groupId));
+    const groupSnap = await groupRef.get();
+
+    if (!groupSnap.exists) {
+      throw new HttpsError("not-found", "Group not found.");
+    }
+
+    // Security Check: Only the owner can change visibility
+    const groupData = groupSnap.data();
+    if (groupData.ownerId !== uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the owner can change group settings.",
+      );
+    }
+
+    // Map the logic:
+    // Public: Visible + No Code
+    // Restricted: Visible + Needs Code
+    // Private: Hidden + Needs Code
+    const updates = {
+      isPublic: mode === "public" || mode === "restricted",
+      isGroupOpen: mode === "public",
+      updatedAt: FieldValue.serverTimestamp(), // Better than ISO string for Firestore querying
+    };
+
+    await groupRef.update(updates);
+
+    return {
+      success: true,
+      appliedMode: mode,
+      flags: updates,
+    };
+  } catch (error) {
+    console.error("Update Privacy Error:", error);
+    throw new HttpsError(
+      "internal",
+      error.message || "Failed to update group privacy strategy.",
+    );
+  }
+});
+
 exports.transferLeagueTeam = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
@@ -667,6 +814,7 @@ exports.transferLeagueTeam = onCall(async (request) => {
     throw new HttpsError("internal", error.message || "Transfer failed.");
   }
 });
+
 // exports.backfillFixtures = onCall(
 //   {
 //     timeoutSeconds: 540,

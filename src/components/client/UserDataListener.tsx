@@ -66,7 +66,6 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
       );
       const idString = allIds.sort().join(",");
 
-      // PERFORMANCE: Only fetch if the set of IDs has changed
       if (lastIdSet.current === idString) return;
       lastIdSet.current = idString;
 
@@ -81,10 +80,18 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
           const groupDoc = await getDoc(doc(clientDB, "groups", groupId));
           if (!groupDoc.exists()) return null;
 
+          // Extract the role here
+          const role = subMetadata[groupId]?.role || "member";
+
           return {
             id: groupId,
-            data: { ...sanitizeData(groupDoc.data()), groupId },
-            role: subMetadata[groupId]?.role || "member",
+            // MERGE HERE: Add the role directly into the group data object
+            data: {
+              ...sanitizeData(groupDoc.data()),
+              groupId,
+              role, // Now the group object knows the user's permission
+            },
+            role,
           };
         } catch (e) {
           return null;
@@ -97,7 +104,7 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
 
       results.forEach((res) => {
         if (res) {
-          groupObj[res.id] = res.data;
+          groupObj[res.id] = res.data; // This now includes the 'role'
           groupPermissions[res.id] = res.role;
         }
       });
@@ -105,7 +112,6 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
       dispatch(groupDataSuccess(groupObj));
       return groupPermissions;
     };
-
     // 1. Listen to the User Doc
     const unsubscribeUser = onSnapshot(userRef, async (snap) => {
       if (!snap.exists()) return;

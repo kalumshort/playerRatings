@@ -11,6 +11,8 @@ export interface Group {
   visibility: "public" | "private";
   groupName?: string;
   league?: string;
+  isPublic?: boolean;
+  isGroupOpen?: boolean;
 }
 
 interface GroupState {
