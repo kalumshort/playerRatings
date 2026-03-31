@@ -1,56 +1,56 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation"; // Added usePathname
+import { useRouter, usePathname } from "next/navigation";
 import useGroupData from "@/Hooks/useGroupData";
 import useUserData from "@/Hooks/useUserData";
 
 export const GroupNavigationSync = () => {
   const router = useRouter();
-  const pathname = usePathname(); // Get current URL path
+  const pathname = usePathname();
   const { userData } = useUserData();
   const { groupData }: any = useGroupData();
 
-  const lastNavigatedSlug = useRef<string | null>(null);
+  // Keep track of the LAST known active group ID to detect a manual change
+  const lastActiveGroupId = useRef<string | null>(null);
 
   useEffect(() => {
-    // 1. PATH GUARD: Only redirect if the user is on the root domain
-    if (pathname !== "/") {
+    // 1. DATA GUARD: Ensure we have the necessary data
+    if (!userData?.activeGroup || !groupData) return;
+
+    const currentActiveId = userData.activeGroup;
+    const activeGroupMetadata = groupData[currentActiveId];
+
+    // Determine if the user actually clicked a "Switch Group" button
+    const hasGroupChanged =
+      lastActiveGroupId.current !== null &&
+      lastActiveGroupId.current !== currentActiveId;
+
+    // 2. LOGIC FOR INITIAL LANDING (at "/")
+    if (pathname === "/" && activeGroupMetadata?.slug) {
+      console.log("[NavSync] Landing on root, redirecting to active group.");
+      lastActiveGroupId.current = currentActiveId;
+      router.replace(`/${activeGroupMetadata.slug}`);
       return;
     }
 
-    // 2. DATA GUARD: Wait for Firebase sync
-    if (!userData || !userData.activeGroup || !groupData) {
-      console.log("[NavSync] Waiting for user/group data to initialize...");
-      return;
-    }
-
-    const activeGroupId = userData.activeGroup;
-    const activeGroupData = groupData[activeGroupId];
-
-    // 3. EXISTENCE CHECK: Ensure the active group is actually in the loaded dictionary
-    if (!activeGroupData) {
-      console.warn(
-        `[NavSync] Active group ${activeGroupId} not found in groupData dictionary.`,
+    // 3. LOGIC FOR MANUAL SWITCH (even if on "/profile")
+    // If the ID changed, we navigate regardless of the current path
+    if (hasGroupChanged && activeGroupMetadata?.slug) {
+      console.log(
+        `[NavSync] Active group changed to ${currentActiveId}. Switching workspace...`,
       );
+      lastActiveGroupId.current = currentActiveId;
+      router.push(`/${activeGroupMetadata.slug}`);
       return;
     }
 
-    // 4. EXECUTION: Navigate if we have a valid slug and haven't just done this
-    if (activeGroupData.slug) {
-      if (activeGroupData.slug !== lastNavigatedSlug.current) {
-        lastNavigatedSlug.current = activeGroupData.slug;
-
-        // Use replace instead of push for the initial landing redirect
-        // so the "Back" button doesn't loop them back to the redirector
-        router.replace(`/${activeGroupData.slug}`);
-      }
-    } else {
-      console.error(
-        "[NavSync] Active group found, but it is missing a slug property.",
-      );
+    // 4. SYNC THE REF: If we are just browsing (e.g. at /profile) and no change happened,
+    // just make sure our Ref stays up to date with the current ID.
+    if (lastActiveGroupId.current === null) {
+      lastActiveGroupId.current = currentActiveId;
     }
-  }, [userData, groupData, pathname, router]);
+  }, [userData?.activeGroup, groupData, pathname, router]);
 
   return null;
 };
