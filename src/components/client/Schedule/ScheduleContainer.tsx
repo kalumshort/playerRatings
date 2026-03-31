@@ -138,9 +138,20 @@ export default function ScheduleContainer({
 
   const handleFixtureClick = useCallback(
     (matchId: number | string) => {
-      router.push(`fixture/${matchId}`);
+      // 1. Get the slug from params.
+      // In Next.js, if your folder is [slug], it's params.slug
+      const clubSlug = params?.clubSlug;
+
+      if (clubSlug) {
+        // 2. Use an absolute path with a leading slash.
+        // This tells the router: "Start from the domain root, not the current URL."
+        router.push(`/${clubSlug}/fixture/${matchId}`);
+      } else {
+        // 3. Optional: Fallback if slug is missing (e.g., if used on a non-group page)
+        console.error("[ScheduleContainer] No clubSlug found in URL params.");
+      }
     },
-    [router],
+    [router, params?.slug], // Critical: Add params.slug to dependencies
   );
 
   // --- SCROLL LOGIC ---
