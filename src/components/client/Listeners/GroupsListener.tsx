@@ -17,29 +17,16 @@ import {
   groupDataSuccess,
 } from "@/lib/redux/slices/groupSlice";
 
-// Ensure these match your actual Redux action creators
-
-/**
- * GroupsListener: The "11votes" Relationship Sync Engine.
- * Listens to the user's joinedGroups sub-collection and fetches
- * corresponding group metadata (live scores, slugs) from the global collection.
- */
 export const GroupsListener = () => {
   const { userData } = useUserData();
   const dispatch = useDispatch();
 
-  // Internal state to track { groupId: role } from the sub-collection
+  // Internal state: { [groupId]: role }
   const [membership, setMembership] = useState<Record<string, string>>({});
   const lastMembershipKey = useRef<string>("");
 
-  // PHASE 1: Listen to the "joinedGroups" Sub-collection for Roles
   useEffect(() => {
-    if (!userData?.uid) {
-      console.log(
-        "[GroupsListener] No UID found, skipping sub-collection listener.",
-      );
-      return;
-    }
+    if (!userData?.uid) return;
 
     const joinedRef = collection(
       clientDB,
@@ -48,27 +35,31 @@ export const GroupsListener = () => {
       "joinedGroups",
     );
 
-    console.log(
-      `[GroupsListener] Initializing sub-collection listener for: ${userData.uid}`,
-    );
-
     const unsubSub = onSnapshot(
       joinedRef,
       (snapshot) => {
+        // 1. Start with the "Official" League Groups from the User Doc
         const newMembership: Record<string, string> = {};
 
+        if (userData.leagueTeams) {
+          Object.values(userData.leagueTeams).forEach((groupId: any) => {
+            if (groupId) newMembership[groupId] = "official";
+          });
+        }
+
+        // 2. Overlay the "Private/Social" Groups from the Sub-collection
         snapshot.docs.forEach((doc) => {
-          // The document ID in this sub-collection IS the groupId
+          // If a user is in a private group that is also their official club,
+          // the private role (owner/member) usually takes precedence for UI actions.
           newMembership[doc.id] = doc.data().role || "member";
         });
 
-        // Generate a unique key to prevent unnecessary re-runs of the second effect
+        // 3. Sync Check
         const currentKey =
           Object.keys(newMembership).sort().join(",") +
           Object.values(newMembership).sort().join(",");
 
         if (currentKey !== lastMembershipKey.current) {
-          console.log("[GroupsListener] Membership/Roles updated.");
           lastMembershipKey.current = currentKey;
           setMembership(newMembership);
         }
@@ -80,27 +71,21 @@ export const GroupsListener = () => {
     );
 
     return () => unsubSub();
-  }, [userData?.uid, dispatch]);
+  }, [userData?.uid, userData?.leagueTeams, dispatch]); // Added leagueTeams to dependencies
 
-  // PHASE 2: Listen to the main "groups" collection for Match Data/Slugs
+  // PHASE 2: Fetch metadata for the combined list
   useEffect(() => {
     const groupIds = Object.keys(membership);
 
     if (groupIds.length === 0) {
-      // If the sub-collection listener finished and found no groups
       if (lastMembershipKey.current !== "") {
-        console.log("[GroupsListener] User has no joined groups.");
         dispatch(groupDataSuccess({}));
       }
       return;
     }
 
-    console.log(
-      `[GroupsListener] Syncing metadata for ${groupIds.length} groups...`,
-    );
     dispatch(groupDataStart());
 
-    // Firestore 'in' query supports up to 30 IDs—ideal for Premier League fans.
     const groupsQuery = query(
       collection(clientDB, "groups"),
       where(documentId(), "in", groupIds),
@@ -114,16 +99,15 @@ export const GroupsListener = () => {
         snapshot.docs.forEach((doc) => {
           const groupDocData = doc.data();
 
-          // MERGE: Combine global group data with the user's specific role
           finalGroupMap[doc.id] = {
-            ...groupDocData, // api-football live data (scores, status, etc.)
+            ...groupDocData,
             groupId: doc.id,
-            role: membership[doc.id], // Guaranteed to exist because of Step 1
+            role: membership[doc.id], // Will be 'official', 'owner', or 'member'
           };
         });
 
         console.log(
-          `[GroupsListener] Success: ${Object.keys(finalGroupMap).length} groups hydrated with roles.`,
+          `[GroupsListener] Synced ${Object.keys(finalGroupMap).length} total groups (Official + Private).`,
         );
         dispatch(groupDataSuccess(finalGroupMap));
       },
@@ -136,7 +120,7 @@ export const GroupsListener = () => {
     return () => unsubGroups();
   }, [membership, dispatch]);
 
-  return null; // This is a logic-only component
+  return null;
 };
 
 export default GroupsListener;
