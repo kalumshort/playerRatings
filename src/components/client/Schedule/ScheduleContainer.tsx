@@ -138,7 +138,7 @@ export default function ScheduleContainer({
 
   const handleFixtureClick = useCallback(
     (matchId: number | string) => {
-      router.push(`${clubSlug}/fixture/${matchId}`);
+      router.push(`fixture/${matchId}`);
     },
     [router],
   );

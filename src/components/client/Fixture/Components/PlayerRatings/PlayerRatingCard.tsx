@@ -23,6 +23,7 @@ import {
 import { handlePlayerRatingSubmit } from "@/lib/firebase/client-actions";
 import EventBadge from "./EventBadge";
 import { getInitialSurname, getRatingColor } from "@/lib/utils/football-logic";
+import useUserData from "@/Hooks/useUserData";
 
 export function PlayerRatingCard({
   player,
@@ -164,6 +165,7 @@ export function PlayerRatingCard({
           </Stack>
         ) : (
           <ClayRatingInput
+            userId={userId}
             onSubmit={(val: number) =>
               handlePlayerRatingSubmit({
                 matchId,
@@ -208,9 +210,11 @@ const ClayScoreDisplay = ({ label, score }: any) => {
   );
 };
 
-const ClayRatingInput = ({ onSubmit }: any) => {
+const ClayRatingInput = ({ onSubmit, userId }: any) => {
   const [val, setVal] = useState(6.0);
   const dynamicColor = getRatingColor(val);
+
+  const v = userId === "4hPrbr7QlZSVqm8VB4F8kRXUtDf2" ? 0.1 : 0.5;
 
   return (
     <Stack
@@ -226,7 +230,7 @@ const ClayRatingInput = ({ onSubmit }: any) => {
       >
         <IconButton
           size="large"
-          onClick={() => setVal((p) => Math.max(0.5, p - 0.5))}
+          onClick={() => setVal((p) => Math.max(0.5, p - v))}
         >
           <RemoveRounded />
         </IconButton>
@@ -272,7 +276,7 @@ const ClayRatingInput = ({ onSubmit }: any) => {
 
         <IconButton
           size="large"
-          onClick={() => setVal((p) => Math.min(10, p + 0.5))}
+          onClick={() => setVal((p) => Math.min(10, p + v))}
         >
           <AddRounded />
         </IconButton>

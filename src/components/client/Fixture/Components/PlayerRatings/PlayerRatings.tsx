@@ -108,9 +108,8 @@ export default function PlayerRatings({
         );
       }
       setOpenConfirmDialog(false);
-      alert("Ratings locked in!");
     } catch (err) {
-      alert("Submission failed");
+      console.error("❌ Error submitting ratings:", err);
     }
   };
 

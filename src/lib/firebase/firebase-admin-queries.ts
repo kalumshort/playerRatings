@@ -42,7 +42,6 @@ export async function getFixturesByClubServer(
 }
 export async function getGroupBySlugServer(slug: string) {
   try {
-    // Query the groups collection for the matching slug
     const snapshot = await adminDb
       .collection("groups")
       .where("slug", "==", slug)
@@ -54,10 +53,20 @@ export async function getGroupBySlugServer(slug: string) {
     }
 
     const groupDoc = snapshot.docs[0];
+    const data = groupDoc.data();
+
     return {
+      ...data,
       id: groupDoc.id,
-      ...groupDoc.data(),
-    } as any; // Replace 'any' with your Group interface
+      // 1. Convert Firestore Timestamps to ISO Strings
+      updatedAt: data.updatedAt?.toDate()
+        ? data.updatedAt.toDate().toISOString()
+        : null,
+      createdAt: data.createdAt?.toDate()
+        ? data.createdAt.toDate().toISOString()
+        : null,
+      // Add any other specific date fields here...
+    } as any;
   } catch (error) {
     console.error("❌ Error fetching group by slug:", error);
     return null;

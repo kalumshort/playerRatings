@@ -23,9 +23,9 @@ export default async function SchedulePage({ params }: PageProps) {
   if (!group) notFound();
 
   // 3. CHECK VISIBILITY (Server-Side Gatekeeping)
-    const isPublic = group.isPublic === true;
+  const isPublic = group.isPublic === true;
 
-  if (group.isPublic === true) {
+  if (group.isPublic === false) {
     const userId = await getUserIdFromSession(); // Rely on cookies, not useAuth
     const isMember = group.members?.includes(userId);
 
