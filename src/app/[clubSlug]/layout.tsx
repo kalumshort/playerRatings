@@ -12,10 +12,10 @@ import { ClubViewProvider } from "@/context/ClubViewProvider";
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
 
+  // 1. Auth & Base Data
   const { userId } = await getAuthSession();
 
-  const userData = userId ? await getUserData(userId) : null;
-
+  // 2. Fetch Group Metadata by Slug
   const groupQuery = await adminDb
     .collection("groups")
     .where("slug", "==", clubSlug)
@@ -24,29 +24,47 @@ export default async function ClubLayout({ children, params }) {
 
   if (groupQuery.empty) notFound();
 
-  const doc = groupQuery.docs[0];
-  const rawData = doc.data();
+  const groupDoc = groupQuery.docs[0];
+  const groupId = groupDoc.id;
+  const rawData = groupDoc.data();
 
+  // 3. NEW: Server-Side Role Fetch from Sub-collection
+  let userRole = "guest";
+
+  if (userId) {
+    const membershipDoc = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("joinedGroups")
+      .doc(groupId)
+      .get();
+
+    if (membershipDoc.exists) {
+      userRole = membershipDoc.data()?.role || "member";
+    }
+  }
+
+  // 4. Construct Payload (Sanitize Timestamps for Client Serialization)
   const groupData = {
     ...rawData,
-    id: doc.id,
-    groupId: doc.id,
+    id: groupId,
+    groupId: groupId,
+    role: userRole, // Baked in from server
     updatedAt: rawData.updatedAt?.toMillis?.() || rawData.updatedAt || null,
     createdAt: rawData.createdAt?.toMillis?.() || rawData.createdAt || null,
   } as any;
 
   const currentYear = "2025";
 
-  const isUsersClub = groupData.league
-    ? userData?.leagueTeams?.[groupData?.league] === groupData.id
-    : true;
+  // Logic: If they have a role other than 'guest', they are a member of this club
+  const isUsersClub = userRole !== "guest";
   const isGuestView = !isUsersClub || !userId;
 
   return (
     <ClubViewProvider isGuestView={isGuestView}>
+      {/* Pushes the full-fat data (including role) to Redux immediately */}
       <GroupClientInitializer groupData={groupData} />
 
-      {/* If you need user data in your initializers, pass it here */}
       <DataInitializer
         clubId={groupData?.groupClubId}
         currentYear={currentYear}

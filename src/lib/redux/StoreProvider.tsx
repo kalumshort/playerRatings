@@ -5,8 +5,10 @@ import { useRef } from "react";
 import { Provider } from "react-redux";
 import { makeStore, AppStore } from "./store";
 import { UserDataListener } from "@/components/client/UserDataListener";
+
 import { useAuth } from "@/context/AuthContext";
 import { GroupNavigationSync } from "@/components/client/Groups/GroupNavigationSync";
+import GroupsListener from "@/components/client/Listeners/GroupsListener";
 
 export default function StoreProvider({
   children,
@@ -22,9 +24,15 @@ export default function StoreProvider({
 
   return (
     <Provider store={storeRef.current}>
-      {/* The Listener lives inside the Provider so it has access to dispatch */}
+      {/* 1. Global State Hydration */}
       {user && <UserDataListener userId={user?.uid || null} />}
+
+      {/* 2. Relationship & Match Data Hydration */}
+      {user && <GroupsListener />}
+
+      {/* 3. Logic-based Routing (Depends on Data above) */}
       {user && <GroupNavigationSync />}
+
       {children}
     </Provider>
   );
