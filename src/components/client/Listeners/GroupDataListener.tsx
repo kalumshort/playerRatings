@@ -19,7 +19,7 @@ interface GroupDataListenerProps {
  */
 export const GroupDataListener = ({ groupId }: GroupDataListenerProps) => {
   const dispatch = useDispatch();
-  console.log(groupId, "GroupDataListener");
+
   useEffect(() => {
     if (!groupId) return;
 
