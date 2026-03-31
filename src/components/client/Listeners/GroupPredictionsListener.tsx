@@ -68,10 +68,6 @@ export const GroupPredictionsListener = ({
               }),
             );
           }
-        } else {
-          console.log(
-            `ℹ️ [PredictionsListener] No predictions yet for match ${mid}`,
-          );
         }
       },
       (error) => {

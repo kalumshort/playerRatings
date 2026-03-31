@@ -33,9 +33,6 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
       return;
     }
 
-    console.log(
-      `[UserDataListener] Initializing profile listener for user: ${userId}`,
-    );
     dispatch(fetchUserDataStart());
 
     const userRef = doc(clientDB, "users", String(userId));
@@ -57,8 +54,6 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
           uid: userId,
         };
 
-        console.log("[UserDataListener] Profile data updated.");
-
         // We no longer fetch or merge groups here.
         // GroupsListener handles all group-related state.
         dispatch(fetchUserDataSuccess(userData));
@@ -70,9 +65,6 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
     );
 
     return () => {
-      console.log(
-        `[UserDataListener] Cleaning up profile listener for ${userId}`,
-      );
       unsubscribeUser();
     };
   }, [userId, dispatch]);

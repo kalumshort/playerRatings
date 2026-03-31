@@ -19,7 +19,7 @@ import useUserData from "@/Hooks/useUserData";
 export default function GroupsTab() {
   const { groupData } = useGroupData();
   const { userData } = useUserData();
-  console.log(groupData);
+
   // Local state to manage the drill-down view
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export default function GroupsTab() {
       (group: any) => group.role === "owner",
     );
   }, [groupData]);
-  console.log(ownedGroups);
+
   // Find the actual group object for the viewer
   const selectedGroup = useMemo(() => {
     return selectedGroupId ? groupData[selectedGroupId] : null;

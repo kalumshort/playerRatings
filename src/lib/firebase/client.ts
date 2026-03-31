@@ -38,15 +38,15 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Client debug logging
-if (typeof window !== "undefined") {
-  console.log("[Firebase Client] Config loaded:", {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
-      ? `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY.slice(0, 6)}...`
-      : "missing",
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "missing",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "missing",
-  });
-}
+// if (typeof window !== "undefined") {
+//   console.log("[Firebase Client] Config loaded:", {
+//     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+//       ? `${process.env.NEXT_PUBLIC_FIREBASE_API_KEY.slice(0, 6)}...`
+//       : "missing",
+//     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "missing",
+//     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "missing",
+//   });
+// }
 
 // Singleton app
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

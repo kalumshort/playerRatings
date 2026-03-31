@@ -39,10 +39,6 @@ export const GroupNavigationSync = () => {
     // 4. EXECUTION: Navigate if we have a valid slug and haven't just done this
     if (activeGroupData.slug) {
       if (activeGroupData.slug !== lastNavigatedSlug.current) {
-        console.log(
-          `[NavSync] Redirecting root user to group: /${activeGroupData.slug}`,
-        );
-
         lastNavigatedSlug.current = activeGroupData.slug;
 
         // Use replace instead of push for the initial landing redirect
