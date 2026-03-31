@@ -30,8 +30,12 @@ const userDataSlice = createSlice({
     },
     fetchUserDataSuccess(state, action: PayloadAction<any>) {
       state.loading = false;
-      state.loaded = true;
-      state.accountData = action.payload;
+
+      // MERGE instead of REPLACE
+      state.accountData = {
+        ...state.accountData, // Keep everything currently in Redux (like userGroups)
+        ...action.payload, // Overwrite with new fields from Firestore
+      };
     },
     setUserGroups: (state, action) => {
       if (state.accountData) {
