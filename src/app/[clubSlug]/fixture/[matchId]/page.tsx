@@ -49,7 +49,7 @@ export default async function FixturePage({ params }: PageProps) {
   if (!group) notFound();
 
   // 2. Security Check (Sub-collection lookup for private groups)
-  const isPublic = group.visibility === "public";
+  const isPublic = group.isPublic === true;
   const isAuthorized =
     isPublic || (userId ? await isGroupMemberServer(group.id, userId) : false);
 

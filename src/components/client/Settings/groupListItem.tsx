@@ -49,9 +49,6 @@ export default function GroupListItem({ group }) {
             >
               {group.name}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {group.groupType} • {group.visibility}
-            </Typography>
           </Box>
         </Box>
 
