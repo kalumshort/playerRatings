@@ -20,6 +20,7 @@ import {
 import { RootState } from "@/lib/redux/store";
 import FanMOTMHighlight from "./FanMOTMHighlight";
 import { selectMatchRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
+import RatingLineupPlayer from "@/components/client/PlayerRatings/RatingLineupPlayer";
 
 interface RatingLineupProps {
   fixture: any;
@@ -141,7 +142,7 @@ export default function RatingLineup({
                   <RatingLineupPlayer
                     key={p.id}
                     player={p}
-                    rating={getRating(p.id)}
+                    playerRating={getRating(p.id)}
                   />
                 ))}
               </Stack>
@@ -178,7 +179,7 @@ export default function RatingLineup({
                 <RatingLineupPlayer
                   key={p.id}
                   player={p}
-                  rating={getRating(p.id)}
+                  playerRating={getRating(p.id)}
                 />
               ))}
             </Box>
@@ -206,58 +207,58 @@ const ScoreBadge = styled(Box)(({ theme }) => ({
   textAlign: "center",
 }));
 
-const RatingLineupPlayer = React.memo(({ player, rating }: any) => {
-  const theme = useTheme() as any;
-  const displayRating = rating ? rating.toFixed(1) : "—";
+// const RatingLineupPlayer = React.memo(({ player, rating }: any) => {
+//   const theme = useTheme() as any;
+//   const displayRating = rating ? rating.toFixed(1) : "—";
 
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: 75,
-        transition: "transform 0.2s ease",
-        "&:hover": { transform: "translateY(-5px)", zIndex: 5 },
-      }}
-    >
-      <Box sx={{ position: "relative", width: 75, height: 75 }}>
-        <Avatar
-          src={
-            player.photo ||
-            `https://media.api-sports.io/football/players/${player.id}.png`
-          }
-          sx={{
-            width: "100%",
-            height: "100%",
-            border: `3px solid white`,
-            boxShadow: theme.clay?.card?.boxShadow,
-            bgcolor: "grey.800",
-          }}
-        />
-        <ScoreBadge>
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 900, fontSize: "0.7rem" }}
-          >
-            {displayRating}
-          </Typography>
-        </ScoreBadge>
-      </Box>
-      <Typography
-        variant="caption"
-        noWrap
-        sx={{
-          mt: 1.5,
-          fontWeight: 800,
-          fontSize: "0.65rem",
-          textAlign: "center",
-          width: "100%",
-          color: "text.primary",
-        }}
-      >
-        {player.name.split(" ").pop()?.toUpperCase()}
-      </Typography>
-    </Box>
-  );
-});
+//   return (
+//     <Box
+//       sx={{
+//         display: "flex",
+//         flexDirection: "column",
+//         alignItems: "center",
+//         width: 75,
+//         transition: "transform 0.2s ease",
+//         "&:hover": { transform: "translateY(-5px)", zIndex: 5 },
+//       }}
+//     >
+//       <Box sx={{ position: "relative", width: 75, height: 75 }}>
+//         <Avatar
+//           src={
+//             player.photo ||
+//             `https://media.api-sports.io/football/players/${player.id}.png`
+//           }
+//           sx={{
+//             width: "100%",
+//             height: "100%",
+//             border: `3px solid white`,
+//             boxShadow: theme.clay?.card?.boxShadow,
+//             bgcolor: "grey.800",
+//           }}
+//         />
+//         <ScoreBadge>
+//           <Typography
+//             variant="caption"
+//             sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+//           >
+//             {displayRating}
+//           </Typography>
+//         </ScoreBadge>
+//       </Box>
+//       <Typography
+//         variant="caption"
+//         noWrap
+//         sx={{
+//           mt: 1.5,
+//           fontWeight: 800,
+//           fontSize: "0.65rem",
+//           textAlign: "center",
+//           width: "100%",
+//           color: "text.primary",
+//         }}
+//       >
+//         {player.name.split(" ").pop()?.toUpperCase()}
+//       </Typography>
+//     </Box>
+//   );
+// });

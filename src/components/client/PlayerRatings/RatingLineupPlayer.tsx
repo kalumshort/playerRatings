@@ -75,7 +75,9 @@ const RatingLineupPlayer = React.memo(
     if (!player) return null;
 
     const displayRating =
-      playerRating && playerRating !== "na" ? playerRating : "—";
+      playerRating && playerRating !== "na"
+        ? Number(playerRating).toFixed(1)
+        : "—";
 
     return (
       <PlayerWrapper>
