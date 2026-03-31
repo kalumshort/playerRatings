@@ -164,7 +164,7 @@ export default function AccountTab({
       </Typography>
 
       <Paper sx={{ p: 3, mb: 3, mt: 1 }}>
-        {groupData && (
+        {userData.userGroups && (
           <Box>
             <SwitcherTrigger />
           </Box>

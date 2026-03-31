@@ -33,6 +33,11 @@ const userDataSlice = createSlice({
       state.loaded = true;
       state.accountData = action.payload;
     },
+    setUserGroups: (state, action) => {
+      if (state.accountData) {
+        state.accountData.userGroups = action.payload; // action.payload is the string[]
+      }
+    },
     clearUserData(state) {
       state.loading = false;
       state.error = null;
@@ -56,6 +61,7 @@ export const {
   fetchUserDataSuccess,
   clearUserData,
   fetchUserMatchData,
+  setUserGroups,
 } = userDataSlice.actions;
 
 export default userDataSlice.reducer;

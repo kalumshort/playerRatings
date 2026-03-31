@@ -8,7 +8,7 @@ import { UserDataListener } from "@/components/client/UserDataListener";
 
 import { useAuth } from "@/context/AuthContext";
 import { GroupNavigationSync } from "@/components/client/Groups/GroupNavigationSync";
-import GroupsListener from "@/components/client/Listeners/GroupsListener";
+import { GroupsListener } from "@/components/client/Listeners/GroupsListener";
 
 export default function StoreProvider({
   children,

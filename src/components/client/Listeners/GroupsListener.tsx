@@ -16,15 +16,17 @@ import {
   groupDataStart,
   groupDataSuccess,
 } from "@/lib/redux/slices/groupSlice";
+import { setUserGroups } from "@/lib/redux/slices/userDataSlice";
+// Import your user data action here
 
 export const GroupsListener = () => {
   const { userData } = useUserData();
   const dispatch = useDispatch();
 
-  // Internal state: { [groupId]: role }
   const [membership, setMembership] = useState<Record<string, string>>({});
   const lastMembershipKey = useRef<string>("");
 
+  // PHASE 1: Listen to the "joinedGroups" Sub-collection
   useEffect(() => {
     if (!userData?.uid) return;
 
@@ -38,23 +40,18 @@ export const GroupsListener = () => {
     const unsubSub = onSnapshot(
       joinedRef,
       (snapshot) => {
-        // 1. Start with the "Official" League Groups from the User Doc
         const newMembership: Record<string, string> = {};
+        const groupIds: string[] = []; // Array for userStore
 
-        if (userData.leagueTeams) {
-          Object.values(userData.leagueTeams).forEach((groupId: any) => {
-            if (groupId) newMembership[groupId] = "official";
-          });
-        }
-
-        // 2. Overlay the "Private/Social" Groups from the Sub-collection
         snapshot.docs.forEach((doc) => {
-          // If a user is in a private group that is also their official club,
-          // the private role (owner/member) usually takes precedence for UI actions.
           newMembership[doc.id] = doc.data().role || "member";
+          groupIds.push(doc.id); // Collect IDs
         });
 
-        // 3. Sync Check
+        // 1. Sync the raw IDs to the User Store immediately
+        dispatch(setUserGroups(groupIds));
+
+        // 2. Sync Check for Phase 2 (Internal State)
         const currentKey =
           Object.keys(newMembership).sort().join(",") +
           Object.values(newMembership).sort().join(",");
@@ -71,9 +68,9 @@ export const GroupsListener = () => {
     );
 
     return () => unsubSub();
-  }, [userData?.uid, userData?.leagueTeams, dispatch]); // Added leagueTeams to dependencies
+  }, [userData?.uid, dispatch]);
 
-  // PHASE 2: Fetch metadata for the combined list
+  // PHASE 2: Fetch Metadata (Unchanged logic, just ensure clear works)
   useEffect(() => {
     const groupIds = Object.keys(membership);
 
@@ -97,22 +94,16 @@ export const GroupsListener = () => {
         const finalGroupMap: Record<string, any> = {};
 
         snapshot.docs.forEach((doc) => {
-          const groupDocData = doc.data();
-
           finalGroupMap[doc.id] = {
-            ...groupDocData,
+            ...doc.data(),
             groupId: doc.id,
-            role: membership[doc.id], // Will be 'official', 'owner', or 'member'
+            role: membership[doc.id],
           };
         });
 
-        console.log(
-          `[GroupsListener] Synced ${Object.keys(finalGroupMap).length} total groups (Official + Private).`,
-        );
         dispatch(groupDataSuccess(finalGroupMap));
       },
       (error) => {
-        console.error("[GroupsListener] Groups metadata error:", error);
         dispatch(groupDataFailure(error.message));
       },
     );
@@ -122,5 +113,3 @@ export const GroupsListener = () => {
 
   return null;
 };
-
-export default GroupsListener;

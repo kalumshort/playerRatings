@@ -45,7 +45,6 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
   const { user } = useAuth();
   const { clubSlug } = useParams();
   const { userData } = useUserData();
-
   const { activeGroup, groupData } = useGroupData();
 
   //   const { activeGroup } = useGroupData();
@@ -154,7 +153,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
               ))}
             </List>
             <Divider sx={{ my: 2, opacity: 0.5 }} />
-            {userData.groups && <SwitcherTrigger />}
+            {userData.userGroups && <SwitcherTrigger />}
           </Box>
         )}
 

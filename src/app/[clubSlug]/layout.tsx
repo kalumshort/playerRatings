@@ -59,7 +59,12 @@ export default async function ClubLayout({ children, params }) {
   // Logic: If they have a role other than 'guest', they are a member of this club
   const isUsersClub = userRole !== "guest";
   const isGuestView = !isUsersClub || !userId;
-
+  console.log(
+    "[ClubLayout] Render with groupData:",
+    groupData,
+    "isGuestView:",
+    isGuestView,
+  );
   return (
     <ClubViewProvider isGuestView={isGuestView}>
       {/* Pushes the full-fat data (including role) to Redux immediately */}
