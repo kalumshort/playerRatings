@@ -55,7 +55,7 @@ export default async function ClubLayout({ children, params }) {
   } as any;
 
   const currentYear = "2025";
-
+  console.log(userRole, "USER ROLE IN LAYOUT");
   // Logic: If they have a role other than 'guest', they are a member of this club
   const isUsersClub = userRole !== "guest";
   const isGuestView = !isUsersClub || !userId;

@@ -34,6 +34,7 @@ import { selectAllPlayerOverallRatings } from "@/lib/redux/selectors/ratingsSele
 import PlayerFormWidgets from "./PlayerFormWidgets";
 import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
 import { useParams } from "next/navigation";
+import PlayerSeasonAverageListItem from "./PlayerSeasonAvergeListItem";
 
 export default function PlayerStatsClient() {
   const theme = useTheme() as any;
@@ -151,62 +152,13 @@ export default function PlayerStatsClient() {
             {listPlayers.map((player, index) => {
               const globalRank =
                 allPlayers.findIndex((p) => p.playerId === player.playerId) + 1;
+
               return (
-                <Fade in key={player.playerId} timeout={300 + index * 50}>
-                  <Paper
-                    onClick={() =>
-                      router.push(`/${clubSlug}/players/${player.playerId}`)
-                    }
-                    sx={{
-                      p: 2,
-                      ...theme.clay?.card,
-                      display: "flex",
-                      alignItems: "center",
-                      cursor: "pointer",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: theme.shadows[4],
-                      },
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        width: 40,
-                        fontWeight: 900,
-                        color: "text.disabled",
-                      }}
-                    >
-                      #{globalRank}
-                    </Typography>
-                    <Avatar
-                      src={player.playerImg}
-                      sx={{ width: 48, height: 48, mr: 2 }}
-                    />
-                    <Box flexGrow={1}>
-                      <Typography variant="subtitle1" fontWeight={700}>
-                        {player.playerName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {player.position}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: "8px",
-                        bgcolor: alpha(getRatingColor(player.rating), 0.1),
-                        color: getRatingColor(player.rating),
-                        border: `1px solid ${alpha(getRatingColor(player.rating), 0.2)}`,
-                      }}
-                    >
-                      <Typography variant="subtitle2" fontWeight={800}>
-                        {player.rating.toFixed(1)}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                </Fade>
+                <PlayerSeasonAverageListItem
+                  playerId={player.playerId}
+                  globalRank={globalRank}
+                  clubSlug={clubSlug}
+                />
               );
             })}
           </Stack>

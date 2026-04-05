@@ -37,21 +37,18 @@ export const CustomTooltip = ({ active, payload }: any) => {
           justifyContent="center"
           mb={1}
         >
-          <Typography variant="caption" fontWeight={700}>
-            vs
-          </Typography>
           <img
             src={data.opponentLogo}
-            style={{ width: 24, height: 24, objectFit: "contain" }}
+            style={{ height: 30, objectFit: "contain" }}
           />
-          <Typography
+          {/* <Typography
             variant="body2"
             fontWeight={800}
             noWrap
             sx={{ maxWidth: 80 }}
           >
             {data.opponentName}
-          </Typography>
+          </Typography> */}
         </Stack>
 
         <Typography
