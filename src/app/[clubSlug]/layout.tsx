@@ -71,7 +71,11 @@ export default async function ClubLayout({ children, params }) {
         groupId={groupData?.id}
       />
 
-      <ClubBanner isGuestView={isGuestView} groupData={groupData} />
+      <ClubBanner
+        isGuestView={isGuestView}
+        groupData={groupData}
+        userId={userId}
+      />
       {children}
     </ClubViewProvider>
   );

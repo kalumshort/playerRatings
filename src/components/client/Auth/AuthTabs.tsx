@@ -10,6 +10,7 @@ import {
   Tab,
   Link,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
 import {
   signInWithEmailAndPassword,
@@ -19,15 +20,23 @@ import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { handleCreateAccount } from "@/lib/firebase/auth-actions";
 
-export default function AuthTabs({ groupId }: { groupId?: string }) {
-  const [tab, setTab] = useState(0);
+interface AuthTabsProps {
+  groupId?: string;
+  mode?: "auth" | "signup"; // "auth" shows both, "signup" locks to Join
+}
+
+export default function AuthTabs({ groupId, mode = "auth" }: AuthTabsProps) {
+  const theme = useTheme();
+  // If mode is signup, force tab to 0 (Join) and stay there
+  const [tab, setTab] = useState(mode === "signup" ? 0 : 0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState({ text: "", isError: false });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Helper to map Firebase error codes to user-friendly messages
+  const isSignupOnly = mode === "signup";
+
   const getFriendlyError = (code: string) => {
     switch (code) {
       case "auth/invalid-email":
@@ -46,10 +55,10 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
     }
   };
 
+  const isFormInvalid = !email.trim() || !password.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Basic Client-Side Validation
     if (!email || !password) {
       setMessage({
         text: "Please enter both email and password.",
@@ -63,9 +72,11 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
 
     try {
       if (tab === 0) {
+        // Sign Up Flow - Handles group joining via Server Action
         await handleCreateAccount({ email, password, groupId });
         router.push("/");
       } else {
+        // Standard Login Flow - No groupId passed here per your requirement
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err: any) {
@@ -77,10 +88,7 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
 
   const handleReset = async () => {
     if (!email) {
-      setMessage({
-        text: "Please enter your email to reset your password.",
-        isError: true,
-      });
+      setMessage({ text: "Enter email to reset password.", isError: true });
       return;
     }
     try {
@@ -96,18 +104,21 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 400, mx: "auto" }}>
-      <Tabs
-        value={tab}
-        onChange={(_, v) => {
-          setTab(v);
-          setMessage({ text: "", isError: false });
-        }}
-        variant="fullWidth"
-        sx={{ mb: 2 }}
-      >
-        <Tab label="Join" />
-        <Tab label="Login" />
-      </Tabs>
+      {/* Hide Tabs if in signup-only mode */}
+      {!isSignupOnly && (
+        <Tabs
+          value={tab}
+          onChange={(_, v) => {
+            setTab(v);
+            setMessage({ text: "", isError: false });
+          }}
+          variant="fullWidth"
+          sx={{ mb: 3 }}
+        >
+          <Tab label="Join" />
+          <Tab label="Login" />
+        </Tabs>
+      )}
 
       <form onSubmit={handleSubmit}>
         <TextField
@@ -119,6 +130,7 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
           required
+          sx={{ mb: 1 }}
         />
         <TextField
           label="Password"
@@ -129,16 +141,18 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
           required
+          sx={{ mb: 1 }}
         />
 
-        {tab === 1 && (
-          <Box sx={{ textAlign: "right", mt: 0.5 }}>
+        {tab === 1 && !isSignupOnly && (
+          <Box sx={{ textAlign: "right", mb: 2 }}>
             <Link
               component="button"
               variant="caption"
               onClick={handleReset}
               type="button"
               disabled={loading}
+              sx={{ color: "text.secondary", textDecoration: "none" }}
             >
               Forgot Password?
             </Link>
@@ -148,14 +162,36 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
         {message.text && (
           <Typography
             variant="caption"
-            color={message.isError ? "error.main" : "success.main"}
-            sx={{ mt: 1, display: "block", textAlign: "center" }}
+            sx={{
+              mt: 1,
+              mb: 2,
+              display: "block",
+              textAlign: "center",
+              color: message.isError ? "error.main" : "success.main",
+              fontWeight: 500,
+            }}
           >
             {message.text}
           </Typography>
         )}
 
-        <Button variant="contained" type="submit" fullWidth disabled={loading}>
+        <Button
+          variant="contained"
+          type="submit"
+          fullWidth
+          // Disable if loading OR if the form is invalid
+          disabled={loading || isFormInvalid}
+          sx={{
+            py: 1.5,
+            borderRadius: theme.spacing(1.5),
+            boxShadow: theme.shadows[2],
+            // Optional: Add a visual cue for the disabled state via theme alpha
+            "&.Mui-disabled": {
+              backgroundColor: theme.palette.action.disabledBackground,
+              color: theme.palette.action.disabled,
+            },
+          }}
+        >
           {loading ? (
             <CircularProgress size={24} color="inherit" />
           ) : tab === 0 ? (
