@@ -124,7 +124,7 @@ export default function RatingLineup({
         </Box>
 
         {/* PITCH VIEW */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 4, py: 6 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, py: 4 }}>
           {/* Group players by Row (Grid 1:X, 2:X etc) */}
           {Object.values(
             starters.reduce((acc: any, { player }: any) => {
