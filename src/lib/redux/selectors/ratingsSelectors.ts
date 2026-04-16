@@ -54,11 +54,7 @@ export const selectMatchMotmById = (matchId: string) =>
   );
 
 // 5. MOTM Percentage Logic (Cleaned up)
-export const selectMotmPercentages = (
-  matchId: string,
-  clubId: string,
-  year: string,
-) =>
+export const selectMotmPercentages = (matchId: string) =>
   createSelector(
     [
       selectMatchMotmById(matchId),

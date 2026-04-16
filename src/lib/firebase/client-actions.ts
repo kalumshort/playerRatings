@@ -292,7 +292,13 @@ export const handleMatchMotmVote = async (params: {
   await Promise.all([
     setDoc(
       groupRef,
-      { motmVotes: { [playerId]: increment(1) } },
+      {
+        motmTotalVotes: increment(1),
+        playerVotes: {
+          [playerId]: increment(1),
+        },
+      },
+
       { merge: true },
     ),
     updateOrSet(userPath, matchId, {

@@ -3,20 +3,27 @@
 import React from "react";
 import { Box, Typography, Paper, Avatar, alpha, useTheme } from "@mui/material";
 import { Trophy, Users } from "lucide-react";
+import { useSelector } from "react-redux";
+import {
+  selectMatchMotmById,
+  selectMotmPercentages,
+} from "@/lib/redux/selectors/ratingsSelectors";
 
 interface FanMOTMHighlightProps {
-  motmPercentages: Array<{
-    name: string;
-    img: string;
-    percentage: number;
-    id: string | number;
-  }>;
+  fixtureId: string;
+  // motmPercentages: Array<{
+  //   name: string;
+  //   img: string;
+  //   percentage: number;
+  //   id: string | number;
+  // }>;
 }
 
-export default function FanMOTMHighlight({
-  motmPercentages,
-}: FanMOTMHighlightProps) {
+export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
   const theme = useTheme() as any;
+  const motmPercentages = useSelector(selectMotmPercentages(fixtureId));
+
+  console.log("FanMOTMHighlight", motmPercentages);
   const winner = motmPercentages?.[0];
 
   if (!winner) return null;

@@ -136,7 +136,7 @@ export default function PlayerRatings({
   }
 
   // C. VIEW MODE (Submitted or Read Only)
-  if (isGuestView || isMatchRatingsSubmitted) {
+  if (isGuestView || !isMatchRatingsSubmitted) {
     return (
       <RatingLineup
         fixture={fixture}

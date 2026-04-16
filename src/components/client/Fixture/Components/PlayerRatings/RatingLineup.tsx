@@ -19,7 +19,11 @@ import {
 
 import { RootState } from "@/lib/redux/store";
 import FanMOTMHighlight from "./FanMOTMHighlight";
-import { selectMatchRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
+import {
+  selectMatchMotmById,
+  selectMatchRatingsById,
+  selectMotmPercentages,
+} from "@/lib/redux/selectors/ratingsSelectors";
 import RatingLineupPlayer from "@/components/client/PlayerRatings/RatingLineupPlayer";
 
 interface RatingLineupProps {
@@ -32,7 +36,7 @@ interface RatingLineupProps {
 export default function RatingLineup({
   fixture,
   usersMatchPlayerRatings,
-  motmPercentages,
+
   groupClubId,
 }: RatingLineupProps) {
   const theme = useTheme() as any;
@@ -83,7 +87,7 @@ export default function RatingLineup({
         background: `linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
       }}
     >
-      {/* <FanMOTMHighlight motmPercentages={motmPercentages} /> */}
+      <FanMOTMHighlight fixtureId={fixture.id} />
 
       <Box sx={{ p: 2, position: "relative" }}>
         {/* SOURCE SELECTOR */}
