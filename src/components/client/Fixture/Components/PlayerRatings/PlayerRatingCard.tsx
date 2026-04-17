@@ -194,7 +194,7 @@ export function PlayerRatingCard({
             height={100}
             sx={{ borderRadius: "24px" }}
           />
-        ) : !usersMatchPlayerRating ? (
+        ) : usersMatchPlayerRating ? (
           /* 2. ONLY SHOW AVG AFTER SUBMISSION */
           <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
             <Box
