@@ -11,20 +11,22 @@ export const selectFixturesLoading = createSelector(
   (slice) => slice.loading,
 );
 
+export const selectFixturesLoaded = createSelector(
+  [selectFixturesSlice],
+  (slice) => slice.loaded,
+);
+
 // --- Context Helper ---
 const selectActiveContext = createSelector(
   [selectGroupData, selectGlobalData],
   (groupData, globalData) => {
     const activeGroupId = groupData.activeGroupId;
-
-    // Explicitly cast the result to Group
-    // This tells TS: "I know this is a full Group object from our interface"
     const activeGroup = activeGroupId
       ? (groupData.byGroupId[activeGroupId] as Group)
       : undefined;
 
     return {
-      clubId: activeGroup?.groupClubId, // The error will disappear here
+      clubId: activeGroup?.groupClubId,
       year: globalData.currentYear,
     };
   },
@@ -62,7 +64,6 @@ export const selectLatestFixture = createSelector(
     if (previous.length > 0) {
       const lastMatchTime = previous[0].fixture.timestamp * 1000;
       const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-      // Show last match if played within 24h, otherwise show next
       return lastMatchTime < twentyFourHoursAgo
         ? upcoming[0] || null
         : previous[0];

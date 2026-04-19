@@ -20,12 +20,14 @@ interface FixturesState {
     };
   };
   loading: boolean;
+  loaded: boolean;
   error: string | null;
 }
 
 const initialState: FixturesState = {
   byClubId: {},
   loading: false,
+  loaded: false,
   error: null,
 };
 
@@ -37,7 +39,6 @@ export const fetchFixtures = createAsyncThunk(
     { clubId, currentYear }: { clubId: string; currentYear: string },
     { rejectWithValue },
   ) => {
-    // 1. Defensive Guard: Ensure path-critical variables are present
     if (!clubId || !currentYear) {
       console.error("[Fixtures Thunk] Aborted: clubId or currentYear missing", {
         clubId,
@@ -47,7 +48,6 @@ export const fetchFixtures = createAsyncThunk(
     }
 
     try {
-      // 2. Safe path construction
       const matchesRef = collection(
         clientDB,
         "fixtures",
@@ -89,7 +89,6 @@ const fixturesSlice = createSlice({
   name: "fixtures",
   initialState,
   reducers: {
-    // 1. HYDRATION: Set fixtures from Server-Side props
     setInitialFixtures(
       state,
       action: PayloadAction<{ clubId: string; year: string; fixtures: any[] }>,
@@ -97,9 +96,9 @@ const fixturesSlice = createSlice({
       const { clubId, year, fixtures } = action.payload;
       if (!state.byClubId[clubId]) state.byClubId[clubId] = {};
       state.byClubId[clubId][year] = fixtures;
+      state.loaded = true;
     },
 
-    // 2. LISTENER UPDATE: Renamed from 'fixtureReducer'
     updateSingleFixture(
       state,
       action: PayloadAction<{
@@ -113,7 +112,6 @@ const fixturesSlice = createSlice({
       const clubIdStr = String(clubId);
       const fixtureIdStr = String(id);
 
-      // 1. Ensure the nested structure exists so we don't fail silently
       if (!state.byClubId[clubIdStr]) {
         state.byClubId[clubIdStr] = {};
       }
@@ -122,22 +120,17 @@ const fixturesSlice = createSlice({
       }
 
       const clubFixtures = state.byClubId[clubIdStr][year];
-
-      // 2. Find the index
       const index = clubFixtures.findIndex(
         (f) => String(f.id) === fixtureIdStr,
       );
 
       if (index !== -1) {
-        // 3. Update existing: Merge carefully
-        // We update the array index directly to ensure Immer picks it up
         clubFixtures[index] = {
           ...clubFixtures[index],
           ...data,
-          id: fixtureIdStr, // Keep ID consistent as a string
+          id: fixtureIdStr,
         };
       } else {
-        // 4. Insert new: If it's a live match that wasn't in the initial list
         clubFixtures.push({
           ...data,
           id: fixtureIdStr,
@@ -149,6 +142,7 @@ const fixturesSlice = createSlice({
     builder
       .addCase(fetchFixtures.pending, (state) => {
         state.loading = true;
+        state.loaded = false;
         state.error = null;
       })
       .addCase(fetchFixtures.fulfilled, (state, action) => {
@@ -156,9 +150,11 @@ const fixturesSlice = createSlice({
         if (!state.byClubId[clubId]) state.byClubId[clubId] = {};
         state.byClubId[clubId][year] = fixtures;
         state.loading = false;
+        state.loaded = true;
       })
       .addCase(fetchFixtures.rejected, (state, action) => {
         state.loading = false;
+        state.loaded = true;
         state.error = action.payload as string;
       })
       .addMatcher(
