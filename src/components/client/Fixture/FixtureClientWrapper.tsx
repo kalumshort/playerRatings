@@ -104,7 +104,6 @@ export default function FixtureClientWrapper({
             showDetails={true}
             showScorers={true}
             addClass={"containerMargin"}
-            showPenaltys={true}
           />
         </Box>
 
