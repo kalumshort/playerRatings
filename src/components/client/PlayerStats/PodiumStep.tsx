@@ -1,119 +1,82 @@
 "use client";
+
 import { getInitialSurname } from "@/lib/utils/football-logic";
-import { Box, Stack, Avatar, Typography, alpha, useTheme } from "@mui/material";
-import { motion } from "framer-motion";
+import { Box, Stack, Avatar, Typography, useTheme } from "@mui/material";
 
-export default function PodiumStep({ rank, player }: any) {
-  const theme = useTheme() as any;
+interface PodiumStepProps {
+  rank: 1 | 2 | 3;
+  player?: {
+    playerId: string;
+    playerName: string;
+    playerImg: string;
+    rating: number;
+  };
+}
+
+export default function PodiumStep({ rank, player }: PodiumStepProps) {
+  const theme = useTheme();
   const isFirst = rank === 1;
+  const width = isFirst ? 104 : 88;
 
-  // Color logic based on your PALETTE
-  const rankColor = isFirst
-    ? theme.palette.primary.main
-    : rank === 2
-      ? "#C0C0C0"
-      : "#CD7F32";
+  if (!player) return <Box sx={{ width }} />;
 
-  if (!player) return <Box sx={{ width: isFirst ? 110 : 90 }} />;
+  const accent = isFirst ? theme.palette.primary.main : theme.palette.text.secondary;
 
   return (
-    <Stack
-      component={motion.div}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.1, type: "spring", stiffness: 100 }}
-      alignItems="center"
-      sx={{
-        position: "relative",
-        width: isFirst ? 120 : 100,
-        zIndex: isFirst ? 2 : 1,
-      }}
-    >
-      {/* FLOATY AVATAR CONTAINER */}
-      <Box sx={{ position: "relative", mb: -2, zIndex: 3 }}>
+    <Stack alignItems="center" spacing={0.75} sx={{ width }}>
+      <Box sx={{ position: "relative" }}>
         <Avatar
           src={player.playerImg}
+          alt={player.playerName}
           sx={{
-            width: isFirst ? 85 : 65,
-            height: isFirst ? 85 : 65,
-            border: `4px solid ${theme.palette.background.paper}`,
-            boxShadow: isFirst
-              ? `0 10px 25px ${alpha(rankColor, 0.4)}`
-              : `0 8px 15px ${alpha(theme.palette.common.black, 0.1)}`,
+            width: isFirst ? 64 : 52,
+            height: isFirst ? 64 : 52,
+            border: isFirst ? `2px solid ${accent}` : "none",
           }}
         />
-        {/* RANK BADGE */}
         <Box
           sx={{
             position: "absolute",
-            bottom: 0,
-            right: 0,
-            width: 28,
-            height: 28,
-            bgcolor: rankColor,
-            borderRadius: "50%",
+            bottom: -4,
+            right: -4,
+            minWidth: 20,
+            height: 20,
+            px: 0.5,
+            bgcolor: "background.paper",
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: `3px solid ${theme.palette.background.paper}`,
-            boxShadow: theme.shadows[2],
           }}
         >
           <Typography
             variant="caption"
-            sx={{ color: "#fff", fontWeight: 900, fontSize: "0.7rem" }}
+            sx={{ color: accent, fontWeight: 700, fontSize: "0.7rem" }}
           >
             {rank}
           </Typography>
         </Box>
       </Box>
 
-      {/* THE PILLAR */}
-      <Box
+      <Typography
+        variant="caption"
+        noWrap
         sx={{
-          width: "100%",
-          pt: 4,
-          pb: 2,
-
-          ...theme.clay?.card,
-          bgcolor: isFirst ? alpha(rankColor, 0.1) : "background.paper",
-          height: isFirst ? 140 : 100,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          border: isFirst
-            ? `2px solid ${alpha(rankColor, 1)}`
-            : "1px solid transparent",
-          // Give it that "squishy" clay look
+          maxWidth: "100%",
+          fontWeight: 600,
+          textAlign: "center",
         }}
       >
-        <Typography
-          variant="h4"
-          fontWeight={900}
-          noWrap
-          sx={{
-            width: "90%",
-            textAlign: "center",
-            fontSize: "0.65rem",
-            letterSpacing: 0.5,
-          }}
-        >
-          {getInitialSurname(player.playerName)}
-        </Typography>
+        {getInitialSurname(player.playerName)}
+      </Typography>
 
-        <Box
-          sx={{ display: "flex", alignItems: "baseline", gap: 0.2, mt: 0.5 }}
-        >
-          <Typography
-            variant={isFirst ? "h5" : "h6"}
-            fontWeight={950}
-            sx={{ color: isFirst ? rankColor : "text.primary", lineHeight: 1 }}
-          >
-            {player.rating.toFixed(1)}
-          </Typography>
-        </Box>
-      </Box>
+      <Typography
+        variant={isFirst ? "h6" : "subtitle2"}
+        sx={{ color: accent, fontWeight: 700, lineHeight: 1 }}
+      >
+        {player.rating.toFixed(1)}
+      </Typography>
     </Stack>
   );
 }

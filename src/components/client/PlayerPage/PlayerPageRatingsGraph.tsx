@@ -10,107 +10,131 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   ReferenceLine,
-  ReferenceArea,
-  Area,
-  ComposedChart,
+  LineChart,
 } from "recharts";
-import { useTheme, alpha, Box, Typography } from "@mui/material";
+import { useTheme, Box, Typography } from "@mui/material";
 
-// CUSTOM IMPORTS
 import { selectActiveClubFixtures } from "@/lib/redux/selectors/fixturesSelectors";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
 import { getRatingColor } from "@/lib/utils/football-logic";
 
+const MIN_Y_RANGE = 3;
+const CHART_HEIGHT = 320;
+
+interface MatchRatingEntry {
+  id: string;
+  totalRating: number;
+  totalSubmits: number;
+}
+
 interface PlayerRatingsLineGraphProps {
   allPlayerRatings: {
-    matches: Record<
-      string,
-      { id: string; totalRating: number; totalSubmits: number }
-    >;
+    matches: Record<string, MatchRatingEntry>;
   };
   clubId: any;
+}
+
+function shortCode(name: string) {
+  return name.split(" ")[0]?.slice(0, 3).toUpperCase() ?? "";
 }
 
 export default function PlayerRatingsLineGraph({
   allPlayerRatings,
   clubId,
 }: PlayerRatingsLineGraphProps) {
-  const theme = useTheme() as any;
+  const theme = useTheme();
   const allFixtures = useSelector(selectActiveClubFixtures);
 
-  // 1. DATA PROCESSING & DYNAMIC DOMAIN CALCULATION
+  const fixturesById = useMemo(() => {
+    const map = new Map<string, any>();
+    (allFixtures || []).forEach((f: any) => map.set(f.id, f));
+    return map;
+  }, [allFixtures]);
+
   const { graphData, seasonAverage, yDomain } = useMemo(() => {
     if (!allPlayerRatings?.matches || !allFixtures) {
-      return { graphData: [], seasonAverage: 0, yDomain: [0, 10] };
+      return {
+        graphData: [],
+        seasonAverage: 0,
+        yDomain: [0, 10] as [number, number],
+      };
     }
 
-    let totalRatingSum = 0;
-    const matchesArray = Object.values(allPlayerRatings.matches);
-
-    const data = matchesArray
-      .map((entry: any) => {
-        const fixture = allFixtures.find((f) => f.id === entry.id);
-        if (!fixture) return null;
+    const data = Object.values(allPlayerRatings.matches)
+      .map((entry) => {
+        const fixture = fixturesById.get(entry.id);
+        if (!fixture || !entry.totalSubmits) return null;
 
         const rating =
-          Number((entry.totalRating / entry.totalSubmits).toFixed(2)) || 0;
-        totalRatingSum += rating;
-
+          Math.round((entry.totalRating / entry.totalSubmits) * 100) / 100;
         const isHome = fixture.teams.home.id === clubId;
         const opponent = isHome ? fixture.teams.away : fixture.teams.home;
+
+        const homeWin = fixture.teams.home.winner;
+        const awayWin = fixture.teams.away.winner;
+        const result = isHome
+          ? homeWin
+            ? "W"
+            : awayWin
+              ? "L"
+              : "D"
+          : awayWin
+            ? "W"
+            : homeWin
+              ? "L"
+              : "D";
 
         return {
           id: entry.id,
           rating,
           date: new Date(fixture.fixture.timestamp * 1000),
           opponentName: opponent.name,
-          opponentShort:
-            opponent.name.split(" ").pop()?.slice(0, 3).toUpperCase() || "",
+          opponentShort: shortCode(opponent.name),
           opponentLogo: opponent.logo,
-          clubId: clubId, // Re-inserted for Tooltip context
-          result: isHome
-            ? fixture.teams.home.winner
-              ? "W"
-              : fixture.teams.away.winner
-                ? "L"
-                : "D"
-            : fixture.teams.away.winner
-              ? "W"
-              : fixture.teams.home.winner
-                ? "L"
-                : "D",
+          clubId,
+          result,
           score: `${fixture.score.fulltime.home} - ${fixture.score.fulltime.away}`,
         };
       })
-      .filter(Boolean)
-      .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+      .filter((d): d is NonNullable<typeof d> => d !== null)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    // CALCULATE DYNAMIC Y-AXIS (Zooming logic for 11votes "Dramatic Form" view)
-    let dynamicYDomain: [number, number] = [0, 10];
-    if (data.length > 0) {
-      const ratings = data.map((d) => d.rating);
-      const minVal = Math.min(...ratings);
-      const maxVal = Math.max(...ratings);
-
-      // Floor/Ceil with 0.5 buffer to avoid the line touching the chart edges
-      const bottom = Math.max(0, Math.floor(minVal - 0.5));
-      const top = Math.min(10, Math.ceil(maxVal + 0.5));
-      dynamicYDomain = [bottom, top];
+    if (data.length === 0) {
+      return {
+        graphData: [],
+        seasonAverage: 0,
+        yDomain: [0, 10] as [number, number],
+      };
     }
+
+    const ratings = data.map((d) => d.rating);
+    const minVal = Math.min(...ratings);
+    const maxVal = Math.max(...ratings);
+
+    // Enforce a minimum visible range so tight clusters don't look like dramatic swings.
+    let bottom = Math.max(0, Math.floor(minVal - 0.5));
+    let top = Math.min(10, Math.ceil(maxVal + 0.5));
+    if (top - bottom < MIN_Y_RANGE) {
+      const mid = (top + bottom) / 2;
+      bottom = Math.max(0, Math.floor(mid - MIN_Y_RANGE / 2));
+      top = Math.min(10, bottom + MIN_Y_RANGE);
+      if (top - bottom < MIN_Y_RANGE) bottom = Math.max(0, top - MIN_Y_RANGE);
+    }
+
+    const avg = ratings.reduce((s, r) => s + r, 0) / ratings.length;
 
     return {
       graphData: data,
-      seasonAverage: data.length > 0 ? totalRatingSum / data.length : 0,
-      yDomain: dynamicYDomain,
+      seasonAverage: avg,
+      yDomain: [bottom, top] as [number, number],
     };
-  }, [allPlayerRatings, allFixtures, clubId]);
+  }, [allPlayerRatings, fixturesById, allFixtures, clubId]);
 
-  // 2. RENDER GATING
   if (graphData.length === 0) {
     return (
       <Box
         sx={{
-          height: 300,
+          height: CHART_HEIGHT,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -124,44 +148,15 @@ export default function PlayerRatingsLineGraph({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
-      <ComposedChart
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+      <LineChart
         data={graphData}
-        margin={{ top: 16, right: 8, left: -20, bottom: 24 }}
+        margin={{ top: 16, right: 12, left: -16, bottom: 8 }}
       >
-        <defs>
-          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop
-              offset="5%"
-              stopColor={theme.palette.primary.main}
-              stopOpacity={0.15}
-            />
-            <stop
-              offset="95%"
-              stopColor={theme.palette.primary.main}
-              stopOpacity={0.01}
-            />
-          </linearGradient>
-        </defs>
-
-        {/* PERFORMANCE BANDS: Success (7.5+) and Error (<5.5) */}
-        <ReferenceArea
-          y1={7.5}
-          y2={10}
-          fill={theme.palette.success.main}
-          fillOpacity={0.03}
-        />
-        <ReferenceArea
-          y1={0}
-          y2={5.5}
-          fill={theme.palette.error.main}
-          fillOpacity={0.03}
-        />
-
         <CartesianGrid
           strokeDasharray="3 3"
           vertical={false}
-          stroke={alpha(theme.palette.divider, 0.1)}
+          stroke={theme.palette.divider}
         />
 
         <YAxis
@@ -177,54 +172,43 @@ export default function PlayerRatingsLineGraph({
         <Tooltip
           content={<CustomTooltip clubId={clubId} />}
           cursor={{
-            stroke: theme.palette.primary.main,
+            stroke: theme.palette.text.secondary,
             strokeWidth: 1,
             strokeDasharray: "4 4",
           }}
         />
 
-        {/* SEASON AVERAGE REFERENCE */}
         {seasonAverage > 0 && (
           <ReferenceLine
             y={seasonAverage}
-            stroke={theme.palette.warning.main}
-            strokeDasharray="5 5"
-            strokeWidth={1.5}
+            stroke={theme.palette.text.secondary}
+            strokeDasharray="4 4"
+            strokeWidth={1}
             label={{
               position: "insideTopRight",
-              value: `AVG ${seasonAverage.toFixed(1)}`,
-              fill: theme.palette.warning.main,
+              value: `Avg ${seasonAverage.toFixed(1)}`,
+              fill: theme.palette.text.secondary,
               fontSize: 10,
-              fontWeight: 800,
-              offset: 10,
+              fontWeight: 600,
+              offset: 8,
             }}
           />
         )}
-
-        <Area
-          type="monotone"
-          dataKey="rating"
-          stroke="none"
-          fill="url(#areaGradient)"
-          isAnimationActive={true}
-          animationDuration={1000}
-        />
 
         <Line
           type="monotone"
           dataKey="rating"
           stroke={theme.palette.primary.main}
-          strokeWidth={3}
+          strokeWidth={2}
           dot={(props: any) => {
             const { cx, cy, payload } = props;
-            const color = getRatingColor(payload.rating);
             return (
               <circle
                 key={payload.id}
                 cx={cx}
                 cy={cy}
                 r={4}
-                fill={color}
+                fill={getRatingColor(payload.rating)}
                 stroke={theme.palette.background.paper}
                 strokeWidth={2}
               />
@@ -236,9 +220,9 @@ export default function PlayerRatingsLineGraph({
             strokeWidth: 2,
             fill: theme.palette.background.paper,
           }}
-          animationDuration={1500}
+          animationDuration={500}
         />
-      </ComposedChart>
+      </LineChart>
     </ResponsiveContainer>
   );
 }

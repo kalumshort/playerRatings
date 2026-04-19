@@ -1,18 +1,10 @@
 "use client";
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
-import {
-  Paper,
-  Box,
-  Avatar,
-  Typography,
-  useTheme,
-  alpha,
-  Chip,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { format } from "date-fns";
 import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
 
 export default function PlayerMatchRow({
@@ -25,12 +17,8 @@ export default function PlayerMatchRow({
   const { clubSlug } = useParams();
   const myClubId = Number(clubId);
 
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // < ~600px
-
-  const { opponent, result, rating } = useMemo(() => {
+  const { result, rating } = useMemo(() => {
     const isHome = fixture.teams.home.id === myClubId;
-    const opponentData = isHome ? fixture.teams.away : fixture.teams.home;
-
     const homeWin = fixture.teams.home.winner;
     const awayWin = fixture.teams.away.winner;
 
@@ -44,206 +32,192 @@ export default function PlayerMatchRow({
     }
 
     return {
-      opponent: opponentData,
       result: res,
       rating: ratingData.totalRating / (ratingData.totalSubmits || 1),
     };
   }, [fixture, myClubId, ratingData]);
 
-  const statusColor = getResultColor(result, theme);
+  const resultColor = getResultColor(result, theme);
+  const ratingColor = getRatingColor(rating);
   const date = new Date(fixture.fixture.timestamp * 1000);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.35 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
     >
       <Link
         href={`/${clubSlug}/fixture/${fixture.id}`}
-        style={{ textDecoration: "none", display: "block" }}
+        style={{ textDecoration: "none", display: "block", color: "inherit" }}
       >
-        <Paper
-          elevation={0}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            p: { xs: 1.5, sm: 2 },
-            gap: { xs: 1.5, sm: 2.5 },
-            position: "relative",
+        <Box
+          sx={(t: any) => ({
+            ...t.clay?.card,
+            cursor: "pointer",
             overflow: "hidden",
-            transition: "all 0.25s ease",
-            "&:hover": {
-              transform: "translateY(-3px)",
-              boxShadow: `0 12px 32px ${alpha(statusColor, 0.18)}`,
-            },
-          }}
+            transition: "transform 0.25s cubic-bezier(0.2, 0, 0, 1)",
+            "&:hover": { transform: "translateY(-2px)" },
+            "&:active": { transform: "scale(0.98)" },
+          })}
         >
-          {/* Result accent bar – thinner on mobile */}
+          {/* Top row: date | result + rating */}
           <Box
             sx={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: { xs: 4, sm: 5 },
-              bgcolor: statusColor,
-              opacity: 0.85,
-            }}
-          />
-
-          {/* Compact date */}
-          <Box
-            sx={{
-              minWidth: { xs: 54, sm: 72 },
-              textAlign: "center",
-              py: { xs: 0.75, sm: 1 },
-              px: { xs: 1, sm: 1.5 },
-              borderRadius: "10px",
-              bgcolor: alpha(theme.palette.background.default, 0.35),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 2,
+              pt: 1.5,
+              pb: 0.75,
+              gap: 1,
             }}
           >
             <Typography
-              variant="caption"
-              fontWeight={700}
-              color="text.secondary"
               sx={{
-                fontSize: { xs: "0.65rem", sm: "0.75rem" },
-                letterSpacing: 0.4,
+                fontSize: "0.62rem",
+                fontWeight: 700,
+                color: "text.secondary",
+                opacity: 0.65,
+                letterSpacing: 0.3,
                 textTransform: "uppercase",
               }}
             >
-              {date.toLocaleDateString("en-GB", { weekday: "short" })}
+              {format(date, "EEE d MMM")}
             </Typography>
+
             <Typography
-              variant="subtitle2"
-              fontWeight={900}
-              lineHeight={1}
-              sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}
+              sx={{
+                fontSize: "0.62rem",
+                fontWeight: 900,
+                color: resultColor,
+                bgcolor: `${resultColor}22`,
+                px: 0.9,
+                py: 0.3,
+                borderRadius: "6px",
+                letterSpacing: 0.5,
+                flexShrink: 0,
+              }}
             >
-              {date.getDate()}
-              <Typography
-                component="span"
-                variant="caption"
-                fontWeight={600}
-                color="text.secondary"
-                sx={{ ml: 0.5, fontSize: { xs: "0.7rem", sm: "0.875rem" } }}
-              >
-                {date.toLocaleDateString("en-GB", { month: "short" })}
-              </Typography>
+              {result} · {fixture.score.fulltime.home}-{fixture.score.fulltime.away}
             </Typography>
           </Box>
 
-          {/* Smaller logo on mobile */}
-          <Avatar
-            src={opponent.logo}
-            variant="square"
-            sx={{
-              width: { xs: 36, sm: 48 },
-              height: { xs: 36, sm: 48 },
-              borderRadius: "10px",
-              bgcolor: alpha(theme.palette.background.default, 0.25),
-              "& img": { objectFit: "contain", p: 0.5 },
-              boxShadow: `0 3px 10px ${alpha("#000", 0.1)}`,
-            }}
-          />
-
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
-              fontWeight={800}
-              noWrap
-              sx={{
-                fontSize: { xs: "0.9rem", sm: "1rem" },
-                mb: 0.25,
-              }}
-            >
-              vs {opponent.name}
-            </Typography>
-
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: { xs: 0.75, sm: 1 },
-                flexWrap: "wrap",
-              }}
-            >
-              <Chip
-                label={`${fixture.score.fulltime.home} - ${fixture.score.fulltime.away}`}
-                size="small"
-                sx={{
-                  fontSize: { xs: "0.7rem", sm: "0.8125rem" },
-                  height: { xs: 20, sm: 24 },
-                  minWidth: { xs: 60, sm: 72 },
-                  fontWeight: 800,
-                  borderRadius: "10px",
-                  bgcolor: alpha(theme.palette.text.primary, 0.07),
-                }}
-              />
-              <Chip
-                label={result}
-                size="small"
-                color={
-                  result === "W"
-                    ? "success"
-                    : result === "L"
-                      ? "error"
-                      : "default"
-                }
-                sx={{
-                  fontSize: { xs: "0.7rem", sm: "0.8125rem" },
-                  height: { xs: 20, sm: 24 },
-                  minWidth: 32,
-                  fontWeight: 900,
-                  borderRadius: "10px",
-                }}
-              />
-            </Box>
-          </Box>
-
-          {/* Smaller rating circle on mobile */}
+          {/* Main row: home | score | away */}
           <Box
             sx={{
-              position: "relative",
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              width: { xs: 52, sm: 64 },
-              height: { xs: 52, sm: 64 },
-              borderRadius: "50%",
-              background: `conic-gradient(${getRatingColor(
-                rating,
-              )} 0deg, ${alpha(getRatingColor(rating), 0.16)} 360deg)`,
-              p: { xs: "2px", sm: "3px" },
+              px: 2,
+              pb: 1.75,
+              gap: 1,
             }}
           >
             <Box
               sx={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                bgcolor: theme.palette.background.paper,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                boxShadow: `inset 0 2px 6px ${alpha("#000", 0.08)}`,
+                gap: 1,
+                flex: 1,
+                minWidth: 0,
               }}
             >
-              <Typography
-                variant="h6"
-                fontWeight={900}
+              <Box
+                component="img"
+                src={fixture.teams.home.logo}
+                alt={fixture.teams.home.name}
                 sx={{
-                  fontSize: { xs: "1.1rem", sm: "1.25rem" },
-                  color: getRatingColor(rating),
+                  width: 30,
+                  height: 30,
+                  objectFit: "contain",
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {fixture.teams.home.name}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={(t: any) => ({
+                ...t.clay?.box,
+                flexShrink: 0,
+                textAlign: "center",
+                minWidth: 84,
+                px: 1.75,
+                py: 1,
+                borderRadius: "14px",
+                border: `1px solid ${ratingColor}33`,
+              })}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 900,
+                  fontSize: "1.75rem",
+                  color: ratingColor,
                   lineHeight: 1,
                 }}
               >
                 {rating.toFixed(1)}
               </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.5rem",
+                  fontWeight: 700,
+                  color: "text.secondary",
+                  opacity: 0.55,
+                  letterSpacing: 1,
+                  mt: 0.5,
+                }}
+              >
+                RATING
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flex: 1,
+                minWidth: 0,
+                justifyContent: "flex-end",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  textAlign: "right",
+                }}
+              >
+                {fixture.teams.away.name}
+              </Typography>
+              <Box
+                component="img"
+                src={fixture.teams.away.logo}
+                alt={fixture.teams.away.name}
+                sx={{
+                  width: 30,
+                  height: 30,
+                  objectFit: "contain",
+                  flexShrink: 0,
+                }}
+              />
             </Box>
           </Box>
-        </Paper>
+        </Box>
       </Link>
     </motion.div>
   );

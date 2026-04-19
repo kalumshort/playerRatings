@@ -6,21 +6,13 @@ import {
   Box,
   Typography,
   Avatar,
-  Chip,
   Stack,
   Grid,
   useTheme,
   Paper,
-  Divider,
-  Skeleton,
   alpha,
 } from "@mui/material";
-import {
-  TrendingUpRounded,
-  HistoryRounded,
-  SportsSoccerRounded,
-} from "@mui/icons-material";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 // CUSTOM IMPORTS
 import { RootState, AppDispatch } from "@/lib/redux/store";
@@ -85,6 +77,8 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
 
   if (!playerData) return <PlayerPageSkeleton />;
 
+  const ratingColor = getRatingColor(seasonAverage);
+
   return (
     <Box
       sx={{
@@ -95,172 +89,80 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         pt: 2,
       }}
     >
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         {/* PROFILE SIDEBAR */}
         <Grid size={{ xs: 12, md: 4, lg: 3 }}>
           <Box
             sx={{
               position: { md: "sticky" },
               top: { md: 100, lg: 120 },
-              zIndex: 10,
             }}
           >
             <Paper
               elevation={0}
               sx={{
-                ...theme.clay?.card, // assuming you still have your clay base
-                borderRadius: "28px",
-                p: { xs: 3, md: 3.5 },
+                p: { xs: 2.5, md: 3 },
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
                 textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                bgcolor: alpha(theme.palette.background.paper, 0.75),
-                backdropFilter: "blur(16px)",
-                border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                boxShadow: theme.shadows[6],
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                "&:hover": {
-                  transform: "translateY(-8px)",
-                  boxShadow: `0 24px 48px ${alpha(theme.palette.primary.main, 0.18)}`,
-                },
               }}
             >
-              {/* Optional subtle background gradient or pattern – can tie to team colors */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  background: `radial-gradient(circle at 30% 20%, ${alpha(
-                    theme.palette.primary.main,
-                    0.08,
-                  )}, transparent 60%)`,
-                  pointerEvents: "none",
-                }}
-              />
-
               <Avatar
                 src={playerData.photo}
+                alt={playerData.name}
                 sx={{
-                  width: { xs: 120, md: 140, lg: 160 },
-                  height: { xs: 120, md: 140, lg: 160 },
+                  width: { xs: 96, md: 112 },
+                  height: { xs: 96, md: 112 },
                   mx: "auto",
-                  mb: 2.5,
-
-                  transition: "transform 0.3s ease",
-                  "&:hover": { transform: "scale(1.06)" },
+                  mb: 2,
                 }}
               />
 
               <Typography
-                variant="h4" // slightly bigger for impact
+                variant="h6"
                 component="h1"
-                fontWeight={900}
-                letterSpacing={0.5}
-                sx={{
-                  mb: 1.5,
-                  background: `linear-gradient(90deg, ${theme.palette.text.primary}, ${alpha(
-                    theme.palette.primary.main,
-                    0.85,
-                  )})`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  textShadow: `0 2px 8px ${alpha("#000", 0.1)}`,
-                }}
+                fontWeight={700}
+                sx={{ mb: 0.5, lineHeight: 1.2 }}
               >
                 {playerData.name}
               </Typography>
 
-              <Stack
-                direction="row"
-                spacing={1.5}
-                justifyContent="center"
-                sx={{ mb: 3, flexWrap: "wrap" }}
-              >
-                <Chip
-                  icon={<SportsSoccerRounded fontSize="small" />}
-                  label={playerData.position}
-                  size="medium" // bigger touch target
-                  color="primary"
-                  sx={{
-                    fontWeight: 800,
-                    px: 2,
-                    borderRadius: "16px",
-                    bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    color: theme.palette.primary.main,
-                    "& .MuiChip-icon": { color: "inherit" },
-                  }}
-                />
-                <Chip
-                  label={`#${playerData.number}`}
-                  size="medium"
-                  variant="outlined"
-                  sx={{
-                    fontWeight: 800,
-                    px: 2,
-                    borderRadius: "16px",
-                    borderColor: alpha(theme.palette.divider, 0.4),
-                    color: theme.palette.text.primary,
-                  }}
-                />
-              </Stack>
-
-              <Divider
-                sx={{
-                  my: 2.5,
-                  borderColor: alpha(theme.palette.divider, 0.18),
-                }}
-              />
-
               <Typography
-                variant="caption"
-                fontWeight={700}
+                variant="body2"
                 color="text.secondary"
-                letterSpacing={1.2}
-                sx={{ textTransform: "uppercase", mb: 1, display: "block" }}
+                sx={{ mb: 2.5 }}
               >
-                Season Average Rating
+                {playerData.position} · #{playerData.number}
               </Typography>
 
               <Box
                 sx={{
-                  position: "relative",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 140,
-                  height: 140,
-                  borderRadius: "50%",
-                  background: `conic-gradient(${getRatingColor(
-                    seasonAverage,
-                  )} 0deg, ${alpha(getRatingColor(seasonAverage), 0.2)} 360deg)`,
-                  p: "6px", // border thickness
+                  pt: 2,
+                  borderTop: `1px solid ${theme.palette.divider}`,
                 }}
               >
-                <Box
+                <Typography
+                  variant="overline"
                   sx={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "50%",
-                    bgcolor: theme.palette.background.paper,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: `inset 0 4px 12px ${alpha("#000", 0.08)}`,
+                    display: "block",
+                    color: "text.secondary",
+                    letterSpacing: 1,
+                    fontWeight: 700,
+                    mb: 0.5,
                   }}
                 >
-                  <Typography
-                    variant="h3"
-                    component="div"
-                    fontWeight={900}
-                    sx={{
-                      color: getRatingColor(seasonAverage),
-                      lineHeight: 1,
-                      textShadow: `0 2px 12px ${alpha(getRatingColor(seasonAverage), 0.4)}`,
-                    }}
-                  >
-                    {seasonAverage.toFixed(1)}
-                  </Typography>
-                </Box>
+                  Season rating
+                </Typography>
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: 700,
+                    color: seasonAverage > 0 ? ratingColor : "text.disabled",
+                    lineHeight: 1,
+                  }}
+                >
+                  {seasonAverage > 0 ? seasonAverage.toFixed(1) : "-.-"}
+                </Typography>
               </Box>
             </Paper>
           </Box>
@@ -268,14 +170,18 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
 
         {/* STATS STREAM */}
         <Grid size={{ xs: 12, md: 8, lg: 9 }}>
-          <Stack spacing={4}>
-            {/* GRAPH */}
+          <Stack spacing={3}>
             <Box>
-              <SectionHeader
-                icon={<TrendingUpRounded />}
-                title="Form Trajectory"
-              />
-              <Paper sx={{ ...theme.clay?.card, p: 3, height: 350 }}>
+              <SectionHeader title="Form trajectory" />
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  height: 320,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 2,
+                }}
+              >
                 <PlayerRatingsLineGraph
                   allPlayerRatings={allPlayerRatings}
                   clubId={activeGroup?.groupClubId}
@@ -283,10 +189,9 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
               </Paper>
             </Box>
 
-            {/* MATCH HISTORY */}
             <Box>
-              <SectionHeader icon={<HistoryRounded />} title="Match History" />
-              <Stack spacing={1.5}>
+              <SectionHeader title="Match history" />
+              <Stack spacing={1}>
                 <AnimatePresence>
                   {previousFixtures.map((fixture, index) => {
                     const matchRating = allPlayerRatings?.matches?.[fixture.id];
@@ -312,11 +217,20 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
   );
 }
 
-const SectionHeader = ({ icon, title }: any) => (
-  <Stack direction="row" spacing={1} alignItems="center" mb={2} pl={1}>
-    {React.cloneElement(icon, { color: "action" })}
-    <Typography variant="h6" fontWeight={800}>
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <Typography
+      variant="overline"
+      sx={{
+        display: "block",
+        mb: 1.5,
+        pl: 0.5,
+        color: "text.secondary",
+        letterSpacing: 1,
+        fontWeight: 700,
+      }}
+    >
       {title}
     </Typography>
-  </Stack>
-);
+  );
+}

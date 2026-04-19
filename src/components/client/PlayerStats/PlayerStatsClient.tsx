@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import {
   Paper,
   Typography,
   Box,
-  Avatar,
   IconButton,
   Menu,
   MenuItem,
@@ -15,30 +14,30 @@ import {
   Stack,
   useTheme,
   alpha,
-  Fade,
-  Skeleton,
 } from "@mui/material";
-import {
-  FilterListRounded,
-  SortRounded,
-  EmojiEventsRounded,
-} from "@mui/icons-material";
-
-import { useRouter } from "next/navigation"; // Correct import for App Router
-
-// CUSTOM IMPORTS
-import { RootState } from "@/lib/redux/store";
-
-import PodiumStep from "./PodiumStep";
-import { selectAllPlayerOverallRatings } from "@/lib/redux/selectors/ratingsSelectors";
-import PlayerFormWidgets from "./PlayerFormWidgets";
-import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
+import { FilterListRounded, SortRounded } from "@mui/icons-material";
 import { useParams } from "next/navigation";
+
+import { RootState } from "@/lib/redux/store";
+import { selectAllPlayerOverallRatings } from "@/lib/redux/selectors/ratingsSelectors";
+import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
+import PodiumStep from "./PodiumStep";
+import PlayerFormWidgets from "./PlayerFormWidgets";
 import PlayerSeasonAverageListItem from "./PlayerSeasonAvergeListItem";
+
+// Placeholder/system account excluded from rankings.
+const EXCLUDED_PLAYER_IDS = new Set(["4720"]);
+
+const POSITION_FILTERS = [
+  "",
+  "Goalkeeper",
+  "Defender",
+  "Midfielder",
+  "Attacker",
+] as const;
 
 export default function PlayerStatsClient() {
   const theme = useTheme() as any;
-  const router = useRouter();
   const { clubSlug } = useParams();
 
   // 1. DATA SELECTORS (Using your new mapped selector)
@@ -58,8 +57,8 @@ export default function PlayerStatsClient() {
   const allPlayers = useMemo(() => {
     if (!allPlayersSeasonAverageRating || !squadData) return [];
 
-    const mapped = Object.entries(allPlayersSeasonAverageRating)
-      .filter(([id]) => squadData[id])
+    return Object.entries(allPlayersSeasonAverageRating)
+      .filter(([id]) => squadData[id] && !EXCLUDED_PLAYER_IDS.has(id))
       .map(([id, stats]: [string, any]) => ({
         playerId: id,
         playerName: squadData[id].name,
@@ -69,28 +68,26 @@ export default function PlayerStatsClient() {
           stats.totalSubmits > 0 ? stats.totalRating / stats.totalSubmits : 0,
         votes: stats.totalSubmits,
       }))
-      .filter((p) => p.playerId !== "4720" && p.rating > 0);
-
-    // Sort once for Global Ranking
-    return mapped.sort((a, b) => b.rating - a.rating);
+      .filter((p) => p.rating > 0)
+      .sort((a, b) => b.rating - a.rating);
   }, [allPlayersSeasonAverageRating, squadData]);
 
-  const isLoading = allPlayers.length === 0;
+  // O(1) rank lookup keyed by the already-sorted list.
+  const globalRankById = useMemo(() => {
+    const map = new Map<string, number>();
+    allPlayers.forEach((p, i) => map.set(p.playerId, i + 1));
+    return map;
+  }, [allPlayers]);
+
   const top3Players = allPlayers.slice(0, 3);
 
   const listPlayers = useMemo(() => {
-    let result = positionFilter
+    const filtered = positionFilter
       ? allPlayers.filter((p) => p.position === positionFilter)
-      : [...allPlayers];
+      : allPlayers;
 
-    return sort === "asc" ? result.reverse() : result;
+    return sort === "asc" ? [...filtered].reverse() : filtered;
   }, [allPlayers, positionFilter, sort]);
-
-  const getRatingColor = (score: number) => {
-    if (score >= 7.5) return theme.palette.success.main;
-    if (score >= 6.0) return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
 
   return (
     <Box
@@ -149,72 +146,33 @@ export default function PlayerStatsClient() {
           </Box>
 
           <Stack spacing={1.5}>
-            {listPlayers.map((player, index) => {
-              const globalRank =
-                allPlayers.findIndex((p) => p.playerId === player.playerId) + 1;
-
-              return (
-                <PlayerSeasonAverageListItem
-                  playerId={player.playerId}
-                  globalRank={globalRank}
-                  clubSlug={clubSlug}
-                />
-              );
-            })}
+            {listPlayers.map((player) => (
+              <PlayerSeasonAverageListItem
+                key={player.playerId}
+                playerId={player.playerId}
+                globalRank={globalRankById.get(player.playerId) ?? 0}
+                clubSlug={clubSlug}
+              />
+            ))}
           </Stack>
         </Grid>
 
         {/* RIGHT COL: PODIUM (Web: Order 2, Mobile: Order 1) */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }} order={{ xs: 1, md: 2 }}>
           <Stack spacing={3} sx={{ position: { md: "sticky" }, top: 100 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                ...theme.clay?.card,
-                p: 3,
-                textAlign: "center",
-                background: `linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.main, 0.03)} 100%)`,
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
-              {/* Subtle Background Icon */}
-              <EmojiEventsRounded
+            <Paper elevation={0} sx={{ p: 2 }}>
+              <Typography
+                variant="overline"
                 sx={{
-                  position: "absolute",
-                  top: -20,
-                  right: -20,
-                  fontSize: 150,
-                  opacity: 0.03,
-                  transform: "rotate(-15deg)",
+                  display: "block",
+                  mb: 1.5,
+                  color: "text.secondary",
+                  letterSpacing: 1,
+                  fontWeight: 700,
                 }}
-              />
-
-              <Stack
-                direction="row"
-                spacing={1}
-                justifyContent="center"
-                alignItems="center"
-                mb={4}
               >
-                <Box
-                  sx={{
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    p: 1,
-                    borderRadius: "12px",
-                    display: "flex",
-                  }}
-                >
-                  <EmojiEventsRounded color="primary" sx={{ fontSize: 20 }} />
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={900}
-                  letterSpacing={1}
-                >
-                  SEASON LEADERS
-                </Typography>
-              </Stack>
+                Season leaders
+              </Typography>
 
               <Box
                 sx={{
@@ -222,7 +180,6 @@ export default function PlayerStatsClient() {
                   alignItems: "flex-end",
                   justifyContent: "center",
                   gap: { xs: 1, sm: 2 },
-                  pb: 1,
                 }}
               >
                 <PodiumStep rank={2} player={top3Players[1]} />
@@ -241,7 +198,7 @@ export default function PlayerStatsClient() {
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        {["", "Goalkeeper", "Defender", "Midfielder", "Attacker"].map((pos) => (
+        {POSITION_FILTERS.map((pos) => (
           <MenuItem
             key={pos}
             onClick={() => {

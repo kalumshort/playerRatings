@@ -84,75 +84,71 @@ export default function PlayerSeasonAverageListItem({
       <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
     );
 
+  const ratingColor = getRatingColor(rating);
+
   return (
     <Paper
+      elevation={0}
       onClick={() => router.push(`/${clubSlug}/players/${playerId}`)}
       sx={{
-        p: 2,
-        ...theme.clay?.card,
+        py: { xs: 1.25, sm: 1.5 },
+        pl: { xs: 1.25, sm: 1.5 },
+        pr: { xs: 2, sm: 2.5 },
         display: "flex",
         alignItems: "center",
+        gap: { xs: 1, sm: 1.5 },
         cursor: "pointer",
-        transition: "all 0.2s ease-in-out",
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 2,
+        transition: "border-color 120ms, background-color 120ms",
         "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: theme.shadows[4],
-          bgcolor: alpha(theme.palette.primary.main, 0.02),
+          borderColor: alpha(theme.palette.primary.main, 0.4),
+          bgcolor: alpha(theme.palette.primary.main, 0.03),
         },
       }}
     >
-      {/* RANK */}
       <Typography
-        variant="h6"
+        variant="caption"
         sx={{
-          width: 40,
-          fontWeight: 900,
-          color: "text.disabled",
+          width: { xs: 24, sm: 28 },
+          fontWeight: 700,
+          color: "text.secondary",
+          flexShrink: 0,
         }}
       >
-        #{globalRank}
+        {globalRank}
       </Typography>
 
-      {/* AVATAR */}
       <Avatar
         src={playerStaticData.photo}
         alt={playerStaticData.name}
         sx={{
-          width: 48,
-          height: 48,
-          mr: 2,
-          border: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
+          width: { xs: 36, sm: 40 },
+          height: { xs: 36, sm: 40 },
+          flexShrink: 0,
         }}
       />
 
-      {/* INFO */}
-      <Box flexGrow={1}>
-        <Typography variant="subtitle1" fontWeight={700}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap>
           {playerStaticData.name}
         </Typography>
-
         <Typography variant="caption" color="text.secondary">
-          Games Played: {playedMatchesCount}
+          {playedMatchesCount} {playedMatchesCount === 1 ? "game" : "games"}
         </Typography>
       </Box>
 
-      {/* RATING BADGE */}
-      <Box
+      <Typography
+        variant="subtitle1"
         sx={{
-          px: 1.5,
-          py: 0.5,
-          borderRadius: "8px",
-          bgcolor: alpha(getRatingColor(rating), 0.1),
-          color: getRatingColor(rating),
-          border: `1px solid ${alpha(getRatingColor(rating), 0.2)}`,
-          minWidth: "45px",
-          textAlign: "center",
+          fontWeight: 700,
+          color: rating > 0 ? ratingColor : "text.disabled",
+          lineHeight: 1,
+          flexShrink: 0,
         }}
       >
-        <Typography variant="subtitle2" fontWeight={800}>
-          {rating > 0 ? rating.toFixed(1) : "-.-"}
-        </Typography>
-      </Box>
+        {rating > 0 ? rating.toFixed(1) : "-.-"}
+      </Typography>
     </Paper>
   );
 }

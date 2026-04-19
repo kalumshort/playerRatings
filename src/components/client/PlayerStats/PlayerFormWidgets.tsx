@@ -12,12 +12,18 @@ import {
   alpha,
   Skeleton,
 } from "@mui/material";
-import { WhatshotRounded, AcUnitRounded } from "@mui/icons-material";
-import { useParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { TrendingUpRounded, TrendingDownRounded } from "@mui/icons-material";
+import { useParams, useRouter } from "next/navigation";
 
-// --- TYPES & INTERFACES ---
 import { RootState, AppDispatch } from "@/lib/redux/store";
+import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors";
+import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
+import { selectAllMatchRatings } from "@/lib/redux/selectors/ratingsSelectors";
+import { fetchMatchPlayerRatings } from "@/lib/redux/actions/ratingsActions";
+import useGlobalData from "@/Hooks/useGlobalData";
+import useGroupData from "@/Hooks/useGroupData";
+
+const RECENT_MATCH_COUNT = 3;
 
 interface PlayerForm {
   playerId: string;
@@ -27,311 +33,219 @@ interface PlayerForm {
   photo: string;
 }
 
-// --- SELECTORS & ACTIONS ---
-// Replace these with your actual Next.js Redux paths
-
-import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors";
-import useGlobalData from "@/Hooks/useGlobalData";
-import useGroupData from "@/Hooks/useGroupData";
-import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
-import { selectAllMatchRatings } from "@/lib/redux/selectors/ratingsSelectors";
-import { fetchMatchPlayerRatings } from "@/lib/redux/actions/ratingsActions";
-import { useRouter } from "next/navigation";
-
 export default function PlayerFormWidgets() {
   const router = useRouter();
-  const theme = useTheme() as any;
   const dispatch = useDispatch<AppDispatch>();
-
+  const { clubSlug } = useParams();
   const { currentYear } = useGlobalData();
   const { activeGroupId } = useGroupData();
 
-  const { clubSlug } = useParams();
-
-  // Extracting from params safely
-
-  // 1. Get Base Data
   const previousFixtures = useSelector(selectPreviousFixtures);
-  // Using the Mapped Squad selector we created earlier for O(1) lookups
   const squadData = useSelector((state: RootState) =>
     selectSeasonSquadData(state),
   );
   const ratingsMap = useSelector(selectAllMatchRatings);
 
-  // Hardcoded or from a global state
-
-  // --- 2. DATA FETCHING EFFECT ---
-  useEffect(() => {
-    if (previousFixtures?.length > 0 && activeGroupId) {
-      const last3Matches = [...previousFixtures]
-        .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp)
-        .slice(0, 3);
-
-      last3Matches.forEach((match) => {
-        const mId = String(match.fixture.id);
-        if (!ratingsMap[mId]) {
-          dispatch(
-            fetchMatchPlayerRatings({
-              matchId: mId,
-              groupId: activeGroupId,
-              currentYear: currentYear,
-            }),
-          );
-        }
-      });
-    }
-  }, [previousFixtures, activeGroupId, currentYear, ratingsMap, dispatch]);
-
-  // --- 3. LOGIC ENGINE ---
-  const { hotPlayer, coldPlayer, isLoading } = useMemo(() => {
-    // 1. Basic Guards
-    if (
-      !previousFixtures ||
-      !squadData ||
-      Object.keys(squadData).length === 0
-    ) {
-      return { isLoading: true };
-    }
-
-    const last3Matches = [...previousFixtures]
+  const recentMatches = useMemo(() => {
+    if (!previousFixtures?.length) return [];
+    return [...previousFixtures]
       .sort((a, b) => b.fixture.timestamp - a.fixture.timestamp)
-      .slice(0, 3);
+      .slice(0, RECENT_MATCH_COUNT);
+  }, [previousFixtures]);
 
-    if (last3Matches.length === 0) return { isLoading: false };
-
-    // 2. CHECK: Do we have the data?
-    // We use .some() instead of .every() so one empty match doesn't break it
-    const hasSomeData = last3Matches.some(
-      (m) => ratingsMap[String(m.fixture.id)],
-    );
-    if (!hasSomeData) return { isLoading: true };
-
-    const formStats: Record<string, { total: number; count: number }> = {};
-
-    last3Matches.forEach((match) => {
+  useEffect(() => {
+    if (!activeGroupId) return;
+    recentMatches.forEach((match) => {
       const mId = String(match.fixture.id);
-      const matchData = ratingsMap[mId];
-
-      if (matchData?.players) {
-        // 1. Use Object.entries to get [ID, DATA]
-        Object.entries(matchData.players).forEach(
-          ([playerId, pStats]: [string, any]) => {
-            // 2. The ID is the key from the object
-            const pId = String(playerId);
-
-            // 3. Safety check against your squad data
-            if (!squadData[pId]) return;
-
-            const totalRating = Number(pStats.totalRating || 0);
-            const totalSubmits = Number(pStats.totalSubmits || 1);
-            const calculatedRating = totalRating / totalSubmits;
-
-            if (calculatedRating > 0) {
-              if (!formStats[pId]) {
-                formStats[pId] = { total: 0, count: 0 };
-              }
-              formStats[pId].total += calculatedRating;
-              formStats[pId].count += 1;
-            }
-          },
+      if (!ratingsMap[mId]) {
+        dispatch(
+          fetchMatchPlayerRatings({
+            matchId: mId,
+            groupId: activeGroupId,
+            currentYear,
+          }),
         );
       }
     });
+  }, [recentMatches, activeGroupId, currentYear, ratingsMap, dispatch]);
 
-    // 3. Convert to averages
-    const averages = Object.entries(formStats)
-      .map(([id, stats]) => ({
-        playerId: id,
-        avgRating: stats.total / stats.count,
-        matchesPlayed: stats.count,
-      }))
-      .filter((p) => p.matchesPlayed >= 1);
-
-    // 4. Final Verification
-    if (averages.length < 2) {
-      // If we have data in Redux but 0 eligible players, stop loading
-      return { isLoading: false };
+  const { hotPlayer, coldPlayer, isLoading } = useMemo(() => {
+    if (!squadData || Object.keys(squadData).length === 0) {
+      return { isLoading: true };
     }
+    if (recentMatches.length === 0) return { isLoading: false };
 
-    averages.sort((a, b) => b.avgRating - a.avgRating);
+    const loadedMatches = recentMatches.filter(
+      (m) => ratingsMap[String(m.fixture.id)],
+    );
+    if (loadedMatches.length === 0) return { isLoading: true };
 
-    const hydrate = (item: any) => ({
+    const totals: Record<string, { total: number; count: number }> = {};
+
+    loadedMatches.forEach((match) => {
+      const matchData = ratingsMap[String(match.fixture.id)];
+      if (!matchData?.players) return;
+
+      Object.entries(matchData.players).forEach(
+        ([playerId, pStats]: [string, any]) => {
+          if (!squadData[playerId]) return;
+
+          const totalRating = Number(pStats.totalRating) || 0;
+          const totalSubmits = Number(pStats.totalSubmits) || 0;
+          if (totalSubmits === 0) return;
+
+          const rating = totalRating / totalSubmits;
+          if (rating <= 0) return;
+
+          if (!totals[playerId]) totals[playerId] = { total: 0, count: 0 };
+          totals[playerId].total += rating;
+          totals[playerId].count += 1;
+        },
+      );
+    });
+
+    // Consistency rule: must have played every recent match we have data for.
+    const eligible = Object.entries(totals)
+      .filter(([, s]) => s.count === loadedMatches.length)
+      .map(([id, s]) => ({
+        playerId: id,
+        avgRating: s.total / s.count,
+        matchesPlayed: s.count,
+      }));
+
+    if (eligible.length < 2) return { isLoading: false };
+
+    eligible.sort((a, b) => b.avgRating - a.avgRating);
+
+    const hydrate = (item: {
+      playerId: string;
+      avgRating: number;
+      matchesPlayed: number;
+    }): PlayerForm => ({
       ...item,
       name: squadData[item.playerId]?.name || "Unknown",
       photo: squadData[item.playerId]?.photo || "",
     });
 
     return {
-      hotPlayer: hydrate(averages[0]),
-      coldPlayer: hydrate(averages[averages.length - 1]),
+      hotPlayer: hydrate(eligible[0]),
+      coldPlayer: hydrate(eligible[eligible.length - 1]),
       isLoading: false,
     };
-  }, [previousFixtures, ratingsMap, squadData]);
-
-  // --- RENDER LOGIC ---
-  if (isLoading) {
-    return (
-      <Paper elevation={0} sx={{ ...theme.clay?.card, p: 2, mb: 3 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            mb: 2,
-            display: "block",
-            fontWeight: 700,
-            color: "text.secondary",
-          }}
-        >
-          CHECKING RECENT FORM...
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <Skeleton
-            variant="rounded"
-            height={180}
-            sx={{ flex: 1, borderRadius: 4 }}
-          />
-          <Skeleton
-            variant="rounded"
-            height={180}
-            sx={{ flex: 1, borderRadius: 4 }}
-          />
-        </Stack>
-      </Paper>
-    );
-  }
-
-  if (!hotPlayer || !coldPlayer) return null;
+  }, [recentMatches, ratingsMap, squadData]);
 
   return (
-    <Paper elevation={0} sx={{ ...theme.clay?.card, p: 2, mb: 3 }}>
+    <Paper elevation={0} sx={{ p: 2 }}>
       <Typography
-        variant="caption"
-        fontWeight={800}
+        variant="overline"
         sx={{
-          ml: 1,
-          mb: 2,
           display: "block",
+          mb: 1.5,
           color: "text.secondary",
-          letterSpacing: 0.5,
+          letterSpacing: 1,
+          fontWeight: 700,
         }}
       >
-        FORM GUIDE (LAST 3 MATCHES)
+        Form · Last {RECENT_MATCH_COUNT} matches
       </Typography>
 
-      <Stack direction="row" spacing={2}>
-        <WidgetCard
-          type="hot"
-          player={hotPlayer}
-          onClick={() =>
-            router.push(`/${clubSlug}/players/${hotPlayer.playerId}`)
-          }
-        />
-        <WidgetCard
-          type="cold"
-          player={coldPlayer}
-          onClick={() =>
-            router.push(`/${clubSlug}/players/${coldPlayer.playerId}`)
-          }
-        />
-      </Stack>
+      {isLoading ? (
+        <Stack direction="row" spacing={1.5}>
+          <Skeleton variant="rounded" height={44} sx={{ flex: 1 }} />
+          <Skeleton variant="rounded" height={44} sx={{ flex: 1 }} />
+        </Stack>
+      ) : !hotPlayer || !coldPlayer ? (
+        <Typography variant="body2" color="text.secondary">
+          Not enough recent data yet.
+        </Typography>
+      ) : (
+        <Stack direction="row" spacing={1.5}>
+          <FormCard
+            variant="hot"
+            player={hotPlayer}
+            onClick={() =>
+              router.push(`/${clubSlug}/players/${hotPlayer.playerId}`)
+            }
+          />
+          <FormCard
+            variant="cold"
+            player={coldPlayer}
+            onClick={() =>
+              router.push(`/${clubSlug}/players/${coldPlayer.playerId}`)
+            }
+          />
+        </Stack>
+      )}
     </Paper>
   );
 }
 
-// --- SUB-COMPONENT: WIDGET CARD ---
-const WidgetCard = ({
-  type,
+function FormCard({
+  variant,
   player,
   onClick,
 }: {
-  type: "hot" | "cold";
+  variant: "hot" | "cold";
   player: PlayerForm;
   onClick: () => void;
-}) => {
+}) {
   const theme = useTheme();
-  const isHot = type === "hot";
-  const mainColor = isHot ? "#FF3D00" : "#00B0FF";
+  const isHot = variant === "hot";
+  const accent = isHot ? theme.palette.success.main : theme.palette.error.main;
+  const Icon = isHot ? TrendingUpRounded : TrendingDownRounded;
+
+  const lastName = player.name.split(" ").slice(-1)[0];
 
   return (
     <Box
       onClick={onClick}
-      component={motion.div}
-      whileHover={{ y: -4 }}
+      role="button"
+      tabIndex={0}
       sx={{
         flex: 1,
-        borderRadius: "24px",
+        minWidth: 0,
         cursor: "pointer",
-        position: "relative",
-        border: `1px solid ${alpha(mainColor, 0.3)}`,
-        background: `linear-gradient(180deg, ${alpha(mainColor, 0.05)} 0%, ${alpha(mainColor, 0.15)} 100%)`,
-        p: 2,
+        px: 1,
+        py: 0.75,
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        borderLeft: `3px solid ${accent}`,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        gap: 1,
+        transition: "border-color 120ms, background-color 120ms",
         "&:hover": {
-          boxShadow: `0 12px 24px -10px ${alpha(mainColor, 0.4)}`,
-          borderColor: mainColor,
+          borderColor: alpha(accent, 0.5),
+          borderLeftColor: accent,
+          bgcolor: alpha(accent, 0.04),
         },
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5,
-          color: "white",
-          bgcolor: mainColor,
-          px: 1.5,
-          py: 0.5,
-          borderRadius: "20px",
-          boxShadow: `0 4px 12px ${alpha(mainColor, 0.4)}`,
-          mb: 2,
-        }}
-      >
-        {isHot ? (
-          <WhatshotRounded sx={{ fontSize: 18 }} />
-        ) : (
-          <AcUnitRounded sx={{ fontSize: 18 }} />
-        )}
-        <Typography variant="caption" fontWeight={900} letterSpacing={1}>
-          {isHot ? "ON FIRE" : "ICE COLD"}
-        </Typography>
-      </Box>
-
+      <Icon sx={{ fontSize: 16, color: accent, flexShrink: 0 }} />
       <Avatar
         src={player.photo}
-        sx={{
-          width: 64,
-          height: 64,
-          border: `3px solid ${theme.palette.background.paper}`,
-          boxShadow: `0 0 20px ${alpha(mainColor, 0.4)}`,
-          mb: 1,
-        }}
+        alt={player.name}
+        sx={{ width: 28, height: 28, flexShrink: 0 }}
       />
-
       <Typography
-        variant="h3"
+        variant="body2"
+        fontWeight={600}
+        noWrap
+        sx={{ flex: 1, minWidth: 0, fontSize: "0.8rem", lineHeight: 1.2 }}
+      >
+        {lastName}
+      </Typography>
+      <Typography
         sx={{
-          fontWeight: 900,
-          color: mainColor,
+          fontWeight: 700,
+          color: accent,
           lineHeight: 1,
-          mt: 1,
-          mb: 0.5,
-          textShadow: `0 2px 10px ${alpha(mainColor, 0.3)}`,
+          flexShrink: 0,
+          fontSize: "0.95rem",
         }}
       >
         {player.avgRating.toFixed(1)}
       </Typography>
-
-      <Typography
-        variant="body2"
-        fontWeight={700}
-        color="text.secondary"
-        noWrap
-        sx={{ maxWidth: "100%", opacity: 0.8 }}
-      >
-        {player.name.split(" ").pop()}
-      </Typography>
     </Box>
   );
-};
+}
