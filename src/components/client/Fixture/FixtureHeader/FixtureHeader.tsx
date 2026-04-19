@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Paper,
@@ -11,31 +11,68 @@ import {
   alpha,
   Skeleton,
   useTheme,
+  Chip,
 } from "@mui/material";
 import {
   StadiumRounded,
   SportsRounded,
   SportsSoccerRounded,
   CalendarMonthRounded,
-  EmojiEventsRounded,
 } from "@mui/icons-material";
 
-// --- HELPERS ---
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const calculateTimeLeft = (targetTime: number) => {
   const difference = +new Date(targetTime * 1000) - +new Date();
-  let timeLeft = null;
-  if (difference > 0) {
-    timeLeft = {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / 1000 / 60) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
-  }
-  return timeLeft;
+  if (difference <= 0) return null;
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
 };
 
-// --- SKELETON ---
+// ─── Animated score number — counts up from 0 to target ───────────────────────
+
+const AnimatedScore = ({ value }: { value: number }) => {
+  const [displayed, setDisplayed] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (hasAnimated.current || value === 0) {
+      setDisplayed(value);
+      return;
+    }
+    hasAnimated.current = true;
+    let current = 0;
+    const steps = value;
+    const duration = 600;
+    const stepTime = Math.floor(duration / steps);
+    const timer = setInterval(() => {
+      current += 1;
+      setDisplayed(current);
+      if (current >= value) clearInterval(timer);
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return (
+    <Typography
+      variant="h2"
+      sx={{
+        fontWeight: 800,
+        lineHeight: 1,
+        fontSize: { xs: "2.5rem", sm: "3rem", md: "3.75rem" },
+      }}
+    >
+      {displayed}
+    </Typography>
+  );
+};
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
 export const FixtureHeaderSkeleton = ({
   className,
 }: {
@@ -47,43 +84,45 @@ export const FixtureHeaderSkeleton = ({
     sx={{
       p: 0,
       overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      minHeight: "200px",
+      minHeight: 200,
       bgcolor: "background.paper",
     }}
   >
-    <Box sx={{ display: "flex", justifyContent: "center", pt: 2, pb: 1 }}>
-      <Skeleton
-        variant="rounded"
-        width={100}
-        height={28}
-        sx={{ borderRadius: 14 }}
-      />
-    </Box>
-    <Box sx={{ px: 1.5, pb: 2.5 }}>
-      <Grid container alignItems="center" spacing={1.5}>
+    <Box sx={{ px: 2, pt: 2.5, pb: 2 }}>
+      <Grid container alignItems="center" spacing={1}>
         <Grid size={{ xs: 3.5 }}>
           <Stack alignItems="center" spacing={1.2}>
-            <Skeleton variant="circular" width={90} height={90} />
-            <Skeleton variant="text" width={80} height={24} />
+            <Skeleton variant="circular" width={72} height={72} />
+            <Skeleton variant="text" width={70} height={20} />
           </Stack>
         </Grid>
         <Grid size={{ xs: 5 }}>
-          <Stack alignItems="center" spacing={1.2}>
+          <Stack alignItems="center" spacing={1}>
+            <Skeleton variant="text" width={90} height={16} />
             <Skeleton
               variant="rounded"
-              width={140}
-              height={70}
-              sx={{ borderRadius: 3 }}
+              width={130}
+              height={56}
+              sx={{ borderRadius: 2 }}
             />
-            <Skeleton variant="text" width={80} height={20} />
+            <Skeleton
+              variant="rounded"
+              width={100}
+              height={20}
+              sx={{ borderRadius: 10 }}
+            />
+            <Skeleton
+              variant="rounded"
+              width={110}
+              height={26}
+              sx={{ borderRadius: 13 }}
+            />
           </Stack>
         </Grid>
         <Grid size={{ xs: 3.5 }}>
           <Stack alignItems="center" spacing={1.2}>
-            <Skeleton variant="circular" width={90} height={90} />
-            <Skeleton variant="text" width={80} height={24} />
+            <Skeleton variant="circular" width={72} height={72} />
+            <Skeleton variant="text" width={70} height={20} />
           </Stack>
         </Grid>
       </Grid>
@@ -91,27 +130,52 @@ export const FixtureHeaderSkeleton = ({
   </Paper>
 );
 
-// --- MAIN COMPONENT ---
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface FixtureHeaderProps {
+  fixture: any;
+  onClick?: (id: string | number) => void;
+  showDetails?: boolean;
+  showScorers?: boolean;
+  addClass?: string;
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function FixtureHeader({
   fixture,
   onClick,
   showDetails = false,
   showScorers = false,
   addClass,
-}: any) {
+}: FixtureHeaderProps) {
   const theme = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  if (!fixture) {
-    return <FixtureHeaderSkeleton className={addClass} />;
-  }
+  // Trigger entrance animation after first paint
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
-  const { teams, fixture: fixData, goals, score, events } = fixture;
+  if (!fixture) return <FixtureHeaderSkeleton className={addClass} />;
+
+  const {
+    teams,
+    fixture: fixData,
+    goals,
+    score,
+    events,
+    league,
+    statistics,
+  } = fixture;
+
   const status = fixData.status.short;
   const isLive = ["1H", "2H", "HT", "ET", "P", "BT"].includes(status);
   const isFinished = ["FT", "AET", "PEN"].includes(status);
   const isScheduled = ["NS", "TBD"].includes(status);
-  const matchDate = new Date(fixData.timestamp * 1000);
 
+  const matchDate = new Date(fixData.timestamp * 1000);
   const dayMonth = matchDate.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -121,16 +185,42 @@ export default function FixtureHeader({
     minute: "2-digit",
   });
 
+  const homeEvents = (events ?? []).filter(
+    (e: any) =>
+      e.team.id === teams.home.id && (e.type === "Goal" || e.type === "Card"),
+  );
+  const awayEvents = (events ?? []).filter(
+    (e: any) =>
+      e.team.id === teams.away.id && (e.type === "Goal" || e.type === "Card"),
+  );
+  const hasEvents = homeEvents.length > 0 || awayEvents.length > 0;
+
+  const homePossession = statistics?.[0]?.statistics?.find(
+    (s: any) => s.type === "Ball Possession",
+  )?.value as string | undefined;
+  const awayPossession = statistics?.[1]?.statistics?.find(
+    (s: any) => s.type === "Ball Possession",
+  )?.value as string | undefined;
+
+  const showPossession = !isScheduled && homePossession && awayPossession;
+
   const getScorers = (teamId: number) =>
-    events
-      ?.filter((e: any) => e.team.id === teamId && e.type === "Goal")
+    (events ?? [])
+      .filter((e: any) => e.team.id === teamId && e.type === "Goal")
       .reduce((acc: any[], curr: any) => {
         const timeStr = `${curr.time.elapsed}${curr.time.extra ? `+${curr.time.extra}` : ""}'`;
-        const existing = acc.find((p) => p.name === curr.player.name);
+        const existing = acc.find((p: any) => p.name === curr.player.name);
         if (existing) existing.times.push(timeStr);
         else acc.push({ name: curr.player.name, times: [timeStr] });
         return acc;
-      }, []) || [];
+      }, []);
+
+  // Shared entrance transition factory
+  const entrance = (delayMs: number) => ({
+    opacity: mounted ? 1 : 0,
+    transform: mounted ? "translateY(0)" : "translateY(10px)",
+    transition: `opacity 0.4s ease ${delayMs}ms, transform 0.4s ease ${delayMs}ms`,
+  });
 
   return (
     <Paper
@@ -138,163 +228,290 @@ export default function FixtureHeader({
       className={addClass}
       elevation={0}
       sx={{
-        padding: "0px",
+        p: 0,
         overflow: "hidden",
         cursor: onClick ? "pointer" : "default",
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
         "&:hover": onClick
           ? { transform: "translateY(-2px)", boxShadow: theme.shadows[4] }
           : undefined,
+        // Live glow — animates on/off via keyframes
         ...(isLive && {
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)}, transparent 70%)`,
+          animation: "liveGlow 2.5s ease-in-out infinite",
+          "@keyframes liveGlow": {
+            "0%,100%": {
+              boxShadow: `0 0 0 0 ${alpha(theme.palette.error.main, 0)}`,
+            },
+            "50%": {
+              boxShadow: `0 0 18px 4px ${alpha(theme.palette.error.main, 0.18)}`,
+            },
+          },
         }),
       }}
     >
-      {/* Status / Live Badge */}
-      <Box sx={{ display: "flex", justifyContent: "center", pt: 2, pb: 1 }}>
-        {isLive ? (
-          <LiveBadge elapsed={fixData.status.elapsed} />
-        ) : (
-          <Box
-            sx={{
-              px: 2.5,
-              py: 0.75,
-              borderRadius: 14,
-              bgcolor: alpha(theme.palette.text.primary, 0.06),
-              border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "0.82rem",
-                fontWeight: 800,
-                color: "text.secondary",
-                letterSpacing: 0.6,
-              }}
-            >
-              {isScheduled ? `${dayMonth} • ${time}` : status}
-            </Typography>
-          </Box>
-        )}
-      </Box>
-
-      {/* Main content */}
-      <Box sx={{ px: { xs: 1, sm: 2 }, pb: { xs: 2.5, sm: 3.5 } }}>
+      {/* ── Teams + Score ── */}
+      <Box sx={{ px: { xs: 1.5, sm: 2 }, pt: 2.5, pb: hasEvents ? 1 : 2.5 }}>
         <Grid container alignItems="center" spacing={1}>
-          {/* Home Team */}
+          {/* Home team — slides in from left */}
           <Grid size={{ xs: 3.5 }}>
-            <TeamColumn team={teams.home} />
+            <Box sx={{ ...entrance(0) }}>
+              <TeamColumn team={teams.home} />
+            </Box>
           </Grid>
 
-          {/* Score / Timer */}
+          {/* Score centre — fades in slightly later */}
           <Grid size={{ xs: 5 }}>
-            <Stack alignItems="center" spacing={1.5}>
-              {isScheduled ? (
-                <CountdownDisplay targetTime={fixData.timestamp} />
-              ) : (
-                <>
+            <Box sx={{ ...entrance(80) }}>
+              <Stack alignItems="center" spacing={0.75}>
+                {/* League label */}
+                {league && (
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    {league.logo && (
+                      <Box
+                        component="img"
+                        src={league.logo}
+                        alt={league.name}
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          objectFit: "contain",
+                          opacity: 0.7,
+                        }}
+                        onError={(e: any) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    )}
+                    <Typography
+                      sx={{
+                        fontSize: {
+                          xs: "0.68rem",
+                          sm: "0.75rem",
+                          md: "0.82rem",
+                        },
+                        color: "text.disabled",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {league.name}
+                      {league.round
+                        ? ` · ${league.round.replace("Regular Season - ", "R")}`
+                        : ""}
+                    </Typography>
+                  </Stack>
+                )}
+
+                {/* Score or countdown */}
+                {isScheduled ? (
+                  <CountdownDisplay targetTime={fixData.timestamp} />
+                ) : (
                   <Stack
                     direction="row"
                     alignItems="center"
-                    justifyContent="center"
-                    spacing={{ xs: 2.5, sm: 4 }}
-                    sx={{ width: "100%" }}
+                    spacing={{ xs: 2, sm: 3 }}
                   >
-                    <Typography variant="h2" sx={{ fontWeight: 900 }}>
-                      {goals.home ?? 0}
-                    </Typography>
+                    <AnimatedScore value={goals?.home ?? 0} />
                     <Typography
                       sx={{
                         fontWeight: 300,
                         color: "text.disabled",
+                        fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
                       }}
                     >
-                      —
+                      –
                     </Typography>
-                    <Typography variant="h2" sx={{ fontWeight: 900 }}>
-                      {goals.away ?? 0}
-                    </Typography>
+                    <AnimatedScore value={goals?.away ?? 0} />
                   </Stack>
-                  {/* HT / Pens pills */}
-                  <Stack direction="row" spacing={1.5} sx={{ mt: 0.5 }}>
-                    {score.halftime.home !== null && !isFinished && (
+                )}
+
+                {/* HT + status */}
+                {!isScheduled && (
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    {score?.halftime?.home !== null && (
+                      <Typography
+                        sx={{
+                          fontSize: {
+                            xs: "0.72rem",
+                            sm: "0.8rem",
+                            md: "0.88rem",
+                          },
+                          color: "text.disabled",
+                        }}
+                      >
+                        HT {score.halftime.home}–{score.halftime.away}
+                      </Typography>
+                    )}
+                    {score?.halftime?.home !== null && (
+                      <Typography
+                        sx={{ fontSize: "0.72rem", color: "text.disabled" }}
+                      >
+                        ·
+                      </Typography>
+                    )}
+                    {isLive ? (
+                      <LiveBadge elapsed={fixData.status.elapsed} />
+                    ) : (
+                      <Chip
+                        label={isFinished ? "Full time" : status}
+                        size="small"
+                        color={isFinished ? "success" : "default"}
+                        sx={{
+                          height: 20,
+                          fontSize: {
+                            xs: "0.68rem",
+                            sm: "0.75rem",
+                            md: "0.8rem",
+                          },
+                          fontWeight: 600,
+                          "& .MuiChip-label": { px: 1 },
+                        }}
+                      />
+                    )}
+                  </Stack>
+                )}
+
+                {/* Scheduled date */}
+                {isScheduled && (
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" },
+                      color: "text.secondary",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {dayMonth} · {time}
+                  </Typography>
+                )}
+
+                {/* Possession pill */}
+                {showPossession && showDetails && (
+                  <Stack direction="row" alignItems="center" sx={{ mt: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        borderRadius: 20,
+                        overflow: "hidden",
+                        border: `0.5px solid ${alpha(theme.palette.divider, 0.6)}`,
+                      }}
+                    >
                       <Box
                         sx={{
-                          bgcolor: alpha(theme.palette.text.primary, 0.08),
-                          px: 2,
-                          py: 0.6,
-                          borderRadius: 12,
+                          px: 1.25,
+                          py: 0.4,
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
                         }}
                       >
                         <Typography
-                          variant="caption"
-                          fontWeight={800}
-                          color="text.secondary"
+                          sx={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "primary.main",
+                          }}
                         >
-                          HT {score.halftime.home}–{score.halftime.away}
+                          {homePossession}
                         </Typography>
                       </Box>
-                    )}
-                    {score.penalty.home !== null && (
                       <Box
                         sx={{
-                          bgcolor: "error.main",
-                          color: "error.contrastText",
-                          px: 2,
-                          py: 0.6,
-                          borderRadius: 12,
+                          px: 1,
+                          py: 0.4,
+                          bgcolor: alpha(theme.palette.text.primary, 0.04),
                         }}
                       >
-                        <Typography variant="caption" fontWeight={900}>
-                          PEN {score.penalty.home}–{score.penalty.away}
+                        <Typography
+                          sx={{ fontSize: "0.65rem", color: "text.disabled" }}
+                        >
+                          poss
                         </Typography>
                       </Box>
-                    )}
+                      <Box
+                        sx={{
+                          px: 1.25,
+                          py: 0.4,
+                          bgcolor: alpha(theme.palette.text.primary, 0.04),
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "text.secondary",
+                          }}
+                        >
+                          {awayPossession}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Stack>
-                </>
-              )}
-            </Stack>
+                )}
+
+                {/* Pen score */}
+                {score?.penalty?.home !== null && (
+                  <Chip
+                    label={`PEN ${score.penalty.home}–${score.penalty.away}`}
+                    size="small"
+                    color="error"
+                    sx={{
+                      height: 20,
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      "& .MuiChip-label": { px: 1 },
+                    }}
+                  />
+                )}
+              </Stack>
+            </Box>
           </Grid>
 
-          {/* Away Team */}
+          {/* Away team — slides in from right */}
           <Grid size={{ xs: 3.5 }}>
-            <TeamColumn team={teams.away} />
+            <Box sx={{ ...entrance(0) }}>
+              <TeamColumn team={teams.away} />
+            </Box>
           </Grid>
         </Grid>
-
-        {/* Scorers */}
-        {showScorers && !isScheduled && (
-          <Box
-            sx={{
-              mt: 3,
-              pt: 2,
-              borderTop: `1px solid ${theme.palette.divider}`,
-            }}
-          >
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                {getScorers(teams.home.id).map((s, i) => (
-                  <ScorerRow key={i} scorer={s} align="right" />
-                ))}
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                {getScorers(teams.away.id).map((s, i) => (
-                  <ScorerRow key={i} scorer={s} align="left" />
-                ))}
-              </Grid>
-            </Grid>
-          </Box>
-        )}
       </Box>
 
-      {/* Footer */}
+      {/* ── Scorers ── */}
+      {showScorers && !isScheduled && (
+        <Box
+          sx={{
+            px: { xs: 1.5, sm: 2 },
+            pb: 2,
+            pt: 0.5,
+            borderTop: `0.5px solid ${theme.palette.divider}`,
+            ...entrance(200),
+          }}
+        >
+          <Grid container spacing={2} sx={{ mt: 0 }} justifyContent="center">
+            <Grid size={{ xs: 5 }}>
+              <Stack alignItems="flex-end">
+                {getScorers(teams.home.id).map((s: any, i: number) => (
+                  <ScorerRow key={i} scorer={s} align="right" />
+                ))}
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 5 }}>
+              <Stack alignItems="flex-start">
+                {getScorers(teams.away.id).map((s: any, i: number) => (
+                  <ScorerRow key={i} scorer={s} align="left" />
+                ))}
+              </Stack>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {/* ── Details footer ── */}
       {showDetails && (
         <Box
           sx={{
-            p: 1.5,
-            bgcolor: alpha(theme.palette.text.primary, 0.04),
-            borderTop: `1px solid ${theme.palette.divider}`,
-            mt: "auto",
+            px: { xs: 1.5, sm: 2 },
+            py: 1.25,
+            bgcolor: alpha(theme.palette.text.primary, 0.03),
+            borderTop: `0.5px solid ${theme.palette.divider}`,
+            ...entrance(220),
           }}
         >
           <Stack
@@ -303,54 +520,27 @@ export default function FixtureHeader({
             justifyContent="center"
             flexWrap="wrap"
             useFlexGap
-            sx={{ opacity: 0.75, rowGap: 1 }}
+            sx={{ opacity: 0.7, rowGap: 0.75 }}
           >
-            {/* League */}
             <Stack direction="row" spacing={0.75} alignItems="center">
-              <EmojiEventsRounded sx={{ fontSize: 15 }} />
-              <Typography variant="caption" fontWeight={700}>
-                {fixture.league.name}
+              <CalendarMonthRounded sx={{ fontSize: 13 }} />
+              <Typography variant="caption" fontWeight={600}>
+                {dayMonth} · {time}
               </Typography>
             </Stack>
-
-            {/* Date & Time */}
-            <Stack direction="row" spacing={0.75} alignItems="center">
-              <CalendarMonthRounded sx={{ fontSize: 15 }} />
-              <Typography variant="caption" fontWeight={700}>
-                {new Date(fixData.timestamp * 1000).toLocaleDateString(
-                  "en-GB",
-                  {
-                    day: "numeric",
-                    month: "short",
-                  },
-                )}
-                {" • "}
-                {new Date(fixData.timestamp * 1000).toLocaleTimeString(
-                  "en-GB",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  },
-                )}
-              </Typography>
-            </Stack>
-
-            {/* Venue */}
             {fixData.venue?.name && (
               <Stack direction="row" spacing={0.75} alignItems="center">
-                <StadiumRounded sx={{ fontSize: 15 }} />
-                <Typography variant="caption" fontWeight={700}>
+                <StadiumRounded sx={{ fontSize: 13 }} />
+                <Typography variant="caption" fontWeight={600}>
                   {fixData.venue.name}
                 </Typography>
               </Stack>
             )}
-
-            {/* Referee */}
             {fixData.referee && (
               <Stack direction="row" spacing={0.75} alignItems="center">
-                <SportsRounded sx={{ fontSize: 15 }} />
-                <Typography variant="caption" fontWeight={700}>
-                  {fixData.referee}
+                <SportsRounded sx={{ fontSize: 13 }} />
+                <Typography variant="caption" fontWeight={600}>
+                  {fixData.referee.split(",")[0]}
                 </Typography>
               </Stack>
             )}
@@ -361,125 +551,155 @@ export default function FixtureHeader({
   );
 }
 
-// ────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-const TeamColumn = ({ team }: any) => {
-  const theme = useTheme();
+const TeamColumn = ({ team }: { team: any }) => (
+  <Stack alignItems="center" spacing={1} sx={{ width: "100%" }}>
+    <Avatar
+      src={team.logo}
+      variant="square"
+      sx={{
+        width: { xs: 64, sm: 72, md: 80 },
+        height: { xs: 64, sm: 72, md: 80 },
+        bgcolor: "transparent",
+        "& img": { objectFit: "contain" },
+      }}
+    />
+    <Typography
+      align="center"
+      sx={{
+        fontWeight: 700,
+        fontSize: { xs: "0.82rem", sm: "0.95rem", md: "1.1rem" },
+        lineHeight: 1.2,
+        maxWidth: 110,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+      }}
+    >
+      {team.name}
+    </Typography>
+  </Stack>
+);
+
+const EventItem = ({
+  event,
+  align,
+}: {
+  event: any;
+  align: "left" | "right";
+}) => {
+  const isGoal = event.type === "Goal";
+  const isCard = event.type === "Card";
+  const isYellow = isCard && event.detail?.toLowerCase().includes("yellow");
+  const isRed = isCard && event.detail?.toLowerCase().includes("red");
+  const timeStr = `${event.time.elapsed}${event.time.extra ? `+${event.time.extra}` : ""}'`;
+
   return (
     <Stack
+      direction={align === "right" ? "row-reverse" : "row"}
       alignItems="center"
-      spacing={{ xs: 1.25, sm: 1.5 }}
-      sx={{ width: "100%" }}
+      spacing={0.5}
     >
-      <Box
-        sx={{
-          width: { xs: 88, sm: 96, md: 104 },
-          height: { xs: 88, sm: 96, md: 104 },
-          borderRadius: "50%",
-          bgcolor: "background.paper",
-          display: "grid",
-          placeItems: "center",
-          overflow: "hidden",
-        }}
-      >
-        <Avatar
-          src={team.logo}
-          variant="square"
-          sx={{
-            width: "78%",
-            height: "78%",
-            bgcolor: "transparent",
-            "& img": { objectFit: "contain" },
-          }}
-        />
-      </Box>
       <Typography
-        variant="subtitle1"
-        align="center"
         sx={{
-          fontWeight: 800,
-          fontSize: { xs: "0.96rem", sm: "1.05rem", md: "1.12rem" },
-          lineHeight: 1.22,
-          maxWidth: "120px",
-          px: 0.5,
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
+          lineHeight: 1,
+          flexShrink: 0,
         }}
       >
-        {team.name}
+        {isGoal ? "⚽" : isYellow ? "🟨" : isRed ? "🟥" : ""}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: { xs: "0.72rem", sm: "0.8rem", md: "0.88rem" },
+          color: "text.secondary",
+          lineHeight: 1.3,
+        }}
+      >
+        {event.player.name}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: { xs: "0.65rem", sm: "0.72rem", md: "0.8rem" },
+          color: "text.disabled",
+          flexShrink: 0,
+        }}
+      >
+        {timeStr}
       </Typography>
     </Stack>
   );
 };
 
-const ScorerRow = ({ scorer, align }: any) => (
+const ScorerRow = ({
+  scorer,
+  align,
+}: {
+  scorer: any;
+  align: "left" | "right";
+}) => (
   <Stack
-    direction={align === "right" ? "row" : "row-reverse"}
-    justifyContent="flex-end"
+    direction={align === "right" ? "row-reverse" : "row"}
     alignItems="center"
     spacing={0.75}
-    sx={{ mb: 0.75 }}
+    sx={{ mb: 0.5 }}
   >
+    <SportsSoccerRounded sx={{ fontSize: 11, opacity: 0.4 }} />
     <Typography
-      sx={{ fontSize: "0.78rem", fontWeight: 600, color: "text.secondary" }}
+      sx={{
+        fontSize: { xs: "0.75rem", sm: "0.82rem", md: "0.9rem" },
+        fontWeight: 600,
+        color: "text.secondary",
+      }}
     >
       {scorer.name}
       <Typography
         component="span"
         sx={{
-          ml: 0.75,
-          fontSize: "0.82rem",
+          ml: 0.5,
+          fontSize: "0.75rem",
           color: "primary.main",
-          fontWeight: 800,
+          fontWeight: 700,
         }}
       >
         {scorer.times.join(", ")}
       </Typography>
     </Typography>
-    <SportsSoccerRounded sx={{ fontSize: 12, opacity: 0.45 }} />
   </Stack>
 );
 
-const LiveBadge = ({ elapsed }: { elapsed: any }) => (
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      gap: 1.25,
-      px: 2,
-      py: 0.75,
-      borderRadius: 14,
-      bgcolor: alpha("#ff1744", 0.12),
-      border: "1px solid #ff5252",
-      boxShadow: "0 2px 10px rgba(255,23,68,0.2)",
-    }}
-  >
+const LiveBadge = ({ elapsed }: { elapsed: number }) => (
+  <Stack direction="row" alignItems="center" spacing={0.75}>
     <Box
       sx={{
-        width: 10,
-        height: 10,
+        width: 7,
+        height: 7,
         borderRadius: "50%",
-        bgcolor: "#ff1744",
-        animation: "pulse 1.4s infinite",
-        "@keyframes pulse": {
-          "0%,100%": { opacity: 1 },
-          "50%": { opacity: 0.4 },
+        bgcolor: "error.main",
+        animation: "livePulse 1.4s ease-in-out infinite",
+        "@keyframes livePulse": {
+          "0%,100%": { opacity: 1, transform: "scale(1)" },
+          "50%": { opacity: 0.3, transform: "scale(0.75)" },
         },
       }}
     />
-    <Typography sx={{ fontSize: "0.82rem", fontWeight: 900, color: "#d50000" }}>
-      LIVE {elapsed || "?"}'
+    <Typography
+      sx={{
+        fontSize: { xs: "0.72rem", sm: "0.8rem", md: "0.9rem" },
+        fontWeight: 800,
+        color: "error.main",
+      }}
+    >
+      {elapsed}'
     </Typography>
-  </Box>
+  </Stack>
 );
 
 const CountdownDisplay = ({ targetTime }: { targetTime: number }) => {
-  const [timeLeft, setTimeLeft] = useState<any>(null);
+  const [timeLeft, setTimeLeft] =
+    useState<ReturnType<typeof calculateTimeLeft>>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -492,33 +712,24 @@ const CountdownDisplay = ({ targetTime }: { targetTime: number }) => {
     return () => clearInterval(timer);
   }, [targetTime]);
 
-  // Hydration Guard
   if (!mounted || !timeLeft) {
     return (
       <Typography
-        sx={{ fontSize: "0.9rem", fontWeight: 800, color: "text.secondary" }}
+        sx={{ fontSize: "0.85rem", fontWeight: 600, color: "text.secondary" }}
       >
         Match starting soon
       </Typography>
     );
   }
 
-  const showDays = timeLeft.days > 0;
   return (
     <Stack
       direction="row"
-      spacing={{ xs: 1.5, sm: 2 }}
+      spacing={1}
       justifyContent="center"
       alignItems="center"
-      useFlexGap
-      flexWrap="wrap"
-      sx={{
-        width: "fit-content",
-        maxWidth: "100%",
-        mx: "auto",
-      }}
     >
-      {showDays && <TimeBox val={timeLeft.days} label="days" />}
+      {timeLeft.days > 0 && <TimeBox val={timeLeft.days} label="days" />}
       <TimeBox val={timeLeft.hours} label="hrs" />
       <TimeBox val={timeLeft.minutes} label="min" />
       <TimeBox val={timeLeft.seconds} label="sec" />
@@ -526,24 +737,33 @@ const CountdownDisplay = ({ targetTime }: { targetTime: number }) => {
   );
 };
 
-const TimeBox = ({ val, label }: any) => (
+const TimeBox = ({ val, label }: { val: number; label: string }) => (
   <Box
     sx={{
-      minWidth: 58,
-      height: 58,
+      minWidth: 52,
+      height: 52,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 10,
+      borderRadius: 2,
       bgcolor: "background.paper",
-      boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
+      border: "0.5px solid",
+      borderColor: "divider",
     }}
   >
-    <Typography fontSize="1.45rem" fontWeight={900} lineHeight={1}>
+    <Typography
+      fontSize={{ xs: "1.3rem", sm: "1.6rem", md: "2rem" }}
+      fontWeight={800}
+      lineHeight={1}
+    >
       {String(val).padStart(2, "0")}
     </Typography>
-    <Typography fontSize="0.78rem" fontWeight={600} color="text.secondary">
+    <Typography
+      fontSize={{ xs: "0.65rem", sm: "0.72rem", md: "0.8rem" }}
+      fontWeight={500}
+      color="text.disabled"
+    >
       {label}
     </Typography>
   </Box>

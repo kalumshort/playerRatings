@@ -21,7 +21,6 @@ export default function LatestFixtureItem() {
     return (
       <Paper
         sx={{
-          p: 4,
           bgcolor: "grey.900",
           borderRadius: 2,
           textAlign: "center",
@@ -41,11 +40,5 @@ export default function LatestFixtureItem() {
     router.push(`${clubSlug}/fixture/${latestFixture.fixture.id}`);
   };
 
-  return (
-    <FixtureHeader
-      fixture={latestFixture}
-      showDate={true}
-      onClick={handleFixtureClick}
-    />
-  );
+  return <FixtureHeader fixture={latestFixture} onClick={handleFixtureClick} />;
 }

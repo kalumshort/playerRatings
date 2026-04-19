@@ -35,7 +35,7 @@ export default function GroupHomeClient() {
   }
 
   return (
-    <Box sx={{ mt: { xs: 2, md: 4 }, px: { xs: 2, md: 0 } }}>
+    <Box sx={{ mt: { xs: 2, md: 4 }, px: { xs: 0, md: 0 } }}>
       <Grid container spacing={3}>
         {/* --- LEFT COLUMN --- */}
         <Grid size={{ xs: 12, md: 8 }}>
