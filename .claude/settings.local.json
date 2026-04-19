@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v '^$')",
+      "Bash(grep -v \"^--$\")",
+      "Bash(awk '{print $2}')",
+      "Bash(python3)"
+    ]
+  }
+}

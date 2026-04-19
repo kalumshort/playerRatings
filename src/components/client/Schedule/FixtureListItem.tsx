@@ -2,247 +2,273 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { styled, keyframes, useTheme, alpha } from "@mui/material/styles";
+import { keyframes, useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
 import { RootState } from "@/lib/redux/store";
-import { useParams } from "next/navigation";
+import { format } from "date-fns";
 
-// --- ANIMATIONS ---
 const pulse = keyframes`
-  0% { transform: scale(0.95); opacity: 0.5; }
+  0% { transform: scale(0.95); opacity: 0.6; }
   50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.5; }
+  100% { transform: scale(0.95); opacity: 0.6; }
 `;
 
-// --- STYLED COMPONENTS ---
-
-const ItemContainer = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "statusColor" && prop !== "active",
-})<{ statusColor: string; active?: boolean }>(
-  ({ theme, statusColor, active }) => ({
-    backgroundColor: theme.palette.background.paper,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "12px 16px",
-    margin: "8px 0",
-    borderRadius: "16px",
-    borderLeft: `6px solid ${statusColor}`,
-    border: active
-      ? `1px solid ${statusColor}`
-      : `1px solid ${theme.palette.divider}`,
-    transition: "all 0.2s ease-in-out",
-    cursor: "pointer",
-    overflow: "hidden",
-    boxShadow: active ? `0 4px 12px ${alpha(statusColor, 0.2)}` : "none",
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.action.hover, 0.04),
-      transform: "translateX(4px)",
-    },
-    [theme.breakpoints.down("sm")]: {
-      padding: "10px 12px",
-    },
-  }),
-);
-
-const TeamBox = styled(Box)<{ align?: "left" | "right" }>(
-  ({ theme, align }) => ({
-    display: "flex",
-    alignItems: "center",
-    flex: 1,
-    gap: "12px",
-    flexDirection: align === "right" ? "row-reverse" : "row",
-    minWidth: 0,
-    [theme.breakpoints.down("sm")]: {
-      gap: "8px",
-    },
-  }),
-);
-
-const TeamName = styled(Typography)(({ theme }) => ({
-  fontSize: "0.85rem",
-  fontWeight: 700,
-  color: theme.palette.text.primary,
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  [theme.breakpoints.down("sm")]: {
-    fontSize: "0.75rem",
-  },
-}));
-
-const Logo = styled("img")(({ theme }) => ({
-  width: "32px",
-  height: "32px",
-  objectFit: "contain",
-  [theme.breakpoints.down("sm")]: {
-    width: "24px",
-    height: "24px",
-  },
-}));
-
-const CenterInfo = styled(Box)({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "90px",
-  flexShrink: 0,
-});
-
-const ScoreText = styled(Box, {
-  // This tells MUI not to forward the $isLive prop to the DOM
-  shouldForwardProp: (prop) => prop !== "$isLive",
-})<{ $isLive?: boolean }>(({ theme, $isLive }) => ({
-  fontSize: "1.2rem",
-  fontWeight: 900,
-  color: $isLive ? theme.palette.primary.main : theme.palette.text.primary,
-  lineHeight: 1,
-}));
-
-const LiveBadge = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  backgroundColor: alpha(theme.palette.error.main, 0.1),
-  padding: "2px 6px",
-  borderRadius: "4px",
-  marginTop: "4px",
-}));
-
-const LiveDot = styled("span")(({ theme }) => ({
-  width: "6px",
-  height: "6px",
-  backgroundColor: theme.palette.error.main,
-  borderRadius: "50%",
-  animation: `${pulse} 1.5s ease-in-out infinite`,
-}));
-
-// --- COMPONENT ---
-
-export default function FixtureListItem({
-  fixture,
-  handleFixtureClick,
-  highlight = false,
-}: any) {
+export default function FixtureListItem({ fixture, handleFixtureClick, highlight = false }: any) {
   const theme = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Get active club ID from your new Redux Store
-  const activeGroupId = useSelector(
-    (state: RootState) => state.groupData.activeGroupId,
-  );
+  const activeGroupId = useSelector((state: RootState) => state.groupData.activeGroupId);
   const activeGroup = useSelector((state: RootState) =>
     activeGroupId ? state.groupData.byGroupId[activeGroupId] : null,
   );
   const groupClubId = Number(activeGroup?.groupClubId);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const status = fixture.fixture.status.short;
   const isPending = ["NS", "TBD", "PST"].includes(status);
   const isLive = ["1H", "2H", "HT", "ET", "P", "BT"].includes(status);
   const isFinished = ["FT", "AET", "PEN"].includes(status);
 
+  const { result, resultColor } = useMemo(() => {
+    if (!isFinished) return { result: null, resultColor: theme.palette.text.secondary };
+    const isHome = fixture.teams.home.id === groupClubId;
+    const homeWin = fixture.teams.home.winner;
+    const awayWin = fixture.teams.away.winner;
+    const isDraw = homeWin === null && awayWin === null;
+    if (isDraw) return { result: "D", resultColor: theme.palette.warning.main };
+    const won = (isHome && homeWin) || (!isHome && awayWin);
+    return won
+      ? { result: "W", resultColor: theme.palette.success.main }
+      : { result: "L", resultColor: theme.palette.error.main };
+  }, [fixture, groupClubId, isFinished, theme]);
+
   const formattedDate = useMemo(() => {
     if (!fixture.fixture.timestamp) return { dayMonth: "", time: "" };
     const date = new Date(fixture.fixture.timestamp * 1000);
     return {
-      dayMonth: `${date.getDate()}/${date.getMonth() + 1}`,
-      time: date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
+      dayMonth: format(date, "EEE d MMM"),
+      time: format(date, "HH:mm"),
     };
   }, [fixture.fixture.timestamp]);
 
-  const statusColor = useMemo(() => {
-    if (isPending) return theme.palette.divider;
-    if (isLive) return theme.palette.primary.main;
-
-    const isHome = fixture.teams.home.id === groupClubId;
-    const teamWon = isHome
-      ? fixture.teams.home.winner
-      : fixture.teams.away.winner;
-    const isDraw =
-      fixture.teams.home.winner === null && fixture.teams.away.winner === null;
-
-    if (isDraw) return theme.palette.warning.main;
-    return teamWon ? theme.palette.success.main : theme.palette.error.main;
-  }, [fixture, groupClubId, isPending, isLive, theme]);
-
-  // Prevent server-side timestamp mismatch
   if (!mounted) return null;
 
   return (
-    <ItemContainer
-      statusColor={statusColor}
-      active={highlight}
+    <Box
       onClick={() => handleFixtureClick(fixture.fixture.id)}
+      sx={(t) => ({
+        ...t.clay.card,
+        cursor: "pointer",
+        overflow: "hidden",
+        transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+        ...(highlight && {
+          outline: `2px solid ${t.palette.primary.main}`,
+          outlineOffset: "2px",
+        }),
+        "&:hover": { transform: "translateY(-2px)" },
+        "&:active": { transform: "scale(0.98)" },
+      })}
     >
-      <TeamBox align="left">
-        <Logo src={fixture.teams.home.logo} alt="home" />
-        <TeamName>{fixture.teams.home.name}</TeamName>
-      </TeamBox>
+      {/* Top row: league info + status/result */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          pt: 1.5,
+          pb: 0.75,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          {fixture.league?.logo && (
+            <Box
+              component="img"
+              src={fixture.league.logo}
+              alt=""
+              sx={{ width: 14, height: 14, objectFit: "contain", opacity: 0.65 }}
+            />
+          )}
+          <Typography
+            sx={{
+              fontSize: "0.62rem",
+              fontWeight: 700,
+              color: "text.secondary",
+              opacity: 0.65,
+              letterSpacing: 0.3,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: 160,
+            }}
+          >
+            {fixture.league?.name}
+          </Typography>
+        </Box>
 
-      <CenterInfo>
-        {isPending ? (
-          <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+          {isLive && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  bgcolor: "error.main",
+                  animation: `${pulse} 1.5s ease-in-out infinite`,
+                }}
+              />
+              <Typography sx={{ fontSize: "0.6rem", fontWeight: 900, color: "error.main" }}>
+                {fixture.fixture.status.elapsed}&apos;
+              </Typography>
+            </Box>
+          )}
+          {isFinished && result && (
             <Typography
               sx={{
-                fontSize: "0.75rem",
-                fontWeight: 800,
-                color: "primary.main",
+                fontSize: "0.6rem",
+                fontWeight: 900,
+                color: resultColor,
+                bgcolor: `${resultColor}22`,
+                px: 0.9,
+                py: 0.3,
+                borderRadius: "6px",
+                letterSpacing: 0.5,
+              }}
+            >
+              {result}
+            </Typography>
+          )}
+          {isPending && (
+            <Typography
+              sx={{
+                fontSize: "0.62rem",
+                fontWeight: 700,
+                color: "text.secondary",
+                opacity: 0.65,
               }}
             >
               {formattedDate.dayMonth}
             </Typography>
-            <Typography sx={{ fontSize: "0.9rem", fontWeight: 700 }}>
+          )}
+        </Box>
+      </Box>
+
+      {/* Main row: home | score/time | away */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: 2,
+          pb: 1.75,
+          gap: 1,
+        }}
+      >
+        {/* Home team */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
+          <Box
+            component="img"
+            src={fixture.teams.home.logo}
+            alt={fixture.teams.home.name}
+            sx={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }}
+          />
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.85rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {fixture.teams.home.name}
+          </Typography>
+        </Box>
+
+        {/* Score / Time */}
+        <Box
+          sx={(t) => ({
+            ...t.clay.box,
+            flexShrink: 0,
+            textAlign: "center",
+            minWidth: 72,
+            px: 1.5,
+            py: 1,
+            borderRadius: "14px",
+          })}
+        >
+          {isPending ? (
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: "1rem",
+                color: "text.secondary",
+                lineHeight: 1,
+              }}
+            >
               {formattedDate.time}
             </Typography>
-          </Box>
-        ) : (
-          <>
-            <ScoreText $isLive={isLive}>
-              {fixture.goals.home} - {fixture.goals.away}
-            </ScoreText>
-            {isLive && (
-              <LiveBadge>
-                <LiveDot />
-                <Typography
-                  sx={{
-                    fontSize: "0.6rem",
-                    fontWeight: 900,
-                    color: "error.main",
-                  }}
-                >
-                  {fixture.fixture.status.elapsed}'
-                </Typography>
-              </LiveBadge>
-            )}
-            {isFinished && (
-              <Typography
-                sx={{
-                  fontSize: "0.65rem",
-                  opacity: 0.6,
-                  fontWeight: 700,
-                  mt: 0.5,
-                }}
-              >
-                FT
-              </Typography>
-            )}
-          </>
-        )}
-      </CenterInfo>
+          ) : (
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: "1.1rem",
+                color: isLive ? "primary.main" : "text.primary",
+                letterSpacing: 1,
+                lineHeight: 1,
+              }}
+            >
+              {fixture.goals.home} – {fixture.goals.away}
+            </Typography>
+          )}
+          {isFinished && (
+            <Typography
+              sx={{
+                fontSize: "0.5rem",
+                fontWeight: 700,
+                color: "text.secondary",
+                opacity: 0.45,
+                letterSpacing: 1,
+                mt: 0.5,
+              }}
+            >
+              FULL TIME
+            </Typography>
+          )}
+        </Box>
 
-      <TeamBox align="right">
-        <Logo src={fixture.teams.away.logo} alt="away" />
-        <TeamName>{fixture.teams.away.name}</TeamName>
-      </TeamBox>
-    </ItemContainer>
+        {/* Away team */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flex: 1,
+            minWidth: 0,
+            justifyContent: "flex-end",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.85rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "right",
+            }}
+          >
+            {fixture.teams.away.name}
+          </Typography>
+          <Box
+            component="img"
+            src={fixture.teams.away.logo}
+            alt={fixture.teams.away.name}
+            sx={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }}
+          />
+        </Box>
+      </Box>
+    </Box>
   );
 }

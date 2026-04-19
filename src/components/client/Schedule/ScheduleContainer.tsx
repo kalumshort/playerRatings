@@ -1,76 +1,33 @@
 "use client";
 
-import React, {
-  useEffect, // Changed from useLayoutEffect to avoid SSR warnings
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation"; // Import from next/navigation
+import { useRouter, useParams } from "next/navigation";
 import {
   MenuItem,
   Select,
   FormControl,
   Typography,
   Box,
-  Paper,
   Button,
   useTheme,
-  alpha,
-  Fade,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-
-// Selectors & Components
+import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import {
   selectActiveClubFixtures,
   selectLatestFixture,
 } from "@/lib/redux/selectors/fixturesSelectors";
-
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import FixtureListItem from "./FixtureListItem";
-
-// --- STYLED COMPONENTS ---
-
-const HeaderContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "16px 24px",
-  backgroundColor: alpha(theme.palette.background.paper, 0.8),
-  backdropFilter: "blur(12px)",
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  zIndex: 10,
-  position: "sticky",
-  top: 0,
-}));
-
-const ScrollContainer = styled("div", {
-  shouldForwardProp: (prop) => prop !== "scroll",
-})<{ scroll?: boolean }>(({ scroll }) => ({
-  height: scroll ? "70vh" : "auto",
-  maxHeight: scroll ? "70vh" : "none",
-  overflowY: scroll ? "auto" : "visible",
-  overflowX: "hidden",
-  scrollBehavior: "smooth",
-  paddingBottom: "80px",
-  position: "relative",
-  width: "100%",
-  "&::-webkit-scrollbar": { display: "none" },
-  scrollbarWidth: "none",
-}));
 
 interface ScheduleContainerProps {
   limitAroundLatest?: number;
   showLink?: boolean;
   scroll?: boolean;
   scrollOnLoad?: boolean;
-  initialFixtures?: any[]; // The "gift" from the Server Component
+  initialFixtures?: any[];
 }
 
 export default function ScheduleContainer({
@@ -78,93 +35,76 @@ export default function ScheduleContainer({
   showLink = false,
   scroll = true,
   scrollOnLoad = true,
-  initialFixtures = [], // Default to empty array
+  initialFixtures = [],
 }: ScheduleContainerProps) {
   const theme = useTheme();
   const router = useRouter();
-
   const params = useParams();
   const clubSlug = params?.clubSlug;
 
-  // 1. SELECT FROM STORE
   const reduxFixtures = useSelector(selectActiveClubFixtures);
-
-  // 2. HYBRID DATA LOGIC
-  // If Redux has fixtures, use them (Live data).
-  // Otherwise, use initialFixtures (Instant server data).
-  const allFixtures = useMemo(() => {
-    return reduxFixtures && reduxFixtures.length > 0
-      ? reduxFixtures
-      : initialFixtures;
-  }, [reduxFixtures, initialFixtures]);
-
   const latestFixture = useSelector(selectLatestFixture);
+
+  const allFixtures = useMemo(
+    () => (reduxFixtures && reduxFixtures.length > 0 ? reduxFixtures : initialFixtures),
+    [reduxFixtures, initialFixtures],
+  );
+
   const [selectedLeague, setSelectedLeague] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef(new Map<string | number, HTMLDivElement>());
 
-  // --- DATA PROCESSING ---
   const displayFixtures = useMemo(() => {
     if (!allFixtures) return [];
-
     let processed = selectedLeague
-      ? allFixtures.filter((item: any) => item.league.name === selectedLeague)
+      ? allFixtures.filter((f: any) => f.league.name === selectedLeague)
       : [...allFixtures];
 
-    processed.sort(
-      (a: any, b: any) => b.fixture.timestamp - a.fixture.timestamp,
-    );
+    processed.sort((a: any, b: any) => b.fixture.timestamp - a.fixture.timestamp);
 
     if (limitAroundLatest > 0 && latestFixture) {
-      const targetIndex = processed.findIndex(
-        (f: any) => f.fixture.id === latestFixture.fixture.id,
-      );
-      if (targetIndex !== -1) {
-        const start = Math.max(0, targetIndex - limitAroundLatest);
-        const end = Math.min(
-          processed.length,
-          targetIndex + limitAroundLatest + 1,
-        );
+      const idx = processed.findIndex((f: any) => f.fixture.id === latestFixture.fixture.id);
+      if (idx !== -1) {
+        const start = Math.max(0, idx - limitAroundLatest);
+        const end = Math.min(processed.length, idx + limitAroundLatest + 1);
         return processed.slice(start, end);
       }
     }
     return processed;
   }, [allFixtures, selectedLeague, latestFixture, limitAroundLatest]);
 
-  const leagueOptions = useMemo(() => {
-    if (!allFixtures) return [];
-    return [...new Set(allFixtures.map((item: any) => item.league.name))];
-  }, [allFixtures]);
+  const leagueOptions = useMemo(
+    () => (!allFixtures ? [] : [...new Set(allFixtures.map((f: any) => f.league.name))]),
+    [allFixtures],
+  );
+
+  // Group fixtures by "Month YYYY" (newest-first order preserved)
+  const groupedFixtures = useMemo(() => {
+    const map = new Map<string, any[]>();
+    displayFixtures.forEach((f: any) => {
+      const key = format(new Date(f.fixture.timestamp * 1000), "MMMM yyyy");
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(f);
+    });
+    return Array.from(map.entries()).map(([label, fixtures]) => ({ label, fixtures }));
+  }, [displayFixtures]);
 
   const handleFixtureClick = useCallback(
     (matchId: number | string) => {
-      // 1. Get the slug from params.
-      // In Next.js, if your folder is [slug], it's params.slug
-      const clubSlug = params?.clubSlug;
-
       if (clubSlug) {
-        // 2. Use an absolute path with a leading slash.
-        // This tells the router: "Start from the domain root, not the current URL."
         router.push(`/${clubSlug}/fixture/${matchId}`);
-      } else {
-        // 3. Optional: Fallback if slug is missing (e.g., if used on a non-group page)
-        console.error("[ScheduleContainer] No clubSlug found in URL params.");
       }
     },
-    [router, params?.slug], // Critical: Add params.slug to dependencies
+    [router, clubSlug],
   );
 
-  // --- SCROLL LOGIC ---
   useEffect(() => {
     if (latestFixture && scrollOnLoad && containerRef.current) {
       const node = itemsRef.current.get(latestFixture.fixture.id);
       const container = containerRef.current;
-
       if (node && container && scroll) {
-        const itemTop = node.offsetTop;
-        const itemHeight = node.clientHeight;
-        const containerHeight = container.clientHeight;
-        const scrollTo = itemTop - containerHeight / 2 + itemHeight / 2;
+        const scrollTo =
+          node.offsetTop - container.clientHeight / 2 + node.clientHeight / 2;
         container.scrollTop = scrollTo;
       } else if (node && !scroll) {
         node.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -173,56 +113,50 @@ export default function ScheduleContainer({
   }, [latestFixture, displayFixtures.length, scrollOnLoad, scroll]);
 
   return (
-    <Paper
-      elevation={0}
+    <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        p: 0,
+        flexGrow: 1,
         overflow: "hidden",
-        bgcolor: "background.paper",
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        flexGrow: 1, // Ensure it fills vertical space in the Next.js layout
+        bgcolor: "background.default",
       }}
     >
-      <HeaderContainer>
-        <Box display="flex" alignItems="center" gap={1}>
-          <CalendarMonthRoundedIcon color="primary" />
-          <Typography variant="h6" fontWeight={800}>
-            Schedule
-          </Typography>
-        </Box>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: 3,
+          py: 2,
+          flexShrink: 0,
+        }}
+      >
+        <Typography variant="caption" sx={{ fontWeight: 800, color: "text.secondary", opacity: 0.5, letterSpacing: 1 }}>
+          FIXTURES & RESULTS
+        </Typography>
 
         {!showLink ? (
-          <FormControl variant="standard" size="small" sx={{ minWidth: 120 }}>
+          <FormControl variant="standard" size="small">
             <Select
               value={selectedLeague}
               onChange={(e) => setSelectedLeague(e.target.value)}
               displayEmpty
               disableUnderline
               sx={{
-                fontSize: "0.85rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 color: "text.secondary",
-                "& .MuiSelect-select": {
-                  textAlign: "right",
-                  pr: "24px !important",
-                },
+                "& .MuiSelect-select": { pr: "24px !important" },
               }}
               renderValue={(selected) => (
                 <span>{selected || "All Competitions"}</span>
               )}
             >
-              <MenuItem value="">
-                <em>All Competitions</em>
-              </MenuItem>
+              <MenuItem value=""><em>All Competitions</em></MenuItem>
               {leagueOptions.map((league: any) => (
-                <MenuItem
-                  key={league}
-                  value={league}
-                  sx={{ fontWeight: 600, fontSize: "0.85rem" }}
-                >
+                <MenuItem key={league} value={league} sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
                   {league}
                 </MenuItem>
               ))}
@@ -231,7 +165,6 @@ export default function ScheduleContainer({
         ) : (
           <Button
             component={Link}
-            // If clubSlug exists, prepend it. If not, fallback to /schedule
             href={clubSlug ? `/${clubSlug}/schedule` : "/schedule"}
             size="small"
             endIcon={<ArrowForwardRoundedIcon />}
@@ -241,61 +174,85 @@ export default function ScheduleContainer({
             View All
           </Button>
         )}
-      </HeaderContainer>
+      </Box>
 
-      <ScrollContainer ref={containerRef} scroll={scroll}>
+      {/* Scrollable fixture list */}
+      <Box
+        ref={containerRef}
+        sx={{
+          flex: 1,
+          overflowY: scroll ? "auto" : "visible",
+          overflowX: "hidden",
+          scrollBehavior: "smooth",
+          pb: 10,
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+        }}
+      >
         {displayFixtures.length === 0 ? (
-          <Box p={6} textAlign="center">
+          <Box sx={{ p: 6, textAlign: "center" }}>
             <Typography variant="body1" color="text.secondary" fontWeight={600}>
               No fixtures found.
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ pt: 1 }}>
-            {displayFixtures.map((fixture: any, index: number) => {
-              const isLatest = latestFixture?.fixture.id === fixture.fixture.id;
-
-              return (
-                <Fade
-                  in
-                  key={fixture.fixture.id}
-                  timeout={300 + Math.min(index, 5) * 50}
+          <AnimatePresence>
+            {groupedFixtures.map(({ label, fixtures }) => (
+              <Box key={label}>
+                {/* Sticky month header */}
+                <Box
+                  sx={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 5,
+                    bgcolor: "background.default",
+                    px: 3,
+                    py: 1.25,
+                  }}
                 >
-                  <Box
-                    ref={(node: HTMLDivElement | null) => {
-                      if (node) {
-                        itemsRef.current.set(fixture.fixture.id, node);
-                      } else {
-                        itemsRef.current.delete(fixture.fixture.id);
-                      }
-                    }}
+                  <Typography
                     sx={{
-                      position: "relative",
-                      px: 2,
-                      py: 0.5,
-                      transition: "all 0.3s ease",
-                      ...(isLatest && {
-                        zIndex: 2,
-                        "& > div": {
-                          transform: "scale(1.01)",
-                          borderColor: "primary.main",
-                          boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`,
-                        },
-                      }),
+                      fontSize: "0.7rem",
+                      fontWeight: 900,
+                      color: "text.secondary",
+                      opacity: 0.45,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
                     }}
                   >
-                    <FixtureListItem
-                      fixture={fixture}
-                      handleFixtureClick={handleFixtureClick}
-                      highlight={isLatest}
-                    />
-                  </Box>
-                </Fade>
-              );
-            })}
-          </Box>
+                    {label}
+                  </Typography>
+                </Box>
+
+                {/* Fixtures for this month */}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, px: 2, pb: 1 }}>
+                  {fixtures.map((fixture: any, i: number) => {
+                    const isLatest = latestFixture?.fixture.id === fixture.fixture.id;
+                    return (
+                      <motion.div
+                        key={fixture.fixture.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.3, ease: "easeOut" }}
+                        ref={(node: HTMLDivElement | null) => {
+                          if (node) itemsRef.current.set(fixture.fixture.id, node);
+                          else itemsRef.current.delete(fixture.fixture.id);
+                        }}
+                      >
+                        <FixtureListItem
+                          fixture={fixture}
+                          handleFixtureClick={handleFixtureClick}
+                          highlight={isLatest}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </Box>
+              </Box>
+            ))}
+          </AnimatePresence>
         )}
-      </ScrollContainer>
-    </Paper>
+      </Box>
+    </Box>
   );
 }
