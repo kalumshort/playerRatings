@@ -10,7 +10,6 @@ import React, {
 } from "react";
 import {
   User,
-  getAuth,
   onAuthStateChanged,
   signOut as firebaseSignOut,
 } from "firebase/auth";
@@ -61,22 +60,45 @@ export const useAuth = (): AuthContextType => {
 };
 
 // ────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────
+
+async function mintSessionCookie(user: User): Promise<void> {
+  try {
+    const idToken = await user.getIdToken();
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) {
+      console.error("Failed to mint session cookie:", await res.text());
+    }
+  } catch (error) {
+    console.error("Session cookie creation error:", error);
+  }
+}
+
+async function clearSessionCookie(): Promise<void> {
+  try {
+    await fetch("/api/auth/session", { method: "DELETE" });
+  } catch (error) {
+    console.error("Session cookie deletion error:", error);
+  }
+}
+
+// ────────────────────────────────────────────────
 // Provider
 // ────────────────────────────────────────────────
 
 interface AuthProviderProps {
   children: ReactNode;
-  enableCookieSync?: boolean; // default: true – disable if using server-side cookies
 }
 
-export const AuthProvider = ({
-  children,
-  enableCookieSync = true,
-}: AuthProviderProps) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
-  // Derived state – updates whenever user changes
   const hasPasswordProvider = useMemo(
     () => user?.providerData?.some((p) => p.providerId === "password") ?? false,
     [user],
@@ -84,41 +106,46 @@ export const AuthProvider = ({
 
   const isSocialOnly = !hasPasswordProvider;
 
-  // Sign-out helper – centralized and typed
   const handleSignOut = async () => {
     try {
       await firebaseSignOut(auth);
-      if (enableCookieSync) {
-        document.cookie =
-          "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-      }
+      await clearSessionCookie();
     } catch (error) {
       console.error("Sign out failed:", error);
     }
   };
 
   useEffect(() => {
-    // Listen to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
-      // Optional cookie sync (useful for Next.js middleware / server components)
-      if (enableCookieSync) {
-        if (currentUser) {
-          document.cookie = `uid=${currentUser.uid}; path=/; max-age=3600; SameSite=Lax`;
-        } else {
-          document.cookie =
-            "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-        }
+      if (currentUser) {
+        // Mint a real httpOnly session cookie verified by Firebase Admin.
+        // This replaces the old plain `uid` cookie and fixes the stale tab
+        // guest bug — the server can now cryptographically verify the session.
+        await mintSessionCookie(currentUser);
+      } else {
+        await clearSessionCookie();
       }
 
-      // Only stop loading once we have the initial state
       setUserLoading(false);
     });
 
-    // Cleanup
     return () => unsubscribe();
-  }, [enableCookieSync]);
+  }, []);
+
+  // Firebase ID tokens expire every hour — refresh the session cookie
+  // automatically so long-lived tabs never go stale.
+  useEffect(() => {
+    if (!user) return;
+
+    const REFRESH_INTERVAL = 55 * 60 * 1000; // 55 minutes
+    const interval = setInterval(async () => {
+      await mintSessionCookie(user);
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const value: AuthContextType = useMemo(
     () => ({
