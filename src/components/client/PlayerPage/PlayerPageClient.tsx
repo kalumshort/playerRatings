@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   Grid,
   useTheme,
   Paper,
-  alpha,
 } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
 
@@ -24,6 +23,7 @@ import {
 
 import PlayerMatchRow from "./PlayerMatchRow";
 import PlayerPageSkeleton from "./PlayerPageSkeleton";
+import PlayerCompareControl from "./PlayerCompareControl";
 import useGroupData from "@/Hooks/useGroupData";
 import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors";
 import { selectPlayerRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
@@ -35,6 +35,10 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
   const theme = useTheme() as any;
   const dispatch = useDispatch<AppDispatch>();
 
+  const [comparePlayerId, setComparePlayerId] = useState<string | null>(null);
+
+  const compareColor = theme.palette.secondary?.main ?? "#ff9800";
+
   // 1. DATA SELECTORS
   const squadData = useSelector((state: RootState) =>
     selectSeasonSquadData(state),
@@ -43,6 +47,10 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
   const allPlayerRatings = useSelector((state: RootState) =>
     selectPlayerRatingsById(playerId)(state),
   );
+  const comparePlayerRatings = useSelector((state: RootState) =>
+    comparePlayerId ? selectPlayerRatingsById(comparePlayerId)(state) : null,
+  );
+  const comparePlayerData = comparePlayerId ? squadData?.[comparePlayerId] : null;
   const previousFixtures = useSelector(selectPreviousFixtures);
 
   const { activeGroup } = useGroupData();
@@ -68,6 +76,18 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
     }
   }, [dispatch, playerId, activeGroup]);
 
+  useEffect(() => {
+    if (comparePlayerId && activeGroup?.groupId) {
+      dispatch(
+        fetchPlayerRatingsAllMatches({
+          playerId: comparePlayerId,
+          groupId: activeGroup?.groupId,
+          currentYear,
+        }),
+      );
+    }
+  }, [dispatch, comparePlayerId, activeGroup]);
+
   // 3. CALCS
   const seasonAverage = useMemo(() => {
     const overall = allPlayerRatings?.seasonOverall;
@@ -75,9 +95,22 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
     return overall.totalRating / overall.totalSubmits;
   }, [allPlayerRatings]);
 
+  const compareSeasonAverage = useMemo(() => {
+    const overall = comparePlayerRatings?.seasonOverall;
+    if (!overall || !overall.totalSubmits) return 0;
+    return overall.totalRating / overall.totalSubmits;
+  }, [comparePlayerRatings]);
+
   if (!playerData) return <PlayerPageSkeleton />;
 
   const ratingColor = getRatingColor(seasonAverage);
+  const comparePlayerInfo = comparePlayerData
+    ? {
+        id: String(comparePlayerData.id),
+        name: comparePlayerData.name,
+        photo: comparePlayerData.photo,
+      }
+    : null;
 
   return (
     <Box
@@ -153,16 +186,38 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                 >
                   Season rating
                 </Typography>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontWeight: 700,
-                    color: seasonAverage > 0 ? ratingColor : "text.disabled",
-                    lineHeight: 1,
-                  }}
-                >
-                  {seasonAverage > 0 ? seasonAverage.toFixed(1) : "-.-"}
-                </Typography>
+
+                {comparePlayerInfo ? (
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    justifyContent="center"
+                    alignItems="flex-end"
+                  >
+                    <SeasonRatingValue
+                      value={seasonAverage}
+                      accent={theme.palette.primary.main}
+                      useRatingColor
+                    />
+                    <SeasonRatingValue
+                      value={compareSeasonAverage}
+                      accent={compareColor}
+                      label={comparePlayerInfo.name}
+                      smaller
+                    />
+                  </Stack>
+                ) : (
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      fontWeight: 700,
+                      color: seasonAverage > 0 ? ratingColor : "text.disabled",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {seasonAverage > 0 ? seasonAverage.toFixed(1) : "-.-"}
+                  </Typography>
+                )}
               </Box>
             </Paper>
           </Box>
@@ -172,7 +227,33 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         <Grid size={{ xs: 12, md: 8, lg: 9 }}>
           <Stack spacing={3}>
             <Box>
-              <SectionHeader title="Form trajectory" />
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 1.5, pl: 0.5 }}
+                gap={1}
+                flexWrap="wrap"
+              >
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: "text.secondary",
+                    letterSpacing: 1,
+                    fontWeight: 700,
+                  }}
+                >
+                  Form trajectory
+                </Typography>
+                <PlayerCompareControl
+                  squadData={squadData}
+                  excludePlayerId={playerId}
+                  comparePlayer={comparePlayerInfo}
+                  compareColor={compareColor}
+                  onSelect={(p) => setComparePlayerId(String(p.id))}
+                  onClear={() => setComparePlayerId(null)}
+                />
+              </Stack>
               <Paper
                 elevation={0}
                 sx={{
@@ -185,6 +266,9 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                 <PlayerRatingsLineGraph
                   allPlayerRatings={allPlayerRatings}
                   clubId={activeGroup?.groupClubId}
+                  comparePlayerRatings={comparePlayerRatings}
+                  comparePlayer={comparePlayerInfo}
+                  playerName={playerData.name}
                 />
               </Paper>
             </Box>
@@ -195,7 +279,12 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                 <AnimatePresence>
                   {previousFixtures.map((fixture, index) => {
                     const matchRating = allPlayerRatings?.matches?.[fixture.id];
-                    if (!matchRating) return null;
+                    const compareMatchRating = comparePlayerInfo
+                      ? comparePlayerRatings?.matches?.[fixture.id]
+                      : null;
+
+                    if (!matchRating && !compareMatchRating) return null;
+
                     return (
                       <PlayerMatchRow
                         key={fixture.id}
@@ -203,7 +292,11 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                         ratingData={matchRating}
                         index={index}
                         playerId={playerId}
+                        player={playerData}
                         clubId={activeGroup?.groupClubId}
+                        compareRatingData={compareMatchRating}
+                        comparePlayer={comparePlayerInfo}
+                        compareColor={compareColor}
                       />
                     );
                   })}
@@ -232,5 +325,71 @@ function SectionHeader({ title }: { title: string }) {
     >
       {title}
     </Typography>
+  );
+}
+
+function SeasonRatingValue({
+  value,
+  accent,
+  useRatingColor,
+  smaller,
+  label,
+}: {
+  value: number;
+  accent: string;
+  useRatingColor?: boolean;
+  smaller?: boolean;
+  label?: string;
+}) {
+  const color =
+    value <= 0
+      ? "text.disabled"
+      : useRatingColor
+        ? getRatingColor(value)
+        : accent;
+
+  return (
+    <Box sx={{ textAlign: "center" }}>
+      <Box
+        sx={{
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          bgcolor: accent,
+          mx: "auto",
+          mb: 0.5,
+        }}
+      />
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: smaller ? "2rem" : "3rem",
+          color,
+          lineHeight: 1,
+        }}
+      >
+        {value > 0 ? value.toFixed(1) : "-.-"}
+      </Typography>
+      {label && (
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            mt: 0.5,
+            fontSize: "0.6rem",
+            fontWeight: 700,
+            color: "text.secondary",
+            letterSpacing: 0.5,
+            maxWidth: 80,
+            mx: "auto",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {label}
+        </Typography>
+      )}
+    </Box>
   );
 }

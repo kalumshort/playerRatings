@@ -27,20 +27,39 @@ interface MatchRatingEntry {
   totalSubmits: number;
 }
 
+interface ComparePlayerInfo {
+  id: string;
+  name: string;
+  photo?: string;
+}
+
 interface PlayerRatingsLineGraphProps {
   allPlayerRatings: {
     matches: Record<string, MatchRatingEntry>;
   };
   clubId: any;
+  comparePlayerRatings?: {
+    matches: Record<string, MatchRatingEntry>;
+  } | null;
+  comparePlayer?: ComparePlayerInfo | null;
+  playerName?: string;
 }
 
 function shortCode(name: string) {
   return name.split(" ")[0]?.slice(0, 3).toUpperCase() ?? "";
 }
 
+function ratingFromEntry(entry?: MatchRatingEntry | null) {
+  if (!entry || !entry.totalSubmits) return null;
+  return Math.round((entry.totalRating / entry.totalSubmits) * 100) / 100;
+}
+
 export default function PlayerRatingsLineGraph({
   allPlayerRatings,
   clubId,
+  comparePlayerRatings,
+  comparePlayer,
+  playerName,
 }: PlayerRatingsLineGraphProps) {
   const theme = useTheme();
   const allFixtures = useSelector(selectActiveClubFixtures);
@@ -51,11 +70,14 @@ export default function PlayerRatingsLineGraph({
     return map;
   }, [allFixtures]);
 
-  const { graphData, seasonAverage, yDomain } = useMemo(() => {
+  const compareColor = (theme.palette as any).secondary?.main ?? "#ff9800";
+
+  const { graphData, seasonAverage, compareAverage, yDomain } = useMemo(() => {
     if (!allPlayerRatings?.matches || !allFixtures) {
       return {
-        graphData: [],
+        graphData: [] as any[],
         seasonAverage: 0,
+        compareAverage: 0,
         yDomain: [0, 10] as [number, number],
       };
     }
@@ -63,10 +85,9 @@ export default function PlayerRatingsLineGraph({
     const data = Object.values(allPlayerRatings.matches)
       .map((entry) => {
         const fixture = fixturesById.get(entry.id);
-        if (!fixture || !entry.totalSubmits) return null;
+        const rating = ratingFromEntry(entry);
+        if (!fixture || rating == null) return null;
 
-        const rating =
-          Math.round((entry.totalRating / entry.totalSubmits) * 100) / 100;
         const isHome = fixture.teams.home.id === clubId;
         const opponent = isHome ? fixture.teams.away : fixture.teams.home;
 
@@ -84,9 +105,14 @@ export default function PlayerRatingsLineGraph({
               ? "L"
               : "D";
 
+        const compareRating = ratingFromEntry(
+          comparePlayerRatings?.matches?.[entry.id],
+        );
+
         return {
           id: entry.id,
           rating,
+          compareRating,
           date: new Date(fixture.fixture.timestamp * 1000),
           opponentName: opponent.name,
           opponentShort: shortCode(opponent.name),
@@ -94,6 +120,8 @@ export default function PlayerRatingsLineGraph({
           clubId,
           result,
           score: `${fixture.score.fulltime.home} - ${fixture.score.fulltime.away}`,
+          playerName,
+          compareName: comparePlayer?.name,
         };
       })
       .filter((d): d is NonNullable<typeof d> => d !== null)
@@ -103,15 +131,20 @@ export default function PlayerRatingsLineGraph({
       return {
         graphData: [],
         seasonAverage: 0,
+        compareAverage: 0,
         yDomain: [0, 10] as [number, number],
       };
     }
 
     const ratings = data.map((d) => d.rating);
-    const minVal = Math.min(...ratings);
-    const maxVal = Math.max(...ratings);
+    const compareRatings = data
+      .map((d) => d.compareRating)
+      .filter((r): r is number => r != null);
 
-    // Enforce a minimum visible range so tight clusters don't look like dramatic swings.
+    const allVals = [...ratings, ...compareRatings];
+    const minVal = Math.min(...allVals);
+    const maxVal = Math.max(...allVals);
+
     let bottom = Math.max(0, Math.floor(minVal - 0.5));
     let top = Math.min(10, Math.ceil(maxVal + 0.5));
     if (top - bottom < MIN_Y_RANGE) {
@@ -122,13 +155,25 @@ export default function PlayerRatingsLineGraph({
     }
 
     const avg = ratings.reduce((s, r) => s + r, 0) / ratings.length;
+    const compareAvg = compareRatings.length
+      ? compareRatings.reduce((s, r) => s + r, 0) / compareRatings.length
+      : 0;
 
     return {
       graphData: data,
       seasonAverage: avg,
+      compareAverage: compareAvg,
       yDomain: [bottom, top] as [number, number],
     };
-  }, [allPlayerRatings, fixturesById, allFixtures, clubId]);
+  }, [
+    allPlayerRatings,
+    comparePlayerRatings,
+    fixturesById,
+    allFixtures,
+    clubId,
+    comparePlayer,
+    playerName,
+  ]);
 
   if (graphData.length === 0) {
     return (
@@ -170,7 +215,13 @@ export default function PlayerRatingsLineGraph({
         />
 
         <Tooltip
-          content={<CustomTooltip clubId={clubId} />}
+          content={
+            <CustomTooltip
+              clubId={clubId}
+              compareColor={compareColor}
+              primaryColor={theme.palette.primary.main}
+            />
+          }
           cursor={{
             stroke: theme.palette.text.secondary,
             strokeWidth: 1,
@@ -178,7 +229,7 @@ export default function PlayerRatingsLineGraph({
           }}
         />
 
-        {seasonAverage > 0 && (
+        {seasonAverage > 0 && !comparePlayer && (
           <ReferenceLine
             y={seasonAverage}
             stroke={theme.palette.text.secondary}
@@ -192,6 +243,30 @@ export default function PlayerRatingsLineGraph({
               fontWeight: 600,
               offset: 8,
             }}
+          />
+        )}
+
+        {comparePlayer && (
+          <Line
+            type="monotone"
+            dataKey="compareRating"
+            stroke={compareColor}
+            strokeWidth={2}
+            strokeDasharray="5 4"
+            connectNulls={false}
+            dot={{
+              r: 3,
+              fill: compareColor,
+              stroke: theme.palette.background.paper,
+              strokeWidth: 2,
+            }}
+            activeDot={{
+              r: 6,
+              stroke: compareColor,
+              strokeWidth: 2,
+              fill: theme.palette.background.paper,
+            }}
+            animationDuration={500}
           />
         )}
 

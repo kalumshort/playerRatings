@@ -21,13 +21,13 @@ export const PALETTE = {
     highlight: "rgba(255, 255, 255, 0.05)",
     input: "#14171D",
   },
-  primary: "#A2D2FF",   // sky blue
-  secondary: "#A0E8AF", // mint green
-  success: "#A0E8AF",   // mint green
-  error: "#FFADAD",     // soft coral
-  warning: "#FFD6A5",   // peach
-  info: "#C9B8FF",      // lavender
-  coral: "#FFC8DD",     // pink
+  primary: "#A2D2FF", // sky blue
+  secondary: "#CDB4DB", // mint green
+  success: "#A0E8AF", // mint green
+  error: "#FFADAD", // soft coral
+  warning: "#FFD6A5", // peach
+  info: "#C9B8FF", // lavender
+  coral: "#FFC8DD", // pink
 } as const;
 
 // ─── TYPE AUGMENTATION ──────────────────────────────────────────────────────
@@ -172,7 +172,6 @@ export const getTheme = (
 
     // ─── COMPONENT OVERRIDES ──────────────────────────────────────
     components: {
-
       // GLOBAL BASE
       MuiCssBaseline: {
         styleOverrides: {
@@ -247,7 +246,9 @@ export const getTheme = (
       MuiDivider: {
         styleOverrides: {
           root: {
-            borderColor: isLight ? "rgba(0,0,0,0.07)" : "rgba(255,255,255,0.06)",
+            borderColor: isLight
+              ? "rgba(0,0,0,0.07)"
+              : "rgba(255,255,255,0.06)",
             margin: "4px 0",
           },
         },
@@ -360,7 +361,11 @@ export const getTheme = (
               backgroundColor: alpha(accentColor, 0.08),
             },
           },
-          sizeSmall: { padding: "8px 18px", fontSize: "0.8rem", borderRadius: "18px" },
+          sizeSmall: {
+            padding: "8px 18px",
+            fontSize: "0.8rem",
+            borderRadius: "18px",
+          },
           sizeLarge: { padding: "16px 36px", fontSize: "1.05rem" },
         },
       },
@@ -393,7 +398,9 @@ export const getTheme = (
             "&.Mui-focused": {
               boxShadow: shadows.innerFocus(accentColor, isLight),
             },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
             "&.Mui-error": {
               boxShadow: isLight
                 ? `inset 3px 3px 6px #C6CEDA, 0 0 0 2px ${PALETTE.error}`
@@ -595,7 +602,9 @@ export const getTheme = (
             backgroundColor: colors.bg,
             border: "none",
             borderRadius: "40px 0 0 40px",
-            boxShadow: isLight ? "-15px 0 30px #d1d9e6" : "-15px 0 30px #0e1014",
+            boxShadow: isLight
+              ? "-15px 0 30px #d1d9e6"
+              : "-15px 0 30px #0e1014",
             backgroundImage: "none",
           },
         },
@@ -616,7 +625,9 @@ export const getTheme = (
           root: {
             "& .MuiBackdrop-root": {
               backdropFilter: "blur(8px)",
-              backgroundColor: isLight ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.55)",
+              backgroundColor: isLight
+                ? "rgba(0,0,0,0.15)"
+                : "rgba(0,0,0,0.55)",
             },
           },
         },
@@ -716,7 +727,9 @@ export const getTheme = (
             borderRadius: "999px",
             height: "6px",
             backgroundColor: colors.input,
-            boxShadow: isLight ? "inset 2px 2px 4px #C6CEDA" : "inset 2px 2px 4px #0B0E12",
+            boxShadow: isLight
+              ? "inset 2px 2px 4px #C6CEDA"
+              : "inset 2px 2px 4px #0B0E12",
           },
           bar: { borderRadius: "999px", backgroundColor: accentColor },
         },

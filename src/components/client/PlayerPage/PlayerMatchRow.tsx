@@ -1,23 +1,33 @@
 "use client";
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Avatar, Box, Stack, Typography, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
+
+interface ComparePlayerInfo {
+  id: string;
+  name: string;
+  photo?: string;
+}
 
 export default function PlayerMatchRow({
   fixture,
   ratingData,
   index,
   clubId,
+  player,
+  compareRatingData,
+  comparePlayer,
+  compareColor,
 }: any) {
   const theme = useTheme() as any;
   const { clubSlug } = useParams();
   const myClubId = Number(clubId);
 
-  const { result, rating } = useMemo(() => {
+  const { result, rating, compareRating } = useMemo(() => {
     const isHome = fixture.teams.home.id === myClubId;
     const homeWin = fixture.teams.home.winner;
     const awayWin = fixture.teams.away.winner;
@@ -31,15 +41,22 @@ export default function PlayerMatchRow({
       else if (homeWin) res = "L";
     }
 
-    return {
-      result: res,
-      rating: ratingData.totalRating / (ratingData.totalSubmits || 1),
-    };
-  }, [fixture, myClubId, ratingData]);
+    const r = ratingData
+      ? ratingData.totalRating / (ratingData.totalSubmits || 1)
+      : null;
+    const cr = compareRatingData
+      ? compareRatingData.totalRating / (compareRatingData.totalSubmits || 1)
+      : null;
+
+    return { result: res, rating: r, compareRating: cr };
+  }, [fixture, myClubId, ratingData, compareRatingData]);
 
   const resultColor = getResultColor(result, theme);
-  const ratingColor = getRatingColor(rating);
+  const ratingColor = rating != null ? getRatingColor(rating) : theme.palette.divider;
   const date = new Date(fixture.fixture.timestamp * 1000);
+  const compareAccent = compareColor ?? theme.palette.secondary?.main ?? "#ff9800";
+
+  const isCompareMode = comparePlayer != null;
 
   return (
     <motion.div
@@ -146,41 +163,63 @@ export default function PlayerMatchRow({
               </Typography>
             </Box>
 
-            <Box
-              sx={(t: any) => ({
-                ...t.clay?.box,
-                flexShrink: 0,
-                textAlign: "center",
-                minWidth: 84,
-                px: 1.75,
-                py: 1,
-                borderRadius: "14px",
-                border: `1px solid ${ratingColor}33`,
-              })}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 900,
-                  fontSize: "1.75rem",
-                  color: ratingColor,
-                  lineHeight: 1,
-                }}
+            {isCompareMode ? (
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ flexShrink: 0, alignItems: "stretch" }}
               >
-                {rating.toFixed(1)}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: "0.5rem",
-                  fontWeight: 700,
-                  color: "text.secondary",
-                  opacity: 0.55,
-                  letterSpacing: 1,
-                  mt: 0.5,
-                }}
+                <CompareRatingChip
+                  rating={rating}
+                  label={player?.name}
+                  photo={player?.photo}
+                  accent={theme.palette.primary.main}
+                  useRatingColor
+                />
+                <CompareRatingChip
+                  rating={compareRating}
+                  label={comparePlayer?.name}
+                  photo={comparePlayer?.photo}
+                  accent={compareAccent}
+                />
+              </Stack>
+            ) : (
+              <Box
+                sx={(t: any) => ({
+                  ...t.clay?.box,
+                  flexShrink: 0,
+                  textAlign: "center",
+                  minWidth: 84,
+                  px: 1.75,
+                  py: 1,
+                  borderRadius: "14px",
+                  border: `1px solid ${ratingColor}33`,
+                })}
               >
-                RATING
-              </Typography>
-            </Box>
+                <Typography
+                  sx={{
+                    fontWeight: 900,
+                    fontSize: "1.75rem",
+                    color: ratingColor,
+                    lineHeight: 1,
+                  }}
+                >
+                  {rating != null ? rating.toFixed(1) : "—"}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.5rem",
+                    fontWeight: 700,
+                    color: "text.secondary",
+                    opacity: 0.55,
+                    letterSpacing: 1,
+                    mt: 0.5,
+                  }}
+                >
+                  RATING
+                </Typography>
+              </Box>
+            )}
 
             <Box
               sx={{
@@ -220,5 +259,68 @@ export default function PlayerMatchRow({
         </Box>
       </Link>
     </motion.div>
+  );
+}
+
+function CompareRatingChip({
+  rating,
+  label,
+  photo,
+  accent,
+  useRatingColor,
+}: {
+  rating: number | null;
+  label?: string;
+  photo?: string;
+  accent: string;
+  useRatingColor?: boolean;
+}) {
+  const color =
+    rating == null
+      ? "text.disabled"
+      : useRatingColor
+        ? getRatingColor(rating)
+        : accent;
+
+  return (
+    <Box
+      sx={(t: any) => ({
+        ...t.clay?.box,
+        textAlign: "center",
+        minWidth: 72,
+        px: 1.25,
+        py: 0.75,
+        borderRadius: "12px",
+        border: `1px solid ${accent}44`,
+      })}
+    >
+      <Stack
+        direction="row"
+        spacing={0.5}
+        alignItems="center"
+        justifyContent="center"
+        sx={{ mb: 0.25 }}
+      >
+        <Avatar src={photo} sx={{ width: 14, height: 14 }} />
+        <Box
+          sx={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            bgcolor: accent,
+          }}
+        />
+      </Stack>
+      <Typography
+        sx={{
+          fontWeight: 900,
+          fontSize: "1.35rem",
+          color,
+          lineHeight: 1,
+        }}
+      >
+        {rating != null ? rating.toFixed(1) : "—"}
+      </Typography>
+    </Box>
   );
 }
