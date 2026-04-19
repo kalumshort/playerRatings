@@ -24,6 +24,7 @@ import {
 import PlayerMatchRow from "./PlayerMatchRow";
 import PlayerPageSkeleton from "./PlayerPageSkeleton";
 import PlayerCompareControl from "./PlayerCompareControl";
+import PlayerNavigationControl from "./PlayerNavigationControl";
 import useGroupData from "@/Hooks/useGroupData";
 import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors";
 import { selectPlayerRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
@@ -50,7 +51,9 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
   const comparePlayerRatings = useSelector((state: RootState) =>
     comparePlayerId ? selectPlayerRatingsById(comparePlayerId)(state) : null,
   );
-  const comparePlayerData = comparePlayerId ? squadData?.[comparePlayerId] : null;
+  const comparePlayerData = comparePlayerId
+    ? squadData?.[comparePlayerId]
+    : null;
   const previousFixtures = useSelector(selectPreviousFixtures);
 
   const { activeGroup } = useGroupData();
@@ -75,6 +78,10 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
       );
     }
   }, [dispatch, playerId, activeGroup]);
+
+  useEffect(() => {
+    setComparePlayerId(null);
+  }, [playerId]);
 
   useEffect(() => {
     if (comparePlayerId && activeGroup?.groupId) {
@@ -119,7 +126,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         mx: "auto",
         pb: 10,
         px: { xs: 2, md: 4 },
-        pt: 2,
+        pt: 5,
       }}
     >
       <Grid container spacing={{ xs: 2, md: 3 }}>
@@ -163,7 +170,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ mb: 2.5 }}
+                sx={{ mb: 1.5 }}
               >
                 {playerData.position} · #{playerData.number}
               </Typography>
@@ -220,6 +227,27 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                 )}
               </Box>
             </Paper>
+            <Stack
+              direction="row"
+              spacing={1}
+              justifyContent="center"
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ mb: 2.5 }}
+            >
+              <PlayerNavigationControl
+                squadData={squadData}
+                currentPlayerId={playerId}
+              />
+              <PlayerCompareControl
+                squadData={squadData}
+                excludePlayerId={playerId}
+                comparePlayer={comparePlayerInfo}
+                compareColor={compareColor}
+                onSelect={(p) => setComparePlayerId(String(p.id))}
+                onClear={() => setComparePlayerId(null)}
+              />
+            </Stack>
           </Box>
         </Grid>
 
@@ -227,33 +255,6 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         <Grid size={{ xs: 12, md: 8, lg: 9 }}>
           <Stack spacing={3}>
             <Box>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 1.5, pl: 0.5 }}
-                gap={1}
-                flexWrap="wrap"
-              >
-                <Typography
-                  variant="overline"
-                  sx={{
-                    color: "text.secondary",
-                    letterSpacing: 1,
-                    fontWeight: 700,
-                  }}
-                >
-                  Form trajectory
-                </Typography>
-                <PlayerCompareControl
-                  squadData={squadData}
-                  excludePlayerId={playerId}
-                  comparePlayer={comparePlayerInfo}
-                  compareColor={compareColor}
-                  onSelect={(p) => setComparePlayerId(String(p.id))}
-                  onClear={() => setComparePlayerId(null)}
-                />
-              </Stack>
               <Paper
                 elevation={0}
                 sx={{
