@@ -562,6 +562,8 @@ const TeamColumn = ({ team }: { team: any }) => (
         width: { xs: 64, sm: 72, md: 80 },
         height: { xs: 64, sm: 72, md: 80 },
         bgcolor: "transparent",
+        boxShadow: "none",
+        borderRadius: 0,
         "& img": { objectFit: "contain" },
       }}
     />
@@ -698,6 +700,7 @@ const LiveBadge = ({ elapsed }: { elapsed: number }) => (
 );
 
 const CountdownDisplay = ({ targetTime }: { targetTime: number }) => {
+  const theme = useTheme();
   const [timeLeft, setTimeLeft] =
     useState<ReturnType<typeof calculateTimeLeft>>(null);
   const [mounted, setMounted] = useState(false);
@@ -722,49 +725,82 @@ const CountdownDisplay = ({ targetTime }: { targetTime: number }) => {
     );
   }
 
+  const segments: { val: number; label: string; pulse?: boolean }[] = [];
+  if (timeLeft.days > 0)
+    segments.push({ val: timeLeft.days, label: "days" });
+  segments.push({ val: timeLeft.hours, label: "hrs" });
+  segments.push({ val: timeLeft.minutes, label: "min" });
+  segments.push({ val: timeLeft.seconds, label: "sec", pulse: true });
+
   return (
-    <Stack
-      direction="row"
-      spacing={1}
-      justifyContent="center"
-      alignItems="center"
-    >
-      {timeLeft.days > 0 && <TimeBox val={timeLeft.days} label="days" />}
-      <TimeBox val={timeLeft.hours} label="hrs" />
-      <TimeBox val={timeLeft.minutes} label="min" />
-      <TimeBox val={timeLeft.seconds} label="sec" />
+    <Stack alignItems="center" spacing={0.5}>
+      <Typography
+        sx={{
+          fontSize: { xs: "0.6rem", sm: "0.65rem" },
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "text.disabled",
+        }}
+      >
+        Kicks off in
+      </Typography>
+      <Stack
+        direction="row"
+        alignItems="flex-end"
+        spacing={{ xs: 0.75, sm: 1 }}
+        sx={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {segments.map((seg, i) => (
+          <React.Fragment key={seg.label}>
+            <Stack alignItems="center" spacing={0.25}>
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.6rem", sm: "2rem", md: "2.4rem" },
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  fontVariantNumeric: "tabular-nums",
+                  color: "text.primary",
+                  ...(seg.pulse && {
+                    animation: "countdownTick 1s ease-in-out infinite",
+                    "@keyframes countdownTick": {
+                      "0%,100%": { opacity: 1 },
+                      "50%": { opacity: 0.55 },
+                    },
+                  }),
+                }}
+              >
+                {String(seg.val).padStart(2, "0")}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: { xs: "0.55rem", sm: "0.62rem" },
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "text.disabled",
+                  lineHeight: 1,
+                }}
+              >
+                {seg.label}
+              </Typography>
+            </Stack>
+            {i < segments.length - 1 && (
+              <Typography
+                sx={{
+                  fontSize: { xs: "1.3rem", sm: "1.6rem", md: "2rem" },
+                  fontWeight: 400,
+                  lineHeight: 1,
+                  color: alpha(theme.palette.text.primary, 0.25),
+                  pb: { xs: "0.7rem", sm: "0.75rem" },
+                }}
+              >
+                :
+              </Typography>
+            )}
+          </React.Fragment>
+        ))}
+      </Stack>
     </Stack>
   );
 };
-
-const TimeBox = ({ val, label }: { val: number; label: string }) => (
-  <Box
-    sx={{
-      minWidth: 52,
-      height: 52,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 2,
-      bgcolor: "background.paper",
-      border: "0.5px solid",
-      borderColor: "divider",
-    }}
-  >
-    <Typography
-      fontSize={{ xs: "1.3rem", sm: "1.6rem", md: "2rem" }}
-      fontWeight={800}
-      lineHeight={1}
-    >
-      {String(val).padStart(2, "0")}
-    </Typography>
-    <Typography
-      fontSize={{ xs: "0.65rem", sm: "0.72rem", md: "0.8rem" }}
-      fontWeight={500}
-      color="text.disabled"
-    >
-      {label}
-    </Typography>
-  </Box>
-);
