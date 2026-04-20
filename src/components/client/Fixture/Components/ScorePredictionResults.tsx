@@ -73,7 +73,7 @@ export default function ScorePredictionResults({
           // Matches the height and spacing of the input component
           justifyContent: "space-between",
           height: "100%",
-          width: "100%",
+
           boxSizing: "border-box",
         }}
       >

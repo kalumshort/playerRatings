@@ -13,6 +13,7 @@ import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
 import { useClubView } from "@/context/ClubViewProvider";
+import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
 
 // Components (Ensure these paths match your new Next.js structure)
 
@@ -213,14 +214,23 @@ export default function MobileFixtureContainer({
             )}
 
             {selectedTab === "PostPredicts" && (
-              <FixturePredictionsTab
-                fixture={fixture}
-                groupId={groupId}
-                currentYear={currentYear}
-                groupData={groupData}
-                isPreMatch={isPreMatch}
-                isGuestView={isGuestView}
-              />
+              <>
+                <FixturePredictionsTab
+                  fixture={fixture}
+                  groupId={groupId}
+                  currentYear={currentYear}
+                  groupData={groupData}
+                  isPreMatch={isPreMatch}
+                  isGuestView={isGuestView}
+                />
+                <LineupPredictorResults
+                  fixture={fixture}
+                  groupId={groupId}
+                  currentYear={currentYear}
+                  groupData={groupData}
+                  isGuestView={true}
+                />
+              </>
             )}
           </Box>
         </Fade>

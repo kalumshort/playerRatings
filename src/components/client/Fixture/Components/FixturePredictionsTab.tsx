@@ -24,7 +24,7 @@ const FixturePredictionsTab = ({
   isGuestView,
 }: FixturePredictionsTabProps) => {
   return (
-    <Stack direction={{ xs: "column", md: "row" }}>
+    <Stack direction={{ xs: "column", md: "column" }}>
       {[WinnerPredict, ScorePrediction, PreMatchMOTM].map(
         (Component, index) => (
           <span key={index}>

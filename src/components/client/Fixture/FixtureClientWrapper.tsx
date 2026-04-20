@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux"; // Added useSelector
-import { Box, Stack } from "@mui/material";
+import { Box } from "@mui/material";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,6 +17,7 @@ import FixtureHeader from "./FixtureHeader/FixtureHeader";
 import { FixtureListener } from "../Listeners/FixturesListener";
 import { UsersMatchDataListener } from "../Listeners/UsersMatchDataListener";
 import MobileFixtureContainer from "./MobileFixtureContainer";
+import DesktopFixtureHub from "./DesktopFixtureHub";
 import { GroupPredictionsListener } from "../Listeners/GroupPredictionsListener";
 import { selectFixtureById } from "@/lib/redux/selectors/fixturesSelectors";
 
@@ -109,19 +110,13 @@ export default function FixtureClientWrapper({
 
         {/* --- DESKTOP VIEW --- */}
         <Box sx={{ display: { xs: "none", md: "block" }, px: 2 }}>
-          <Stack spacing={3}>
-            <MobileFixtureContainer
-              fixture={fixture}
-              showPredictions={showPredictions}
-              groupId={groupId}
-              currentYear={currentYear}
-              groupData={group}
-            />
-
-            <Box sx={{ display: "flex", gap: 3 }}>
-              {/* Future desktop components like Lineups/Stats go here */}
-            </Box>
-          </Stack>
+          <DesktopFixtureHub
+            fixture={fixture}
+            showPredictions={showPredictions}
+            groupId={groupId}
+            currentYear={currentYear}
+            groupData={group}
+          />
         </Box>
 
         {/* --- MOBILE VIEW --- */}

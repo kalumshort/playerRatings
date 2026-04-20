@@ -19,6 +19,7 @@ import { RootState } from "@/lib/redux/store";
 import ChosenLineup from "./LineupPredictorUserSquad";
 import ConsensusLineup from "./LineupPredictorConsensusLineup";
 import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
+import { CommunityTeamStats } from "./LineupPredictorPlayerData";
 
 interface LineupTabsProps {
   fixture: any;
@@ -86,6 +87,11 @@ export default function LineupPredictorResults({
               iconPosition="start"
               label="Group XI"
             />
+            <Tab
+              icon={<GroupsRounded fontSize="small" />}
+              iconPosition="start"
+              label="Stats"
+            />
           </Tabs>
         </Paper>
       )}
@@ -124,6 +130,15 @@ export default function LineupPredictorResults({
               )}
             </Box>
           </Fade>
+        )}
+
+        {activeTab === 2 && (
+          <CommunityTeamStats
+            fixture={fixture}
+            groupId={groupId}
+            currentYear={currentYear}
+            groupData={groupData}
+          />
         )}
       </Box>
     </Box>

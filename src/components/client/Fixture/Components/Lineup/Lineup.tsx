@@ -82,7 +82,11 @@ export default function Lineup({
   }, [activeXI]);
 
   return (
-    <Paper sx={{ position: "relative", width: "100%", pt: 6 }}>
+    <Paper
+      sx={{
+        position: "relative",
+      }}
+    >
       {/* --- TOP CONTROLS --- */}
       <Box
         sx={{
@@ -94,7 +98,6 @@ export default function Lineup({
           justifyContent: "space-between",
           zIndex: 10,
           px: 1,
-          margin: "0 30px",
         }}
       >
         <StatusLegend

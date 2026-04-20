@@ -45,10 +45,10 @@ export default function LineupPredictor({
   // Triggered if the user has already submitted a team or if the prop is forced
   if (isGuestView || storedPrediction || readOnly) {
     return (
-      <Box sx={{ flexGrow: 1, width: "100%", mt: 2 }}>
+      <Box sx={{ flexGrow: 1, mt: 2 }}>
         <Grid container spacing={4} alignItems="flex-start">
           {/* LEFT: User's Saved XI / Tabs */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 12 }}>
             <LineupPredictorResults
               fixture={fixture}
               groupId={groupId}
@@ -59,14 +59,14 @@ export default function LineupPredictor({
           </Grid>
 
           {/* RIGHT: Community Consensus Stats */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* <Grid size={{ xs: 12, md: 12 }}>
             <CommunityTeamStats
               fixture={fixture}
               groupId={groupId}
               currentYear={currentYear}
               groupData={groupData}
             />
-          </Grid>
+          </Grid> */}
         </Grid>
       </Box>
     );

@@ -88,7 +88,6 @@ export default function ScorePrediction({
         flexDirection: "column",
         alignItems: "center",
         // Force the layout to spread across the full height of the parent
-        justifyContent: "space-between",
       }}
     >
       {/* --- HEADER --- */}

@@ -106,8 +106,6 @@ export default function Statistics({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        width: "100%",
-        borderRadius: "24px",
       }}
     >
       {/* HEADER */}
