@@ -43,21 +43,25 @@ const EMOJI_OPTIONS = [
   "🤡",
   "🤬",
 ];
-const EVENT_THEMES: Record<string, any> = {
+const buildEventThemes = (theme: any): Record<string, any> => ({
   Goal: {
     icon: SportsSoccerRounded,
-    bg: "#A0E8AF",
-    color: "#1a3b1e",
+    bg: theme.palette.event.goal,
+    color: theme.palette.event.goalText,
     label: "GOAL!",
   },
-  Card: { icon: StyleRounded, bg: "#FEB2B2", color: "#742A2A" },
+  Card: {
+    icon: StyleRounded,
+    bg: theme.palette.cards.red,
+    color: theme.palette.cards.redText,
+  },
   subst: {
     icon: SwapHorizRounded,
-    bg: "background.paper",
-    color: "primary.main",
+    bg: theme.palette.background.paper,
+    color: theme.palette.primary.main,
     label: "SUBSTITUTION",
   },
-};
+});
 
 // Helper to identify events uniquely without an ID
 const getEventKey = (event: any) =>
@@ -103,10 +107,7 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
 
   if (!events || events.length === 0) {
     return (
-      <Paper
-        elevation={0}
-        sx={{ ...theme.clay?.card, p: 6, textAlign: "center" }}
-      >
+      <Paper sx={{ p: 6, textAlign: "center" }}>
         <FlagRounded sx={{ fontSize: 48, opacity: 0.2, mb: 1 }} />
         <Typography variant="body2" color="text.secondary" fontWeight={800}>
           Awaiting match events...
@@ -117,7 +118,6 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
 
   return (
     <Paper
-      elevation={0}
       sx={{
         p: 0,
         overflow: "hidden",
@@ -128,7 +128,8 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
       <Box
         sx={{
           p: 2.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          borderBottom: 1,
+          borderColor: "divider",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -210,16 +211,20 @@ const EventRow = ({
     }
   };
 
+  const EVENT_THEMES = buildEventThemes(theme);
   const config = EVENT_THEMES[event.type] || {
     icon: FlagRounded,
-    bg: "grey.100",
-    color: "grey.700",
+    bg: theme.palette.background.default,
+    color: theme.palette.text.secondary,
   };
 
   const isYellow = event.detail?.includes("Yellow");
-  const iconBg = event.type === "Card" && isYellow ? "#F6E05E" : config.bg;
+  const iconBg =
+    event.type === "Card" && isYellow ? theme.palette.cards.yellow : config.bg;
   const iconColor =
-    event.type === "Card" && isYellow ? "#5F370E" : config.color;
+    event.type === "Card" && isYellow
+      ? theme.palette.cards.yellowText
+      : config.color;
 
   return (
     <Box sx={{ display: "flex", gap: 2, px: 2, py: 2, position: "relative" }}>
@@ -251,7 +256,6 @@ const EventRow = ({
             bgcolor: iconBg,
             color: iconColor,
             zIndex: 1,
-            boxShadow: 1,
           }}
         >
           <config.icon sx={{ fontSize: 18 }} />
@@ -274,11 +278,7 @@ const EventRow = ({
               size="small"
               sx={{
                 height: 24,
-                fontSize: "0.7rem",
-                fontWeight: 800,
-                borderRadius: "6px",
                 bgcolor: alpha(theme.palette.primary.main, 0.04),
-                borderColor: alpha(theme.palette.divider, 0.5),
               }}
             />
           ))}
@@ -289,7 +289,6 @@ const EventRow = ({
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
-                border: `1px dashed ${theme.palette.divider}`,
                 width: 24,
                 height: 24,
               }}
@@ -305,9 +304,7 @@ const EventRow = ({
             anchorEl={anchorEl}
             onClose={() => setAnchorEl(null)}
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-            PaperProps={{
-              sx: { p: 1, borderRadius: 3, boxShadow: theme.shadows[10] },
-            }}
+            PaperProps={{ sx: { p: 1 } }}
           >
             <Stack direction="row" spacing={0.5}>
               {EMOJI_OPTIONS.map((emoji) => (
@@ -329,8 +326,6 @@ const EventRow = ({
         sx={{
           width: 28,
           height: 28,
-          border: `2px solid ${theme.palette.background.paper}`,
-          boxShadow: 1,
         }}
       />
     </Box>
@@ -353,14 +348,24 @@ const EventContent = ({ event, label }: any) => {
           variant="body2"
           sx={{ fontWeight: 800, color: "primary.main" }}
         >
-          <span style={{ opacity: 0.6, fontSize: "0.7rem" }}>IN:</span>{" "}
+          <Box
+            component="span"
+            sx={{ opacity: 0.6, fontSize: "0.7rem" }}
+          >
+            IN:
+          </Box>{" "}
           {event.assist?.name}
         </Typography>
         <Typography
           variant="body2"
           sx={{ fontWeight: 800, color: "error.main" }}
         >
-          <span style={{ opacity: 0.6, fontSize: "0.7rem" }}>OUT:</span>{" "}
+          <Box
+            component="span"
+            sx={{ opacity: 0.6, fontSize: "0.7rem" }}
+          >
+            OUT:
+          </Box>{" "}
           {event.player?.name}
         </Typography>
       </Box>

@@ -82,12 +82,13 @@ export default function ScorePrediction({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         // Force the layout to spread across the full height of the parent
+        justifyContent: "space-between",
       }}
     >
       {/* --- HEADER --- */}

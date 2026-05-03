@@ -20,7 +20,7 @@ export const CustomTooltip = ({
 
     return (
       <Paper
-        elevation={8}
+
         sx={{
           bgcolor: "rgba(26, 28, 30, 0.95)",
           color: "#fff",

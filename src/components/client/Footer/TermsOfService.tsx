@@ -57,7 +57,7 @@ export default function TermsOfServicePage() {
   return (
     <Container maxWidth="md" sx={{ py: 10 }}>
       <Paper
-        elevation={0}
+
         sx={{
           p: { xs: 3, md: 8 },
           ...theme.clay?.card,

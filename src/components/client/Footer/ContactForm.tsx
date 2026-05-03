@@ -103,7 +103,7 @@ export default function ContactForm() {
       transition={{ duration: 0.4 }}
     >
       <Paper
-        elevation={0}
+
         sx={{
           p: { xs: 3, md: 5 },
           maxWidth: "600px",

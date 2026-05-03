@@ -22,33 +22,29 @@ const floatPulse = keyframes`
   50% { transform: translateY(-3px) scale(1.05); }
 `;
 
-const HeroCard = styled(Paper)(({ theme }: any) => ({
-  ...theme.clay?.card,
+const HeroCard = styled(Paper)(({ theme }) => ({
   position: "relative",
   padding: theme.spacing(5, 3, 4),
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   overflow: "hidden",
-  borderRadius: 28,
   background: `radial-gradient(circle at 50% 0%, ${alpha(
     theme.palette.primary.main,
     0.18,
   )} 0%, ${theme.palette.background.paper} 65%)`,
 }));
 
-const VotePill = styled(Box)(({ theme }: any) => ({
-  ...theme.clay?.box,
-  position: "absolute",
+const votePillSx = {
+  position: "absolute" as const,
   top: 18,
   right: 18,
-  padding: theme.spacing(0.5, 1.5),
+  px: 1.5,
+  py: 0.5,
   display: "inline-flex",
   alignItems: "center",
-  gap: theme.spacing(0.75),
-  borderRadius: 999,
-  backgroundColor: theme.palette.background.default,
-}));
+  gap: 0.75,
+};
 
 const Medal = styled(Box)(({ theme }) => ({
   position: "absolute",
@@ -59,17 +55,13 @@ const Medal = styled(Box)(({ theme }) => ({
   borderRadius: "50%",
   display: "grid",
   placeItems: "center",
-  background: "linear-gradient(145deg, #FFE27A 0%, #F5B300 100%)",
-  border: `4px solid ${theme.palette.background.paper}`,
-  boxShadow: "0 6px 14px rgba(0,0,0,0.25)",
+  background: `linear-gradient(145deg, ${theme.palette.motm.goldStart} 0%, ${theme.palette.motm.goldEnd} 100%)`,
   animation: `${floatPulse} 2.4s infinite ease-in-out`,
 }));
 
-const HeroAvatar = styled(Avatar)(({ theme }: any) => ({
+const HeroAvatar = styled(Avatar)(({ theme }) => ({
   width: 128,
   height: 128,
-  border: `6px solid ${theme.palette.background.paper}`,
-  boxShadow: theme.clay?.card?.boxShadow || theme.shadows[10],
   backgroundColor: theme.palette.grey[800],
 }));
 
@@ -111,21 +103,22 @@ export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
   if (!winner) return null;
 
   return (
-    <HeroCard elevation={0}>
-      <VotePill>
+    <HeroCard>
+      <Paper variant="pill" sx={votePillSx}>
         <Users size={13} color={theme.palette.text.secondary} />
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 900, color: "text.secondary", fontSize: "0.7rem" }}
-        >
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
           {winner.percentage}% OF VOTES
         </Typography>
-      </VotePill>
+      </Paper>
 
       <Box sx={{ position: "relative", mb: 2 }}>
         <HeroAvatar src={winner.img} alt={winner.name} />
         <Medal>
-          <Trophy size={20} color="#7A4F00" strokeWidth={2.5} />
+          <Trophy
+            size={20}
+            color={theme.palette.motm.bronze}
+            strokeWidth={2.5}
+          />
         </Medal>
       </Box>
 
@@ -134,7 +127,6 @@ export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
         sx={{
           color: "primary.main",
           letterSpacing: 3,
-          fontWeight: 900,
           mb: 0.5,
         }}
       >
@@ -144,7 +136,6 @@ export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
       <Typography
         variant="h4"
         sx={{
-          fontWeight: 900,
           color: "text.primary",
           lineHeight: 1.1,
           textTransform: "uppercase",
@@ -161,7 +152,7 @@ export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
 
       <Typography
         variant="body2"
-        sx={{ mt: 1.5, opacity: 0.55, fontWeight: 700, letterSpacing: 1 }}
+        sx={{ mt: 1.5, opacity: 0.55, letterSpacing: 1 }}
       >
         The fans have spoken
       </Typography>

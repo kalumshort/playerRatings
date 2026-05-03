@@ -73,9 +73,18 @@ export default function AccountTab({
       </Typography>
       <Paper sx={{ p: 3, mb: 3, mt: 1 }}>
         <Stack direction="row" spacing={2} alignItems="center">
-          <Box sx={{ p: 2, borderRadius: "50%", bgcolor: "action.hover" }}>
+          <Paper
+            variant="flat"
+            sx={{
+              p: 2,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <User />
-          </Box>
+          </Paper>
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>
               {userData.displayName}
@@ -187,7 +196,7 @@ export default function AccountTab({
 
       <ListItemButton
         onClick={handleSignOut}
-        sx={{ color: "error.main", borderRadius: 2 }}
+        sx={{ color: "error.main" }}
       >
         <ListItemIcon sx={{ minWidth: 40, color: "error.main" }}>
           <LogOut size={20} />

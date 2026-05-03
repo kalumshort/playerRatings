@@ -86,7 +86,7 @@ const buildFormationRows = (players: any[]) => {
 
 function LoadingSkeleton() {
   return (
-    <CardContainer elevation={0}>
+    <CardContainer>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Skeleton variant="text" width={140} height={40} />
@@ -143,7 +143,7 @@ export default function LatestTeamSeasonRating() {
   if (!allFixtures) return <LoadingSkeleton />;
 
   return (
-    <CardContainer elevation={0}>
+    <CardContainer>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h5" fontWeight={800}>

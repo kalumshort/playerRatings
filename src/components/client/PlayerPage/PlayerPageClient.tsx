@@ -139,7 +139,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
             }}
           >
             <Paper
-              elevation={0}
+
               sx={{
                 p: { xs: 2.5, md: 3 },
                 border: `1px solid ${theme.palette.divider}`,
@@ -256,7 +256,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
           <Stack spacing={3}>
             <Box>
               <Paper
-                elevation={0}
+
                 sx={{
                   p: 2,
                   height: 320,

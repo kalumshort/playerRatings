@@ -160,7 +160,7 @@ export default function PlayerStatsClient() {
         {/* RIGHT COL: PODIUM (Web: Order 2, Mobile: Order 1) */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }} order={{ xs: 1, md: 2 }}>
           <Stack spacing={3} sx={{ position: { md: "sticky" }, top: 100 }}>
-            <Paper elevation={0} sx={{ p: 2 }}>
+            <Paper sx={{ p: 2 }}>
               <Typography
                 variant="overline"
                 sx={{

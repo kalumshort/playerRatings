@@ -5,10 +5,20 @@ import {
   InfoOutlined,
   Close,
 } from "@mui/icons-material";
-import { Box, Typography, IconButton, Paper, Fade, Stack } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Paper,
+  Fade,
+  Stack,
+  alpha,
+  useTheme,
+} from "@mui/material";
 
 // Small status badge that appears over player heads
 export const StatusBadge = ({ status, visible }: any) => {
+  const theme = useTheme();
   if (!visible || !status) return null;
 
   let icon = null;
@@ -16,13 +26,13 @@ export const StatusBadge = ({ status, visible }: any) => {
 
   if (status.wantsSubOut) {
     icon = <ArrowDownward sx={{ fontSize: 16 }} />;
-    color = "#d32f2f";
+    color = theme.palette.error.main;
   } else if (status.isHot) {
     icon = <Whatshot sx={{ fontSize: 16 }} />;
-    color = "linear-gradient(135deg, #ff9800, #f44336)";
+    color = theme.palette.form.poor;
   } else if (status.isCold) {
     icon = <AcUnit sx={{ fontSize: 16 }} />;
-    color = "linear-gradient(135deg, #4fc3f7, #0288d1)";
+    color = theme.palette.form.inForm;
   }
 
   if (!icon) return null;
@@ -41,8 +51,6 @@ export const StatusBadge = ({ status, visible }: any) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: "2px solid white",
-        boxShadow: 3,
         zIndex: 10,
         animation: "bob 2s ease-in-out infinite",
         "@keyframes bob": { "0%, 100%": { top: -15 }, "50%": { top: -19 } },
@@ -59,11 +67,10 @@ export const StatusLegend = ({ open, setOpen, active }: any) => {
 
   if (!open)
     return (
-      <Box
+      <Paper
+        variant="pill"
         onClick={() => setOpen(true)}
         sx={{
-          bgcolor: "rgba(0,0,0,0.4)",
-          borderRadius: "20px",
           px: 1.5,
           py: 0.5,
           display: "flex",
@@ -71,24 +78,19 @@ export const StatusLegend = ({ open, setOpen, active }: any) => {
           cursor: "pointer",
         }}
       >
-        <InfoOutlined sx={{ color: "white", fontSize: 16, mr: 0.5 }} />
-        <Typography
-          variant="caption"
-          sx={{ color: "white", fontWeight: "bold" }}
-        >
+        <InfoOutlined sx={{ color: "common.white", fontSize: 16, mr: 0.5 }} />
+        <Typography variant="caption" sx={{ color: "common.white" }}>
           KEY
         </Typography>
-      </Box>
+      </Paper>
     );
 
   return (
     <Paper
+      variant="sm"
       sx={{
         p: 2,
-        borderRadius: "16px",
         minWidth: 160,
-        bgcolor: "background.paper",
-        border: "1px solid rgba(255,255,255,0.1)",
       }}
     >
       <Stack direction="row" justifyContent="space-between" mb={1}>
@@ -128,7 +130,6 @@ const LegendRow = ({ icon, label, color }: any) => (
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: "1px solid white",
         bgcolor: color,
       }}
     >

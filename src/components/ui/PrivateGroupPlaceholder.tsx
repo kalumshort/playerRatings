@@ -30,7 +30,7 @@ export default function PrivateGroupPlaceholder({
         }}
       >
         <Paper
-          elevation={0}
+
           sx={(theme) => ({
             p: 5,
 

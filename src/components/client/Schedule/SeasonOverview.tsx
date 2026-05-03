@@ -48,7 +48,7 @@ export default function SeasonOverview({ stats, played }: SeasonOverviewProps) {
 
   return (
     <Box sx={{ flexShrink: 0, zIndex: 10, pb: 2 }}>
-      <Paper elevation={0} sx={{ p: 3, borderRadius: "0 0 32px 32px" }}>
+      <Paper sx={{ p: 3 }}>
         <Box
           sx={{
             display: "flex",

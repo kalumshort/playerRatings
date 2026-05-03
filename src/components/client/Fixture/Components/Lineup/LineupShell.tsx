@@ -75,16 +75,13 @@ export default function LineupShell({
     <Box sx={{ maxWidth: 450, mx: "auto", position: "relative" }}>
       <Paper
         ref={lineupRef}
-        elevation={10}
         sx={{
           position: "relative",
           overflow: "hidden",
-          borderRadius: "24px",
           aspectRatio: "0.72",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
-          // The "Grass" Pitch Effect
           background: `linear-gradient(180deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
         }}
       >
@@ -131,8 +128,6 @@ export default function LineupShell({
                         width: 55,
                         height: 55,
                         mx: "auto",
-                        border: `3px solid white`,
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
                         bgcolor: "background.paper",
                       }}
                     />
@@ -140,10 +135,9 @@ export default function LineupShell({
                       variant="caption"
                       sx={{
                         display: "block",
-                        fontWeight: 900,
-                        fontSize: "0.65rem",
-                        color: "white",
-                        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                        color: "common.white",
+                        textShadow: (t) =>
+                          `0 2px 4px ${alpha(t.palette.common.black, 0.5)}`,
                         mt: 0.5,
                         whiteSpace: "nowrap",
                       }}
@@ -152,22 +146,21 @@ export default function LineupShell({
                     </Typography>
 
                     {player.subText && (
-                      <Box
+                      <Paper
+                        variant="pill"
                         sx={{
                           position: "absolute",
                           top: -5,
                           right: 0,
                           bgcolor: "secondary.main",
-                          color: "white",
+                          color: "common.white",
                           fontSize: "0.6rem",
                           fontWeight: 900,
                           px: 0.6,
-                          borderRadius: 1,
-                          boxShadow: 2,
                         }}
                       >
                         {player.subText}
-                      </Box>
+                      </Paper>
                     )}
                   </Box>
                 );
@@ -185,16 +178,13 @@ export default function LineupShell({
         >
           <Typography
             variant="caption"
-            sx={{ color: "white", opacity: 0.8, fontWeight: 900 }}
+            sx={{ color: "common.white", opacity: 0.8 }}
           >
             {title.toUpperCase()}
           </Typography>
           <Stack direction="row" alignItems="center" spacing={0.5}>
-            <SportsSoccer sx={{ fontSize: 14, color: "white" }} />
-            <Typography
-              variant="caption"
-              sx={{ color: "white", fontWeight: 900 }}
-            >
+            <SportsSoccer sx={{ fontSize: 14, color: "common.white" }} />
+            <Typography variant="caption" sx={{ color: "common.white" }}>
               {formation}
             </Typography>
           </Stack>
@@ -203,14 +193,14 @@ export default function LineupShell({
 
       {/* FLOATING ACTION BUTTON (Not captured in screenshot) */}
       {enableSave && (
-        <Box data-nosnap="true" style={{ textAlign: "right", marginTop: 12 }}>
+        <Box data-nosnap="true" sx={{ textAlign: "right", mt: 1.5 }}>
           <AsyncButton
             loading={isSaving}
             onClick={handleSaveImage}
             variant="contained"
             color="secondary"
             startIcon={<DownloadIcon />}
-            sx={{ borderRadius: "50px", fontWeight: 900, px: 3 }}
+            sx={{ px: 3 }}
             size="small"
           >
             Download
@@ -241,7 +231,8 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: "50%",
         height: "15%",
-        border: "2px solid white",
+        border: 2,
+        borderColor: "common.white",
         borderTop: 0,
       }}
     />
@@ -255,7 +246,8 @@ const PitchLines = () => (
         width: "30%",
         aspectRatio: "1",
         borderRadius: "50%",
-        border: "2px solid white",
+        border: 2,
+        borderColor: "common.white",
       }}
     />
     <Box
@@ -265,7 +257,7 @@ const PitchLines = () => (
         left: 0,
         right: 0,
         height: "2px",
-        bgcolor: "white",
+        bgcolor: "common.white",
       }}
     />
     {/* Penalty Area Bottom */}
@@ -277,7 +269,8 @@ const PitchLines = () => (
         transform: "translateX(-50%)",
         width: "50%",
         height: "15%",
-        border: "2px solid white",
+        border: 2,
+        borderColor: "common.white",
         borderBottom: 0,
       }}
     />

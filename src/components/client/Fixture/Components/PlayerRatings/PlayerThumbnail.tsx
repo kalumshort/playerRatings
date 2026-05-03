@@ -2,25 +2,24 @@
 
 import React, { useMemo } from "react";
 import { useSelector, shallowEqual } from "react-redux";
-import { Box, Avatar, Tooltip, styled, alpha, Stack } from "@mui/material";
+import { Box, Avatar, Tooltip, styled, Stack } from "@mui/material";
 
 import { RootState } from "@/lib/redux/store";
 
-const ACCENT = "#4EFF4E";
-
 const StatusDot = styled(Box, {
   shouldForwardProp: (prop) => prop !== "active" && prop !== "type",
-})<{ active?: boolean; type: "rated" | "motm" }>(({ theme, active, type }) => ({
-  width: 6,
-  height: 6,
-  borderRadius: "50%",
-  transition: "all 0.2s ease",
-  backgroundColor: type === "rated" ? ACCENT : theme.palette.primary.main,
-  opacity: active ? 1 : 0.6,
-  boxShadow: active
-    ? `0 0 8px ${type === "rated" ? ACCENT : theme.palette.primary.main}`
-    : "none",
-}));
+})<{ active?: boolean; type: "rated" | "motm" }>(({ theme, active, type }) => {
+  const accent =
+    type === "rated" ? theme.palette.success.main : theme.palette.primary.main;
+  return {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    transition: "all 0.2s ease",
+    backgroundColor: accent,
+    opacity: active ? 1 : 0.6,
+  };
+});
 
 interface ThumbnailProps {
   player: any;
@@ -88,18 +87,10 @@ function PlayerThumbnail({
           sx={{
             width: 40,
             height: 40,
-            fontWeight: 900,
             fontSize: "0.8rem",
-            border: `2px solid ${isActive ? ACCENT : "transparent"}`,
             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: isActive ? "scale(1.15)" : "scale(1)",
-            // Visual feedback for rated players
             filter: isRated ? "grayscale(0.2) brightness(1.1)" : "none",
-            boxShadow: isActive
-              ? `0 0 15px ${alpha(ACCENT, 0.4)}`
-              : isRated
-                ? `inset 0 0 0 2px ${alpha(ACCENT, 0.5)}`
-                : (theme) => theme.shadows[2],
             bgcolor: "grey.800",
           }}
         >

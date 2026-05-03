@@ -105,7 +105,7 @@ export default function RatingLineup({
   if (formationRows.length === 0) return null;
 
   return (
-    <ShellCard elevation={0}>
+    <ShellCard>
       <FanMOTMHighlight fixtureId={fixture.id} />
 
       <Box sx={{ position: "relative", p: 2 }}>

@@ -9,6 +9,8 @@ import {
   CircularProgress,
   Stack,
   Alert,
+  Paper,
+  useTheme,
 } from "@mui/material";
 import { Globe, Lock } from "lucide-react";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -22,6 +24,7 @@ export default function GroupVisibilityToggle({
   groupId,
   initialVisibility,
 }: GroupVisibilityToggleProps) {
+  const theme = useTheme();
   const [isPublic, setIsPublic] = useState(initialVisibility);
   const [loading, setLoading] = useState(false);
 
@@ -53,7 +56,7 @@ export default function GroupVisibilityToggle({
         PRIVACY & ACCESS
       </Typography>
 
-      <Box sx={{ p: 2, mt: 1, borderRadius: 2, bgcolor: "action.hover" }}>
+      <Paper variant="flat" sx={{ p: 2, mt: 1 }}>
         <Stack
           direction="row"
           alignItems="center"
@@ -61,9 +64,9 @@ export default function GroupVisibilityToggle({
         >
           <Stack direction="row" spacing={2} alignItems="center">
             {isPublic ? (
-              <Globe size={20} color="#4caf50" />
+              <Globe size={20} color={theme.palette.success.main} />
             ) : (
-              <Lock size={20} color="#f44336" />
+              <Lock size={20} color={theme.palette.error.main} />
             )}
             <Box>
               <Typography variant="body2" fontWeight={700}>
@@ -87,10 +90,10 @@ export default function GroupVisibilityToggle({
             />
           )}
         </Stack>
-      </Box>
+      </Paper>
 
       {isPublic && (
-        <Alert severity="info" sx={{ mt: 1, borderRadius: 2, py: 0 }}>
+        <Alert severity="info" sx={{ mt: 1, py: 0 }}>
           <Typography variant="caption">
             Public groups tend to grow 3x faster by allowing casual visitors.
           </Typography>

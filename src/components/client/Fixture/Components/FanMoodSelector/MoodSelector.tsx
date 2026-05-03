@@ -83,7 +83,7 @@ export const MoodSelector = ({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         borderRadius: "28px",
         overflow: "hidden",

@@ -99,7 +99,7 @@ export default function PreMatchMOTM({
   if (isGuestView || !isPreMatch || storedUsersPlayerToWatch || !user) {
     return (
       <Paper
-        elevation={0}
+
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -245,7 +245,7 @@ export default function PreMatchMOTM({
   // --- VOTING VIEW ---
   return (
     <Paper
-      elevation={0}
+
       sx={{
         display: "flex",
         flexDirection: "column",

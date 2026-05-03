@@ -64,7 +64,7 @@ export default function ScorePredictionResults({
   return (
     <>
       <Paper
-        elevation={0}
+
         sx={{
           p: 3,
           display: "flex",

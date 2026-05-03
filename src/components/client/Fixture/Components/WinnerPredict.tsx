@@ -79,7 +79,7 @@ export default function WinnerPredict({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         textAlign: "center",
         display: "flex",

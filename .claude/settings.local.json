@@ -6,7 +6,10 @@
       "Bash(awk '{print $2}')",
       "Bash(python3)",
       "Bash(npx tsc *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(grep -r \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" /c/Users/kshor/Documents/Websites/player_ratings/player-ratings/src --include=\"*.tsx\" --include=\"*.jsx\")",
+      "Bash(grep -rn \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" /c/Users/kshor/Documents/Websites/player_ratings/player-ratings/src --include=\"*.tsx\" --include=\"*.jsx\")",
+      "Bash(xargs -0 sed -i -E 's/[[:space:]]*elevation=\\\\{0\\\\}//g; s/[[:space:]]*elevation=\\\\{8\\\\}//g; s/[[:space:]]*elevation=\\\\{10\\\\}//g')"
     ]
   }
 }

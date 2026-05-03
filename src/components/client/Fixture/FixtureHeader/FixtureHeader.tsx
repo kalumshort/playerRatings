@@ -79,7 +79,7 @@ export const FixtureHeaderSkeleton = ({
   className?: string;
 }) => (
   <Paper
-    elevation={0}
+
     className={className}
     sx={{
       p: 0,
@@ -226,7 +226,7 @@ export default function FixtureHeader({
     <Paper
       onClick={() => onClick?.(fixData.id)}
       className={addClass}
-      elevation={0}
+
       sx={{
         p: 0,
         overflow: "hidden",

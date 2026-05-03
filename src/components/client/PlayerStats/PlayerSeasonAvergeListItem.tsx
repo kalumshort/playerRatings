@@ -88,7 +88,7 @@ export default function PlayerSeasonAverageListItem({
 
   return (
     <Paper
-      elevation={0}
+
       onClick={() => router.push(`/${clubSlug}/players/${playerId}`)}
       sx={{
         py: { xs: 1.25, sm: 1.5 },

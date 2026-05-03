@@ -23,7 +23,7 @@ export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
   //   const { activeGroup } = useGroupData();
 
   return (
-    <GlassAppBar elevation={0}>
+    <GlassAppBar>
       <Toolbar sx={{ height: isMobile ? 64 : 80, px: 2 }}>
         <NavContainer>
           {/* Logo */}

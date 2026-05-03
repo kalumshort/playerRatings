@@ -78,7 +78,7 @@ export default function Statistics({
   if (!categorizedStats) {
     return (
       <Paper
-        elevation={0}
+
         sx={{
           p: 6,
           display: "flex",
@@ -101,7 +101,7 @@ export default function Statistics({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         overflow: "hidden",
         display: "flex",

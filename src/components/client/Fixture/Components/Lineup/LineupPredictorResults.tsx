@@ -63,7 +63,7 @@ export default function LineupPredictorResults({
       {/* --- CONDITIONAL TABS --- */}
       {!isGuestView && (
         <Paper
-          elevation={0}
+
           sx={{
             ...theme.clay?.box,
             display: "flex",

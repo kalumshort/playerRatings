@@ -28,9 +28,7 @@ export default function PlayerPageSkeleton() {
         {/* LEFT COLUMN: PROFILE CARD SKELETON */}
         <Grid size={{ xs: 12, md: 4, lg: 3 }}>
           <Paper
-            elevation={0}
             sx={{
-              ...theme.clay?.card,
               p: 3,
               display: "flex",
               flexDirection: "column",
@@ -48,18 +46,8 @@ export default function PlayerPageSkeleton() {
             {/* Name and Chips */}
             <Skeleton variant="text" width="80%" height={32} />
             <Stack direction="row" spacing={1} my={2}>
-              <Skeleton
-                variant="rounded"
-                width={80}
-                height={24}
-                sx={{ borderRadius: "12px" }}
-              />
-              <Skeleton
-                variant="rounded"
-                width={40}
-                height={24}
-                sx={{ borderRadius: "12px" }}
-              />
+              <Skeleton variant="rounded" width={80} height={24} />
+              <Skeleton variant="rounded" width={40} height={24} />
             </Stack>
 
             <Divider sx={{ my: 2, width: "100%" }} />
@@ -81,12 +69,11 @@ export default function PlayerPageSkeleton() {
                 height={30}
                 sx={{ mb: 2, ml: 1 }}
               />
-              <Paper sx={{ ...theme.clay?.card, p: 3, height: 350 }}>
+              <Paper sx={{ p: 3, height: 350 }}>
                 <Skeleton
                   variant="rectangular"
                   width="100%"
                   height="100%"
-                  sx={{ borderRadius: 2 }}
                 />
               </Paper>
             </Box>
@@ -104,18 +91,16 @@ export default function PlayerPageSkeleton() {
                   <Paper
                     key={i}
                     sx={{
-                      ...theme.clay?.card,
                       display: "flex",
                       alignItems: "center",
                       p: 2,
-                      borderLeft: "6px solid #e0e0e0",
                     }}
                   >
                     <Skeleton
                       variant="rectangular"
                       width={40}
                       height={40}
-                      sx={{ mr: 2, borderRadius: 1 }}
+                      sx={{ mr: 2 }}
                     />
                     <Box sx={{ flexGrow: 1 }}>
                       <Skeleton variant="text" width="30%" height={20} />
@@ -125,7 +110,6 @@ export default function PlayerPageSkeleton() {
                       variant="rounded"
                       width={50}
                       height={35}
-                      sx={{ borderRadius: 2 }}
                     />
                   </Paper>
                 ))}

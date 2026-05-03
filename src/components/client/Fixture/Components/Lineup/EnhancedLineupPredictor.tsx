@@ -34,8 +34,7 @@ import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
 
 // --- STYLED COMPONENTS ---
 
-const PitchSurface = styled(Box)(({ theme }: any) => ({
-  ...theme.clay?.card,
+const PitchSurface = styled(Box)(({ theme }) => ({
   position: "relative",
   width: "100%",
   aspectRatio: "0.72",
@@ -48,13 +47,13 @@ const PitchSurface = styled(Box)(({ theme }: any) => ({
   background: `linear-gradient(180deg, ${theme.palette.success.dark} 0%, ${theme.palette.success.main} 100%)`,
 }));
 
-const PitchMarking = styled(Box)({
+const PitchMarking = styled(Box)(({ theme }) => ({
   position: "absolute",
-  borderColor: "rgba(255,255,255,0.4)",
+  borderColor: alpha(theme.palette.common.white, 0.4),
   borderStyle: "solid",
   borderWidth: 2,
   pointerEvents: "none",
-});
+}));
 
 const PlayerSlot = styled(Box)(({ theme }) => ({
   width: 62,
@@ -67,11 +66,10 @@ const PlayerSlot = styled(Box)(({ theme }) => ({
   justifyContent: "center",
   borderRadius: "50%",
   transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-  backgroundColor: "rgba(0,0,0,0.15)",
-  boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.2)",
+  backgroundColor: alpha(theme.palette.common.black, 0.15),
   "&:hover": {
     transform: "scale(1.1)",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: alpha(theme.palette.common.white, 0.2),
   },
 }));
 
@@ -83,13 +81,12 @@ const RemoveButton = styled(Box)(({ theme }) => ({
   height: 22,
   borderRadius: "50%",
   backgroundColor: theme.palette.error.main,
-  color: "#FFF",
+  color: theme.palette.background.paper,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontSize: "14px",
   fontWeight: "bold",
-  boxShadow: "0px 2px 4px rgba(0,0,0,0.3)",
   zIndex: 10,
 }));
 
@@ -199,11 +196,7 @@ export default function EnhancedLineupPredictor({
           <Select
             value={formation}
             onChange={(e) => setFormation(e.target.value)}
-            sx={{
-              fontWeight: 900,
-              borderRadius: "12px",
-              bgcolor: "background.paper",
-            }}
+            sx={{ bgcolor: "background.paper" }}
           >
             {Object.keys(FORMATIONS).map((f) => (
               <MenuItem key={f} value={f} sx={{ fontWeight: 700 }}>
@@ -268,17 +261,13 @@ export default function EnhancedLineupPredictor({
                     sx={{
                       width: 56,
                       height: 56,
-                      border: "2px solid #FFF",
-                      boxShadow: 3,
                     }}
                   />
                   <Typography
                     variant="caption"
                     sx={{
                       display: "block",
-                      color: "#FFF",
-                      fontWeight: 900,
-                      fontSize: "0.6rem",
+                      color: "common.white",
                       mt: 0.5,
                     }}
                   >
@@ -303,7 +292,10 @@ export default function EnhancedLineupPredictor({
                   onClick={() => handleSlotClick(slotId)}
                 >
                   <AddIcon
-                    sx={{ color: "rgba(255,255,255,0.4)", fontSize: 24 }}
+                    sx={{
+                      color: (t) => alpha(t.palette.common.white, 0.4),
+                      fontSize: 24,
+                    }}
                   />
                 </PlayerSlot>
               );

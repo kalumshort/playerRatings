@@ -8,7 +8,7 @@ export const PALETTE = {
     paper: "#FFFFFF",
     textPrimary: "#4A4A4A",
     textSecondary: "#8C8C8C",
-    clayShadow: "#D1D9E6",
+    clayShadow: "#C4B49A",
     highlight: "#FFFFFF",
     input: "#EDF0F5",
   },
@@ -21,17 +21,100 @@ export const PALETTE = {
     highlight: "rgba(255, 255, 255, 0.05)",
     input: "#14171D",
   },
-  primary: "#A2D2FF", // sky blue
-  secondary: "#CDB4DB", // mint green
-  success: "#A0E8AF", // mint green
-  error: "#FFADAD", // soft coral
-  warning: "#FFD6A5", // peach
-  info: "#C9B8FF", // lavender
-  coral: "#FFC8DD", // pink
+  primary: "#A2D2FF",
+  secondary: "#CDB4DB",
+  success: "#A0E8AF",
+  error: "#FFADAD",
+  warning: "#FFD6A5",
+  info: "#C9B8FF",
+  coral: "#FFC8DD",
+} as const;
+
+// ─── DOMAIN SEMANTIC TOKENS ─────────────────────────────────────────────────
+const DOMAIN = {
+  form: {
+    good: "linear-gradient(135deg, #66bb6a 0%, #1b5e20 100%)",
+    poor: "linear-gradient(135deg, #ff7043 0%, #bf360c 100%)",
+    inForm: "linear-gradient(135deg, #42a5f5 0%, #0d47a1 100%)",
+    goodSolid: "#43a047",
+    poorSolid: "#e64a19",
+    inFormSolid: "#1e88e5",
+  },
+  motm: {
+    goldStart: "#FFE27A",
+    goldEnd: "#F5B300",
+    gold: "#FFD700",
+    bronze: "#7A4F00",
+    bronzeAccent: "#B7791F",
+  },
+  cards: {
+    yellow: "#F6E05E",
+    yellowText: "#744210",
+    yellowBg: "#FEF3C7",
+    red: "#FEB2B2",
+    redText: "#742A2A",
+    redBg: "#FED7D7",
+  },
+  event: {
+    goal: "#A0E8AF",
+    goalText: "#2F5C34",
+    goalBg: "#C6F6D5",
+    assist: "#A2D2FF",
+    assistText: "#2B4C6F",
+    sub: "#C9B8FF",
+    subText: "#3D2A8C",
+  },
 } as const;
 
 // ─── TYPE AUGMENTATION ──────────────────────────────────────────────────────
+type FormPalette = {
+  good: string;
+  poor: string;
+  inForm: string;
+  goodSolid: string;
+  poorSolid: string;
+  inFormSolid: string;
+};
+type MotmPalette = {
+  goldStart: string;
+  goldEnd: string;
+  gold: string;
+  bronze: string;
+  bronzeAccent: string;
+};
+type CardsPalette = {
+  yellow: string;
+  yellowText: string;
+  yellowBg: string;
+  red: string;
+  redText: string;
+  redBg: string;
+};
+type EventPalette = {
+  goal: string;
+  goalText: string;
+  goalBg: string;
+  assist: string;
+  assistText: string;
+  sub: string;
+  subText: string;
+};
+
 declare module "@mui/material/styles" {
+  interface Palette {
+    coral: Palette["primary"];
+    form: FormPalette;
+    motm: MotmPalette;
+    cards: CardsPalette;
+    event: EventPalette;
+  }
+  interface PaletteOptions {
+    coral?: PaletteOptions["primary"];
+    form?: FormPalette;
+    motm?: MotmPalette;
+    cards?: CardsPalette;
+    event?: EventPalette;
+  }
   interface Theme {
     clay: {
       card: React.CSSProperties;
@@ -54,25 +137,43 @@ declare module "@mui/material/styles" {
   }
 }
 
-// ─── SHADOW TOKENS ──────────────────────────────────────────────────────────
-const shadows = {
-  outer: (clayShadow: string, isLight: boolean) =>
-    isLight
-      ? `8px 8px 16px ${clayShadow}, -8px -8px 16px #FFFFFF`
-      : `8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.03)`,
-  outerSm: (clayShadow: string, isLight: boolean) =>
-    isLight
-      ? `4px 4px 8px ${clayShadow}, -4px -4px 8px #FFFFFF`
-      : `4px 4px 8px #0B0E12, -4px -4px 8px rgba(255,255,255,0.03)`,
-  inner: (isLight: boolean) =>
-    isLight
-      ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
-      : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.03)",
-  innerFocus: (accentColor: string, isLight: boolean) =>
-    isLight
-      ? `inset 3px 3px 6px #C6CEDA, inset -3px -3px 6px #FFFFFF, 0 0 0 2px ${accentColor}`
-      : `inset 4px 4px 8px #0B0E12, 0 0 0 2px ${accentColor}`,
+declare module "@mui/material/Paper" {
+  interface PaperPropsVariantOverrides {
+    sm: true;
+    pill: true;
+    flat: true;
+  }
+}
+
+// ─── SHADOW HELPERS ─────────────────────────────────────────────────────────
+// Claymorphism mixin (raised surfaces): single drop shadow + thick border + inset highlights
+type ClaySize = "lg" | "md" | "sm";
+const clayMixin = (
+  size: ClaySize,
+  isLight: boolean,
+  clayShadow: string,
+): React.CSSProperties => {
+  const drop = size === "lg" ? 7 : size === "md" ? 5 : 4;
+  return {
+    border: isLight
+      ? "2.5px solid rgba(255,255,255,0.82)"
+      : "2px solid rgba(255,255,255,0.07)",
+    boxShadow: isLight
+      ? `0 ${drop}px 0 0 ${clayShadow}, inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(0,0,0,0.04)`
+      : `0 ${drop}px 0 0 ${clayShadow}, inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.4)`,
+  };
 };
+
+// Neumorphism inset helpers (kept for inputs, tabs, toggle group — recessed feel)
+const innerShadow = (isLight: boolean) =>
+  isLight
+    ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
+    : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.03)";
+
+const innerFocusShadow = (accentColor: string, isLight: boolean) =>
+  isLight
+    ? `inset 3px 3px 6px #C6CEDA, inset -3px -3px 6px #FFFFFF, 0 0 0 2px ${accentColor}`
+    : `inset 4px 4px 8px #0B0E12, 0 0 0 2px ${accentColor}`;
 
 // ─── THEME FACTORY ──────────────────────────────────────────────────────────
 export const getTheme = (
@@ -81,6 +182,7 @@ export const getTheme = (
 ): Theme => {
   const isLight = mode === "light";
   const colors = isLight ? PALETTE.light : PALETTE.dark;
+  const clay = (size: ClaySize) => clayMixin(size, isLight, colors.clayShadow);
 
   return createTheme({
     // ─── PALETTE ──────────────────────────────────────────────────
@@ -94,9 +196,49 @@ export const getTheme = (
       error: { main: PALETTE.error },
       warning: { main: PALETTE.warning },
       info: { main: PALETTE.info },
+      coral: { main: PALETTE.coral },
+      form: DOMAIN.form,
+      motm: DOMAIN.motm,
+      cards: DOMAIN.cards,
+      event: DOMAIN.event,
     },
 
-    shape: { borderRadius: 16 },
+    shape: { borderRadius: 18 },
+
+    // ─── CLAY TOKENS (back-compat for `theme.clay?.card / .box / .button`) ───
+    clay: {
+      card: {
+        backgroundColor: colors.paper,
+        borderRadius: 18,
+        ...clay("lg"),
+      },
+      box: {
+        backgroundColor: colors.input,
+        borderRadius: 18,
+        boxShadow: innerShadow(isLight),
+        border: "none",
+      },
+      button: {
+        backgroundColor: colors.paper,
+        borderRadius: 100,
+        color: colors.textPrimary,
+        fontWeight: 800,
+        transition: "all 0.18s cubic-bezier(0.2, 0, 0, 1)",
+        ...clay("sm"),
+        "&:hover": {
+          transform: "translateY(-1px)",
+          boxShadow: isLight
+            ? `0 5px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(0,0,0,0.04)`
+            : `0 5px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.4)`,
+        },
+        "&:active": {
+          transform: "translateY(2px)",
+          boxShadow: isLight
+            ? `0 2px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(0,0,0,0.04)`
+            : `0 2px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.4)`,
+        },
+      },
+    },
 
     // ─── TYPOGRAPHY ───────────────────────────────────────────────
     typography: {
@@ -104,20 +246,38 @@ export const getTheme = (
       h1: {
         fontFamily: "var(--font-jakarta), sans-serif",
         fontWeight: 800,
+        fontSize: "2rem",
         letterSpacing: "-0.025em",
       },
       h2: {
         fontFamily: "var(--font-jakarta), sans-serif",
-        fontWeight: 700,
+        fontWeight: 800,
+        fontSize: "1.5rem",
         letterSpacing: "-0.015em",
       },
-      h3: { fontFamily: "var(--font-jakarta), sans-serif", fontWeight: 700 },
-      h4: { fontFamily: "var(--font-jakarta), sans-serif", fontWeight: 700 },
-      h5: { fontFamily: "var(--font-jakarta), sans-serif", fontWeight: 700 },
-      h6: { fontFamily: "var(--font-jakarta), sans-serif", fontWeight: 700 },
+      h3: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+        fontSize: "1.25rem",
+      },
+      h4: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+        fontSize: "1.125rem",
+      },
+      h5: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+        fontSize: "1rem",
+      },
+      h6: {
+        fontFamily: "var(--font-jakarta), sans-serif",
+        fontWeight: 700,
+        fontSize: "0.9rem",
+      },
       button: {
         fontFamily: "var(--font-outfit), sans-serif",
-        fontWeight: 700,
+        fontWeight: 800,
         fontSize: "0.95rem",
         letterSpacing: "0.01em",
         textTransform: "none",
@@ -126,48 +286,6 @@ export const getTheme = (
       body2: { fontSize: "0.875rem", lineHeight: 1.5 },
       caption: { fontWeight: 600, letterSpacing: 0.3, fontSize: "0.75rem" },
       overline: { fontWeight: 800, letterSpacing: 1.5, fontSize: "0.65rem" },
-    },
-
-    // ─── CLAY TOKENS ──────────────────────────────────────────────
-    clay: {
-      card: {
-        backgroundColor: colors.bg,
-        borderRadius: "32px",
-        boxShadow: isLight
-          ? `8px 8px 16px ${colors.clayShadow}, -8px -8px 16px #FFFFFF, inset 0 0 0 1px rgba(255,255,255,0.8)`
-          : `8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.03), inset 0 0 0 1px rgba(255,255,255,0.05)`,
-        border: "none",
-      },
-      box: {
-        backgroundColor: colors.input,
-        borderRadius: "24px",
-        boxShadow: isLight
-          ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
-          : "inset 4px 4px 8px #0B0E12",
-        border: "none",
-      },
-      button: {
-        backgroundColor: colors.bg,
-        borderRadius: "24px",
-        color: colors.textPrimary,
-        fontWeight: 700,
-        transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
-        boxShadow: isLight
-          ? "6px 6px 12px #C6CEDA, -6px -6px 12px #FFFFFF"
-          : "6px 6px 12px #0B0E12, -6px -6px 12px rgba(255,255,255,0.03)",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: isLight
-            ? "8px 8px 16px #C6CEDA, -8px -8px 16px #FFFFFF"
-            : "8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.05)",
-        },
-        "&:active": {
-          transform: "scale(0.98)",
-          boxShadow: isLight
-            ? "inset 4px 4px 8px #C6CEDA, inset -4px -4px 8px #FFFFFF"
-            : "inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.05)",
-        },
-      },
     },
 
     // ─── COMPONENT OVERRIDES ──────────────────────────────────────
@@ -185,22 +303,23 @@ export const getTheme = (
         },
       },
 
-      // RIPPLE — disable globally for clay feel
       MuiButtonBase: {
         defaultProps: { disableRipple: true },
       },
 
-      // APP BAR
+      // APP BAR — claymorphism: solid bg, bottom drop shadow
       MuiAppBar: {
         defaultProps: { elevation: 0, color: "transparent" },
         styleOverrides: {
           root: {
-            backgroundColor: alpha(colors.paper, 0.75),
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            backgroundColor: colors.bg,
+            backgroundImage: "none",
             borderBottom: isLight
-              ? "1px solid rgba(255,255,255,0.9)"
-              : "1px solid rgba(255,255,255,0.05)",
+              ? "2px solid rgba(255,255,255,0.82)"
+              : "2px solid rgba(255,255,255,0.07)",
+            boxShadow: isLight
+              ? `0 4px 0 0 ${colors.clayShadow}`
+              : `0 4px 0 0 ${colors.clayShadow}`,
           },
         },
       },
@@ -211,33 +330,74 @@ export const getTheme = (
         },
       },
 
-      // PAPER
+      // PAPER — the main clay surface, with variants
       MuiPaper: {
+        defaultProps: { elevation: 0 },
         styleOverrides: {
           root: {
-            padding: "6px",
-            margin: "8px",
             backgroundImage: "none",
             backgroundColor: colors.paper,
-            borderRadius: "32px",
+            borderRadius: 26,
             transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
-            boxShadow: isLight
-              ? `10px 10px 20px ${colors.clayShadow}, -10px -10px 20px ${colors.highlight}`
-              : `12px 12px 24px ${colors.clayShadow}, -6px -6px 15px rgba(255,255,255,0.03)`,
-            border: isLight
-              ? "1px solid rgba(255,255,255,0.9)"
-              : "1px solid rgba(255,255,255,0.05)",
+            ...clay("lg"),
+          },
+        },
+        variants: [
+          {
+            props: { variant: "sm" },
+            style: {
+              backgroundImage: "none",
+              backgroundColor: colors.paper,
+              borderRadius: 18,
+              transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
+              ...clayMixin("md", isLight, colors.clayShadow),
+            },
+          },
+          {
+            props: { variant: "pill" },
+            style: {
+              backgroundImage: "none",
+              backgroundColor: colors.paper,
+              borderRadius: 100,
+              transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
+              ...clayMixin("sm", isLight, colors.clayShadow),
+            },
+          },
+          {
+            props: { variant: "flat" },
+            style: {
+              backgroundImage: "none",
+              backgroundColor: colors.input,
+              borderRadius: 18,
+              boxShadow: "none",
+              border: isLight
+                ? "1px solid rgba(196,180,154,0.3)"
+                : "1px solid rgba(255,255,255,0.06)",
+            },
+          },
+        ],
+      },
+
+      // CARD — inherits from Paper
+      MuiCard: {
+        defaultProps: { elevation: 0 },
+      },
+
+      MuiCardContent: {
+        styleOverrides: {
+          root: {
+            "&:last-child": { paddingBottom: 16 },
           },
         },
       },
 
-      // AVATAR
+      // AVATAR — small clay
       MuiAvatar: {
         styleOverrides: {
-          root: {
-            borderRadius: "12px",
-            boxShadow: shadows.outerSm(colors.clayShadow, isLight),
-          },
+          root: ({ theme }) => ({
+            borderRadius: 12,
+            ...clayMixin("sm", isLight, colors.clayShadow),
+          }),
           img: { objectFit: "contain", width: "100%", height: "100%" },
         },
       },
@@ -254,96 +414,101 @@ export const getTheme = (
         },
       },
 
-      // CHIP
+      // CHIP — pill, small clay
       MuiChip: {
         defaultProps: { variant: "filled" },
         styleOverrides: {
           root: {
-            borderRadius: "12px",
-            fontWeight: 700,
+            borderRadius: 100,
+            fontWeight: 800,
             fontSize: "0.75rem",
             height: 28,
-            border: "none",
             transition: "all 0.2s ease",
             backgroundColor: colors.input,
-            boxShadow: shadows.outerSm(colors.clayShadow, isLight),
+            ...clayMixin("sm", isLight, colors.clayShadow),
             "&:hover": { filter: "brightness(1.04)" },
           },
           label: { paddingLeft: "12px", paddingRight: "12px" },
           colorPrimary: {
             backgroundColor: alpha(accentColor, 0.18),
             color: accentColor,
+            border: "none",
             boxShadow: "none",
           },
           colorSecondary: {
             backgroundColor: alpha(PALETTE.secondary, 0.18),
             color: isLight ? "#1b5e35" : PALETTE.secondary,
+            border: "none",
             boxShadow: "none",
           },
           colorSuccess: {
             backgroundColor: alpha(PALETTE.success, 0.18),
             color: isLight ? "#1b5e35" : PALETTE.success,
+            border: "none",
             boxShadow: "none",
           },
           colorError: {
             backgroundColor: alpha(PALETTE.error, 0.18),
             color: isLight ? "#b5000a" : PALETTE.error,
+            border: "none",
             boxShadow: "none",
           },
           colorWarning: {
             backgroundColor: alpha(PALETTE.warning, 0.22),
             color: isLight ? "#7c5a00" : PALETTE.warning,
+            border: "none",
             boxShadow: "none",
           },
           colorInfo: {
             backgroundColor: alpha(PALETTE.info, 0.18),
             color: isLight ? "#3d2a8c" : PALETTE.info,
+            border: "none",
             boxShadow: "none",
           },
         },
       },
 
-      // BUTTONS
+      // BUTTONS — pill, claymorphism, press-down on active
       MuiButton: {
         defaultProps: { disableElevation: true, disableRipple: true },
         styleOverrides: {
           root: {
-            borderRadius: "24px",
+            borderRadius: 100,
             padding: "12px 28px",
             textTransform: "none",
-            fontWeight: 700,
+            fontWeight: 800,
             fontFamily: "var(--font-jakarta), sans-serif",
-            transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
-            boxShadow: isLight
-              ? `6px 6px 12px ${colors.clayShadow}, -6px -6px 12px ${colors.highlight}, inset 0 0 0 1px rgba(255,255,255,0.5)`
-              : `6px 6px 12px #0B0E12, -6px -6px 12px rgba(255,255,255,0.03), inset 0 0 0 1px rgba(255,255,255,0.05)`,
+            transition: "all 0.18s cubic-bezier(0.2, 0, 0, 1)",
+            ...clayMixin("sm", isLight, colors.clayShadow),
             "&:hover": {
-              transform: "translateY(-2px)",
+              transform: "translateY(-1px)",
               boxShadow: isLight
-                ? `8px 8px 16px ${colors.clayShadow}, -8px -8px 16px ${colors.highlight}`
-                : `8px 8px 16px #0B0E12, -8px -8px 16px rgba(255,255,255,0.05)`,
+                ? `0 5px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(0,0,0,0.04)`
+                : `0 5px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.4)`,
             },
             "&:active": {
-              transform: "scale(0.98)",
+              transform: "translateY(2px)",
               boxShadow: isLight
-                ? `inset 4px 4px 8px ${colors.clayShadow}, inset -4px -4px 8px ${colors.highlight}`
-                : `inset 4px 4px 8px #0B0E12, inset -4px -4px 8px rgba(255,255,255,0.05)`,
+                ? `0 2px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(0,0,0,0.04)`
+                : `0 2px 0 0 ${colors.clayShadow}, inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.4)`,
+            },
+            "&.Mui-disabled": {
+              boxShadow: "none",
+              border: "none",
+              opacity: 0.6,
             },
           },
           containedPrimary: {
             backgroundColor: accentColor,
             color: "#1A1C1E",
-            boxShadow: `0 8px 16px ${alpha(accentColor, 0.4)}`,
             "&:hover": {
               backgroundColor: accentColor,
               filter: "brightness(1.05)",
-              boxShadow: `0 12px 20px ${alpha(accentColor, 0.55)}`,
             },
           },
           containedSecondary: {
             backgroundColor: PALETTE.secondary,
             color: "#1A1C1E",
-            boxShadow: `0 8px 16px ${alpha(PALETTE.secondary, 0.4)}`,
             "&:hover": {
               backgroundColor: PALETTE.secondary,
               filter: "brightness(1.05)",
@@ -351,20 +516,24 @@ export const getTheme = (
           },
           outlined: {
             borderColor: isLight ? colors.clayShadow : "rgba(255,255,255,0.12)",
-            boxShadow: "none",
-            "&:hover": { boxShadow: "none" },
+            "&:hover": {
+              borderColor: isLight
+                ? colors.clayShadow
+                : "rgba(255,255,255,0.18)",
+            },
           },
           text: {
             boxShadow: "none",
+            border: "none",
             "&:hover": {
               boxShadow: "none",
               backgroundColor: alpha(accentColor, 0.08),
             },
+            "&:active": { boxShadow: "none", transform: "none" },
           },
           sizeSmall: {
             padding: "8px 18px",
             fontSize: "0.8rem",
-            borderRadius: "18px",
           },
           sizeLarge: { padding: "16px 36px", fontSize: "1.05rem" },
         },
@@ -374,8 +543,8 @@ export const getTheme = (
         defaultProps: { disableRipple: true },
         styleOverrides: {
           root: {
-            borderRadius: "14px",
-            transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+            borderRadius: 14,
+            transition: "all 0.18s cubic-bezier(0.2, 0, 0, 1)",
             "&:hover": {
               backgroundColor: colors.input,
               transform: "translateY(-1px)",
@@ -385,18 +554,18 @@ export const getTheme = (
         },
       },
 
-      // INPUTS
+      // INPUTS — keep neumorphic recessed feel (hybrid)
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: "16px",
+            borderRadius: 18,
             backgroundColor: colors.input,
-            boxShadow: shadows.inner(isLight),
+            boxShadow: innerShadow(isLight),
             transition: "box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1)",
             "& .MuiOutlinedInput-notchedOutline": { border: "none" },
             "&:hover .MuiOutlinedInput-notchedOutline": { border: "none" },
             "&.Mui-focused": {
-              boxShadow: shadows.innerFocus(accentColor, isLight),
+              boxShadow: innerFocusShadow(accentColor, isLight),
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               border: "none",
@@ -433,7 +602,6 @@ export const getTheme = (
         },
       },
 
-      // SELECT
       MuiSelect: {
         styleOverrides: {
           select: {
@@ -447,7 +615,7 @@ export const getTheme = (
       MuiMenuItem: {
         styleOverrides: {
           root: {
-            borderRadius: "12px",
+            borderRadius: 12,
             margin: "2px 6px",
             fontWeight: 600,
             transition: "all 0.2s ease",
@@ -468,21 +636,21 @@ export const getTheme = (
         },
       },
 
-      // TABS
+      // TABS — keep neumorphic recessed container (hybrid)
       MuiTabs: {
         styleOverrides: {
           root: {
-            minHeight: "48px",
+            minHeight: 48,
             width: "100%",
             padding: "6px",
             backgroundColor: colors.input,
-            borderRadius: "24px",
-            boxShadow: shadows.inner(isLight),
+            borderRadius: 24,
+            boxShadow: innerShadow(isLight),
             overflow: "hidden",
           },
           scroller: {
             overflow: "auto !important",
-            borderRadius: "24px",
+            borderRadius: 24,
             "&::-webkit-scrollbar": { display: "none" },
             msOverflowStyle: "none",
             scrollbarWidth: "none",
@@ -495,30 +663,30 @@ export const getTheme = (
       MuiTab: {
         styleOverrides: {
           root: {
-            borderRadius: "20px",
-            minHeight: "36px",
+            borderRadius: 20,
+            minHeight: 36,
             margin: "0 4px",
             transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
             fontFamily: "var(--font-jakarta), sans-serif",
-            fontWeight: 600,
+            fontWeight: 700,
             textTransform: "none",
             color: colors.textSecondary,
             "&.Mui-selected": {
               backgroundColor: colors.paper,
               color: accentColor,
-              boxShadow: shadows.outerSm(colors.clayShadow, isLight),
+              ...clayMixin("sm", isLight, colors.clayShadow),
             },
           },
         },
       },
 
-      // TOGGLE BUTTON
+      // TOGGLE BUTTON — keep neumorphic recessed group (hybrid)
       MuiToggleButtonGroup: {
         styleOverrides: {
           root: {
             backgroundColor: colors.input,
-            borderRadius: "24px",
-            boxShadow: shadows.inner(isLight),
+            borderRadius: 24,
+            boxShadow: innerShadow(isLight),
             padding: "4px",
             border: "none",
             gap: "4px",
@@ -534,9 +702,9 @@ export const getTheme = (
       MuiToggleButton: {
         styleOverrides: {
           root: {
-            borderRadius: "20px",
+            borderRadius: 20,
             border: "none",
-            fontWeight: 600,
+            fontWeight: 700,
             textTransform: "none",
             fontFamily: "var(--font-jakarta), sans-serif",
             transition: "all 0.3s cubic-bezier(0.2, 0, 0, 1)",
@@ -544,10 +712,34 @@ export const getTheme = (
             "&.Mui-selected": {
               backgroundColor: colors.paper,
               color: accentColor,
-              fontWeight: 700,
-              boxShadow: shadows.outerSm(colors.clayShadow, isLight),
+              fontWeight: 800,
+              ...clayMixin("sm", isLight, colors.clayShadow),
               "&:hover": { backgroundColor: colors.paper },
             },
+          },
+        },
+      },
+
+      // BOTTOM NAVIGATION — clay top edge
+      MuiBottomNavigation: {
+        styleOverrides: {
+          root: {
+            backgroundColor: colors.paper,
+            borderTop: isLight
+              ? "2px solid rgba(255,255,255,0.82)"
+              : "2px solid rgba(255,255,255,0.07)",
+            boxShadow: isLight
+              ? `0 -4px 0 0 ${colors.clayShadow}`
+              : `0 -4px 0 0 ${colors.clayShadow}`,
+          },
+        },
+      },
+
+      MuiBottomNavigationAction: {
+        styleOverrides: {
+          root: {
+            color: colors.textSecondary,
+            "&.Mui-selected": { color: accentColor },
           },
         },
       },
@@ -561,20 +753,20 @@ export const getTheme = (
 
       MuiListItem: {
         styleOverrides: {
-          root: { borderRadius: "16px", marginBottom: "2px" },
+          root: { borderRadius: 16, marginBottom: 2 },
         },
       },
 
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            borderRadius: "18px",
+            borderRadius: 18,
             margin: "4px 8px",
             transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
             "&:hover": { backgroundColor: colors.input },
             "&.Mui-selected": {
               backgroundColor: colors.bg,
-              boxShadow: shadows.inner(isLight),
+              boxShadow: innerShadow(isLight),
               color: accentColor,
               "&:hover": { backgroundColor: colors.bg },
             },
@@ -591,7 +783,7 @@ export const getTheme = (
 
       MuiListItemIcon: {
         styleOverrides: {
-          root: { minWidth: "40px", color: colors.textSecondary },
+          root: { minWidth: 40, color: colors.textSecondary },
         },
       },
 
@@ -600,12 +792,15 @@ export const getTheme = (
         styleOverrides: {
           paper: {
             backgroundColor: colors.bg,
-            border: "none",
-            borderRadius: "40px 0 0 40px",
-            boxShadow: isLight
-              ? "-15px 0 30px #d1d9e6"
-              : "-15px 0 30px #0e1014",
             backgroundImage: "none",
+            borderRadius: "32px 0 0 32px",
+            border: isLight
+              ? "2.5px solid rgba(255,255,255,0.82)"
+              : "2px solid rgba(255,255,255,0.07)",
+            borderRight: "none",
+            boxShadow: isLight
+              ? `-7px 0 0 0 ${colors.clayShadow}`
+              : `-7px 0 0 0 ${colors.clayShadow}`,
           },
         },
       },
@@ -614,13 +809,11 @@ export const getTheme = (
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: "32px",
+            borderRadius: 26,
             backgroundColor: colors.paper,
             backgroundImage: "none",
-            margin: "16px",
-            boxShadow: isLight
-              ? `20px 20px 40px ${colors.clayShadow}, -10px -10px 30px #FFFFFF`
-              : `20px 20px 40px #0B0E12, -6px -6px 20px rgba(255,255,255,0.03)`,
+            margin: 16,
+            ...clay("lg"),
           },
           root: {
             "& .MuiBackdrop-root": {
@@ -661,7 +854,7 @@ export const getTheme = (
         styleOverrides: {
           root: { padding: "8px" },
           track: {
-            borderRadius: "999px",
+            borderRadius: 999,
             backgroundColor: isLight ? "#C6CEDA" : "#14171D",
             opacity: "1 !important" as any,
             boxShadow: isLight
@@ -686,7 +879,7 @@ export const getTheme = (
       MuiAlert: {
         styleOverrides: {
           root: {
-            borderRadius: "16px",
+            borderRadius: 16,
             border: "none",
             fontWeight: 600,
             boxShadow: "none",
@@ -724,14 +917,14 @@ export const getTheme = (
       MuiLinearProgress: {
         styleOverrides: {
           root: {
-            borderRadius: "999px",
-            height: "6px",
+            borderRadius: 999,
+            height: 6,
             backgroundColor: colors.input,
             boxShadow: isLight
               ? "inset 2px 2px 4px #C6CEDA"
               : "inset 2px 2px 4px #0B0E12",
           },
-          bar: { borderRadius: "999px", backgroundColor: accentColor },
+          bar: { borderRadius: 999, backgroundColor: accentColor },
         },
       },
 
@@ -739,7 +932,7 @@ export const getTheme = (
         defaultProps: { animation: "wave" },
         styleOverrides: {
           root: {
-            borderRadius: "12px",
+            borderRadius: 12,
             backgroundColor: colors.input,
           },
           wave: {
@@ -752,18 +945,18 @@ export const getTheme = (
         },
       },
 
-      // TOOLTIP
+      // TOOLTIP — small clay
       MuiTooltip: {
         defaultProps: { arrow: true },
         styleOverrides: {
           tooltip: {
             backgroundColor: isLight ? colors.paper : "#2E3238",
             color: colors.textPrimary,
-            borderRadius: "12px",
+            borderRadius: 12,
             fontSize: "0.75rem",
             fontWeight: 600,
             padding: "8px 12px",
-            boxShadow: shadows.outerSm(colors.clayShadow, isLight),
+            ...clayMixin("sm", isLight, colors.clayShadow),
           },
           arrow: { color: isLight ? colors.paper : "#2E3238" },
         },

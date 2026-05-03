@@ -11,6 +11,8 @@ import {
   Zoom,
   styled,
   keyframes,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import {
   SportsSoccerRounded,
@@ -31,26 +33,25 @@ const popIn = keyframes`
 // --- STYLED COMPONENTS ---
 const BadgeRoot = styled(Box, {
   shouldForwardProp: (prop) => prop !== "bg",
-})<{ bg: string }>(({ bg }) => ({
+})<{ bg: string }>(({ bg, theme }) => ({
   width: 22,
   height: 22,
   borderRadius: "50%",
-  boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   position: "relative",
   background: bg,
-  border: "1.5px solid white",
+  border: `1.5px solid ${theme.palette.background.paper}`,
   animation: `${popIn} 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
 }));
 
-const CountBadge = styled("span")({
+const CountBadge = styled("span")(({ theme }) => ({
   position: "absolute",
   top: -6,
   right: -6,
-  background: "#121212",
-  color: "white",
+  background: theme.palette.text.primary,
+  color: theme.palette.background.paper,
   fontSize: "8px",
   fontWeight: 900,
   width: 14,
@@ -59,12 +60,13 @@ const CountBadge = styled("span")({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  border: "1px solid white",
-});
+  border: `1px solid ${theme.palette.background.paper}`,
+}));
 
 // --- SUB-COMPONENT: EVENT BADGES ---
 const EventBadge = ({ type, data, playerId, count }: any) => {
-  const iconStyle = { fontSize: 13, color: "white" };
+  const theme = useTheme();
+  const iconStyle = { fontSize: 13, color: theme.palette.background.paper };
 
   if (type === "goal") {
     return (
@@ -73,7 +75,7 @@ const EventBadge = ({ type, data, playerId, count }: any) => {
         arrow
         TransitionComponent={Zoom}
       >
-        <BadgeRoot bg="linear-gradient(135deg, #66bb6a, #1b5e20)">
+        <BadgeRoot bg={theme.palette.form.good}>
           <SportsSoccerRounded sx={iconStyle} />
           {count > 1 && <CountBadge>{count}</CountBadge>}
         </BadgeRoot>
@@ -93,11 +95,9 @@ const EventBadge = ({ type, data, playerId, count }: any) => {
           sx={{
             width: 14,
             height: 19,
-            bgcolor: isYellow ? "#FFEB3B" : "#F44336",
+            bgcolor: isYellow ? "cards.yellow" : "cards.red",
             borderRadius: "2px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
             transform: "rotate(-5deg)",
-            border: "0.5px solid rgba(0,0,0,0.2)",
             animation: `${popIn} 0.3s ease`,
           }}
         />
@@ -107,9 +107,7 @@ const EventBadge = ({ type, data, playerId, count }: any) => {
 
   if (type === "sub") {
     const isOut = data.player?.id === playerId;
-    const bg = isOut
-      ? "linear-gradient(135deg, #ff7043, #bf360c)"
-      : "linear-gradient(135deg, #42a5f5, #0d47a1)";
+    const bg = isOut ? theme.palette.form.poor : theme.palette.form.inForm;
 
     return (
       <Tooltip
@@ -140,11 +138,12 @@ export default function LineupPlayer({
   groupId,
   ...props
 }: any) {
+  const theme = useTheme();
   // 1. SELECTORS
   const squadData = useSelector(
     (state: RootState) => state.teamSquads.byClubId,
   ); // Assuming path
-  const groupColour = "#DA291C"; // This should ideally come from props or a group selector
+  const groupColour = theme.palette.error.main; // Should ideally come from props or a group selector
 
   // 2. EVENT LOGIC
   const events = useMemo(() => {
@@ -191,13 +190,11 @@ export default function LineupPlayer({
             player.photo ||
             `https://media.api-sports.io/football/players/${player.id}.png`
           }
-          sx={(theme) => ({
+          sx={{
             width: "100%",
             height: "100%",
-            border: `3px solid ${theme.palette.background.paper}`,
-            boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
             bgcolor: "grey.900",
-          })}
+          }}
         />
 
         {/* OVERLAYS */}
@@ -247,9 +244,10 @@ export default function LineupPlayer({
               width: 26,
               height: 26,
               bgcolor: "background.paper",
-              boxShadow: "inset 0 1px 4px rgba(0,0,0,0.3)",
-              border: "1px solid rgba(0,0,0,0.1)",
-              "&:hover": { bgcolor: "error.main", color: "white" },
+              "&:hover": {
+                bgcolor: "error.main",
+                color: "background.paper",
+              },
             }}
           >
             <DeleteRounded sx={{ fontSize: 14 }} color="error" />
@@ -264,10 +262,8 @@ export default function LineupPlayer({
           noWrap
           sx={{
             mt: 1,
-            fontWeight: 900,
-            fontSize: "0.7rem",
-            color: "white",
-            textShadow: "0 1px 3px rgba(0,0,0,0.8)",
+            color: "common.white",
+            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.8)}`,
             textAlign: "center",
             width: "100%",
           }}
@@ -282,17 +278,14 @@ export default function LineupPlayer({
           sx={{
             width: "80%",
             mt: 0.5,
-            bgcolor: "rgba(0,0,0,0.5)",
-            borderRadius: 4,
+            bgcolor: alpha(theme.palette.common.black, 0.5),
             p: "2px",
-            border: "1px solid rgba(255,255,255,0.1)",
           }}
         >
           <Box
             sx={{
               height: 4,
               width: "100%",
-              borderRadius: 2,
               overflow: "hidden",
             }}
           >
@@ -301,7 +294,6 @@ export default function LineupPlayer({
                 width: `${percentage}%`,
                 height: "100%",
                 bgcolor: groupColour,
-                boxShadow: `0 0 8px ${groupColour}`,
                 transition: "width 0.8s ease-in-out",
               }}
             />

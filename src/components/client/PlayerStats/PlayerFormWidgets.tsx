@@ -135,7 +135,7 @@ export default function PlayerFormWidgets() {
   }, [recentMatches, ratingsMap, squadData]);
 
   return (
-    <Paper elevation={0} sx={{ p: 2 }}>
+    <Paper sx={{ p: 2 }}>
       <Typography
         variant="overline"
         sx={{

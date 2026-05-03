@@ -68,7 +68,7 @@ export function CommunityTeamStats({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         border: "none",
         borderRadius: "28px",

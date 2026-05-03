@@ -10,6 +10,7 @@ import {
   useTheme,
   alpha,
   Stack,
+  Paper,
 } from "@mui/material";
 import { InfoOutlined, GroupsRounded } from "@mui/icons-material";
 
@@ -155,9 +156,9 @@ export default function ConsensusLineup({
               sx={{ display: "block", fontWeight: 700 }}
             >
               Winning Formation:{" "}
-              <span style={{ color: theme.palette.primary.main }}>
+              <Box component="span" sx={{ color: "primary.main" }}>
                 {consensus.formation}
-              </span>{" "}
+              </Box>{" "}
               ({consensus.formationPercentage}%)
             </Typography>
           </Box>
@@ -177,13 +178,12 @@ export default function ConsensusLineup({
         </Stack>
 
         <Collapse in={showLogic}>
-          <Box
+          <Paper
+            variant="flat"
             sx={{
               mt: 2,
               p: 2,
-              borderRadius: "16px",
               bgcolor: alpha(theme.palette.primary.main, 0.05),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
               display: "flex",
               gap: 1.5,
             }}
@@ -207,7 +207,7 @@ export default function ConsensusLineup({
                 community is nearly certain about that position.
               </Typography>
             </Box>
-          </Box>
+          </Paper>
         </Collapse>
       </Box>
 

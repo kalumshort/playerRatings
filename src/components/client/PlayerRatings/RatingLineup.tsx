@@ -70,7 +70,7 @@ export default function RatingLineup({
 
   return (
     <Paper
-      elevation={0}
+
       sx={{
         p: 0,
         overflow: "hidden",
