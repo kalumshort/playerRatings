@@ -1,6 +1,7 @@
 export const PALETTE = {
   EXCITED: "#B4E7B4",
   HAPPY: "#F9E59B",
+  HOPEFUL: "#D4C5F9",
   NERVOUS: "#FFCC99",
   SAD: "#B8C9F2",
   ANGRY: "#F2B1B1",
@@ -8,9 +9,10 @@ export const PALETTE = {
 
 export const MOODS = [
   { label: "excited", emoji: "🤩", color: PALETTE.EXCITED, weight: 100 },
-  { label: "happy", emoji: "😄", color: PALETTE.HAPPY, weight: 75 },
-  { label: "nervous", emoji: "😬", color: PALETTE.NERVOUS, weight: 50 },
-  { label: "sad", emoji: "😢", color: PALETTE.SAD, weight: 25 },
+  { label: "happy", emoji: "😄", color: PALETTE.HAPPY, weight: 80 },
+  { label: "hopeful", emoji: "🤞", color: PALETTE.HOPEFUL, weight: 60 },
+  { label: "nervous", emoji: "😬", color: PALETTE.NERVOUS, weight: 40 },
+  { label: "sad", emoji: "😢", color: PALETTE.SAD, weight: 20 },
   { label: "angry", emoji: "😡", color: PALETTE.ANGRY, weight: 0 },
 ];
 

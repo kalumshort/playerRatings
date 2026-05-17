@@ -80,10 +80,10 @@ export const MoodSelector = ({
       moodKey: mood.label,
     });
   };
+  const showInteractionPanel = !isGuestView && isMatchLive;
 
   return (
     <Paper
-
       sx={{
         borderRadius: "28px",
         overflow: "hidden",
@@ -97,10 +97,11 @@ export const MoodSelector = ({
             height: 350,
             bgcolor: alpha(theme.palette.background.default, 0.5),
           }}
-          size={{ xs: 12, md: 8 }}
+          // 2. Dynamically adjust the size based on the panel's visibility
+          size={{ xs: 12, md: showInteractionPanel ? 8 : 12 }}
         >
           {matchMoods ? (
-            <MoodAreaChart matchMoods={matchMoods} />
+            <MoodAreaChart matchMoods={matchMoods} events={fixture?.events} />
           ) : (
             <Stack
               alignItems="center"
@@ -119,18 +120,19 @@ export const MoodSelector = ({
         </Grid>
 
         {/* INTERACTION PANEL */}
-        {!isGuestView && isMatchLive && (
+        {showInteractionPanel && (
           <Grid
             size={{ xs: 12, md: 4 }}
             sx={{
-              p: 4,
+              p: { xs: 2, sm: 3, md: 3 },
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               borderLeft: { md: `1px solid ${theme.palette.divider}` },
+              minWidth: 0,
             }}
           >
-            <Box sx={{ mb: 4, textAlign: "center" }}>
+            <Box sx={{ mb: { xs: 2, md: 3 }, textAlign: "center" }}>
               <Typography variant="h6" fontWeight={900}>
                 VIBE CHECK
               </Typography>
@@ -143,7 +145,11 @@ export const MoodSelector = ({
               sx={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 2,
+                gap: { xs: 1.5, md: 2 },
+                width: "100%",
+                justifyItems: "center",
+                maxWidth: 360,
+                mx: "auto",
               }}
             >
               {MOODS.map((mood) => (
@@ -154,11 +160,16 @@ export const MoodSelector = ({
                   whileTap={{ scale: 0.9 }}
                   onClick={(e) => handleMoodClick(mood, e)}
                   sx={{
-                    fontSize: "2rem",
-                    width: 70,
-                    height: 70,
+                    fontSize: "clamp(1.5rem, 2.2vw, 2rem)",
+                    width: "100%",
+                    maxWidth: 70,
+                    height: "auto",
+                    aspectRatio: "1 / 1",
+                    p: 0,
+                    minWidth: 0,
                     bgcolor: alpha(mood.color, 0.1),
                     border: `2px solid ${alpha(mood.color, 0.2)}`,
+                    borderRadius: "50%",
                     "&:hover": {
                       borderColor: mood.color,
                       bgcolor: alpha(mood.color, 0.2),
