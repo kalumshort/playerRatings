@@ -31,7 +31,7 @@ export default function PodiumStep({ rank, player }: PodiumStepProps) {
           sx={{
             width: isFirst ? 64 : 52,
             height: isFirst ? 64 : 52,
-            border: isFirst ? `2px solid ${accent}` : "none",
+            border: isFirst ? `1px solid ${accent}` : "none",
           }}
         />
         <Box

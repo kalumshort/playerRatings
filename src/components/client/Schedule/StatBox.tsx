@@ -17,7 +17,7 @@ export const StatBox = ({ value, label, color }: StatBoxProps) => (
       alignItems: "center",
       justifyContent: "center",
       py: 1.5,
-      borderRadius: "16px",
+      borderRadius: "10px",
       bgcolor: "background.default",
       // Adding a subtle fallback for the 'clay' effect
       boxShadow: theme.clay ? "none" : "inset 0px 2px 4px rgba(0,0,0,0.05)",

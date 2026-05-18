@@ -103,19 +103,19 @@ export const FixtureHeaderSkeleton = ({
               variant="rounded"
               width={130}
               height={56}
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: "10px" }}
             />
             <Skeleton
               variant="rounded"
               width={100}
               height={20}
-              sx={{ borderRadius: 10 }}
+              sx={{ borderRadius: "8px" }}
             />
             <Skeleton
               variant="rounded"
               width={110}
               height={26}
-              sx={{ borderRadius: 13 }}
+              sx={{ borderRadius: "8px" }}
             />
           </Stack>
         </Grid>
@@ -390,7 +390,7 @@ export default function FixtureHeader({
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        borderRadius: 20,
+                        borderRadius: "8px",
                         overflow: "hidden",
                         border: `0.5px solid ${alpha(theme.palette.divider, 0.6)}`,
                       }}

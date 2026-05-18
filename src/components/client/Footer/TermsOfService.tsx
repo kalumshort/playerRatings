@@ -109,8 +109,8 @@ export default function TermsOfServicePage() {
         <Box
           sx={{
             p: 3,
-            border: `2px solid ${theme.palette.error.main}`,
-            borderRadius: "16px",
+            border: `1px solid ${theme.palette.error.main}`,
+            borderRadius: "10px",
             bgcolor: alpha(theme.palette.error.main, 0.05),
             mb: 4,
           }}
@@ -207,7 +207,7 @@ export default function TermsOfServicePage() {
         <Box
           sx={{
             p: 4,
-            borderRadius: "20px",
+            borderRadius: "10px",
             border: `1px solid ${theme.palette.divider}`,
             bgcolor: alpha(theme.palette.background.default, 0.4),
             mt: 4,

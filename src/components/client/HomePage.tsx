@@ -227,7 +227,7 @@ export default function HomePage() {
             maxWidth: 550,
             display: "flex",
             alignItems: "center",
-            borderRadius: 10,
+            borderRadius: "10px",
             border: `1px solid ${theme.palette.divider}`,
             bgcolor: alpha(theme.palette.background.paper, 0.8),
             backdropFilter: "blur(10px)",
@@ -413,7 +413,7 @@ export default function HomePage() {
                       sx={{
                         width: 56,
                         height: 56,
-                        borderRadius: 3,
+                        borderRadius: "10px",
                         display: "grid",
                         placeItems: "center",
                         bgcolor: alpha(theme.palette.primary.main, 0.08),
@@ -701,8 +701,8 @@ function Phase1Demo() {
                       : alpha(theme.palette.text.primary, 0.08),
                     color: pl.topPick ? "primary.main" : "text.primary",
                     border: pl.topPick
-                      ? `2px solid ${theme.palette.primary.main}`
-                      : "2px solid transparent",
+                      ? `1px solid ${theme.palette.primary.main}`
+                      : "1px solid transparent",
                   }}
                 >
                   {pl.initials}
@@ -915,11 +915,11 @@ const ClubCard = ({ team }: { team: any }) => {
           textAlign: "center",
           height: "100%",
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          border: `2px solid transparent`,
+          border: `1px solid transparent`,
           "&:hover": {
             borderColor: theme.palette.primary.main,
-            transform: "translateY(-4px)",
-            boxShadow: theme.shadows[4],
+            transform: "translateY(-2px)",
+            boxShadow: theme.shadows[2],
           },
         }}
       >
@@ -957,9 +957,9 @@ const ClubCard = ({ team }: { team: any }) => {
           disableElevation
           endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
           sx={{
-            borderRadius: 3,
+            borderRadius: "8px",
             py: 1,
-            fontWeight: 900,
+            fontWeight: 800,
             fontSize: "0.85rem",
           }}
         >

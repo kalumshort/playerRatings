@@ -97,7 +97,7 @@ export default function MobileFixtureContainer({
             alignItems: "center",
             p: 0.5,
             backgroundColor: "background.paper", // Fallback if clay is missing
-            borderRadius: "24px",
+            borderRadius: "10px",
             overflow: "hidden",
           })}
         >

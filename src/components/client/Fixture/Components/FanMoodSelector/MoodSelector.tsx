@@ -85,7 +85,7 @@ export const MoodSelector = ({
   return (
     <Paper
       sx={{
-        borderRadius: "28px",
+        borderRadius: "12px",
         overflow: "hidden",
         border: `1px solid ${theme.palette.divider}`,
       }}
@@ -168,7 +168,7 @@ export const MoodSelector = ({
                     p: 0,
                     minWidth: 0,
                     bgcolor: alpha(mood.color, 0.1),
-                    border: `2px solid ${alpha(mood.color, 0.2)}`,
+                    border: `1px solid ${alpha(mood.color, 0.2)}`,
                     borderRadius: "50%",
                     "&:hover": {
                       borderColor: mood.color,

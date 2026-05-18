@@ -137,8 +137,8 @@ export function PlayerRatingCard({
             sx={{
               width: 100,
               height: 100,
-              border: `4px solid ${isMOTM ? theme.palette.secondary.main : theme.palette.background.paper}`,
-              boxShadow: theme.shadows[4],
+              border: `2px solid ${isMOTM ? theme.palette.secondary.main : theme.palette.background.paper}`,
+              boxShadow: theme.shadows[2],
               transition: "border 0.3s ease",
             }}
           />
@@ -152,7 +152,7 @@ export function PlayerRatingCard({
                 borderRadius: "50%",
                 p: 0.5,
                 display: "flex",
-                border: `3px solid ${theme.palette.background.paper}`,
+                border: `2px solid ${theme.palette.background.paper}`,
               }}
             >
               <EmojiEventsRounded sx={{ color: "white", fontSize: 20 }} />
@@ -192,7 +192,7 @@ export function PlayerRatingCard({
             variant="rounded"
             width="100%"
             height={100}
-            sx={{ borderRadius: "24px" }}
+            sx={{ borderRadius: "12px" }}
           />
         ) : usersMatchPlayerRating ? (
           /* 2. ONLY SHOW AVG AFTER SUBMISSION */
@@ -202,7 +202,7 @@ export function PlayerRatingCard({
                 flex: 1,
                 textAlign: "center",
                 p: 2.5,
-                borderRadius: "24px",
+                borderRadius: "12px",
                 bgcolor: alpha(theme.palette.divider, 0.05),
               }}
             >
@@ -228,7 +228,7 @@ export function PlayerRatingCard({
                 flex: 1,
                 textAlign: "center",
                 p: 2.5,
-                borderRadius: "24px",
+                borderRadius: "12px",
                 bgcolor: alpha(getRatingColor(Number(avgRating)), 0.1),
                 border: `1px solid ${alpha(getRatingColor(Number(avgRating)), 0.2)}`,
               }}
@@ -325,11 +325,11 @@ const ClayRatingInput = ({ onSubmit, userId }: any) => {
         size="large"
         onClick={() => onSubmit(val)}
         sx={{
-          borderRadius: "18px",
+          borderRadius: "10px",
           py: 2,
-          fontWeight: 900,
+          fontWeight: 800,
           background: `linear-gradient(45deg, ${activeColor}, ${alpha(activeColor, 0.8)})`,
-          boxShadow: `0 8px 24px ${alpha(activeColor, 0.3)}`,
+          boxShadow: `0 4px 12px ${alpha(activeColor, 0.25)}`,
           "&:hover": { background: activeColor },
         }}
       >

@@ -14,7 +14,7 @@ import RatingLineupPlayer from "./RatingLineupPlayer";
 
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: 24,
-  borderRadius: 24,
+  borderRadius: 12,
   backgroundColor: theme.palette.background.paper,
   border: `1px solid ${theme.palette.divider}`,
   overflow: "hidden",
@@ -23,7 +23,7 @@ const CardContainer = styled(Paper)(({ theme }) => ({
 const PitchContainer = styled(Box)(({ theme }) => {
   const accent = theme.palette.primary.main;
   return {
-    borderRadius: 20,
+    borderRadius: 12,
     padding: "40px 10px",
     minHeight: 450,
     display: "flex",

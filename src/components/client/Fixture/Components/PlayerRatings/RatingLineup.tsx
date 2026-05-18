@@ -31,7 +31,7 @@ const ShellCard = styled(Paper)(({ theme }: any) => ({
   ...theme.clay?.card,
   padding: 0,
   overflow: "hidden",
-  borderRadius: 28,
+  borderRadius: 12,
   background: `linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${alpha(
     theme.palette.primary.main,
     0.05,

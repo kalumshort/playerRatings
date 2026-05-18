@@ -22,7 +22,7 @@ export default function LatestFixtureItem() {
       <Paper
         sx={{
           bgcolor: "grey.900",
-          borderRadius: 2,
+          borderRadius: "12px",
           textAlign: "center",
           border: `1px solid ${theme.palette.divider}`,
         }}

@@ -87,7 +87,7 @@ export default function StadiumSwitcher({
     width: "100%",
     p: 2,
 
-    border: "2px solid",
+    border: "1px solid",
     borderColor: isActive ? "primary.main" : "divider",
     bgcolor: isActive ? "action.selected" : "background.paper",
     display: "flex",
@@ -174,7 +174,7 @@ export default function StadiumSwitcher({
       maxWidth="sm"
       PaperProps={{
         sx: {
-          borderRadius: "28px",
+          borderRadius: "14px",
           bgcolor: "background.default",
           backgroundImage: "none",
         },
@@ -270,7 +270,7 @@ export default function StadiumSwitcher({
                   height: 100,
                   mx: "auto",
                   mb: 3,
-                  borderRadius: "16px",
+                  borderRadius: "10px",
                   bgcolor: "white",
                   border: "1px solid",
                   borderColor: "divider",
@@ -476,7 +476,7 @@ export default function StadiumSwitcher({
                         sx={{
                           width: "100%",
                           p: 1.5,
-                          borderRadius: "16px",
+                          borderRadius: "10px",
                           border: "1px solid",
                           borderColor: "divider",
                           flexDirection: "column",

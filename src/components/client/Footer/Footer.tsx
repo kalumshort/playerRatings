@@ -133,7 +133,7 @@ const Footer = () => {
             <Box
               sx={{
                 p: 3,
-                borderRadius: "16px",
+                borderRadius: "10px",
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
               }}
