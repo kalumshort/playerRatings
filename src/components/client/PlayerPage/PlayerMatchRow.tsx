@@ -52,9 +52,11 @@ export default function PlayerMatchRow({
   }, [fixture, myClubId, ratingData, compareRatingData]);
 
   const resultColor = getResultColor(result, theme);
-  const ratingColor = rating != null ? getRatingColor(rating) : theme.palette.divider;
+  const ratingColor =
+    rating != null ? getRatingColor(rating) : theme.palette.divider;
   const date = new Date(fixture.fixture.timestamp * 1000);
-  const compareAccent = compareColor ?? theme.palette.secondary?.main ?? "#ff9800";
+  const compareAccent =
+    compareColor ?? theme.palette.secondary?.main ?? "#ff9800";
 
   const isCompareMode = comparePlayer != null;
 
@@ -116,7 +118,8 @@ export default function PlayerMatchRow({
                 flexShrink: 0,
               }}
             >
-              {result} · {fixture.score.fulltime.home}-{fixture.score.fulltime.away}
+              {result} · {fixture.score.fulltime.home}-
+              {fixture.score.fulltime.away}
             </Typography>
           </Box>
 
@@ -193,14 +196,13 @@ export default function PlayerMatchRow({
                   px: 1.75,
                   py: 1,
                   borderRadius: "14px",
-                  border: `1px solid ${ratingColor}33`,
+                  border: `1px solid ${ratingColor}!important`,
                 })}
               >
                 <Typography
                   sx={{
                     fontWeight: 900,
                     fontSize: "1.75rem",
-                    color: ratingColor,
                     lineHeight: 1,
                   }}
                 >

@@ -88,7 +88,6 @@ export default function PlayerSeasonAverageListItem({
 
   return (
     <Paper
-
       onClick={() => router.push(`/${clubSlug}/players/${playerId}`)}
       sx={{
         py: { xs: 1.25, sm: 1.5 },
@@ -98,7 +97,8 @@ export default function PlayerSeasonAverageListItem({
         alignItems: "center",
         gap: { xs: 1, sm: 1.5 },
         cursor: "pointer",
-        border: `1px solid ${theme.palette.divider}`,
+
+        border: `1px solid ${ratingColor}!important`,
         borderRadius: 2,
         transition: "border-color 120ms, background-color 120ms",
         "&:hover": {
@@ -142,7 +142,6 @@ export default function PlayerSeasonAverageListItem({
         variant="subtitle1"
         sx={{
           fontWeight: 700,
-          color: rating > 0 ? ratingColor : "text.disabled",
           lineHeight: 1,
           flexShrink: 0,
         }}
