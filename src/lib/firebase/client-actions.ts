@@ -404,11 +404,9 @@ export const submitContactForm = async ({
 export const handleAddUserToGroup = async ({
   userData,
   groupId,
-  role = "member",
 }: {
   userData: any;
   groupId: string;
-  role?: string;
 }) => {
   try {
     // 1. Guard: Ensure we have the required IDs
@@ -419,10 +417,10 @@ export const handleAddUserToGroup = async ({
     // 2. Reference the function using the pre-initialized 'functions' instance
     const addUserToGroup = httpsCallable(functions, "addUserToGroup");
 
-    // 3. Execute call
+    // 3. Execute call. Role is decided server-side — a client-supplied role
+    // was an escalation path into groupUsers/{groupId}/admins/{uid}.
     await addUserToGroup({
       groupId: groupId,
-      role,
     });
 
     return {

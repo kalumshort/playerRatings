@@ -3,7 +3,7 @@ import { MetadataRoute } from "next";
 import { adminDb } from "@/lib/firebase/admin";
 
 const BASE_URL = "https://11votes.com";
-const CURRENT_YEAR = "2025";
+const CURRENT_YEAR = "2026";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Logic: 7 days ago in seconds (API-Football uses Unix timestamps)
@@ -12,7 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Fetch data in parallel
   // Note: Added .where filter to fixtures to limit read costs and payload size
   const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
-    adminDb.collection("groups").where("visibility", "==", "public").get(),
+    // `isPublic` is the field the app itself gates on ([clubSlug]/page.tsx),
+    // and the only one updateGroupPrivacy has always written.
+    adminDb.collection("groups").where("isPublic", "==", true).get(),
     adminDb
       .collection(`fixtures/${CURRENT_YEAR}/fixtures`)
       .where("fixture.timestamp", ">=", sevenDaysAgoSeconds)
