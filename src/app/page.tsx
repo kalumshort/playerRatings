@@ -21,14 +21,12 @@ export default async function Page() {
     if (userDoc.exists) {
       const rawData = userDoc.data();
 
-      // SANITIZE: Convert Firebase Timestamps to plain numbers or strings
+      // SANITIZE: Server Components can only pass plain JSON to the client, so
+      // strip Firestore Timestamps first, then convert the known date fields.
       userData = {
-        ...rawData,
-        // Convert specific fields if you know them
-        lastLogin: rawData?.lastLogin?.toMillis() || null,
-        createdAt: rawData?.createdAt?.toMillis() || null,
-        // Or just convert the whole object to be safe:
         ...JSON.parse(JSON.stringify(rawData)),
+        lastLogin: rawData?.lastLogin?.toMillis?.() ?? null,
+        createdAt: rawData?.createdAt?.toMillis?.() ?? null,
       };
     }
 
@@ -52,10 +50,15 @@ export default async function Page() {
     redirect(`/${groupSlug}`);
   }
 
+  // RootPage reads `userHomeGroup.slug` — keep the shape it expects, otherwise
+  // its "still syncing" guard can never resolve from server data.
   return (
     <RootPage
       initialIsLoggedIn={true}
-      serverUserData={{ ...userData, groupSlug }}
+      serverUserData={{
+        ...userData,
+        userHomeGroup: groupSlug ? { slug: groupSlug } : null,
+      }}
     />
   );
 }

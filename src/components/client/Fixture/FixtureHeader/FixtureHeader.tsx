@@ -270,12 +270,12 @@ export default function FixtureHeader({
           >
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
-                {getScorers(teams.home.id).map((s, i) => (
+                {getScorers(teams.home.id).map((s: any, i: number) => (
                   <ScorerRow key={i} scorer={s} align="right" />
                 ))}
               </Grid>
               <Grid size={{ xs: 6 }}>
-                {getScorers(teams.away.id).map((s, i) => (
+                {getScorers(teams.away.id).map((s: any, i: number) => (
                   <ScorerRow key={i} scorer={s} align="left" />
                 ))}
               </Grid>

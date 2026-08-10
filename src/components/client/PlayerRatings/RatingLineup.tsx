@@ -138,7 +138,7 @@ export default function RatingLineup({
                 return rows;
               }, [])
               .reverse()
-              .map((rowPlayers, rowIndex) => (
+              .map((rowPlayers: any[], rowIndex: number) => (
                 <Box
                   key={`row-${rowIndex}`}
                   sx={{

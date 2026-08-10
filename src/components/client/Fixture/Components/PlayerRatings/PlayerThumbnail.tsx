@@ -3,7 +3,6 @@
 import React, { useMemo } from "react";
 import { useSelector, shallowEqual } from "react-redux";
 import { Box, Avatar, Tooltip, styled, alpha, Stack } from "@mui/material";
-import { useParams } from "react-router-dom";
 import { RootState } from "@/lib/redux/store";
 
 const ACCENT = "#4EFF4E";
@@ -29,7 +28,7 @@ interface ThumbnailProps {
   currentIndex: number;
   onSelect: (index: number) => void;
   usersMatchPlayerRatings: any;
-  storedUsersMatchMOTM: string | null;
+  storedUsersMatchMOTM: string | null | undefined;
 }
 
 function PlayerThumbnail({

@@ -18,7 +18,13 @@ import { CustomTooltip } from "@/components/ui/CustomTooltip";
 import { getRatingColor } from "@/lib/utils/football-logic";
 
 // --- MAIN COMPONENT ---
-export default function PlayerRatingsLineGraph({ allPlayerRatings, clubId }) {
+export default function PlayerRatingsLineGraph({
+  allPlayerRatings,
+  clubId,
+}: {
+  allPlayerRatings: any;
+  clubId: string | undefined;
+}) {
   const theme = useTheme();
 
   // 1. Get Fixtures from Redux to Hydrate the Graph

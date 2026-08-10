@@ -304,21 +304,33 @@ export const handleMatchMotmVote = async ({
     `groups/${groupId}/seasons/${currentYear}/playerRatings`,
     matchId,
   );
-  const userPath = `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`;
+  const userMatchRef = doc(
+    db,
+    `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+    matchId,
+  );
 
-  await Promise.all([
-    // Increment the global MOTM tally
-    setDoc(
-      groupRef,
-      { motmVotes: { [playerId]: increment(1) } },
-      { merge: true },
-    ),
-    // Mark the user as having submitted everything
-    updateOrSet(userPath, matchId, {
-      motmVote: playerId,
-      ratingsSubmitted: true,
-    }),
-  ]);
+  // One batch, not two independent promises: security rules dedupe this vote by
+  // reading the user's own match doc, and a batch is evaluated against pre-batch
+  // state as a unit — so a double-tap can't slip a second tally increment
+  // through the gap before `motmVote` lands.
+  const batch = writeBatch(db);
+
+  // Increment the global MOTM tally
+  batch.set(
+    groupRef,
+    { motmVotes: { [playerId]: increment(1) } },
+    { merge: true },
+  );
+
+  // Mark the user as having submitted everything
+  batch.set(
+    userMatchRef,
+    { motmVote: playerId, ratingsSubmitted: true },
+    { merge: true },
+  );
+
+  await batch.commit();
 };
 
 export const handlePlayerRatingSubmit = async (data: any) => {
@@ -451,11 +463,9 @@ export const submitContactForm = async ({
 export const handleAddUserToGroup = async ({
   userData,
   groupId,
-  role = "user",
 }: {
   userData: any;
   groupId: string;
-  role?: string;
 }) => {
   try {
     // 1. Guard: Ensure we have the required IDs
@@ -466,16 +476,10 @@ export const handleAddUserToGroup = async ({
     // 2. Reference the function using the pre-initialized 'functions' instance
     const addUserToGroup = httpsCallable(functions, "addUserToGroup");
 
-    // 3. Execute call
-    await addUserToGroup({
-      groupId: groupId,
-      userId: userData.uid,
-      userData: {
-        email: userData.email,
-        role: role,
-        joinedAt: new Date().toISOString(),
-      },
-    });
+    // 3. Execute call. The callable takes the uid from the verified auth
+    //    context and fixes the role itself — a client-supplied role would be a
+    //    path to writing yourself into the group's admins collection.
+    await addUserToGroup({ groupId });
 
     return {
       success: true,

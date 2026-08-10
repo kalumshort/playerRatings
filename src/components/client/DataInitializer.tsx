@@ -7,6 +7,7 @@ import { RootState, AppDispatch } from "@/lib/redux/store";
 import { fetchFixtures } from "@/lib/redux/slices/fixturesSlice";
 import { fetchTeamSquad } from "@/lib/redux/slices/squadSlice";
 import { fetchAllPlayersSeasonOverallRating } from "@/lib/redux/actions/ratingsActions";
+import { devLog } from "@/lib/utils/logger";
 
 interface DataInitializerProps {
   clubId: string;
@@ -36,17 +37,17 @@ export default function DataInitializer({
     if (!clubId || !currentYear) return;
 
     if (!hasFixtures) {
-      console.log(`[Data] 📥 Fetching Fixtures: ${clubId} (${currentYear})`);
+      devLog(`[Data] Fetching fixtures: ${clubId} (${currentYear})`);
       dispatch(fetchFixtures({ clubId, currentYear }));
     }
 
     if (!hasSquad) {
-      console.log(`[Data] 📥 Fetching Squad: ${clubId} (${currentYear})`);
+      devLog(`[Data] Fetching squad: ${clubId} (${currentYear})`);
       dispatch(fetchTeamSquad({ squadId: clubId, currentYear }));
     }
 
     if (groupId && !hasSeasonRatings) {
-      console.log(`[Data] 📥 Fetching Season Ratings for Group: ${groupId}`);
+      devLog(`[Data] Fetching season ratings for group: ${groupId}`);
       dispatch(fetchAllPlayersSeasonOverallRating({ groupId, currentYear }));
     }
   }, [

@@ -1,12 +1,5 @@
 import { db } from "./client";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  collection,
-  getDocs,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 /**
  * Cleanly fetches a single document and handles the "exists" check.
@@ -30,6 +23,11 @@ export async function setDocument(path: string, id: string, data: any) {
 
 /**
  * Updates or sets a document with an initial timestamp if missing.
+ *
+ * Note: the read is deliberate. `updateDoc` replaces object fields outright
+ * while `setDoc(..., {merge:true})` deep-merges them, and callers such as the
+ * lineup submission rely on the replacing behaviour so a re-submitted XI cannot
+ * leave stale slots behind.
  */
 export async function updateOrSet(path: string, id: string, data: any) {
   const docRef = doc(db, path, id);

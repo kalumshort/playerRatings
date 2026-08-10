@@ -5,6 +5,7 @@ import ScheduleContainer from "@/components/client/Schedule/ScheduleContainer";
 import {
   getFixturesByClubServer,
   getGroupBySlugServer,
+  isGroupMemberServer,
 } from "@/lib/firebase/firebase-admin-queries";
 import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
@@ -23,12 +24,20 @@ export default async function SchedulePage({ params }: PageProps) {
   if (!group) notFound();
 
   // 3. CHECK VISIBILITY (Server-Side Gatekeeping)
-  if (group.visibility === "private") {
-    const userId = await getUserIdFromSession(); // Rely on cookies, not useAuth
-    const isMember = group.members?.includes(userId);
+  // Membership lives in groupUsers/{groupId}/members/{userId} — the same source
+  // the Cloud Functions write and firestore.rules checks.
+  if (group.visibility !== "public") {
+    const userId = await getUserIdFromSession(); // Verified session, not a raw cookie
+    const isMember = userId
+      ? await isGroupMemberServer(group.id, userId)
+      : false;
 
     if (!isMember) {
-      return <PrivateGroupPlaceholder name={group.name} />;
+      return (
+        <PrivateGroupPlaceholder
+          name={group.name ?? group.groupName ?? "This group"}
+        />
+      );
     }
   }
 

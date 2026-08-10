@@ -290,7 +290,6 @@ const ActionButton = ({ label, color, bg, border, icon, onClick }: any) => (
 );
 
 const SubItem = ({ sub, squadData, onVote }: any) => {
-  console.log(sub, "SubItem Data");
   const player = sub.player;
   if (!player) return null;
 

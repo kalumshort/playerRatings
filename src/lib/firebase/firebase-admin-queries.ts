@@ -99,25 +99,50 @@ export async function getFixtureByIdServer(
     return null;
   }
 }
+/** The role sub-collections under groupUsers/{groupId}, in likelihood order. */
+const ROLE_COLLECTIONS = ["members", "admins", "owners"] as const;
+
+export type GroupRole = (typeof ROLE_COLLECTIONS)[number];
+
 /**
- * Checks if a user is a member of a group by looking for their
- * document in the groupusers/{groupId}/members/{userId} sub-collection.
+ * Resolves a user's role in a group, or null if they have none.
+ *
+ * Roles are mutually exclusive sub-collections — addMemberToGroup() writes to
+ * groupUsers/{groupId}/members OR /admins OR /owners, never more than one. So an
+ * admin has no `members` document, and checking only `members` locks group staff
+ * out of their own private group. This mirrors hasGroupRole() in firestore.rules.
+ *
+ * (users/{uid}/joinedGroups/{groupId} would be a single read, but it is only
+ * populated for recent joins — the role docs are the complete source.)
  */
-export async function isGroupMemberServer(groupId: string, userId: string) {
+export async function getGroupRoleServer(
+  groupId: string,
+  userId: string,
+): Promise<GroupRole | null> {
+  if (!groupId || !userId) return null;
+
   try {
     const db = getAdminDb();
-    const memberDoc = await db
-      .collection("groupUsers")
-      .doc(groupId)
-      .collection("members")
-      .doc(userId)
-      .get();
+    const groupUsers = db.collection("groupUsers").doc(groupId);
 
-    return memberDoc.exists;
+    // One round trip for all three lookups.
+    const docs = await db.getAll(
+      ...ROLE_COLLECTIONS.map((c) => groupUsers.collection(c).doc(userId)),
+    );
+
+    const index = docs.findIndex((doc) => doc.exists);
+    return index === -1 ? null : ROLE_COLLECTIONS[index];
   } catch (error) {
-    console.error("❌ [Admin] Error checking membership:", error);
-    return false;
+    console.error("❌ [Admin] Error resolving group role:", error);
+    return null;
   }
+}
+
+/**
+ * Whether the user belongs to the group in any role (member, admin or owner).
+ */
+export async function isGroupMemberServer(groupId: string, userId: string) {
+  return (await getGroupRoleServer(groupId, userId)) !== null;
 }
 
 /**

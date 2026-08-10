@@ -52,7 +52,7 @@ export default async function RootLayout({
       className={`${outfit.variable} ${jakarta.variable} ${spaceMono.variable}`}
     >
       <body>
-        <AuthProvider>
+        <AuthProvider serverIsLoggedIn={isLoggedIn}>
           <StoreProvider>
             <ThemeRegistry initialTheme={initialTheme}>
               <Header serverIsLoggedIn={isLoggedIn} />

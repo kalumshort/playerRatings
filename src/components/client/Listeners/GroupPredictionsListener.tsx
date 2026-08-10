@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { fetchMatchPrediction } from "@/lib/redux/slices/predictionsSlice";
+import { devLog, devWarn } from "@/lib/utils/logger";
 
 interface GroupPredictionsListenerProps {
   groupId: string | number;
@@ -27,7 +28,7 @@ export const GroupPredictionsListener = ({
   useEffect(() => {
     // 1. Guard against missing/undefined props
     if (!groupId || !matchId || !currentYear) {
-      console.warn("⚠️ [PredictionsListener] Missing props:", {
+      devWarn("[PredictionsListener] Missing props:", {
         groupId,
         matchId,
         currentYear,
@@ -39,10 +40,7 @@ export const GroupPredictionsListener = ({
     const mid = String(matchId);
     const year = String(currentYear);
 
-    console.log(
-      `%c🔮 [PredictionsListener] Subscribing: groups/${gid}/seasons/${year}/predictions/${mid}`,
-      "color: #8b5cf6; font-weight: bold;",
-    );
+    devLog(`[PredictionsListener] Subscribing to match ${mid}`);
 
     const predictionsRef = doc(
       db,
@@ -63,11 +61,7 @@ export const GroupPredictionsListener = ({
 
           // Only dispatch if data changed to save CPU/Renders
           if (lastDataRef.current !== fingerprint) {
-            console.log(
-              `%c📈 [PredictionsListener] Update for Group ${gid}:`,
-              "color: #10b981; font-weight: bold;",
-              data,
-            );
+            devLog(`[PredictionsListener] Update for match ${mid}`);
 
             lastDataRef.current = fingerprint;
 
@@ -80,26 +74,16 @@ export const GroupPredictionsListener = ({
             );
           }
         } else {
-          console.log(
-            `ℹ️ [PredictionsListener] No predictions yet for match ${mid}`,
-          );
+          devLog(`[PredictionsListener] No predictions yet for match ${mid}`);
         }
       },
       (error) => {
-        console.error(
-          "%c🚨 [PredictionsListener] Firestore Error:",
-          "color: #ef4444; font-weight: bold;",
-        );
-        console.error(`Path: groups/${gid}/seasons/${year}/predictions/${mid}`);
-        console.error("Message:", error.message);
+        console.error("[PredictionsListener] Firestore error:", error.message);
       },
     );
 
     return () => {
-      console.log(
-        `%c🧹 [PredictionsListener] Unsubscribing from match ${mid}`,
-        "color: #f59e0b;",
-      );
+      devLog(`[PredictionsListener] Unsubscribing from match ${mid}`);
       unsubscribe();
     };
   }, [groupId, matchId, currentYear, dispatch]);

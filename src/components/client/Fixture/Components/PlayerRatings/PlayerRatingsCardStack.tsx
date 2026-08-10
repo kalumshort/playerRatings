@@ -46,7 +46,6 @@ export default function PlayerRatingsCardStack({
   const matchRatings = useSelector((state: RootState) =>
     selectMatchRatingsById(fixture.id)(state),
   );
-  console.log(matchRatings, "Match Ratings in Card Stack");
   // 1. DATA SANITIZATION
   const players = useMemo(
     () => combinedPlayers.filter(Boolean),

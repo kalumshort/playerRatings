@@ -70,7 +70,7 @@ export default function Lineup({
   // 3. PITCH GRID ORGANIZER
   const rows = useMemo(() => {
     const pitchRows: any[][] = [];
-    activeXI.forEach(({ player }) => {
+    activeXI.forEach(({ player }: any) => {
       const rowIdx = parseInt(player.grid.split(":")[0]);
       if (!pitchRows[rowIdx]) pitchRows[rowIdx] = [];
       pitchRows[rowIdx].push(player);
@@ -182,7 +182,7 @@ export default function Lineup({
           pb: 4,
         }}
       >
-        {finalSubsList.map((sub) => (
+        {finalSubsList.map((sub: any) => (
           <Box
             key={sub.player.id}
             sx={{

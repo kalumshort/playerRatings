@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db, functions } from "./client";
 import { httpsCallable } from "firebase/functions";
+import { devWarn } from "@/lib/utils/logger";
 
 /**
  * Update a specific field in the User document.
@@ -25,7 +26,7 @@ export const updateUserField = async <T>(
   newValue: T,
 ): Promise<void> => {
   if (!userId || !field || newValue === undefined) {
-    console.warn("Update skipped: Missing required parameters.");
+    devWarn("Update skipped: Missing required parameters.");
     return;
   }
 

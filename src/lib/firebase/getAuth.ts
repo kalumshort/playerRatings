@@ -1,11 +1,15 @@
-import { cookies } from "next/headers";
+import "server-only";
+import { getUserIdFromSession } from "@/lib/auth-server";
 
+/**
+ * Thin wrapper over {@link getUserIdFromSession} for callers that want a
+ * boolean alongside the id. Both go through the same verified session cookie.
+ */
 export async function getAuthSession() {
-  const cookieStore = await cookies();
-  const uid = cookieStore.get("uid")?.value;
+  const userId = await getUserIdFromSession();
 
   return {
-    isLoggedIn: !!uid,
-    userId: uid || null,
+    isLoggedIn: !!userId,
+    userId,
   };
 }

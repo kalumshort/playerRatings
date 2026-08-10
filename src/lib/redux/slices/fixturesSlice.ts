@@ -8,6 +8,7 @@ import {
   or,
   orderBy,
 } from "firebase/firestore";
+import { devLog } from "@/lib/utils/logger";
 
 // --- TYPES ---
 
@@ -95,7 +96,7 @@ const fixturesSlice = createSlice({
       const clubIdStr = String(clubId);
       const fixtureIdStr = String(id);
 
-      console.log(`🔄 [Reducer] Processing update for Match ${fixtureIdStr}`);
+      devLog(`[Fixtures] Processing update for match ${fixtureIdStr}`);
 
       // 1. Ensure the nested structure exists so we don't fail silently
       if (!state.byClubId[clubIdStr]) {
@@ -120,14 +121,14 @@ const fixturesSlice = createSlice({
           ...data,
           id: fixtureIdStr, // Keep ID consistent as a string
         };
-        console.log(`✅ [Reducer] Updated existing fixture at index ${index}`);
+        devLog(`[Fixtures] Updated existing fixture at index ${index}`);
       } else {
         // 4. Insert new: If it's a live match that wasn't in the initial list
         clubFixtures.push({
           ...data,
           id: fixtureIdStr,
         });
-        console.log(`➕ [Reducer] Added new fixture to state`);
+        devLog(`[Fixtures] Added new fixture to state`);
       }
     },
   },
@@ -146,13 +147,7 @@ const fixturesSlice = createSlice({
       .addCase(fetchFixtures.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      })
-      .addMatcher(
-        (action) => action.type.includes("updateSingleFixture"),
-        (state, action) => {
-          console.log("🎯 MATCHED ACTION IN REDUCER:", action.type);
-        },
-      );
+      });
   },
 });
 

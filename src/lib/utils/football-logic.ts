@@ -65,7 +65,7 @@ export function getInitialSurname(name: string): string {
   return `${firstInitial}. ${surname}`;
 }
 
-export const getResultColor = (result, theme) => {
+export const getResultColor = (result: string, theme: any) => {
   if (result === "W") return theme.palette.success.main;
   if (result === "D") return theme.palette.warning.main;
   return theme.palette.error.main;

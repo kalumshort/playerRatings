@@ -6,6 +6,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { getAuth } from "firebase/auth";
 import { fetchUserMatchData } from "@/lib/redux/slices/userDataSlice";
+import { devWarn } from "@/lib/utils/logger";
 
 interface UsersMatchDataListenerProps {
   matchId: string;
@@ -57,8 +58,8 @@ export const UsersMatchDataListener = ({
         }
       },
       (error) => {
-        // Log error but don't crash; might be a permissions issue if logout happens
-        console.warn("⚠️ [UserListener] Match data access error:", error);
+        // Log but don't crash; usually a permissions issue right after logout
+        devWarn("[UserListener] Match data access error:", error.message);
       },
     );
 

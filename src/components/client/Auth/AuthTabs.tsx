@@ -20,6 +20,33 @@ import { useRouter } from "next/navigation";
 
 import { handleCreateAccount } from "@/lib/firebase/auth-actions";
 
+/**
+ * Firebase error codes are deliberately not surfaced verbatim — codes like
+ * `auth/user-not-found` let an attacker enumerate which emails have accounts.
+ */
+function friendlyAuthError(code: string | undefined): string {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-email":
+      return "Incorrect email or password.";
+    case "auth/email-already-in-use":
+      return "That email can't be used. Try signing in instead.";
+    case "auth/weak-password":
+      return "Password must be at least 6 characters.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait a moment and try again.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Sign-in was cancelled.";
+    case "auth/network-request-failed":
+      return "Network error. Check your connection and try again.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
+}
+
 export default function AuthTabs({ groupId }: { groupId?: string }) {
   const [tab, setTab] = useState(0);
   const [email, setEmail] = useState("");
@@ -38,17 +65,24 @@ export default function AuthTabs({ groupId }: { groupId?: string }) {
         // AuthListener in AuthContext will handle the redirect or UI change
       }
     } catch (err: any) {
-      setMessage({ text: err.message, isError: true });
+      setMessage({ text: friendlyAuthError(err?.code), isError: true });
     }
   };
 
   const handleReset = async () => {
     if (!email) return setMessage({ text: "Enter email first", isError: true });
+
+    // Always report the same outcome so this can't be used to probe for accounts.
+    const neutral = "If that email is registered, a reset link is on its way.";
     try {
       await sendPasswordResetEmail(auth, email);
-      setMessage({ text: "Reset email sent!", isError: false });
+      setMessage({ text: neutral, isError: false });
     } catch (err: any) {
-      setMessage({ text: err.message, isError: true });
+      const isRateLimited = err?.code === "auth/too-many-requests";
+      setMessage({
+        text: isRateLimited ? friendlyAuthError(err.code) : neutral,
+        isError: isRateLimited,
+      });
     }
   };
 

@@ -40,7 +40,6 @@ export default function LatestFixtureItem() {
   const awayTeamId = latestFixture.teams.away.id;
   const homeColor = "#1727b5";
   const awayColor = "#b92525";
-  console.log(latestFixture);
   // 2. Generate Gradient (Modern MUI approach)
   const fixtureGradient = `linear-gradient(95deg, ${alpha(homeColor, 0.9)} 40%, ${alpha(awayColor, 0.9)} 60%)`;
 

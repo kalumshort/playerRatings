@@ -1,6 +1,6 @@
 import { Home, Calendar, Trophy, User } from "lucide-react";
 
-export const getNavItems = (clubSlug) => [
+export const getNavItems = (clubSlug: string) => [
   { text: "Home", icon: <Home size={20} />, path: `/${clubSlug}` },
   {
     text: "Schedule",

@@ -37,7 +37,7 @@ export const allPlayerRatings = createSelector(
   (bucket) => bucket.players || {},
 );
 
-export const selectPlayerRatingsById = (playerId) =>
+export const selectPlayerRatingsById = (playerId: string) =>
   createSelector([allPlayerRatings], (players) => players[playerId]);
 
 // 4. Dynamic Selectors (Curried)

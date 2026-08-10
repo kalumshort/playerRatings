@@ -45,7 +45,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
 
   //   const { activeGroup } = useGroupData();
   //   const { isGroupAdmin } = useUserData();
-  const navItems = getNavItems(clubSlug);
+  const navItems = getNavItems(String(clubSlug ?? ""));
 
   const accentColor = theme.palette.primary.main;
 

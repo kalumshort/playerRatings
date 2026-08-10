@@ -58,7 +58,7 @@ export default function PrivateGroupPlaceholder({
           </Box>
 
           <Typography variant="h5" fontWeight={900} letterSpacing={-0.5}>
-            {name.toUpperCase()} IS PRIVATE
+            {(name || "This group").toUpperCase()} IS PRIVATE
           </Typography>
 
           <Typography color="text.secondary" variant="body1" sx={{ px: 2 }}>
@@ -78,7 +78,7 @@ export default function PrivateGroupPlaceholder({
             </Button>
             <Button
               variant="contained"
-              onClick={() => router.push("/login")}
+              onClick={() => router.push("/")}
               sx={{ borderRadius: "12px", px: 4 }}
             >
               Sign In

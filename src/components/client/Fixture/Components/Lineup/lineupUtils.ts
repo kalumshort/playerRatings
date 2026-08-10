@@ -39,7 +39,7 @@ export const getLiveLineup = (
     if (index !== -1) {
       // Find the incoming player details from the bench
       const playerOnDetails = allSubs.find(
-        (s) => Number(s.player.id) === playerOnId,
+        (s: any) => Number(s.player.id) === playerOnId,
       );
 
       if (playerOnDetails) {
@@ -65,7 +65,7 @@ export const getLiveLineup = (
   // We want: (Subs who never played) + (Starters/Subs who were subbed off)
   const activeIds = new Set(activeXI.map((p) => Number(p.player.id)));
   const finalSubsList = [
-    ...allSubs.filter((s) => !activeIds.has(Number(s.player.id))),
+    ...allSubs.filter((s: any) => !activeIds.has(Number(s.player.id))),
     ...subbedOutList,
   ];
 

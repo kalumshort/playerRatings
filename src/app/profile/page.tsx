@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getUserIdFromSession } from "@/lib/auth-server";
 
 export const metadata: Metadata = {
   title: "Your Profile | 11Votes",
@@ -9,9 +9,8 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   // 1. Server-side Auth Check
-  // We check the cookie you set in AuthProvider to prevent a "Flash of Unauthenticated Content"
-  const cookieStore = await cookies();
-  const uid = cookieStore.get("uid")?.value;
+  // Uses the verified session cookie, so this cannot be spoofed from the client.
+  const uid = await getUserIdFromSession();
 
   // 2. Redirect if not logged in - happens BEFORE the browser renders anything
   if (!uid) {

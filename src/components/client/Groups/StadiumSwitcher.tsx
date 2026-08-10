@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition, useMemo } from "react";
+import React, { useState, useTransition } from "react";
 import {
   Box,
   Typography,
@@ -19,7 +19,6 @@ import {
   Chip,
   Fade,
   CircularProgress,
-  Stack,
 } from "@mui/material";
 import {
   Search,
@@ -29,19 +28,14 @@ import {
   ArrowLeftRight,
   Lock,
   CalendarClock,
-  Plus,
-  Globe,
-  AlertTriangle,
 } from "lucide-react";
 import { differenceInDays, addDays, formatDistanceToNow } from "date-fns";
 
-// Firebase Actions
+// The new modular function trigger
 import {
   updateLeagueTeam,
   updateUserField,
 } from "@/lib/firebase/client-user-actions";
-
-// Static Data & Hooks
 import { teamList } from "@/lib/utils/teamList";
 import useGroupData from "@/Hooks/useGroupData";
 
@@ -50,91 +44,77 @@ export default function StadiumSwitcher({
   onClose,
   groups,
   userData,
+  leagueKey = "premier-league",
 }: any) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0);
-  const [transferLeagueKey, setTransferLeagueKey] = useState<string | null>(
-    null,
-  );
-  const [pendingSelection, setPendingSelection] = useState<any | null>(null); // New: Track team click for confirmation
+  const [isChangingTeam, setIsChangingTeam] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
 
-  const SUPPORTED_LEAGUES = [
-    { id: "premier-league", name: "Premier League", active: true },
-    { id: "la-liga", name: "La Liga", active: false },
-    { id: "serie-a", name: "Serie A", active: false },
-  ];
+  const leagueDisplayName = leagueKey.replace("-", " ").toUpperCase();
+  const currentClubId = userData?.leagueTeams?.[leagueKey];
+  const currentClub: any = groupData?.[currentClubId];
 
-  const privateCommunities = useMemo(() => {
-    return Object.values(groups || {}).filter(
-      (g: any) =>
-        g.visibility === "private" && userData?.groups?.includes(g.groupId),
-    );
-  }, [groups, userData?.groups]);
+  // Cooldown Logic (30-day rule)
+  const lastTransfer = userData?.lastTransferDates?.[leagueKey]?.toDate();
+  const nextAvailableDate = lastTransfer ? addDays(lastTransfer, 30) : null;
+  const canTransfer =
+    !lastTransfer || differenceInDays(new Date(), lastTransfer) >= 30;
 
-  const filteredMarket = useMemo(() => {
-    return teamList.filter((team) => {
-      const matchesSearch = team.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesLeague = transferLeagueKey === "premier-league";
-      const isNotCurrent =
-        String(team.teamId) !==
-        String(userData?.leagueTeams?.[transferLeagueKey!]);
-      return matchesSearch && matchesLeague && isNotCurrent;
-    });
-  }, [search, transferLeagueKey, userData]);
+  const transferMarket = teamList.filter(
+    (team) =>
+      team.name.toLowerCase().includes(search.toLowerCase()) &&
+      String(team.teamId) !== String(currentClubId),
+  );
 
-  const handleConfirmTransfer = () => {
-    if (isPending || !transferLeagueKey || !pendingSelection) return;
+  const privateCommunities = Object.values(groups || {}).filter(
+    (g: any) =>
+      g.visibility === "private" && userData?.groups?.includes(g.groupId),
+  );
+
+  /**
+   * Refactored to use the Transfer Coordinator logic
+   */
+  const handleTransfer = (newTeamId: number) => {
+    if (isPending) return;
 
     startTransition(async () => {
+      // This now calls the 'transferLeagueTeam' Cloud Function
       const result = await updateLeagueTeam({
         userData,
-        groupId: String(pendingSelection.teamId),
-        leagueKey: transferLeagueKey,
+        groupId: String(newTeamId),
+        leagueKey,
       });
 
       if (result.success) {
-        setPendingSelection(null);
-        setTransferLeagueKey(null);
+        // Transfer was successful!
         onClose();
       } else {
+        // Show error to user
         alert(result.message);
       }
     });
   };
 
   const handleActiveGroupChange = async (newGroupId: string) => {
-    if (!newGroupId || isPending) return;
-    startTransition(async () => {
-      await updateUserField(userData?.uid, "activeGroup", newGroupId);
-      onClose();
-    });
-  };
-
-  const closeDialog = () => {
-    setPendingSelection(null);
-    setTransferLeagueKey(null);
-    onClose();
+    if (!newGroupId) {
+      return;
+    }
+    await updateUserField(userData?.uid, "activeGroup", newGroupId);
   };
 
   return (
     <Dialog
       open={open}
-      onClose={closeDialog}
+      onClose={onClose}
       fullWidth
       maxWidth="sm"
       PaperProps={{
-        sx: {
-          borderRadius: "28px",
-          bgcolor: "background.default",
-          backgroundImage: "none",
-        },
+        sx: { borderRadius: "24px", bgcolor: "background.default" },
       }}
     >
-      {/* Dynamic Header */}
+      {/* Header */}
       <Box
         sx={{
           p: 3,
@@ -149,66 +129,45 @@ export default function StadiumSwitcher({
           </Typography>
           <Typography
             variant="caption"
-            sx={{
-              fontWeight: 800,
-              color: "primary.main",
-              textTransform: "uppercase",
-            }}
+            sx={{ fontWeight: 800, color: "primary.main" }}
           >
-            {pendingSelection
-              ? "Confirm Transfer"
-              : transferLeagueKey
-                ? `Market: ${transferLeagueKey.replace("-", " ")}`
-                : "Manage Memberships"}
+            {leagueDisplayName}
           </Typography>
         </Box>
-        <IconButton
-          onClick={() =>
-            pendingSelection
-              ? setPendingSelection(null)
-              : transferLeagueKey
-                ? setTransferLeagueKey(null)
-                : onClose()
-          }
-          disabled={isPending}
-        >
-          <X size={20} />
+        <IconButton onClick={onClose} disabled={isPending}>
+          <X />
         </IconButton>
       </Box>
 
-      {/* Primary Navigation - Hide when confirming to focus user */}
-      {!pendingSelection && (
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => {
-            setActiveTab(v);
-            setTransferLeagueKey(null);
-          }}
-          variant="fullWidth"
-          sx={{ borderBottom: 1, borderColor: "divider" }}
-        >
-          <Tab
-            icon={<Trophy size={18} />}
-            label="My Teams"
-            iconPosition="start"
-            disabled={isPending}
-          />
-          <Tab
-            icon={<Lock size={18} />}
-            label="Private Groups"
-            iconPosition="start"
-            disabled={isPending}
-          />
-        </Tabs>
-      )}
+      {/* Navigation */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
+        variant="fullWidth"
+        sx={{ borderBottom: 1, borderColor: "divider" }}
+      >
+        <Tab
+          icon={<Trophy size={18} />}
+          label="My Club"
+          iconPosition="start"
+          disabled={isPending}
+        />
+        <Tab
+          icon={<Lock size={18} />}
+          label="Communities"
+          iconPosition="start"
+          disabled={isPending}
+        />
+      </Tabs>
 
-      <Box sx={{ p: 3, minHeight: 450, position: "relative" }}>
+      <Box sx={{ p: 3, minHeight: 400, position: "relative" }}>
+        {/* Loading Overlay for the Transfer process */}
         {isPending && (
           <Box
             sx={{
               position: "absolute",
               inset: 0,
-              zIndex: 20,
+              zIndex: 10,
               bgcolor: "rgba(255,255,255,0.7)",
               display: "flex",
               alignItems: "center",
@@ -220,246 +179,105 @@ export default function StadiumSwitcher({
           </Box>
         )}
 
-        {/* NEW: Confirmation Screen */}
-        {pendingSelection ? (
-          <Fade in={true}>
-            <Box sx={{ textAlign: "center", py: 2 }}>
-              <Avatar
-                src={pendingSelection.logo}
-                sx={{
-                  width: 100,
-                  height: 100,
-                  mx: "auto",
-                  mb: 3,
-                  borderRadius: "16px",
-                  bgcolor: "white",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  p: 1,
-                }}
-              />
-              <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>
-                Sign for {pendingSelection.name}?
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", px: 4, mb: 4 }}
-              >
-                Joining this club will replace your current{" "}
-                <strong>{transferLeagueKey?.replace("-", " ")}</strong>{" "}
-                registration.
-              </Typography>
-
-              <Paper
-                sx={{
-                  bgcolor: "warning.light",
-                  p: 2,
-                  borderRadius: "16px",
-                  mb: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  textAlign: "left",
-                }}
-              >
-                <AlertTriangle color="#d32f2f" />
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#d32f2f", fontWeight: 700 }}
-                >
-                  WARNING: Transfer windows are strict. Once you switch, your
-                  account will be{" "}
-                  <strong>locked from further transfers for 30 days.</strong>
-                </Typography>
-              </Paper>
-
-              <Stack direction="row" spacing={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => setPendingSelection(null)}
-                  sx={{ borderRadius: "12px", fontWeight: 800 }}
-                >
-                  Go Back
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handleConfirmTransfer}
-                  sx={{ borderRadius: "12px", fontWeight: 800 }}
-                >
-                  Confirm Transfer
-                </Button>
-              </Stack>
-            </Box>
-          </Fade>
-        ) : activeTab === 0 ? (
-          /* LEAGUE SLOTS VIEW */
+        {activeTab === 0 && (
           <Box>
-            {!transferLeagueKey ? (
-              <Stack spacing={2}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 900,
-                    color: "text.secondary",
-                    letterSpacing: 1,
-                  }}
-                >
-                  YOUR REGISTERED LEAGUE SLOTS
-                </Typography>
-                {SUPPORTED_LEAGUES.map((league) => {
-                  const clubId = userData?.leagueTeams?.[league.id];
-                  const clubData: any = groupData?.[clubId];
-                  const lastTransfer =
-                    userData?.lastTransferDates?.[league.id]?.toDate();
-                  const nextDate = lastTransfer
-                    ? addDays(lastTransfer, 30)
-                    : null;
-                  const canChange =
-                    !lastTransfer ||
-                    differenceInDays(new Date(), lastTransfer) >= 30;
+            {!isChangingTeam ? (
+              <Fade in={true}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mb: 1,
+                      display: "block",
+                      fontWeight: 800,
+                      color: "text.secondary",
+                    }}
+                  >
+                    CURRENT REGISTRATION
+                  </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 3,
+                      borderRadius: "20px",
+                      textAlign: "center",
+                      bgcolor: "background.paper",
+                    }}
+                  >
+                    <Avatar
+                      src={currentClub?.logo}
+                      sx={{
+                        width: 100,
+                        height: 100,
+                        mx: "auto",
+                        mb: 2,
+                        borderRadius: 0,
+                        objectFit: "contain",
+                      }}
+                    />
+                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                      {currentClub?.name || "Unattached"}
+                    </Typography>
 
-                  return (
-                    <Fade in key={league.id}>
-                      <Paper
-                        variant="outlined"
-                        sx={{
-                          p: 2,
-                          borderRadius: "20px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          opacity: league.active ? 1 : 0.5,
-                          bgcolor: league.active
-                            ? "background.paper"
-                            : "action.disabledBackground",
-                        }}
-                      >
-                        <Avatar
-                          src={clubData?.logo}
-                          sx={{
-                            width: 54,
-                            height: 54,
-                            borderRadius: "12px",
-                            bgcolor: "white",
-                            p: 0.5,
-                            border: "1px solid",
-                            borderColor: "divider",
-                          }}
+                    <Box sx={{ mt: 3 }}>
+                      {!canTransfer && nextAvailableDate ? (
+                        <Chip
+                          icon={<CalendarClock size={14} />}
+                          label={`Window opens in ${formatDistanceToNow(nextAvailableDate)}`}
+                          color="warning"
+                          variant="outlined"
+                          sx={{ fontWeight: 700 }}
+                        />
+                      ) : (
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          startIcon={<ArrowLeftRight size={18} />}
+                          onClick={() => setIsChangingTeam(true)}
+                          sx={{ borderRadius: "12px", fontWeight: 800 }}
                         >
-                          <Globe size={24} />
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontWeight: 900,
-                              color: "text.secondary",
-                              textTransform: "uppercase",
-                              fontSize: "0.65rem",
-                            }}
-                          >
-                            {league.name}
-                          </Typography>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontWeight: 900, lineHeight: 1.2 }}
-                          >
-                            {clubData?.name ||
-                              (league.active
-                                ? "No Club Assigned"
-                                : "Opening Soon")}
-                          </Typography>
-                          {!canChange && league.active && nextDate && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: "warning.main",
-                                fontWeight: 700,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <CalendarClock size={12} /> Window:{" "}
-                              {formatDistanceToNow(nextDate)}
-                            </Typography>
-                          )}
-                        </Box>
-                        {league.active ? (
-                          <Button
-                            variant="contained"
-                            size="small"
-                            disabled={!canChange}
-                            onClick={() => setTransferLeagueKey(league.id)}
-                            startIcon={
-                              clubId ? (
-                                <ArrowLeftRight size={14} />
-                              ) : (
-                                <Plus size={14} />
-                              )
-                            }
-                            sx={{
-                              borderRadius: "10px",
-                              fontWeight: 800,
-                              textTransform: "none",
-                            }}
-                          >
-                            {clubId ? "Transfer" : "Join"}
-                          </Button>
-                        ) : (
-                          <Chip
-                            label="Locked"
-                            size="small"
-                            icon={<Lock size={12} />}
-                            sx={{ fontWeight: 700 }}
-                          />
-                        )}
-                      </Paper>
-                    </Fade>
-                  );
-                })}
-              </Stack>
+                          Transfer Club
+                        </Button>
+                      )}
+                    </Box>
+                  </Paper>
+                </Box>
+              </Fade>
             ) : (
-              /* TRANSFER MARKET VIEW */
-              <Box sx={{ animation: "fadeIn 0.2s ease-in" }}>
+              <Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <IconButton
-                    onClick={() => setTransferLeagueKey(null)}
+                    onClick={() => setIsChangingTeam(false)}
                     sx={{ mr: 1 }}
                   >
                     <ArrowLeftRight size={18} />
                   </IconButton>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                    Select New Club
+                    Transfer Market
                   </Typography>
                 </Box>
                 <TextField
                   fullWidth
-                  placeholder="Search teams..."
+                  placeholder="Find your new team..."
                   size="small"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   sx={{ mb: 2 }}
                 />
                 <Grid container spacing={1}>
-                  {filteredMarket.map((team) => (
+                  {transferMarket.map((team) => (
                     <Grid size={{ xs: 4, sm: 3 }} key={team.teamId}>
                       <ButtonBase
-                        onClick={() => setPendingSelection(team)} // Instead of calling handleTransfer directly
+                        onClick={() => handleTransfer(team.teamId)}
                         sx={{
                           width: "100%",
-                          p: 1.5,
-                          borderRadius: "16px",
+                          p: 1,
+                          borderRadius: "12px",
                           border: "1px solid",
                           borderColor: "divider",
                           flexDirection: "column",
                           gap: 1,
-                          "&:hover": {
-                            bgcolor: "action.hover",
-                            borderColor: "primary.main",
-                          },
+                          "&:hover": { bgcolor: "action.hover" },
                         }}
                       >
                         <Avatar
@@ -468,10 +286,9 @@ export default function StadiumSwitcher({
                         />
                         <Typography
                           sx={{
-                            fontSize: "0.65rem",
+                            fontSize: "0.6rem",
                             fontWeight: 800,
                             textAlign: "center",
-                            lineHeight: 1.1,
                           }}
                         >
                           {team.name}
@@ -483,9 +300,11 @@ export default function StadiumSwitcher({
               </Box>
             )}
           </Box>
-        ) : (
-          /* PRIVATE COMMUNITIES TAB */
-          <Box sx={{ animation: "fadeIn 0.2s ease-in" }}>
+        )}
+
+        {/* Tab 1: Communities */}
+        {activeTab === 1 && (
+          <Box>
             <Typography
               variant="caption"
               sx={{
@@ -495,42 +314,34 @@ export default function StadiumSwitcher({
                 color: "text.secondary",
               }}
             >
-              YOUR JOINED COMMUNITIES
+              PRIVATE COMMUNITIES
             </Typography>
-            <Stack spacing={1.5}>
-              {privateCommunities.map((group: any) => {
-                const isActive = userData.activeGroup === group.groupId;
-                return (
+            <Grid container spacing={2}>
+              {privateCommunities.map((group: any) => (
+                <Grid size={{ xs: 12 }} key={group.groupId}>
                   <ButtonBase
-                    key={group.groupId}
-                    onClick={() => handleActiveGroupChange(group.groupId)}
                     sx={{
                       width: "100%",
                       p: 2,
                       borderRadius: "16px",
                       border: "1px solid",
-                      borderColor: isActive ? "primary.main" : "divider",
-                      bgcolor: isActive
-                        ? "action.selected"
-                        : "background.paper",
+                      borderColor: "divider",
                       justifyContent: "flex-start",
                       gap: 2,
                     }}
+                    onClick={() => handleActiveGroupChange(group.groupId)}
                   >
                     <Avatar
                       src={group.logo?.replace(/"/g, "")}
-                      sx={{ width: 40, height: 40, borderRadius: "8px" }}
+                      sx={{ width: 40, height: 40 }}
                     />
-                    <Typography
-                      sx={{ fontWeight: 700, flex: 1, textAlign: "left" }}
-                    >
+                    <Typography sx={{ fontWeight: 700 }}>
                       {group.name}
                     </Typography>
-                    {isActive && <CheckCircle2 size={18} color="#4caf50" />}
                   </ButtonBase>
-                );
-              })}
-            </Stack>
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         )}
       </Box>

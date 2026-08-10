@@ -17,6 +17,35 @@ import {
   groupDataFailure,
 } from "@/lib/redux/slices/groupSlice";
 
+/**
+ * Roles are mutually exclusive sub-collections under groupUsers/{groupId}, so an
+ * admin has no `members` document. Reading only `members` made every admin look
+ * like a plain "user" and left useUserData().isGroupAdmin permanently false.
+ * Security rules permit reading your own doc in any of the three.
+ */
+const ROLE_COLLECTIONS = ["members", "admins", "owners"] as const;
+
+const fetchGroupRole = async (groupId: string, userId: string) => {
+  const docs = await Promise.all(
+    ROLE_COLLECTIONS.map((collectionName) =>
+      getDoc(doc(db, `groupUsers/${groupId}/${collectionName}`, userId)).catch(
+        () => null,
+      ),
+    ),
+  );
+
+  for (let i = 0; i < docs.length; i++) {
+    const snap = docs[i];
+    if (snap?.exists()) {
+      // The doc carries the role string; the collection it lives in is the
+      // fallback if that field was never written.
+      return snap.data().role || ROLE_COLLECTIONS[i].replace(/s$/, "");
+    }
+  }
+
+  return "user";
+};
+
 // Helper to sanitize Firebase Timestamps (Prevents Redux serialization errors)
 const sanitizeData = (data: any) => {
   const sanitized = { ...data };
@@ -61,15 +90,7 @@ export const UserDataListener = ({ userId }: { userId: string | null }) => {
               const groupData = sanitizeData(groupDoc.data());
 
               // Fetch User Role in this specific group
-              const groupUserRef = doc(
-                db,
-                `groupUsers/${groupId}/members`,
-                userId,
-              );
-              const groupUserDoc = await getDoc(groupUserRef);
-              const role = groupUserDoc.exists()
-                ? groupUserDoc.data().role
-                : "user";
+              const role = await fetchGroupRole(groupId, userId);
 
               return {
                 id: groupId,
