@@ -2,151 +2,192 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-   // Match for groupInviteLinks collection
-    match /groupInviteLinks/{inviteId} {
-      
-      // Rule for creating a group invite (write)
-      allow create: if request.auth != null && isUserAdmin(request.auth.uid, request.resource.data.groupId);
 
-      // Rule for reading an invite (viewing the group invite)
-      allow read: if true ;
+    // =========================================================
+    // 1. HELPER FUNCTIONS
+    // =========================================================
 
-      // You can also define update and delete rules if needed
-      allow update: if false;  // No one can update the invite once it's created
-      allow delete: if request.auth != null && isUserAdmin(request.auth.uid, resource.data.groupId);
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Function to check if the user is an admin of the group
-    function isUserAdmin(userId, groupId) {
-      return exists(/databases/$(database)/documents/groupUsers/$(groupId)/admins/$(userId));
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Fixtures - no access allowed
-    match /fixtures/{fixtureId} {
-      allow read, write: if false;
-
-      match /{subCollection}/{subDocId} {
-        allow read: if request.auth != null;
-        allow write: if false;
-      }
+    function isGroupMember(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/members/$(request.auth.uid));
     }
 
-    // Team Squads - read allowed for authenticated users, write denied
-     match /teamSquads/{squadId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
-    match /teamSquads/{squadId}/season/{seasonId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
-
-    // Player Images - read allowed for authenticated users, write denied
-    match /playerImages/data/teams/{teamId}/players/{playerId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+    function isGroupAdmin(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/admins/$(request.auth.uid));
     }
     
-    
-    match /groupUsers/{groupId}/members/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow write: if false;  // Deny all write operations
+    function isGroupOwner(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/owners/$(request.auth.uid));
     }
 
-    // Groups - read allowed for authenticated users, write allowed only for group admins
+    function isGroupPublic(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.visibility == 'public';
+    }
+    
+
+    // --- PERMISSION CHECKS ---
+
+    function canReadGroup(groupId) {
+      return isGroupPublic(groupId) || isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+    }
+
+    function canWriteGroup(groupId) {
+      return (isGroupPublic(groupId) && isSignedIn()) || isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+    }
+
+    // --- SECURITY VALIDATIONS (REUSABLE) ---
+
+    // 1. Check for valid Rating Updates (Used in 3 different places)
+    // - Creation: Starts with 1 vote, rating 0-10.
+    // - Update: Votes +1, Rating goes up by Max 10.
+    function isValidRatingUpdate() {
+      return (
+        // CASE 1: CREATION
+        (resource == null 
+         && request.resource.data.totalSubmits == 1
+         && request.resource.data.totalRating <= 10)
+        || 
+        // CASE 2: UPDATE
+        (resource != null
+         // Rating Logic: Must go up, but Max 10 points
+         && request.resource.data.totalRating >= resource.data.totalRating
+         && (request.resource.data.totalRating - resource.data.totalRating) <= 10
+         // Submit Logic: Must increase by exactly 1
+         && (request.resource.data.totalSubmits == resource.data.totalSubmits + 1)
+        )
+      );
+    }
+
+    // =========================================================
+    // 2. COLLECTION RULES
+    // =========================================================
+
+    // --- A. GROUPS & SUBCOLLECTIONS ---
+
     match /groups/{groupId} {
-      allow read: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-      allow write: if request.auth != null && isUserAdmin(request.auth.uid, groupId);
+      allow read: if canReadGroup(groupId);
+      allow write: if isGroupOwner(groupId); 
 
       match /seasons/{seasonId} {
-        allow read: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+        allow read: if canReadGroup(groupId);
 
-        match /playerRatings/{playerRatingId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-
-          match /players/{playerId} {
-            allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-        }
-        match /fixtureMoods/{matchId}{
-				allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-        
-        }
-        // Per-question aggregate predictions (bar chart style)
-        match /seasonPredictions/{questionKey} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-        }
-        // Predictions - read and write for authenticated users in the group
-        match /predictions/{matchId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-
-          match /teamSubmissions {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-
-          match /totalTeamSubmits {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-
-          match /totalPlayersSubmits {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-        }
-
-        // Players in season - read and write for authenticated users in the group
+        // 1. PLAYER SEASON TOTALS
         match /players/{playerId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+           allow read: if canReadGroup(groupId);
+           allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
 
-          // Matches under player - read and write for authenticated users in the group
-          match /matches/{matchId} {
-            allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+           // 2. PLAYER MATCH HISTORY (Nested)
+           // Prevents spamming a specific match history for a player
+           match /matches/{matchId} {
+              allow read: if canReadGroup(groupId);
+              allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
+           }
+        }
+
+        match /playerRatings/{matchId} {
+          allow read: if canReadGroup(groupId);
+          // General match data (like MOTM votes)
+          // We ensure the total vote count only increases by 1
+        allow write: if canWriteGroup(groupId) ;
+             
+          // 3. MATCH RATINGS AGGREGATE (For Community Average)
+          match /players/{playerId} {
+            allow read: if canReadGroup(groupId);
+            allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
           }
+        }
+        
+        // 4. PREDICTIONS
+        // Validating the 'totalTeamSubmits' or 'totalVotes'
+      match /predictions/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow write: if canWriteGroup(groupId) && (
+             resource == null 
+             // Ensure "Total Team Submits" only increases by 1 (One prediction per click)
+             || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['formations','positionConsensus','totalTeamSubmits', 'totalPlayersSubmits', 'result', 'preMatchMotm', 'preMatchMotmVotes', 'scorePredictions', 'homeGoals', 'awayGoals', 'totalScoreVotes']))
+             // NOTE: Deep map validation is hard in Rules, but we can at least ensure 
+             // high-level counters like 'totalVotes' (if you add them) increment by 1.
+          );
+        }
+
+        // Live stats and Moods (Lower risk, standard checks)
+        match /livePlayerStats/{matchId} {
+           allow read: if canReadGroup(groupId);
+           allow write: if canWriteGroup(groupId);
+        }
+
+        match /fixtureMoods/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow write: if canWriteGroup(groupId);
+        }
+        
+        match /eventsReactions/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow write: if canWriteGroup(groupId);
+        }
+        
+        match /seasonPredictions/{questionKey} {
+          allow read: if canReadGroup(groupId);
+          allow write: if canWriteGroup(groupId);
         }
       }
     }
 
-    // Users - only the user themselves can read/write their data
+    // --- B. USER DATA ---
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      match /groups/{groupId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-
-        match /seasons/{seasonId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
-
-          match /matches/{matchId} {
-            allow read, write: if request.auth != null && request.auth.uid == userId;
-
-            // Allow writing to the players map inside the playerRatings document
-            match /players/{playerId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-
-            // Allow writing to the 'motm' field (Man of the Match)
-            match /motm {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-          }
-        }
+      allow read, write: if isOwner(userId);
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // Catch-all rule: deny access to all other documents
+    // --- C. PUBLIC READ-ONLY DATA ---
+    match /fixtures/{season}/fixtures/{fixtureId} {
+      allow read: if true; 
+    }
+
+    match /teamSquads/{squadId} {
+      allow read: if true;
+      match /season/{seasonId} {
+        allow read: if true;
+      }
+    }
+
+    match /playerImages/{allImages=**} {
+      allow read: if true;
+    }
+
+    // --- D. INVITES & MEMBERSHIP ---
+    match /groupInvites/{inviteId} {
+      allow read: if request.auth != null && (
+    // We look up the group document to check if the current user is the ownerId
+    get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.ownerId == request.auth.uid
+  );
+       allow write, create,  delete: if request.auth != null && (
+    // We look up the group document to check if the current user is the ownerId
+    get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.ownerId == request.auth.uid
+  );
+    }
+    
+    match /groupUsers/{groupId}/members/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; 
+    }
+    
+    match /groupUsers/{groupId}/admins/{userId} {
+      allow read: if true; 
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
-  }
-
-  // Custom function to check if the user is part of the group (either a member or admin)
-  function isUserInGroup(userId, groupId) {
-    return exists(/databases/(default)/documents/groupUsers/$(groupId)/members/$(userId)) ||
-           exists(/databases/(default)/documents/groupUsers/$(groupId)/admins/$(userId));
-  }
-
-  // Custom function to check if the user is an admin of the group
-  function isUserAdmin(userId, groupId) {
-    return exists(/databases/(default)/documents/groupUsers/$(groupId)/admins/$(userId));
   }
 }
