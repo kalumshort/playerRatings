@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Box, Stack } from "@mui/material";
-import Masonry from "react-masonry-css";
+import MasonryLib, { type MasonryProps } from "react-masonry-css";
 
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
 import LineupPredictor from "./Components/Lineup/LineupPredictor";
@@ -23,6 +23,14 @@ interface DesktopFixtureHubProps {
 }
 
 const GAP = 24; // px — matches MUI spacing(3)
+
+// react-masonry-css@1.0.16 ships its own index.d.ts declaring
+// `render(): JSX.Element`. React 19's types require ReactNode there, so tsc
+// rejects it as a JSX component even though the runtime component is fine.
+// Re-typing the import is contained; patching the dependency is not.
+const Masonry = MasonryLib as unknown as React.ComponentType<
+  MasonryProps & { children?: React.ReactNode }
+>;
 
 const MasonryGrid: React.FC<{
   children: React.ReactNode;
