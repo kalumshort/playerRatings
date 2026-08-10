@@ -1,5 +1,23 @@
 rules_version = '2';
 
+// =============================================================================
+// 11Votes Firestore Security Rules
+//
+// THIS FILE IS THE SOURCE OF TRUTH. firebase.json deploys it via
+// `firebase deploy --only firestore:rules`. Do not keep a second copy in the
+// 11votes-next repo — that is how the previous rules went stale.
+//
+// Design notes:
+//  - Reads on public groups are open (anonymous visitors browse public clubs).
+//    Writes always require a role doc under groupUsers/{groupId}/...
+//  - Roles are mutually exclusive subcollections (members | admins | owners),
+//    written by addMemberToGroup() in functions/helperFunctions.js. An admin has
+//    NO members doc, so every permission check ORs the three.
+//  - Client writes to vote aggregates are bounded per write AND deduped against
+//    the user's own match document. See the get()/exists() budget note at the
+//    bottom before adding another lookup.
+// =============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -22,46 +40,98 @@ service cloud.firestore {
     function isGroupAdmin(groupId) {
       return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/admins/$(request.auth.uid));
     }
-    
+
     function isGroupOwner(groupId) {
       return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/owners/$(request.auth.uid));
     }
 
+    // get() returns null for a missing doc, and reading an absent field raises
+    // an error, so both are guarded — otherwise a half-migrated group document
+    // turns every rule that touches it into a hard deny.
     function isGroupPublic(groupId) {
-      return get(/databases/$(database)/documents/groups/$(groupId)).data.visibility == 'public';
+      let g = get(/databases/$(database)/documents/groups/$(groupId));
+      return g != null && g.data.get('visibility', 'private') == 'public';
     }
-    
 
     // --- PERMISSION CHECKS ---
 
-    function canReadGroup(groupId) {
-      return isGroupPublic(groupId) || isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+    function hasGroupRole(groupId) {
+      return isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
     }
 
+    function canReadGroup(groupId) {
+      return isGroupPublic(groupId) || hasGroupRole(groupId);
+    }
+
+    // Writing requires actually belonging to the group. A public group is
+    // readable by anyone but NOT writable by any passing signed-in account —
+    // otherwise one throwaway login can vote in every club without joining.
     function canWriteGroup(groupId) {
-      return (isGroupPublic(groupId) && isSignedIn()) || isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+      return hasGroupRole(groupId);
     }
 
     // --- SECURITY VALIDATIONS (REUSABLE) ---
 
-    // 1. Check for valid Rating Updates (Used in 3 different places)
-    // - Creation: Starts with 1 vote, rating 0-10.
-    // - Update: Votes +1, Rating goes up by Max 10.
+    // The user's own record of what they did in this match. It is written in the
+    // same writeBatch as the aggregates, and rules get() sees pre-batch state,
+    // so the first submission passes and repeats are denied.
+    function userMatchData(groupId, seasonId, matchId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)/groups/$(groupId)/seasons/$(seasonId)/matches/$(matchId));
+    }
+
+    function notYetRated(groupId, seasonId, matchId, playerId) {
+      let d = userMatchData(groupId, seasonId, matchId);
+      return d == null
+          || !('players' in d.data)
+          || !(playerId in d.data.players);
+    }
+
+    function notYetVotedMotm(groupId, seasonId, matchId) {
+      let d = userMatchData(groupId, seasonId, matchId);
+      return d == null || !('motmVote' in d.data);
+    }
+
+    // Rating aggregates hold exactly { totalSubmits, totalRating }.
+    // - Create: first vote, rating within 0..10.
+    // - Update: submits +1 exactly, rating up by at most 10, never down.
+    // request.resource is null on delete, so this denies deletes explicitly
+    // rather than relying on an evaluation error.
     function isValidRatingUpdate() {
-      return (
-        // CASE 1: CREATION
-        (resource == null 
-         && request.resource.data.totalSubmits == 1
-         && request.resource.data.totalRating <= 10)
-        || 
-        // CASE 2: UPDATE
-        (resource != null
-         // Rating Logic: Must go up, but Max 10 points
-         && request.resource.data.totalRating >= resource.data.totalRating
-         && (request.resource.data.totalRating - resource.data.totalRating) <= 10
-         // Submit Logic: Must increase by exactly 1
-         && (request.resource.data.totalSubmits == resource.data.totalSubmits + 1)
-        )
+      return request.resource != null
+        && request.resource.data.totalSubmits is number
+        && request.resource.data.totalRating is number
+        && (
+          (resource == null
+            && request.resource.data.totalSubmits == 1
+            && request.resource.data.totalRating >= 0
+            && request.resource.data.totalRating <= 10
+            && request.resource.data.keys().hasOnly(['totalSubmits', 'totalRating']))
+          ||
+          (resource != null
+            && request.resource.data.totalSubmits == resource.data.totalSubmits + 1
+            && request.resource.data.totalRating >= resource.data.totalRating
+            && (request.resource.data.totalRating - resource.data.totalRating) <= 10
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalSubmits', 'totalRating']))
+        );
+    }
+
+    // Every top-level field the client is allowed to touch on a predictions doc.
+    // Values are increments inside nested maps, which rules cannot validate in
+    // depth — this bounds WHICH keys change, not by how much.
+    function predictionKeys() {
+      return [
+        'formations', 'positionConsensus', 'totalTeamSubmits', 'totalPlayersSubmits',
+        'result', 'preMatchMotm', 'preMatchMotmVotes',
+        'scorePredictions', 'homeGoals', 'awayGoals', 'totalScoreVotes'
+      ];
+    }
+
+    // Restrict a write to an allow-list of keys on both create and update.
+    function touchesOnly(allowed) {
+      return request.resource != null && (
+        resource == null
+          ? request.resource.data.keys().hasOnly(allowed)
+          : request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed)
       );
     }
 
@@ -73,69 +143,77 @@ service cloud.firestore {
 
     match /groups/{groupId} {
       allow read: if canReadGroup(groupId);
-      allow write: if isGroupOwner(groupId); 
+      allow write: if isGroupOwner(groupId);
 
       match /seasons/{seasonId} {
         allow read: if canReadGroup(groupId);
 
         // 1. PLAYER SEASON TOTALS
+        // No matchId in scope here, so per-match dedup is impossible. In the
+        // normal flow this doc is written in the same batch as the match-scoped
+        // docs below, and a batch fails as a unit — so their dedup covers it.
+        // A direct write to this doc alone is still bounded to +1 / +10.
         match /players/{playerId} {
-           allow read: if canReadGroup(groupId);
-           allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId) && isValidRatingUpdate();
 
-           // 2. PLAYER MATCH HISTORY (Nested)
-           // Prevents spamming a specific match history for a player
-           match /matches/{matchId} {
-              allow read: if canReadGroup(groupId);
-              allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
-           }
+          // 2. PLAYER MATCH HISTORY
+          match /matches/{matchId} {
+            allow read: if canReadGroup(groupId);
+            allow create, update: if canWriteGroup(groupId)
+              && isValidRatingUpdate()
+              && notYetRated(groupId, seasonId, matchId, playerId);
+          }
         }
 
         match /playerRatings/{matchId} {
           allow read: if canReadGroup(groupId);
-          // General match data (like MOTM votes)
-          // We ensure the total vote count only increases by 1
-        allow write: if canWriteGroup(groupId) ;
-             
+
+          // The match-level doc holds the MOTM tally. These two key names are
+          // what handleMatchMotmVote() actually writes — keep them in sync with
+          // src/lib/firebase/client-actions.ts or voting breaks silently.
+          // A Cloud Function may also write a computed winner here via the Admin
+          // SDK, which bypasses rules.
+          allow create, update: if canWriteGroup(groupId)
+            && touchesOnly(['motmTotalVotes', 'playerVotes'])
+            && notYetVotedMotm(groupId, seasonId, matchId);
+
           // 3. MATCH RATINGS AGGREGATE (For Community Average)
           match /players/{playerId} {
             allow read: if canReadGroup(groupId);
-            allow write: if canWriteGroup(groupId) && isValidRatingUpdate();
+            allow create, update: if canWriteGroup(groupId)
+              && isValidRatingUpdate()
+              && notYetRated(groupId, seasonId, matchId, playerId);
           }
         }
-        
+
         // 4. PREDICTIONS
-        // Validating the 'totalTeamSubmits' or 'totalVotes'
-      match /predictions/{matchId} {
+        // The key allow-list applies to create as well as update, so being
+        // first to write a match's doc grants no extra freedom.
+        match /predictions/{matchId} {
           allow read: if canReadGroup(groupId);
-          allow write: if canWriteGroup(groupId) && (
-             resource == null 
-             // Ensure "Total Team Submits" only increases by 1 (One prediction per click)
-             || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['formations','positionConsensus','totalTeamSubmits', 'totalPlayersSubmits', 'result', 'preMatchMotm', 'preMatchMotmVotes', 'scorePredictions', 'homeGoals', 'awayGoals', 'totalScoreVotes']))
-             // NOTE: Deep map validation is hard in Rules, but we can at least ensure 
-             // high-level counters like 'totalVotes' (if you add them) increment by 1.
-          );
+          allow create, update: if canWriteGroup(groupId) && touchesOnly(predictionKeys());
         }
 
-        // Live stats and Moods (Lower risk, standard checks)
+        // Live stats and moods: low-value counters, but still no deletes.
         match /livePlayerStats/{matchId} {
-           allow read: if canReadGroup(groupId);
-           allow write: if canWriteGroup(groupId);
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
         }
 
         match /fixtureMoods/{matchId} {
           allow read: if canReadGroup(groupId);
-          allow write: if canWriteGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
         }
-        
+
         match /eventsReactions/{matchId} {
           allow read: if canReadGroup(groupId);
-          allow write: if canWriteGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
         }
-        
+
         match /seasonPredictions/{questionKey} {
           allow read: if canReadGroup(groupId);
-          allow write: if canWriteGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
         }
       }
     }
@@ -150,7 +228,7 @@ service cloud.firestore {
 
     // --- C. PUBLIC READ-ONLY DATA ---
     match /fixtures/{season}/fixtures/{fixtureId} {
-      allow read: if true; 
+      allow read: if true;
     }
 
     match /teamSquads/{squadId} {
@@ -165,29 +243,55 @@ service cloud.firestore {
     }
 
     // --- D. INVITES & MEMBERSHIP ---
+    // Owner-only, matching createInviteCode()'s own ownerId check. Note the
+    // create branch reads request.resource: on create `resource` is null, so
+    // the previous rule could never succeed.
     match /groupInvites/{inviteId} {
-      allow read: if request.auth != null && (
-    // We look up the group document to check if the current user is the ownerId
-    get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.ownerId == request.auth.uid
-  );
-       allow write, create,  delete: if request.auth != null && (
-    // We look up the group document to check if the current user is the ownerId
-    get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.ownerId == request.auth.uid
-  );
+      allow read, update, delete: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
+      allow create: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
     }
-    
+
+    // Role docs are written only by Cloud Functions (Admin SDK). Reads are
+    // scoped to the user themselves plus group staff — isGroupAdmin()/
+    // isGroupOwner() use exists(), which ignores these read rules.
     match /groupUsers/{groupId}/members/{userId} {
-      allow read: if isOwner(userId);
-      allow write: if false; 
+      allow read: if isOwner(userId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+      allow write: if false;
     }
-    
+
     match /groupUsers/{groupId}/admins/{userId} {
-      allow read: if true; 
+      allow read: if isOwner(userId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+      allow write: if false;
+    }
+
+    match /groupUsers/{groupId}/owners/{userId} {
+      allow read: if isOwner(userId) || isGroupOwner(groupId);
       allow write: if false;
     }
 
     match /{document=**} {
       allow read, write: if false;
     }
+
+    // =========================================================
+    // 3. DOCUMENT ACCESS BUDGET
+    // Limits: 10 get()/exists() per read or query, 20 per batched write.
+    //
+    //  canReadGroup      = 1 get + up to 3 exists       = 4 of 10
+    //  rating batch (4 writes, worst case)
+    //    playerRatings/{m}/players/{p}  3 exists + 1 get = 4
+    //    players/{p}/matches/{m}        3 exists + 1 get = 4
+    //    players/{p}                    3 exists         = 3
+    //    users/... (isOwner)                             = 0
+    //                                             total   11 of 20
+    //
+    // A plain member short-circuits on the first exists(), so the typical cost
+    // is ~5. Adding another per-write lookup, or a fifth write to the rating
+    // batch, needs this recomputed first.
+    // =========================================================
   }
 }
