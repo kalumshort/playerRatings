@@ -14,6 +14,7 @@ import { Download as DownloadIcon, SportsSoccer } from "@mui/icons-material";
 import html2canvas from "html2canvas";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { Icon } from "lucide-react";
+import { toast } from "sonner";
 
 interface LineupShellProps {
   team: Record<string, { name: string; photo: string; subText?: string }>;
@@ -63,6 +64,7 @@ export default function LineupShell({
       link.click();
     } catch (err) {
       console.error("Screenshot failed:", err);
+      toast.error("Couldn't save the image. Try again.");
     } finally {
       setIsSaving(false);
     }

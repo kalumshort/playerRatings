@@ -47,7 +47,7 @@ export default function AuthDialog({ open, onClose, group }: AuthDialogProps) {
           <Typography variant="h6" fontWeight="bold">
             {group ? "Join the Squad" : "Welcome Back"}
           </Typography>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Box>

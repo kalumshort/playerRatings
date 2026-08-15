@@ -14,6 +14,7 @@ import {
 import { onSnapshot, doc } from "firebase/firestore";
 import { clientDB } from "@/lib/firebase/client";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 // Components
 
@@ -36,6 +37,9 @@ export const MoodSelector = ({
 }: any) => {
   const theme = useTheme();
   const [matchMoods, setMatchMoods] = useState<any>(null);
+  const [moodsStatus, setMoodsStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
   const [particles, setParticles] = useState<any[]>([]);
   const { user } = useAuth();
   const isMatchLive = isLive(fixture);
@@ -51,9 +55,20 @@ export const MoodSelector = ({
       `groups/${groupId}/seasons/${currentYear}/fixtureMoods`,
       matchId,
     );
-    const unsubscribe = onSnapshot(docRef, (snap) => {
-      if (snap.exists()) setMatchMoods(snap.data());
-    });
+    // A match nobody has reacted to yet has no doc at all. Without the else
+    // branch the panel sat on "SYNCHRONIZING..." forever, and with no error
+    // callback a permission failure looked identical.
+    const unsubscribe = onSnapshot(
+      docRef,
+      (snap) => {
+        setMatchMoods(snap.exists() ? snap.data() : {});
+        setMoodsStatus("ready");
+      },
+      (err) => {
+        console.error("Mood listener failed:", err);
+        setMoodsStatus("error");
+      },
+    );
     return () => unsubscribe();
   }, [groupId, matchId, currentYear]);
 
@@ -72,12 +87,18 @@ export const MoodSelector = ({
       1000,
     );
 
-    await handleFixtureMood({
+    // Deliberately fire-and-forget: repeat-tapping the vibe check is the
+    // feature, so no pending lock. The shared toast id collapses a burst of
+    // failures into a single message.
+    handleFixtureMood({
       groupId,
       currentYear,
       matchId,
       timeElapsed,
       moodKey: mood.label,
+    }).catch((err) => {
+      console.error("Mood vote failed:", err);
+      toast.error("Couldn't register that reaction.", { id: "mood-vote" });
     });
   };
   const showInteractionPanel = !isGuestView && isMatchLive;
@@ -100,7 +121,7 @@ export const MoodSelector = ({
           // 2. Dynamically adjust the size based on the panel's visibility
           size={{ xs: 12, md: showInteractionPanel ? 8 : 12 }}
         >
-          {matchMoods ? (
+          {moodsStatus === "ready" && Object.keys(matchMoods ?? {}).length > 0 ? (
             <MoodAreaChart matchMoods={matchMoods} events={fixture?.events} />
           ) : (
             <Stack
@@ -108,12 +129,18 @@ export const MoodSelector = ({
               justifyContent="center"
               height="100%"
               spacing={1}
+              sx={{ px: 3, textAlign: "center" }}
             >
               <Typography
                 variant="caption"
                 sx={{ letterSpacing: 2, opacity: 0.5 }}
               >
-                SYNCHRONIZING STADIUM PULSE...
+                {moodsStatus === "loading" && "SYNCHRONIZING STADIUM PULSE..."}
+                {moodsStatus === "error" && "STADIUM PULSE UNAVAILABLE"}
+                {moodsStatus === "ready" &&
+                  (showInteractionPanel
+                    ? "NO REACTIONS YET — BE THE FIRST"
+                    : "NO REACTIONS RECORDED")}
               </Typography>
             </Stack>
           )}
@@ -155,6 +182,7 @@ export const MoodSelector = ({
               {MOODS.map((mood) => (
                 <IconButton
                   key={mood.label}
+                  aria-label={`Feeling ${mood.label}`}
                   component={motion.button}
                   disabled={isGuestView || !user}
                   whileTap={{ scale: 0.9 }}

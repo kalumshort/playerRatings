@@ -231,6 +231,7 @@ export default function LineupPlayer({
 
         {onDelete && (
           <IconButton
+            aria-label="Remove player from lineup"
             size="small"
             onClick={(e) => {
               e.stopPropagation();

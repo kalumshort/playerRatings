@@ -79,6 +79,7 @@ export default function PlayerImageCarousel({
       {/* LEFT NAV */}
       {!isMobile && (
         <IconButton
+          aria-label="Previous player"
           onClick={() => handleManualScroll(-1)}
           sx={{
             position: "absolute",
@@ -189,6 +190,7 @@ export default function PlayerImageCarousel({
       {/* RIGHT NAV */}
       {!isMobile && (
         <IconButton
+          aria-label="Next player"
           onClick={() => handleManualScroll(1)}
           sx={{
             position: "absolute",

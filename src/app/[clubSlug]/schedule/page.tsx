@@ -56,7 +56,12 @@ export default async function SchedulePage({
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        // ScheduleContainer is an inner-scrolling panel, so it needs a bounded
+        // height. 100vh was wrong twice over: it ignores the mobile URL bar,
+        // and it didn't subtract the fixed header spacer, so the bottom of the
+        // list sat below the fold and was unreachable. dvh tracks the visible
+        // viewport; the offsets match the spacer in Header/index.tsx.
+        height: { xs: "calc(100dvh - 64px)", md: "calc(100dvh - 80px)" },
         overflow: "hidden",
       }}
     >

@@ -233,7 +233,7 @@ export default function HomePage() {
             backdropFilter: "blur(10px)",
           }}
         >
-          <IconButton sx={{ ml: 1 }} disabled>
+          <IconButton sx={{ ml: 1 }} disabled aria-label="Search clubs">
             <Search />
           </IconButton>
           <InputBase

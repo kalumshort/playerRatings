@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"; // Added useSelector
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -31,6 +31,12 @@ export default function FixtureClientWrapper({
 }: any) {
   const { user } = useAuth();
   const dispatch = useDispatch();
+  const theme = useTheme();
+
+  // Matches the `md` breakpoint the previous display:none switch used.
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const groupId = group?.id;
   const clubId = group?.groupClubId;
@@ -108,27 +114,43 @@ export default function FixtureClientWrapper({
           />
         </Box>
 
-        {/* --- DESKTOP VIEW --- */}
-        <Box sx={{ display: { xs: "none", md: "block" }, px: 2 }}>
-          <DesktopFixtureHub
-            fixture={fixture}
-            showPredictions={showPredictions}
-            groupId={groupId}
-            currentYear={currentYear}
-            groupData={group}
-          />
-        </Box>
+        {/*
+          Two phases, because three things are in tension: the right layout must
+          paint before JS runs, the content must exist in the SSR HTML (fixture
+          pages are in the sitemap), and only one layout should stay mounted.
 
-        {/* --- MOBILE VIEW --- */}
-        <Box sx={{ display: { xs: "block", md: "none" } }}>
-          <MobileFixtureContainer
-            fixture={fixture}
-            showPredictions={showPredictions}
-            groupId={groupId}
-            currentYear={currentYear}
-            groupData={group}
-          />
-        </Box>
+          Before hydration we emit both and let the CSS media query pick — the
+          original behaviour, correct on first paint and fully server-rendered.
+          Once mounted we drop to a single tree, so a phone no longer keeps the
+          whole desktop hub alive (recharts, masonry, framer-motion, and a
+          second onSnapshot on the same mood doc) and re-renders it on every
+          Redux tick.
+        */}
+        {!mounted || isDesktop ? (
+          <Box
+            sx={{ display: mounted ? "block" : { xs: "none", md: "block" }, px: 2 }}
+          >
+            <DesktopFixtureHub
+              fixture={fixture}
+              showPredictions={showPredictions}
+              groupId={groupId}
+              currentYear={currentYear}
+              groupData={group}
+            />
+          </Box>
+        ) : null}
+
+        {!mounted || !isDesktop ? (
+          <Box sx={{ display: mounted ? "block" : { xs: "block", md: "none" } }}>
+            <MobileFixtureContainer
+              fixture={fixture}
+              showPredictions={showPredictions}
+              groupId={groupId}
+              currentYear={currentYear}
+              groupData={group}
+            />
+          </Box>
+        ) : null}
       </Box>
     </Box>
   );

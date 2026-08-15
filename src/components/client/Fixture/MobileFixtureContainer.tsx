@@ -15,6 +15,7 @@ import FixturePredictionsTab from "./Components/FixturePredictionsTab";
 import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
+import FixtureUnavailable from "./FixtureUnavailable";
 
 // Components (Ensure these paths match your new Next.js structure)
 
@@ -89,7 +90,9 @@ export default function MobileFixtureContainer({
     }
   }, [tabs, selectedTab]);
 
-  if (tabs.length === 0) return null;
+  if (tabs.length === 0) {
+    return <FixtureUnavailable status={fixture?.fixture?.status?.short} />;
+  }
 
   return (
     <>

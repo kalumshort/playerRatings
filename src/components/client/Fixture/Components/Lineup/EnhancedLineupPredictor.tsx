@@ -30,6 +30,7 @@ import { RootState } from "@/lib/redux/store";
 import { FORMATIONS } from "./LineupPredictor";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { handlePredictTeamSubmit } from "@/lib/firebase/client-actions";
+import { toast } from "sonner";
 import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
 
 // --- STYLED COMPONENTS ---
@@ -177,7 +178,11 @@ export default function EnhancedLineupPredictor({
       });
       // Logic for refreshing predictions is handled by the real-time listener
     } catch (error) {
-      console.error(error);
+      console.error("Lineup submission failed:", error);
+      toast.error("Couldn't submit your XI. Try again.", {
+        id: `lineup-${matchId}`,
+        duration: 6000,
+      });
     } finally {
       setLoading(false);
     }

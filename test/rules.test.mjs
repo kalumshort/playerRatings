@@ -212,6 +212,55 @@ async function main() {
       ),
     ));
 
+  // handlePredictWinningTeam / handlePredictTeamScore / handlePredictPreMatchMotm
+  // move a vote by incrementing the new key and decrementing the old one inside
+  // a transaction. touchesOnly() only bounds WHICH top-level keys change, so a
+  // nested delta must still pass — and the arithmetic must leave the denominator
+  // alone when a user changes their mind rather than votes for the first time.
+  console.log("\nVote-change deltas (predictions)");
+  await it("member CAN write a result delta (increment + decrement)", () =>
+    assertSucceeds(
+      setDoc(
+        doc(member, p.predictions(PUB)),
+        { result: { away: increment(1), home: increment(-1) } },
+        { merge: true },
+      ),
+    ));
+  await it("member CAN write a score-prediction delta", () =>
+    assertSucceeds(
+      setDoc(
+        doc(member, p.predictions(PUB)),
+        {
+          scorePredictions: { "3-0": increment(1), "2-1": increment(-1) },
+          homeGoals: { 3: increment(1), 2: increment(-1) },
+          awayGoals: { 0: increment(1), 1: increment(-1) },
+        },
+        { merge: true },
+      ),
+    ));
+  await it("a vote change leaves totalVotes untouched", async () => {
+    const ref = doc(member, `groups/${PUB}/seasons/${YEAR}/predictions/m_delta`);
+    // First vote: choice + denominator.
+    await setDoc(
+      ref,
+      { result: { home: increment(1), totalVotes: increment(1) } },
+      { merge: true },
+    );
+    // Change of mind: swap the choice, denominator stays put.
+    await setDoc(
+      ref,
+      { result: { away: increment(1), home: increment(-1) } },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    const r = snap.data().result;
+    if (r.home !== 0 || r.away !== 1 || r.totalVotes !== 1) {
+      throw new Error(
+        `expected home=0 away=1 totalVotes=1, got ${JSON.stringify(r)}`,
+      );
+    }
+  });
+
   console.log("\nRating validation (#4)");
   await it("member CANNOT create a rating with a negative total", () =>
     assertFails(

@@ -134,7 +134,7 @@ export default function UpdatePasswordModal({
         }}
       >
         Change Password
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Close">
           <X size={20} />
         </IconButton>
       </DialogTitle>
@@ -151,6 +151,7 @@ export default function UpdatePasswordModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowCurrent(!showCurrent)}
                     edge="end"
                     size="small"
@@ -178,6 +179,7 @@ export default function UpdatePasswordModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowNew(!showNew)}
                     edge="end"
                     size="small"
@@ -206,6 +208,7 @@ export default function UpdatePasswordModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowConfirm(!showConfirm)}
                     edge="end"
                     size="small"

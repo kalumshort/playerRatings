@@ -41,6 +41,7 @@ import {
 } from "@/lib/firebase/client-user-actions";
 import { teamList } from "@/lib/utils/teamList";
 import useGroupData from "@/Hooks/useGroupData";
+import { toast } from "sonner";
 
 export default function StadiumSwitcher({
   open,
@@ -76,7 +77,8 @@ export default function StadiumSwitcher({
         onClose(); // Close hub on success
       }
     } catch (err: any) {
-      alert(err.message);
+      console.error("Join by invite code failed:", err);
+      toast.error(err?.message || "That invite code didn't work.");
     } finally {
       setIsJoining(false);
     }
@@ -147,7 +149,7 @@ export default function StadiumSwitcher({
         setTransferLeagueKey(null);
         onClose();
       } else {
-        alert(result.message);
+        toast.error(result.message || "Couldn't switch clubs. Try again.");
       }
     });
   };
@@ -207,7 +209,7 @@ export default function StadiumSwitcher({
                 : "Manage Memberships"}
           </Typography>
         </Box>
-        <IconButton onClick={closeDialog} disabled={isPending}>
+        <IconButton onClick={closeDialog} disabled={isPending} aria-label="Close">
           <X size={20} />
         </IconButton>
       </Box>
@@ -421,6 +423,11 @@ export default function StadiumSwitcher({
 
                           <IconButton
                             size="small"
+                            aria-label={
+                              isActive
+                                ? "Change club for this league"
+                                : "Make this your active club"
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
                               isActive
@@ -451,6 +458,7 @@ export default function StadiumSwitcher({
               <Box sx={{ animation: "fadeIn 0.2s ease-in" }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <IconButton
+                    aria-label="Back to my teams"
                     onClick={() => setTransferLeagueKey(null)}
                     sx={{ mr: 1 }}
                   >

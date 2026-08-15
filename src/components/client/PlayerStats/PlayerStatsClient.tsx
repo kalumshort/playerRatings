@@ -147,11 +147,12 @@ export default function PlayerStatsClient({ season }: PlayerStatsClientProps) {
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <SeasonSwitcher season={season} />
               <IconButton
+                aria-label="Change sort order"
                 onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
               >
                 <SortRounded color={sort === "desc" ? "primary" : "action"} />
               </IconButton>
-              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} aria-label="Filter by position">
                 <FilterListRounded
                   color={positionFilter ? "primary" : "action"}
                 />

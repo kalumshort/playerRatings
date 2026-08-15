@@ -27,6 +27,7 @@ import {
 import { doc, onSnapshot } from "firebase/firestore";
 
 import { handleEventReaction } from "@/lib/firebase/client-actions";
+import { toast } from "sonner";
 import { clientDB } from "@/lib/firebase/client";
 import { isLive } from "@/lib/utils/football-logic";
 
@@ -208,6 +209,7 @@ const EventRow = ({
       });
     } catch (err) {
       console.error("Failed to react:", err);
+      toast.error("Couldn't add your reaction.", { id: "event-reaction" });
     }
   };
 
@@ -285,6 +287,7 @@ const EventRow = ({
 
           {isMatchLive && (
             <IconButton
+              aria-label="Add a reaction"
               size="small"
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
@@ -310,6 +313,7 @@ const EventRow = ({
               {EMOJI_OPTIONS.map((emoji) => (
                 <IconButton
                   key={emoji}
+                  aria-label={`React with ${emoji}`}
                   onClick={() => handleEmojiClick(emoji)}
                   sx={{ fontSize: 20 }}
                 >

@@ -42,6 +42,7 @@ export default function GroupsTab() {
         <Box>
           <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
             <IconButton
+              aria-label="Back to groups list"
               onClick={() => setSelectedGroupId(null)}
               sx={{ color: "text.primary" }}
             >

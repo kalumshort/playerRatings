@@ -97,7 +97,7 @@ export const StatusLegend = ({ open, setOpen, active }: any) => {
         <Typography variant="caption" fontWeight={900}>
           STATUS KEY
         </Typography>
-        <IconButton size="small" onClick={() => setOpen(false)}>
+        <IconButton size="small" onClick={() => setOpen(false)} aria-label="Close">
           <Close fontSize="small" />
         </IconButton>
       </Stack>

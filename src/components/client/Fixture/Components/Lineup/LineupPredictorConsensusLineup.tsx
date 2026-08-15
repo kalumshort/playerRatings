@@ -164,6 +164,7 @@ export default function ConsensusLineup({
           </Box>
 
           <IconButton
+            aria-label="About the consensus lineup"
             onClick={() => setShowLogic(!showLogic)}
             size="small"
             sx={{

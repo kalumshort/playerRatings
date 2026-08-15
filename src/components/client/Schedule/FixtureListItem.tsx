@@ -56,9 +56,22 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
 
   return (
     <Box
+      // A real button so the row is reachable by keyboard and announced as
+      // interactive; it was a bare div with an onClick.
+      component="button"
+      type="button"
       onClick={() => handleFixtureClick(fixture.fixture.id)}
+      aria-label={`View ${fixture.teams.home.name} versus ${fixture.teams.away.name}`}
       sx={(t) => ({
         ...t.clay.card,
+        // Undo the UA button styling so the card looks unchanged.
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        font: "inherit",
+        color: "inherit",
+        border: 0,
+        p: 0,
         cursor: "pointer",
         overflow: "hidden",
         transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
@@ -68,6 +81,10 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
         }),
         "&:hover": { transform: "translateY(-2px)" },
         "&:active": { transform: "scale(0.98)" },
+        "&:focus-visible": {
+          outline: `2px solid ${t.palette.primary.main}`,
+          outlineOffset: "2px",
+        },
       })}
     >
       {/* Top row: league info + status/result */}
@@ -85,6 +102,8 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
           {fixture.league?.logo && (
             <Box
               component="img"
+              loading="lazy"
+              decoding="async"
               src={fixture.league.logo}
               alt=""
               sx={{ width: 14, height: 14, objectFit: "contain", opacity: 0.65 }}
@@ -169,6 +188,8 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
           <Box
             component="img"
+            loading="lazy"
+            decoding="async"
             src={fixture.teams.home.logo}
             alt={fixture.teams.home.name}
             sx={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }}
@@ -263,6 +284,8 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
           </Typography>
           <Box
             component="img"
+            loading="lazy"
+            decoding="async"
             src={fixture.teams.away.logo}
             alt={fixture.teams.away.name}
             sx={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }}

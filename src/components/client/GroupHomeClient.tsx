@@ -10,7 +10,7 @@ import {
   selectFixturesLoaded,
 } from "@/lib/redux/selectors/fixturesSelectors";
 
-import { Spinner } from "@/components/ui/Spinner";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import useGroupData from "@/Hooks/useGroupData";
 import LatestFixtureItem from "./Fixture/FixtureHeader/LatestFixtureItem";
 import ScheduleContainer from "./Schedule/ScheduleContainer";
@@ -30,8 +30,21 @@ export default function GroupHomeClient() {
   // straight through to render empty content — causing the flash.
   const notStarted = !loaded && !loading;
 
+  // An in-place skeleton, not <Spinner />: that one is position:fixed / 100vh /
+  // z-9999, so switching season blanked the entire app including the header.
   if (notStarted || loading) {
-    return <Spinner text="Loading Stadium Data..." />;
+    return (
+      <Box sx={{ mt: { xs: 2, md: 4 } }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <PageSkeleton rows={3} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <PageSkeleton rows={1} />
+          </Grid>
+        </Grid>
+      </Box>
+    );
   }
 
   return (

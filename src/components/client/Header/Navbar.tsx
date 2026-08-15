@@ -59,6 +59,7 @@ export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
             )} */}
 
             <IconButton
+              aria-label="Open navigation menu"
               onClick={() => setDrawerOpen(true)}
               sx={{
                 color: "text.primary",

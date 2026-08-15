@@ -14,6 +14,7 @@ import {
   signOut as firebaseSignOut,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
+import { toast } from "sonner";
 
 // ────────────────────────────────────────────────
 // Types
@@ -112,6 +113,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await clearSessionCookie();
     } catch (error) {
       console.error("Sign out failed:", error);
+      toast.error("Sign out failed. Please try again.");
     }
   };
 

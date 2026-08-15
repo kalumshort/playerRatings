@@ -15,12 +15,19 @@ import {
 
 interface AsyncButtonProps extends ButtonProps {
   loading?: boolean;
+  /**
+   * Keep the caller's own background while loading. Buttons that paint a
+   * gradient via `background` need this, otherwise the loading state's
+   * `backgroundColor: !important` stomps it mid-flight.
+   */
+  keepBackground?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const AsyncButton = ({
   children,
   loading = false,
+  keepBackground = false,
   onClick,
   sx = {},
   ...props
@@ -42,7 +49,9 @@ export const AsyncButton = ({
       boxShadow: `${pressedShadow} !important`,
       transform: "translateY(2px) !important",
       pointerEvents: "none",
-      backgroundColor: `${mainColor} !important`,
+      ...(keepBackground
+        ? {}
+        : { backgroundColor: `${mainColor} !important` }),
       color: "transparent !important",
       // Ensure icons are hidden too
       "& .MuiButton-startIcon, & .MuiButton-endIcon": {
@@ -54,24 +63,26 @@ export const AsyncButton = ({
     theme.palette.primary.main,
     theme.palette.secondary.main,
     props.color,
+    keepBackground,
   ]);
 
   return (
     <Button
       {...props}
       onClick={!loading ? onClick : undefined}
-      sx={{
-        position: "relative",
-        transition: "all 0.2s ease",
-        fontWeight: 900,
-        borderRadius: "16px",
-
-        // Apply loading styles if active
-        ...(loading ? loadingStyles : {}),
-
-        // Merge external styles
+      // MUI's array form. Spreading an array into an object literal (the
+      // previous shape) produced { "0": {...} } and silently dropped every
+      // caller's sx. Later entries win, so callers can still override.
+      sx={[
+        {
+          position: "relative",
+          transition: "all 0.2s ease",
+          fontWeight: 900,
+          borderRadius: "16px",
+        },
+        loading && loadingStyles,
         ...(Array.isArray(sx) ? sx : [sx]),
-      }}
+      ]}
     >
       {/* Content wrapper */}
       <Box

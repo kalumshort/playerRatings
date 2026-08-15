@@ -93,7 +93,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
           <Typography variant="h6" sx={{ color: accentColor, fontWeight: 800 }}>
             {user && activeGroup ? activeGroup.name : "11VOTES"}
           </Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={onClose} aria-label="Close navigation menu">
             <X size={20} />
           </IconButton>
         </Box> */}

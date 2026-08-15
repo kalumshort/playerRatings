@@ -269,6 +269,8 @@ export default function FixtureHeader({
                     {league.logo && (
                       <Box
                         component="img"
+                        loading="lazy"
+                        decoding="async"
                         src={league.logo}
                         alt={league.name}
                         sx={{

@@ -96,11 +96,15 @@ export default function PlayerSeasonAverageListItem({
 
   return (
     <Paper
+      // Keyboard-reachable: this row was a Paper with a bare onClick.
+      component="button"
+      type="button"
       onClick={() =>
         router.push(
           withSeasonParam(`/${clubSlug}/players/${playerId}`, currentYear),
         )
       }
+      aria-label={`View ${playerStaticData?.name ?? "player"} season stats`}
       sx={{
         py: { xs: 1.25, sm: 1.5 },
         pl: { xs: 1.25, sm: 1.5 },
@@ -109,6 +113,11 @@ export default function PlayerSeasonAverageListItem({
         alignItems: "center",
         gap: { xs: 1, sm: 1.5 },
         cursor: "pointer",
+        // Undo UA button styling so the row renders as before.
+        width: "100%",
+        textAlign: "left",
+        font: "inherit",
+        color: "inherit",
 
         border: `1px solid ${ratingColor}!important`,
         borderRadius: 2,

@@ -36,6 +36,7 @@ import {
   doc,
   serverTimestamp,
 } from "firebase/firestore";
+import { toast } from "sonner";
 
 interface GroupInviteGeneratorProps {
   groupId: string;
@@ -106,6 +107,7 @@ export default function GroupInviteGenerator({
       await createInvite({ groupId });
     } catch (error) {
       console.error("Invite Generation Error:", error);
+      toast.error("Couldn't create an invite link. Try again.");
     } finally {
       setGenerating(false);
     }
@@ -123,6 +125,7 @@ export default function GroupInviteGenerator({
       setDeactivateId(null);
     } catch (e) {
       console.error("Deactivation Error", e);
+      toast.error("Couldn't deactivate that invite. Try again.");
     } finally {
       setIsDeactivating(false);
     }
@@ -223,6 +226,7 @@ export default function GroupInviteGenerator({
                       title={copiedId === invite.id ? "Copied!" : "Copy Code"}
                     >
                       <IconButton
+                        aria-label="Copy invite link"
                         size="small"
                         onClick={() => handleCopy(invite.id, invite.id)}
                         sx={{
@@ -242,6 +246,7 @@ export default function GroupInviteGenerator({
 
                     <Tooltip title="Deactivate">
                       <IconButton
+                        aria-label="Deactivate invite link"
                         size="small"
                         onClick={() => setDeactivateId(invite.id)}
                         sx={{

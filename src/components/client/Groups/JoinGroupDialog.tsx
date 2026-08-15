@@ -84,7 +84,7 @@ export default function JoinGroupDialog({
             {isClub ? "Join the Squad" : "Join Community"}
           </Typography>
           {!loading && (
-            <IconButton onClick={onClose} size="small">
+            <IconButton onClick={onClose} size="small" aria-label="Close">
               <CloseIcon />
             </IconButton>
           )}

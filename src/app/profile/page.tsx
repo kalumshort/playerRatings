@@ -25,6 +25,8 @@ import UpdatePasswordModal from "@/components/client/Auth/UpdatePasswordModal";
 import AddPasswordModal from "@/components/client/Auth/SocialAddPasswordModal";
 import { useAuth } from "@/context/AuthContext";
 import ProfileSettings from "@/components/client/Settings/ProfileSettings";
+import { useDrawer } from "@/components/client/Header/DrawerContext";
+import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
   const { user, userLoading, isSocialOnly, signOut } = useAuth();
@@ -38,6 +40,7 @@ export default function ProfileSettingsPage() {
   const [addPwModalOpen, setAddPwModalOpen] = useState(false);
 
   const router = useRouter();
+  const { toggleDrawer } = useDrawer();
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -51,6 +54,12 @@ export default function ProfileSettingsPage() {
     setIsSaving(true);
     try {
       await updateUserField(userData.uid, "displayName", displayName.trim());
+      toast.success("Display name updated.");
+    } catch (err) {
+      // Previously try/finally with no catch: a failed save just reset the
+      // spinner and left an unhandled rejection.
+      console.error("Failed to update display name:", err);
+      toast.error("Couldn't update your display name. Try again.");
     } finally {
       setIsSaving(false);
     }
@@ -70,8 +79,34 @@ export default function ProfileSettingsPage() {
     );
   }
 
+  // Signed-out visitors used to get a completely blank page here.
   if (!user || !userData) {
-    return null; // or redirect to login
+    return (
+      <Box
+        sx={{
+          minHeight: "60vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          px: 3,
+          gap: 2,
+        }}
+      >
+        <User size={48} strokeWidth={1.5} />
+        <Typography variant="h5" fontWeight={900}>
+          SIGN IN TO VIEW YOUR PROFILE
+        </Typography>
+        <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
+          Your account settings, groups and voting history live here. Sign in to
+          pick up where you left off.
+        </Typography>
+        <Button variant="contained" onClick={() => toggleDrawer(true)}>
+          Sign In
+        </Button>
+      </Box>
+    );
   }
 
   return <ProfileSettings />;

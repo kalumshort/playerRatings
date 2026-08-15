@@ -149,6 +149,8 @@ export default function PlayerMatchRow({
             >
               <Box
                 component="img"
+                loading="lazy"
+                decoding="async"
                 src={fixture.teams.home.logo}
                 alt={fixture.teams.home.name}
                 sx={{
@@ -252,6 +254,8 @@ export default function PlayerMatchRow({
               </Typography>
               <Box
                 component="img"
+                loading="lazy"
+                decoding="async"
                 src={fixture.teams.away.logo}
                 alt={fixture.teams.away.name}
                 sx={{

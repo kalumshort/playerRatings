@@ -1,6 +1,12 @@
 import { clientDB, functions } from "./client";
-import { doc, increment, setDoc, writeBatch } from "firebase/firestore";
-import { updateOrSet } from "./utils";
+import {
+  doc,
+  increment,
+  runTransaction,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
+import { updateOrSet, txUpdateOrSet } from "./utils";
 import { httpsCallable } from "firebase/functions";
 
 // --- Validation Helper ---
@@ -42,7 +48,7 @@ interface LiveStatParams {
   matchId: string;
   timeElapsed: string | number;
   playerId: string;
-  statKey: string; // 'hot' | 'cold' | 'sub' | 'sub_req_{playerId}'
+  statKeys: string[]; // 'hot' | 'cold' | 'sub' | 'sub_req_{playerId}'
 }
 interface RatingData {
   groupId: string;
@@ -53,6 +59,18 @@ interface RatingData {
   rating: number;
 }
 
+/**
+ * The predictions doc has no dedup in firestore.rules (only touchesOnly), so
+ * these writers are responsible for their own idempotency.
+ *
+ * Shape shared by the three below: read ONLY the user's own match doc inside
+ * the transaction, then write the group aggregate with increment(±1) sentinels.
+ * Reading the group doc would be the obvious move but is wrong — Firestore
+ * transactions are optimistic, so every doc you read becomes a contention
+ * point, and predictions/{matchId} is the hot doc at kickoff. The user's doc
+ * has exactly one writer, so contention stays at zero. Cost is unchanged:
+ * updateOrSet already did a getDoc.
+ */
 export const handlePredictWinningTeam = async ({
   groupId,
   currentYear,
@@ -62,22 +80,42 @@ export const handlePredictWinningTeam = async ({
 }: VoteParams & { choice: "home" | "draw" | "away" }) => {
   validateParams({ groupId, currentYear, matchId, userId });
 
-  const groupPath = `groups/${groupId}/seasons/${currentYear}/predictions`;
-  await setDoc(
-    doc(clientDB, groupPath, matchId),
-    {
-      result: { [choice]: increment(1), totalVotes: increment(1) },
-    },
-    { merge: true },
+  const groupRef = doc(
+    clientDB,
+    `groups/${groupId}/seasons/${currentYear}/predictions`,
+    matchId,
+  );
+  const userRef = doc(
+    clientDB,
+    `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+    matchId,
   );
 
-  const userPath = `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`;
-  await updateOrSet(userPath, matchId, { result: choice });
+  return await runTransaction(clientDB, async (tx) => {
+    const userSnap = await tx.get(userRef);
+    const previous: "home" | "draw" | "away" | null =
+      userSnap.exists() ? (userSnap.data()?.result ?? null) : null;
+
+    // Re-running the same vote (a retry after a dropped connection) is a no-op.
+    if (previous === choice) return { changed: false, previous };
+
+    const result: Record<string, any> = { [choice]: increment(1) };
+    if (previous) {
+      // Moving a vote: the denominator doesn't change.
+      result[previous] = increment(-1);
+    } else {
+      result.totalVotes = increment(1);
+    }
+
+    tx.set(groupRef, { result }, { merge: true });
+    txUpdateOrSet(tx, userRef, userSnap, { result: choice });
+
+    return { changed: true, previous };
+  });
 };
 
 export const handlePredictTeamScore = async (params: ScorePredictParams) => {
   try {
-    validateParams(params);
     const {
       groupId,
       currentYear,
@@ -88,33 +126,78 @@ export const handlePredictTeamScore = async (params: ScorePredictParams) => {
       awayGoals,
     } = params;
 
+    // Not validateParams(params): homeGoals/awayGoals are 0 for any clean
+    // sheet, and the falsy check rejected them as missing — so every 1-0, 0-0
+    // or 2-0 prediction threw before it reached Firestore.
+    validateParams({ groupId, currentYear, matchId, userId, score });
+    if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) {
+      throw new Error("Score prediction requires numeric goal counts");
+    }
+
     const groupPredRef = doc(
       clientDB,
       `groups/${groupId}/seasons/${currentYear}/predictions`,
       matchId,
     );
+    const userRef = doc(
+      clientDB,
+      `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+      matchId,
+    );
 
-    const groupUpdate = {
-      scorePredictions: { [score]: increment(1) },
-      homeGoals: { [homeGoals]: increment(1) },
-      awayGoals: { [awayGoals]: increment(1) },
-      totalScoreVotes: increment(1),
-    };
+    return await runTransaction(clientDB, async (tx) => {
+      const userSnap = await tx.get(userRef);
+      const previous: string | null = userSnap.exists()
+        ? (userSnap.data()?.ScorePrediction ?? null)
+        : null;
 
-    const userMatchPath = `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`;
+      if (previous === score) return { success: true, changed: false, previous };
 
-    await Promise.all([
-      setDoc(groupPredRef, groupUpdate, { merge: true }),
-      updateOrSet(userMatchPath, matchId, {
+      // Accumulate numeric deltas before converting to increment() sentinels.
+      // "2-1" -> "2-0" keeps the same home score, so homeGoals[2] must net to
+      // zero; assigning increment(1) then increment(-1) under the same key
+      // would just overwrite and wrongly decrement.
+      const homeDeltas: Record<string, number> = { [homeGoals]: 1 };
+      const awayDeltas: Record<string, number> = { [awayGoals]: 1 };
+      const scoreDeltas: Record<string, number> = { [score]: 1 };
+
+      if (previous) {
+        scoreDeltas[previous] = (scoreDeltas[previous] ?? 0) - 1;
+
+        // A malformed or legacy value must skip the goal decrements rather
+        // than write NaN into a counter — that would be unrecoverable.
+        const [prevHome, prevAway] = String(previous).split("-").map(Number);
+        if (Number.isFinite(prevHome) && Number.isFinite(prevAway)) {
+          homeDeltas[prevHome] = (homeDeltas[prevHome] ?? 0) - 1;
+          awayDeltas[prevAway] = (awayDeltas[prevAway] ?? 0) - 1;
+        }
+      }
+
+      const toIncrements = (deltas: Record<string, number>) =>
+        Object.entries(deltas).reduce<Record<string, any>>((acc, [k, v]) => {
+          if (v !== 0) acc[k] = increment(v);
+          return acc;
+        }, {});
+
+      const groupUpdate: Record<string, any> = {
+        scorePredictions: toIncrements(scoreDeltas),
+        homeGoals: toIncrements(homeDeltas),
+        awayGoals: toIncrements(awayDeltas),
+      };
+
+      if (!previous) groupUpdate.totalScoreVotes = increment(1);
+
+      tx.set(groupPredRef, groupUpdate, { merge: true });
+      txUpdateOrSet(tx, userRef, userSnap, {
         ScorePrediction: score,
         predictionTimestamp: Date.now(),
-      }),
-    ]);
+      });
 
-    return { success: true };
+      return { success: true, changed: true, previous };
+    });
   } catch (error: any) {
     console.error("❌ Error submitting score prediction:", error);
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -133,19 +216,35 @@ export const handlePredictPreMatchMotm = async (params: {
     `groups/${groupId}/seasons/${currentYear}/predictions`,
     matchId,
   );
-  const userPath = `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`;
+  const userRef = doc(
+    clientDB,
+    `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+    matchId,
+  );
 
-  await Promise.all([
-    setDoc(
-      groupRef,
-      {
-        preMatchMotm: { [playerId]: increment(1) },
-        preMatchMotmVotes: increment(1),
-      },
-      { merge: true },
-    ),
-    updateOrSet(userPath, matchId, { preMatchMotm: playerId }),
-  ]);
+  return await runTransaction(clientDB, async (tx) => {
+    const userSnap = await tx.get(userRef);
+    const previous: string | null = userSnap.exists()
+      ? (userSnap.data()?.preMatchMotm ?? null)
+      : null;
+
+    if (previous === playerId) return { changed: false, previous };
+
+    const groupUpdate: Record<string, any> = {
+      preMatchMotm: { [playerId]: increment(1) },
+    };
+
+    if (previous) {
+      groupUpdate.preMatchMotm[previous] = increment(-1);
+    } else {
+      groupUpdate.preMatchMotmVotes = increment(1);
+    }
+
+    tx.set(groupRef, groupUpdate, { merge: true });
+    txUpdateOrSet(tx, userRef, userSnap, { preMatchMotm: playerId });
+
+    return { changed: true, previous };
+  });
 };
 
 export const handlePredictTeamSubmit = async (params: TeamSubmitParams) => {
@@ -190,14 +289,23 @@ export const handlePredictTeamSubmit = async (params: TeamSubmitParams) => {
     return { success: true };
   } catch (error: any) {
     console.error("❌ Lineup Submission Error:", error);
-    throw new Error(error.message);
+    // Re-throw as-is: wrapping in new Error() discards error.code, which the
+    // UI needs to tell "already submitted" apart from "connection dropped".
+    throw error;
   }
 };
 
 export const handleLivePlayerStats = async (params: LiveStatParams) => {
   try {
-    validateParams(params);
-    const { groupId, currentYear, matchId, timeElapsed, playerId, statKey } =
+    // Not validateParams(params): timeElapsed is legitimately 0 at kickoff and
+    // the falsy check would reject it as missing.
+    validateParams({
+      groupId: params.groupId,
+      currentYear: params.currentYear,
+      matchId: params.matchId,
+      playerId: params.playerId,
+    });
+    const { groupId, currentYear, matchId, timeElapsed, playerId, statKeys } =
       params;
 
     const docRef = doc(
@@ -206,16 +314,24 @@ export const handleLivePlayerStats = async (params: LiveStatParams) => {
       matchId,
     );
 
+    // One merged payload for all keys. A sub vote writes both `sub` and
+    // `sub_req_{id}`; issuing them as two sequential writes meant a failure
+    // between them counted the sub without the target, corrupting sortedSubs.
+    const perPlayer = statKeys.reduce<Record<string, any>>((acc, key) => {
+      acc[key] = increment(1);
+      return acc;
+    }, {});
+
     const updatePayload = {
-      [String(timeElapsed)]: { [playerId]: { [statKey]: increment(1) } },
-      totals: { [playerId]: { [statKey]: increment(1) } },
+      [String(timeElapsed)]: { [playerId]: perPlayer },
+      totals: { [playerId]: perPlayer },
     };
 
     await setDoc(docRef, updatePayload, { merge: true });
     return { success: true };
   } catch (error: any) {
     console.error("❌ Live Player Stat Error:", error);
-    throw new Error(error.message);
+    throw error;
   }
 };
 
@@ -364,7 +480,9 @@ export const handlePlayerRatingSubmit = async (data: any) => {
     return { success: true };
   } catch (error: any) {
     console.error("❌ Firestore Batch Failed:", error);
-    throw new Error(error.message);
+    // Preserve error.code — rules dedupe repeat ratings with permission-denied,
+    // which the UI reports as "you've already submitted this".
+    throw error;
   }
 };
 

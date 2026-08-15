@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { Globe, Lock } from "lucide-react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { toast } from "sonner";
 
 interface GroupVisibilityToggleProps {
   groupId: string;
@@ -40,6 +41,7 @@ export default function GroupVisibilityToggle({
       setIsPublic(newValue);
     } catch (error) {
       console.error("Failed to update visibility", error);
+      toast.error("Couldn't update visibility. Try again.");
       // Revert UI state on error
       setIsPublic(!newValue);
     } finally {
