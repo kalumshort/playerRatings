@@ -11,6 +11,8 @@ import { selectActiveClubFixtures } from "@/lib/redux/selectors/fixturesSelector
 import { selectAllPlayerOverallRatings } from "@/lib/redux/selectors/ratingsSelectors";
 import { RootState } from "@/lib/redux/store";
 import RatingLineupPlayer from "./RatingLineupPlayer";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: 24,
@@ -124,6 +126,7 @@ export default function LatestTeamSeasonRating() {
     return id ? state.groupData.byGroupId[id] : null;
   });
   const clubId = Number(activeGroup?.groupClubId);
+  const { season } = useClubView();
 
   const allFixtures = useSelector(selectActiveClubFixtures);
   const playerStats = useSelector(selectAllPlayerOverallRatings);
@@ -155,7 +158,10 @@ export default function LatestTeamSeasonRating() {
         </Box>
         <Button
           component={Link}
-          href={`${activeGroup?.slug}/player-stats`}
+          href={withSeasonParam(
+            `/${activeGroup?.slug}/player-stats`,
+            season,
+          )}
           size="small"
           endIcon={<ArrowForwardIcon />}
           variant="contained"

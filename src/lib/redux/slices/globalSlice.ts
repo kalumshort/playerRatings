@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { CURRENT_SEASON } from "@/lib/config/season";
 
 interface GlobalState {
   currentYear: string;
@@ -6,7 +7,7 @@ interface GlobalState {
 }
 
 const initialState: GlobalState = {
-  currentYear: "2025", // Default starting year
+  currentYear: CURRENT_SEASON, // Overridden by DataInitializer when browsing an archived season
   isSidebarOpen: false,
 };
 

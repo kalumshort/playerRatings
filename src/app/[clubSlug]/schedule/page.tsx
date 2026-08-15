@@ -9,14 +9,20 @@ import {
 import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
 import { Box } from "@mui/material";
+import { resolveSeason } from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string }>;
+  searchParams: Promise<{ season?: string }>;
 }
 
-export default async function SchedulePage({ params }: PageProps) {
+export default async function SchedulePage({
+  params,
+  searchParams,
+}: PageProps) {
   // 1. Await params (Required in Next.js 15)
   const { clubSlug } = await params;
+  const { season: seasonParam } = await searchParams;
 
   // 2. FETCH GROUP FIRST
   const group = await getGroupBySlugServer(clubSlug);
@@ -35,9 +41,10 @@ export default async function SchedulePage({ params }: PageProps) {
   }
 
   // 4. DATA FETCHING (Only happens if authorized)
-  const currentYear = "2025";
+  // Allowlisted before it reaches a Firestore path
+  const season = resolveSeason(seasonParam);
   const clubId = group.groupClubId;
-  const fixtures = await getFixturesByClubServer(clubId, currentYear);
+  const fixtures = await getFixturesByClubServer(clubId, season);
 
   // 5. DATA PROCESSING
   const stats = calculateStats(fixtures, clubId);
@@ -53,8 +60,8 @@ export default async function SchedulePage({ params }: PageProps) {
         overflow: "hidden",
       }}
     >
-      <SeasonOverview stats={stats} played={played} />
-      <ScheduleContainer initialFixtures={fixtures} />
+      <SeasonOverview stats={stats} played={played} season={season} />
+      <ScheduleContainer initialFixtures={fixtures} season={season} />
     </Box>
   );
 }

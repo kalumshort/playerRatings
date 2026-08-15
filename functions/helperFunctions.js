@@ -5,6 +5,8 @@ const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const BASE_URL = "https://v3.football.api-sports.io";
 
 // The season every function reads and writes. Bump this once per season.
+// Keep in sync with CURRENT_SEASON in src/lib/config/season.ts — `src/` and
+// `functions/` are separate packages (ESM vs CJS) and cannot import each other.
 const SEASON = 2026;
 const LEAGUE_ID = 39; // Premier League
 

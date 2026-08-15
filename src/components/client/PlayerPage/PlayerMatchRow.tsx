@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 interface ComparePlayerInfo {
   id: string;
@@ -22,9 +24,12 @@ export default function PlayerMatchRow({
   compareRatingData,
   comparePlayer,
   compareColor,
+  season: seasonProp,
 }: any) {
   const theme = useTheme() as any;
   const { clubSlug } = useParams();
+  const { season: contextSeason } = useClubView();
+  const season = seasonProp ?? contextSeason;
   const myClubId = Number(clubId);
 
   const { result, rating, compareRating } = useMemo(() => {
@@ -67,7 +72,7 @@ export default function PlayerMatchRow({
       transition={{ delay: index * 0.04, duration: 0.3 }}
     >
       <Link
-        href={`/${clubSlug}/fixture/${fixture.id}`}
+        href={withSeasonParam(`/${clubSlug}/fixture/${fixture.id}`, season)}
         style={{ textDecoration: "none", display: "block", color: "inherit" }}
       >
         <Box

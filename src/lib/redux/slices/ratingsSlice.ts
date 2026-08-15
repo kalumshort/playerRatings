@@ -10,6 +10,8 @@ import {
 interface RatingsState {
   byGroupId: {
     [groupId: string]: {
+      /** Season this bucket holds. Ratings are cleared when the user switches season. */
+      season?: string;
       matches: {
         [matchId: string]: {
           players: Record<string, any>;
@@ -40,10 +42,22 @@ const initialState: RatingsState = {
 
 // --- HELPER ---
 
-const initGroupBucket = (state: RatingsState, groupId: string) => {
-  if (!state.byGroupId[groupId]) {
-    state.byGroupId[groupId] = { matches: {}, players: {} };
+// `season` is only passed by fetches that know which season they loaded. When it
+// differs from what the bucket holds, the cached ratings belong to another season
+// and must be dropped rather than merged. Listener reducers omit it and are no-ops here.
+const initGroupBucket = (
+  state: RatingsState,
+  groupId: string,
+  season?: string,
+) => {
+  const existing = state.byGroupId[groupId];
+
+  if (!existing || (season && existing.season && existing.season !== season)) {
+    state.byGroupId[groupId] = { matches: {}, players: {}, season };
+  } else if (season) {
+    existing.season = season;
   }
+
   return state.byGroupId[groupId];
 };
 
@@ -134,8 +148,8 @@ const ratingsSlice = createSlice({
       .addCase(
         fetchAllPlayersSeasonOverallRating.fulfilled,
         (state, action) => {
-          const { groupId, players } = action.payload;
-          const bucket = initGroupBucket(state, groupId);
+          const { groupId, season, players } = action.payload;
+          const bucket = initGroupBucket(state, groupId, season);
           Object.entries(players).forEach(([playerId, playerData]) => {
             if (!bucket.players[playerId]) {
               bucket.players[playerId] = { seasonOverall: {}, matches: {} };
@@ -151,8 +165,9 @@ const ratingsSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchMatchPlayerRatings.fulfilled, (state, action) => {
-        const { groupId, matchId, playerRatings, motmData } = action.payload;
-        const bucket = initGroupBucket(state, groupId);
+        const { groupId, season, matchId, playerRatings, motmData } =
+          action.payload;
+        const bucket = initGroupBucket(state, groupId, season);
         bucket.matches[matchId] = { players: playerRatings, motm: motmData };
         state.loading = false;
       })
@@ -167,8 +182,8 @@ const ratingsSlice = createSlice({
       })
       .addCase(fetchPlayerRatingsAllMatches.fulfilled, (state, action) => {
         if (!action.payload) return;
-        const { groupId, playerId, matchesData } = action.payload;
-        const bucket = initGroupBucket(state, groupId);
+        const { groupId, season, playerId, matchesData } = action.payload;
+        const bucket = initGroupBucket(state, groupId, season);
         if (!bucket.players[playerId]) {
           bucket.players[playerId] = { seasonOverall: {}, matches: {} };
         }

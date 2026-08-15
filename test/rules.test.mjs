@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs";
 
 const PUB = "pub1"; // public group
 const PRIV = "priv1"; // private group
-const YEAR = "2025";
+const YEAR = "2026";
 const MATCH = "m1";
 const PLAYER = "p1";
 

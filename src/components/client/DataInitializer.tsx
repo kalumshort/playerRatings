@@ -2,24 +2,31 @@
 
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "next/navigation";
 
 import { RootState, AppDispatch } from "@/lib/redux/store";
 import { fetchFixtures } from "@/lib/redux/slices/fixturesSlice";
 import { fetchTeamSquad } from "@/lib/redux/slices/squadSlice";
 import { fetchAllPlayersSeasonOverallRating } from "@/lib/redux/actions/ratingsActions";
+import { setCurrentYear } from "@/lib/redux/slices/globalSlice";
+import { resolveSeason } from "@/lib/config/season";
 
 interface DataInitializerProps {
   clubId: string;
-  currentYear: string;
   groupId?: string;
 }
 
 export default function DataInitializer({
   clubId,
-  currentYear,
   groupId,
 }: DataInitializerProps) {
   const dispatch = useDispatch<AppDispatch>();
+
+  // The single client-side reader of ?season=. Layouts don't get searchParams, so
+  // this component owns it and mirrors the result into Redux for everything else.
+  // It renders null, so the Suspense boundary it needs costs nothing.
+  const searchParams = useSearchParams();
+  const currentYear = resolveSeason(searchParams.get("season"));
 
   // 1. Guarded selectors: Ensure we don't try to access nested state if IDs are missing
   const hasFixtures = useSelector(
@@ -32,11 +39,18 @@ export default function DataInitializer({
       currentYear &&
       !!state.teamSquads.byClubId[clubId]?.[currentYear],
   );
-  const hasSeasonRatings = useSelector((state: RootState) =>
-    groupId && currentYear
-      ? !!state.playerRatings.byGroupId[groupId]?.players
-      : false,
-  );
+  const hasSeasonRatings = useSelector((state: RootState) => {
+    if (!groupId || !currentYear) return false;
+    const bucket = state.playerRatings.byGroupId[groupId];
+    // Ratings cached for a different season must not be reused
+    return !!bucket?.players && bucket.season === currentYear;
+  });
+
+  // Mirror the active season into Redux so the year-aware selectors
+  // (fixturesSelectors, squadSelectors) follow the switcher.
+  useEffect(() => {
+    dispatch(setCurrentYear(currentYear));
+  }, [currentYear, dispatch]);
 
   useEffect(() => {
     // 2. Strict Guard: Stop if critical path variables are missing

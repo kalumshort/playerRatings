@@ -55,7 +55,7 @@ export const fetchAllPlayersSeasonOverallRating = createAsyncThunk(
         sanitizedRatings[doc.id] = sanitizeData({ ...doc.data(), id: doc.id });
       });
 
-      return { groupId, players: sanitizedRatings };
+      return { groupId, season: currentYear.trim(), players: sanitizedRatings };
     } catch (error: any) {
       console.error("[Ratings Thunk] Error:", error);
       return rejectWithValue(error.message);
@@ -107,6 +107,7 @@ export const fetchMatchPlayerRatings = createAsyncThunk(
 
       return {
         groupId,
+        season: currentYear,
         matchId: mid,
         playerRatings,
         motmData: motmSnapshot.exists()
@@ -155,7 +156,7 @@ export const fetchPlayerRatingsAllMatches = createAsyncThunk(
         matchesData[doc.id] = { id: doc.id, ...doc.data() };
       });
 
-      return { groupId, playerId, matchesData };
+      return { groupId, season: currentYear, playerId, matchesData };
     } catch (error: any) {
       console.error("Error getting player ratings:", error);
       return rejectWithValue(error.message);

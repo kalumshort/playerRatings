@@ -3,9 +3,11 @@ import { Metadata } from "next";
 
 import PlayerPageClient from "@/components/client/PlayerPage/PlayerPageClient";
 import { adminDb } from "@/lib/firebase/admin";
+import { resolveSeason } from "@/lib/config/season";
 
 interface Props {
   params: Promise<{ clubSlug: string; playerId: string }>;
+  searchParams: Promise<{ season?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -23,7 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { playerId } = await params;
-  return <PlayerPageClient playerId={playerId} />;
+  // Resolved server-side so the rating fetches start on the right season
+  const season = resolveSeason((await searchParams).season);
+
+  return <PlayerPageClient playerId={playerId} season={season} />;
 }

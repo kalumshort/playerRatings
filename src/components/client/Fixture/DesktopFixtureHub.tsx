@@ -12,6 +12,7 @@ import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import Statistics from "./Components/Statistics";
 import Events from "./Components/Events";
 import { useClubView } from "@/context/ClubViewProvider";
+import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
 
 interface DesktopFixtureHubProps {
@@ -69,7 +70,11 @@ export default function DesktopFixtureHub({
   groupId,
   groupData,
 }: DesktopFixtureHubProps) {
-  const { isGuestView } = useClubView();
+  // Archived seasons are read-only. The interactive children below already model
+  // "can't interact" as isGuestView, so reuse that switch rather than a parallel one.
+  // currentYear is resolved server-side, so this is right on the first render.
+  const { isGuestView: isGuest } = useClubView();
+  const isGuestView = isGuest || isArchivedSeason(currentYear);
 
   const status = fixture?.fixture?.status?.short;
   const isPreMatch = ["NS", "TBD"].includes(status);

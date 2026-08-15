@@ -22,6 +22,7 @@ import { selectAllMatchRatings } from "@/lib/redux/selectors/ratingsSelectors";
 import { fetchMatchPlayerRatings } from "@/lib/redux/actions/ratingsActions";
 import useGlobalData from "@/Hooks/useGlobalData";
 import useGroupData from "@/Hooks/useGroupData";
+import { withSeasonParam } from "@/lib/config/season";
 
 const RECENT_MATCH_COUNT = 3;
 
@@ -33,11 +34,17 @@ interface PlayerForm {
   photo: string;
 }
 
-export default function PlayerFormWidgets() {
+export default function PlayerFormWidgets({
+  season,
+}: {
+  /** Server-resolved season; falls back to the Redux mirror where not supplied. */
+  season?: string;
+}) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { clubSlug } = useParams();
-  const { currentYear } = useGlobalData();
+  const { currentYear: mirroredYear } = useGlobalData();
+  const currentYear = season ?? mirroredYear;
   const { activeGroupId } = useGroupData();
 
   const previousFixtures = useSelector(selectPreviousFixtures);
@@ -164,14 +171,24 @@ export default function PlayerFormWidgets() {
             variant="hot"
             player={hotPlayer}
             onClick={() =>
-              router.push(`/${clubSlug}/players/${hotPlayer.playerId}`)
+              router.push(
+                withSeasonParam(
+                  `/${clubSlug}/players/${hotPlayer.playerId}`,
+                  currentYear,
+                ),
+              )
             }
           />
           <FormCard
             variant="cold"
             player={coldPlayer}
             onClick={() =>
-              router.push(`/${clubSlug}/players/${coldPlayer.playerId}`)
+              router.push(
+                withSeasonParam(
+                  `/${clubSlug}/players/${coldPlayer.playerId}`,
+                  currentYear,
+                ),
+              )
             }
           />
         </Stack>

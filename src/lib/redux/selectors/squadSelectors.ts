@@ -31,14 +31,17 @@ export const selectSeasonSquadData = createSelector(
   [selectSquadSlice, selectActiveContext],
   (squadSlice, { clubId, year }) => {
     if (!clubId || !year) return null;
-    return squadSlice.byClubId[clubId]?.[year].seasonSquad.reduce(
-      (acc: Record<string, any>, player: any) => {
-        // We force the ID to a string for consistent object key access
-        acc[String(player.id)] = player;
-        return acc;
-      },
-      {},
-    );
+
+    // The bucket is absent while a newly selected season is still fetching,
+    // and stays absent for any season with no squad stored.
+    const seasonSquad = squadSlice.byClubId[clubId]?.[year]?.seasonSquad;
+    if (!Array.isArray(seasonSquad)) return null;
+
+    return seasonSquad.reduce((acc: Record<string, any>, player: any) => {
+      // We force the ID to a string for consistent object key access
+      acc[String(player.id)] = player;
+      return acc;
+    }, {});
   },
 );
 

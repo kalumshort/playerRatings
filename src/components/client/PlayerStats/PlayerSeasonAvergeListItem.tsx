@@ -23,23 +23,31 @@ import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
 import useGroupData from "@/Hooks/useGroupData";
 import { fetchPlayerRatingsAllMatches } from "@/lib/redux/actions/ratingsActions";
 import { getRatingColor } from "@/lib/utils/football-logic";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 interface PlayerSeasonAverageListItemProps {
   playerId: string;
   clubSlug: any;
   globalRank: number;
+  season?: string;
 }
 
 export default function PlayerSeasonAverageListItem({
   playerId,
   clubSlug,
   globalRank,
+  season: seasonProp,
 }: PlayerSeasonAverageListItemProps) {
   const theme = useTheme() as any;
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
   const { activeGroup } = useGroupData();
+  const { season: contextSeason } = useClubView();
+  // Prefer the server-resolved season: the context mirror lags a render, which
+  // would fire a wasted current-season fetch on archived pages.
+  const currentYear = seasonProp ?? contextSeason;
 
   useEffect(() => {
     if (playerId && activeGroup?.groupId) {
@@ -47,11 +55,11 @@ export default function PlayerSeasonAverageListItem({
         fetchPlayerRatingsAllMatches({
           playerId,
           groupId: activeGroup?.groupId,
-          currentYear: "2025",
+          currentYear,
         }),
       );
     }
-  }, [dispatch, playerId, activeGroup]);
+  }, [dispatch, playerId, activeGroup, currentYear]);
 
   // 1. ATOMIC SELECTORS
   // We select the whole maps but immediately pluck the ID to minimize subscription overhead
@@ -88,7 +96,11 @@ export default function PlayerSeasonAverageListItem({
 
   return (
     <Paper
-      onClick={() => router.push(`/${clubSlug}/players/${playerId}`)}
+      onClick={() =>
+        router.push(
+          withSeasonParam(`/${clubSlug}/players/${playerId}`, currentYear),
+        )
+      }
       sx={{
         py: { xs: 1.25, sm: 1.5 },
         pl: { xs: 1.25, sm: 1.5 },

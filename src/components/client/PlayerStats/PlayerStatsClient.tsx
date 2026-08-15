@@ -24,6 +24,8 @@ import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
 import PodiumStep from "./PodiumStep";
 import PlayerFormWidgets from "./PlayerFormWidgets";
 import PlayerSeasonAverageListItem from "./PlayerSeasonAvergeListItem";
+import SeasonSwitcher from "../Widgets/SeasonSwitcher";
+import { formatSeason } from "@/lib/config/season";
 
 // Placeholder/system account excluded from rankings.
 const EXCLUDED_PLAYER_IDS = new Set(["4720"]);
@@ -36,7 +38,12 @@ const POSITION_FILTERS = [
   "Attacker",
 ] as const;
 
-export default function PlayerStatsClient() {
+interface PlayerStatsClientProps {
+  /** Server-resolved season, so per-player fetches start on the right one. */
+  season: string;
+}
+
+export default function PlayerStatsClient({ season }: PlayerStatsClientProps) {
   const theme = useTheme() as any;
   const { clubSlug } = useParams();
 
@@ -47,6 +54,12 @@ export default function PlayerStatsClient() {
   const allPlayersSeasonAverageRating = useSelector(
     selectAllPlayerOverallRatings,
   );
+  // Squad and ratings both arrive via client-side fetches, so "empty" is only
+  // meaningful once they've settled — otherwise every load flashes "no ratings".
+  const ratingsLoading = useSelector(
+    (state: RootState) => state.playerRatings.playerSeasonOverallRatingsLoading,
+  );
+  const hasLoaded = squadData !== null && !ratingsLoading;
 
   // 2. STATE
   const [sort, setSort] = useState<"asc" | "desc">("desc");
@@ -131,7 +144,8 @@ export default function PlayerStatsClient() {
               />
             </Stack>
 
-            <Stack direction="row">
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              <SeasonSwitcher season={season} />
               <IconButton
                 onClick={() => setSort((s) => (s === "desc" ? "asc" : "desc"))}
               >
@@ -146,12 +160,24 @@ export default function PlayerStatsClient() {
           </Box>
 
           <Stack spacing={1.5}>
+            {hasLoaded && listPlayers.length === 0 && (
+              <Paper sx={{ p: 4, textAlign: "center" }}>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>
+                  No ratings yet for {formatSeason(season)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Once fans rate players this season they&apos;ll appear here.
+                  Switch season above to see previous ratings.
+                </Typography>
+              </Paper>
+            )}
             {listPlayers.map((player) => (
               <PlayerSeasonAverageListItem
                 key={player.playerId}
                 playerId={player.playerId}
                 globalRank={globalRankById.get(player.playerId) ?? 0}
                 clubSlug={clubSlug}
+                season={season}
               />
             ))}
           </Stack>
@@ -187,7 +213,7 @@ export default function PlayerStatsClient() {
                 <PodiumStep rank={3} player={top3Players[2]} />
               </Box>
             </Paper>
-            <PlayerFormWidgets />
+            <PlayerFormWidgets season={season} />
           </Stack>
         </Grid>
       </Grid>

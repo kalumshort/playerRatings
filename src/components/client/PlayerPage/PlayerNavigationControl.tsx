@@ -18,6 +18,8 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 interface SquadPlayer {
   id: string | number;
@@ -31,17 +33,21 @@ interface PlayerNavigationControlProps {
   squadData: Record<string, SquadPlayer> | null | undefined;
   currentPlayerId: string;
   onNavigate?: () => void;
+  season?: string;
 }
 
 export default function PlayerNavigationControl({
   squadData,
   currentPlayerId,
   onNavigate,
+  season: seasonProp,
 }: PlayerNavigationControlProps) {
   const theme = useTheme() as any;
   const router = useRouter();
   const params = useParams();
   const clubSlug = params?.clubSlug as string | undefined;
+  const { season: contextSeason } = useClubView();
+  const season = seasonProp ?? contextSeason;
 
   const accent = theme.palette.primary?.main ?? "#1976d2";
 
@@ -76,7 +82,7 @@ export default function PlayerNavigationControl({
     handleClose();
     if (!clubSlug) return;
     onNavigate?.();
-    router.push(`/${clubSlug}/players/${player.id}`);
+    router.push(withSeasonParam(`/${clubSlug}/players/${player.id}`, season));
   };
 
   return (

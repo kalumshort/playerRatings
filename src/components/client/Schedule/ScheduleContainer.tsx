@@ -21,6 +21,8 @@ import {
   selectLatestFixture,
 } from "@/lib/redux/selectors/fixturesSelectors";
 import FixtureListItem from "./FixtureListItem";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 interface ScheduleContainerProps {
   limitAroundLatest?: number;
@@ -28,6 +30,8 @@ interface ScheduleContainerProps {
   scroll?: boolean;
   scrollOnLoad?: boolean;
   initialFixtures?: any[];
+  /** Server-resolved season. Falls back to context where no server page supplies it. */
+  season?: string;
 }
 
 export default function ScheduleContainer({
@@ -36,11 +40,14 @@ export default function ScheduleContainer({
   scroll = true,
   scrollOnLoad = true,
   initialFixtures = [],
+  season: seasonProp,
 }: ScheduleContainerProps) {
   const theme = useTheme();
   const router = useRouter();
   const params = useParams();
   const clubSlug = params?.clubSlug;
+  const { season: contextSeason } = useClubView();
+  const season = seasonProp ?? contextSeason;
 
   const reduxFixtures = useSelector(selectActiveClubFixtures);
   const latestFixture = useSelector(selectLatestFixture);
@@ -92,10 +99,11 @@ export default function ScheduleContainer({
   const handleFixtureClick = useCallback(
     (matchId: number | string) => {
       if (clubSlug) {
-        router.push(`/${clubSlug}/fixture/${matchId}`);
+        // Preserve the archive season, or the fixture page 404s against 2026
+        router.push(withSeasonParam(`/${clubSlug}/fixture/${matchId}`, season));
       }
     },
-    [router, clubSlug],
+    [router, clubSlug, season],
   );
 
   useEffect(() => {
@@ -165,7 +173,10 @@ export default function ScheduleContainer({
         ) : (
           <Button
             component={Link}
-            href={clubSlug ? `/${clubSlug}/schedule` : "/schedule"}
+            href={withSeasonParam(
+              clubSlug ? `/${clubSlug}/schedule` : "/schedule",
+              season,
+            )}
             size="small"
             endIcon={<ArrowForwardRoundedIcon />}
             variant="contained"

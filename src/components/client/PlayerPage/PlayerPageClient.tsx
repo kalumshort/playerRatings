@@ -26,13 +26,23 @@ import PlayerPageSkeleton from "./PlayerPageSkeleton";
 import PlayerCompareControl from "./PlayerCompareControl";
 import PlayerNavigationControl from "./PlayerNavigationControl";
 import useGroupData from "@/Hooks/useGroupData";
+import { useClubView } from "@/context/ClubViewProvider";
+import SeasonSwitcher from "../Widgets/SeasonSwitcher";
+import { formatSeason } from "@/lib/config/season";
 import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors";
 import { selectPlayerRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
 import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
 import PlayerRatingsLineGraph from "./PlayerPageRatingsGraph";
 import { getRatingColor } from "@/lib/utils/football-logic";
 
-export default function PlayerPageClient({ playerId }: { playerId: string }) {
+export default function PlayerPageClient({
+  playerId,
+  season,
+}: {
+  playerId: string;
+  /** Server-resolved season, so the rating fetches below start on the right one. */
+  season?: string;
+}) {
   const theme = useTheme() as any;
   const dispatch = useDispatch<AppDispatch>();
 
@@ -58,7 +68,10 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
 
   const { activeGroup } = useGroupData();
 
-  const currentYear = "2025";
+  // Prefer the server-resolved season: the context mirror lags a render, which
+  // would fire a wasted current-season fetch on archived pages.
+  const { season: contextSeason } = useClubView();
+  const currentYear = season ?? contextSeason;
 
   // 2. FETCHING
   useEffect(() => {
@@ -77,7 +90,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         }),
       );
     }
-  }, [dispatch, playerId, activeGroup]);
+  }, [dispatch, playerId, activeGroup, currentYear]);
 
   useEffect(() => {
     setComparePlayerId(null);
@@ -93,7 +106,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
         }),
       );
     }
-  }, [dispatch, comparePlayerId, activeGroup]);
+  }, [dispatch, comparePlayerId, activeGroup, currentYear]);
 
   // 3. CALCS
   const seasonAverage = useMemo(() => {
@@ -108,7 +121,29 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
     return overall.totalRating / overall.totalSubmits;
   }, [comparePlayerRatings]);
 
-  if (!playerData) return <PlayerPageSkeleton />;
+  // squadData is null only while the season's squad is still loading. Once it
+  // resolves, a missing player means they aren't in that season's squad — show
+  // the switcher rather than an endless skeleton with no way back.
+  if (!squadData) return <PlayerPageSkeleton />;
+
+  if (!playerData) {
+    return (
+      <Box sx={{ maxWidth: 560, mx: "auto", px: 2, pt: 8, textAlign: "center" }}>
+        <Paper sx={{ p: 4, border: `1px solid ${theme.palette.divider}` }}>
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+            Not in this season&apos;s squad
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            This player has no {formatSeason(currentYear)} record for this club.
+            Pick another season to see their ratings.
+          </Typography>
+          <Stack direction="row" justifyContent="center">
+            <SeasonSwitcher season={currentYear} />
+          </Stack>
+        </Paper>
+      </Box>
+    );
+  }
 
   const ratingColor = getRatingColor(seasonAverage);
   const comparePlayerInfo = comparePlayerData
@@ -181,18 +216,24 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                   borderTop: `1px solid ${theme.palette.divider}`,
                 }}
               >
-                <Typography
-                  variant="overline"
-                  sx={{
-                    display: "block",
-                    color: "text.secondary",
-                    letterSpacing: 1,
-                    fontWeight: 700,
-                    mb: 0.5,
-                  }}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 0.5 }}
                 >
-                  Season rating
-                </Typography>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: 1,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Season rating
+                  </Typography>
+                  <SeasonSwitcher season={currentYear} />
+                </Stack>
 
                 {comparePlayerInfo ? (
                   <Stack
@@ -238,6 +279,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
               <PlayerNavigationControl
                 squadData={squadData}
                 currentPlayerId={playerId}
+                season={currentYear}
               />
               <PlayerCompareControl
                 squadData={squadData}
@@ -298,6 +340,7 @@ export default function PlayerPageClient({ playerId }: { playerId: string }) {
                         compareRatingData={compareMatchRating}
                         comparePlayer={comparePlayerInfo}
                         compareColor={compareColor}
+                        season={currentYear}
                       />
                     );
                   })}

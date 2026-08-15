@@ -9,7 +9,10 @@
       "Bash(npm install *)",
       "Bash(grep -r \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" /c/Users/kshor/Documents/Websites/player_ratings/player-ratings/src --include=\"*.tsx\" --include=\"*.jsx\")",
       "Bash(grep -rn \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" /c/Users/kshor/Documents/Websites/player_ratings/player-ratings/src --include=\"*.tsx\" --include=\"*.jsx\")",
-      "Bash(xargs -0 sed -i -E 's/[[:space:]]*elevation=\\\\{0\\\\}//g; s/[[:space:]]*elevation=\\\\{8\\\\}//g; s/[[:space:]]*elevation=\\\\{10\\\\}//g')"
+      "Bash(xargs -0 sed -i -E 's/[[:space:]]*elevation=\\\\{0\\\\}//g; s/[[:space:]]*elevation=\\\\{8\\\\}//g; s/[[:space:]]*elevation=\\\\{10\\\\}//g')",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell($p = @\\(\"playwright\",\"puppeteer\",\"@playwright/test\",\"puppeteer-core\"\\); foreach \\($n in $p\\) { if \\(Test-Path \"node_modules\\\\$n\"\\) { \"LOCAL: $n\" } }; try { $v = npx --no-install playwright --version 2>$null; if \\($v\\) { \"NPX PLAYWRIGHT: $v\" } } catch {}; if \\(Test-Path \"$env:USERPROFILE\\\\AppData\\\\Local\\\\ms-playwright\"\\) { \"PW BROWSERS CACHE PRESENT\" })",
+      "PowerShell(npx next start -p 3100)"
     ]
   }
 }

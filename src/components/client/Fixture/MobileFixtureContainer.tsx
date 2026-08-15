@@ -13,6 +13,7 @@ import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
 import { useClubView } from "@/context/ClubViewProvider";
+import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
 
 // Components (Ensure these paths match your new Next.js structure)
@@ -32,7 +33,11 @@ export default function MobileFixtureContainer({
   groupId,
   groupData,
 }: MobileFixtureContainerProps) {
-  const { isGuestView } = useClubView();
+  // Archived seasons are read-only. The interactive children below already model
+  // "can't interact" as isGuestView, so reuse that switch rather than a parallel one.
+  // currentYear is resolved server-side, so this is right on the first render.
+  const { isGuestView: isGuest } = useClubView();
+  const isGuestView = isGuest || isArchivedSeason(currentYear);
 
   // 1. Match Status Helpers
   const status = fixture?.fixture?.status?.short;

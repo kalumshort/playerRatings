@@ -10,20 +10,22 @@ import {
 import FixtureClientWrapper from "@/components/client/Fixture/FixtureClientWrapper";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
+import { isArchivedSeason, resolveSeason } from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string; matchId: string }>;
+  searchParams: Promise<{ season?: string }>;
 }
-
-const CURRENT_YEAR = "2025";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: PageProps): Promise<Metadata> {
   const { matchId } = await params;
+  const season = resolveSeason((await searchParams).season);
 
   try {
-    const fixture = await getFixtureByIdServer(matchId, CURRENT_YEAR);
+    const fixture = await getFixtureByIdServer(matchId, season);
     if (!fixture) return { title: "Match Not Found" };
 
     const { home, away } = fixture.teams;
@@ -31,6 +33,11 @@ export async function generateMetadata({
       title: `${home.name} vs ${away.name} - Player Ratings | 11Votes`,
       description: `Rate the players for ${home.name} vs ${away.name}.`,
       openGraph: { images: [home.logo, away.logo] },
+      // Archived seasons aren't in the sitemap and must not compete
+      // with the canonical current-season URLs.
+      ...(isArchivedSeason(season) && {
+        robots: { index: false, follow: true },
+      }),
     };
   } catch (error) {
     console.error("[Metadata Error]:", error);
@@ -38,8 +45,12 @@ export async function generateMetadata({
   }
 }
 
-export default async function FixturePage({ params }: PageProps) {
+export default async function FixturePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { clubSlug, matchId } = await params;
+  const season = resolveSeason((await searchParams).season);
 
   console.log(`--- [DEBUG] Starting Page Load for ${clubSlug}/${matchId} ---`);
 
@@ -72,18 +83,18 @@ export default async function FixturePage({ params }: PageProps) {
 
   // 3. Parallel Data Fetching
   console.log(
-    `[DEBUG]: Fetching fixture/ratings for matchId: ${matchId}, year: ${CURRENT_YEAR}`,
+    `[DEBUG]: Fetching fixture/ratings for matchId: ${matchId}, year: ${season}`,
   );
 
   const [fixture, predictions, ratingsData] = await Promise.all([
-    getFixtureByIdServer(matchId, CURRENT_YEAR),
-    getMatchPredictionsServer(group.id, matchId, CURRENT_YEAR),
-    getMatchPlayerRatingsServer(group.id, matchId, CURRENT_YEAR),
+    getFixtureByIdServer(matchId, season),
+    getMatchPredictionsServer(group.id, matchId, season),
+    getMatchPlayerRatingsServer(group.id, matchId, season),
   ]);
 
   if (!fixture) {
     console.error(
-      `[NOT_FOUND]: Fixture data missing for matchId "${matchId}" in year ${CURRENT_YEAR}`,
+      `[NOT_FOUND]: Fixture data missing for matchId "${matchId}" in year ${season}`,
     );
     notFound();
   }
@@ -99,7 +110,7 @@ export default async function FixturePage({ params }: PageProps) {
       initialRatings={ratingsData}
       group={group}
       matchId={matchId}
-      currentYear={CURRENT_YEAR}
+      currentYear={season}
     />
   );
 }
