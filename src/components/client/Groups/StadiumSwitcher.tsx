@@ -36,10 +36,10 @@ import {
 import { differenceInDays, addDays, formatDistanceToNow } from "date-fns";
 
 import {
-  joinGroupByCodeClient,
   updateLeagueTeam,
   updateUserField,
 } from "@/lib/firebase/client-user-actions";
+import InviteCodeEntry from "./InviteCodeEntry";
 import { teamList } from "@/lib/utils/teamList";
 import useGroupData from "@/Hooks/useGroupData";
 import { toast } from "sonner";
@@ -58,32 +58,6 @@ export default function StadiumSwitcher({
   const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
-
-  // Inside StadiumSwitcher component
-  const [inviteCode, setInviteCode] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
-
-  const handleJoinByCode = async () => {
-    if (!inviteCode || isJoining) return;
-
-    setIsJoining(true);
-    try {
-      // Reference your new Cloud Function via client-actions.ts
-      const result = await joinGroupByCodeClient({
-        inviteCode: inviteCode,
-      });
-
-      if (result.success) {
-        setInviteCode("");
-        onClose(); // Close hub on success
-      }
-    } catch (err: any) {
-      console.error("Join by invite code failed:", err);
-      toast.error(err?.message || "That invite code didn't work.");
-    } finally {
-      setIsJoining(false);
-    }
-  };
 
   // Unified Styling Helper
   const sharedCardSx = (isActive: boolean) => ({
@@ -109,19 +83,24 @@ export default function StadiumSwitcher({
     { id: "serie-a", name: "Serie A", active: false },
   ];
 
+  // A community is any group that isn't one of the league clubs from teamList.
+  // This used to test `g.privateGroup`, a field nothing in the app has ever
+  // written — so this tab was always empty and the invite box below it was
+  // unreachable. `league` is set by the group doc for real clubs only.
+  const isCommunityGroup = (group: any) =>
+    Boolean(group) && (!group.league || group.isPublic === false);
+
   // Auto-detect tab on mount based on activeGroup
   useEffect(() => {
     if (userData?.activeGroup) {
       const clubData: any = groupData?.[userData.activeGroup];
 
-      const isPrivate = clubData?.privateGroup;
-
-      setActiveTab(isPrivate ? 1 : 0);
+      setActiveTab(isCommunityGroup(clubData) ? 1 : 0);
     }
   }, [userData?.activeGroup, groups]);
 
   const privateCommunities = useMemo(() => {
-    return Object.values(groups || {}).filter((g: any) => g.privateGroup);
+    return Object.values(groups || {}).filter(isCommunityGroup);
   }, [groups]);
 
   const filteredMarket = useMemo(() => {
@@ -532,6 +511,16 @@ export default function StadiumSwitcher({
             >
               YOUR JOINED COMMUNITIES
             </Typography>
+            {privateCommunities.length === 0 && (
+              <Box sx={{ py: 3, textAlign: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                  You haven't joined any private groups yet.
+                </Typography>
+                <Typography variant="caption" color="text.disabled">
+                  Got an invite? Enter the code below.
+                </Typography>
+              </Box>
+            )}
             <Stack spacing={1.5}>
               {privateCommunities
                 .sort((a: any, b: any) => {
@@ -589,53 +578,15 @@ export default function StadiumSwitcher({
                   );
                 })}
             </Stack>
-            <Box
-              sx={{
-                mt: 4,
-                pt: 3,
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  mb: 2,
-                  display: "block",
-                  fontWeight: 800,
-                  color: "text.secondary",
-                }}
-              >
-                HAVE AN INVITE CODE?
-              </Typography>
+          </Box>
+        )}
 
-              <Stack direction="row" spacing={1}>
-                <TextField
-                  fullWidth
-                  placeholder="E.G. RED-DEVILS-2024"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  disabled={isJoining}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                      bgcolor: "background.paper",
-                    },
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleJoinByCode}
-                  disabled={!inviteCode || isJoining}
-                  sx={{
-                    borderRadius: "12px",
-                    fontWeight: 900,
-                    px: 3,
-                    minWidth: "100px",
-                  }}
-                >
-                  {isJoining ? <CircularProgress size={20} /> : "JOIN"}
-                </Button>
-              </Stack>
-            </Box>
+        {/* Outside the tab panels on purpose. This used to sit at the bottom of
+            the Private Groups tab, which only ever rendered for groups carrying
+            a field the app never set — so nobody could reach it. */}
+        {!pendingSelection && !transferLeagueKey && (
+          <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
+            <InviteCodeEntry onJoined={onClose} />
           </Box>
         )}
       </Box>

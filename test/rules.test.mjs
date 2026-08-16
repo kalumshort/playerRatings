@@ -32,6 +32,9 @@ const PLAYER = "p1";
 const MEMBER = "user_member";
 const ADMIN = "user_admin";
 const OUTSIDER = "user_outsider";
+const OWNER = "user_owner";
+
+const CODE = "AB3K9P"; // invite for PRIV, doc id is the code itself
 
 let testEnv;
 let passed = 0;
@@ -111,7 +114,24 @@ async function main() {
       name: "Private FC",
       visibility: "private",
       groupClubId: "34",
+      // The invite rules gate on the ownerId field, not the owners role doc.
+      ownerId: OWNER,
     });
+    // An invite plus one redemption, as createInviteCode/joinGroupByCode write
+    // them. Both are Admin-SDK-only writes, so the suite seeds them directly.
+    await setDoc(doc(db, `groupInvites/${CODE}`), {
+      inviteCode: CODE,
+      groupId: PRIV,
+      role: "member",
+      active: true,
+      usageCount: 1,
+    });
+    await setDoc(doc(db, `groupInvites/${CODE}/redemptions/${MEMBER}`), {
+      uid: MEMBER,
+      groupId: PRIV,
+      role: "member",
+    });
+    await setDoc(doc(db, `inviteAttempts/${OUTSIDER}`), { count: 3 });
     // MEMBER is a plain member of both; ADMIN is an admin of the private group
     // and has NO members doc — the case that locked staff out.
     for (const g of [PUB, PRIV]) {
@@ -131,6 +151,7 @@ async function main() {
   const member = testEnv.authenticatedContext(MEMBER).firestore();
   const admin = testEnv.authenticatedContext(ADMIN).firestore();
   const outsider = testEnv.authenticatedContext(OUTSIDER).firestore();
+  const owner = testEnv.authenticatedContext(OWNER).firestore();
   const anon = testEnv.unauthenticatedContext().firestore();
 
   console.log("\nReads");
@@ -411,6 +432,61 @@ async function main() {
     assertSucceeds(getDoc(doc(member, `groupUsers/${PUB}/members/${MEMBER}`))));
   await it("outsider CANNOT read someone else's role doc", () =>
     assertFails(getDoc(doc(outsider, `groupUsers/${PRIV}/members/${MEMBER}`))));
+
+  // An invite code is a bearer token: anyone who can read groupInvites can join
+  // every group they can enumerate. Only the owner of the target group may.
+  console.log("\nInvites");
+  await it("owner CAN read their group's invite", () =>
+    assertSucceeds(getDoc(doc(owner, `groupInvites/${CODE}`))));
+  await it("member of the group CANNOT read its invite", () =>
+    assertFails(getDoc(doc(member, `groupInvites/${CODE}`))));
+  await it("admin of the group CANNOT read its invite", () =>
+    assertFails(getDoc(doc(admin, `groupInvites/${CODE}`))));
+  await it("outsider CANNOT read an invite", () =>
+    assertFails(getDoc(doc(outsider, `groupInvites/${CODE}`))));
+  await it("anonymous CANNOT read an invite", () =>
+    assertFails(getDoc(doc(anon, `groupInvites/${CODE}`))));
+
+  // Deactivation is a direct client write from GroupInviteGenerator, so the
+  // update branch has to stay open to the owner and shut to everyone else.
+  await it("owner CAN deactivate their invite", () =>
+    assertSucceeds(
+      setDoc(doc(owner, `groupInvites/${CODE}`), { active: false }, { merge: true }),
+    ));
+  await it("member CANNOT deactivate an invite", () =>
+    assertFails(
+      setDoc(doc(member, `groupInvites/${CODE}`), { active: false }, { merge: true }),
+    ));
+  await it("outsider CANNOT forge an invite for a group they don't own", () =>
+    assertFails(
+      setDoc(doc(outsider, "groupInvites/FORGED"), {
+        groupId: PRIV,
+        role: "admin",
+        active: true,
+      }),
+    ));
+
+  await it("owner CAN read who redeemed their invite", () =>
+    assertSucceeds(
+      getDoc(doc(owner, `groupInvites/${CODE}/redemptions/${MEMBER}`)),
+    ));
+  await it("member CANNOT read redemption records", () =>
+    assertFails(
+      getDoc(doc(member, `groupInvites/${CODE}/redemptions/${MEMBER}`)),
+    ));
+  await it("owner CANNOT write a redemption record (Admin SDK only)", () =>
+    assertFails(
+      setDoc(doc(owner, `groupInvites/${CODE}/redemptions/${OUTSIDER}`), {
+        uid: OUTSIDER,
+        groupId: PRIV,
+      }),
+    ));
+
+  // Reading or resetting these would defeat the join rate limit.
+  await it("user CANNOT read their own invite attempt counter", () =>
+    assertFails(getDoc(doc(outsider, `inviteAttempts/${OUTSIDER}`))));
+  await it("user CANNOT reset their own invite attempt counter", () =>
+    assertFails(setDoc(doc(outsider, `inviteAttempts/${OUTSIDER}`), { count: 0 })));
 
   console.log("\nCatch-all");
   await it("member CANNOT read contact_messages", () =>

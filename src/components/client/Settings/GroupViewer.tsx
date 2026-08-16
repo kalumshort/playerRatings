@@ -3,7 +3,6 @@
 import React from "react";
 import { Box, Typography, Paper, Divider } from "@mui/material";
 import GroupInviteGenerator from "./GroupInviteGenerator";
-import GroupVisibilityToggle from "./GroupVisibilityToggle";
 import GroupPrivacySettings from "./GroupPrivacySettings";
 import { GroupDataListener } from "../Listeners/GroupDataListener";
 

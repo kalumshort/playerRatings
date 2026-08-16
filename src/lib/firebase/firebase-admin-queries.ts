@@ -123,6 +123,29 @@ export async function isGroupMemberServer(groupId: string, userId: string) {
 }
 
 /**
+ * Role-agnostic membership check.
+ *
+ * isGroupMemberServer() only looks at groupUsers/{id}/members, so it misses
+ * admins and owners. users/{uid}/joinedGroups/{groupId} is written for every
+ * role, and is the same doc joinGroupByCode tests before it rejects a re-join.
+ */
+export async function hasJoinedGroupServer(groupId: string, userId: string) {
+  try {
+    const membershipDoc = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("joinedGroups")
+      .doc(String(groupId))
+      .get();
+
+    return membershipDoc.exists;
+  } catch (error) {
+    console.error("❌ [Admin] Error checking joined group:", error);
+    return false;
+  }
+}
+
+/**
  * Server-side fetch for match predictions (Winner, Score, MOTM predictions)
  */
 export async function getMatchPredictionsServer(
@@ -190,6 +213,89 @@ export async function getMatchPlayerRatingsServer(
   } catch (error) {
     console.error("❌ [Admin] Error fetching match player ratings:", error);
     return { players: {}, motm: null };
+  }
+}
+
+export type InvitePreview =
+  | {
+      valid: true;
+      code: string;
+      groupId: string;
+      groupName: string;
+      groupLogo: string | null;
+      groupSlug: string | null;
+      role: string;
+    }
+  | { valid: false; reason: "invalid" | "expired" | "exhausted" };
+
+/**
+ * Reads an invite code for the /join/[code] preview.
+ *
+ * Rules deny every client read of groupInvites to non-owners, so a would-be
+ * joiner can only see the group behind a code through the Admin SDK. The
+ * validity checks mirror evaluateInvite() in functions/index.js — keep the two
+ * in step, or the page will offer a Join button that redemption then refuses.
+ *
+ * A missing code and a deactivated one both return "invalid", so this can't be
+ * used to enumerate which codes exist.
+ */
+export async function getInvitePreview(code: string): Promise<InvitePreview> {
+  const normalised = String(code || "")
+    .trim()
+    .toUpperCase();
+
+  if (!normalised) return { valid: false, reason: "invalid" };
+
+  try {
+    const inviteDoc = await adminDb
+      .collection("groupInvites")
+      .doc(normalised)
+      .get();
+
+    if (!inviteDoc.exists) return { valid: false, reason: "invalid" };
+
+    const invite = inviteDoc.data() as any;
+
+    if (invite.active === false) return { valid: false, reason: "invalid" };
+
+    if (invite.expiresAt && invite.expiresAt.toMillis() <= Date.now()) {
+      return { valid: false, reason: "expired" };
+    }
+
+    if (invite.maxUses != null && (invite.usageCount || 0) >= invite.maxUses) {
+      return { valid: false, reason: "exhausted" };
+    }
+
+    // groupName/groupLogo/groupSlug are denormalised onto the invite, but codes
+    // created before that fall back to the group doc rather than showing blanks.
+    let { groupName, groupLogo, groupSlug } = invite;
+
+    if (!groupName || !groupSlug) {
+      const groupDoc = await adminDb
+        .collection("groups")
+        .doc(String(invite.groupId))
+        .get();
+
+      if (!groupDoc.exists) return { valid: false, reason: "invalid" };
+
+      const group = groupDoc.data() as any;
+      groupName = groupName || group.name || "a private group";
+      groupLogo = groupLogo || group.logoUrl || null;
+      groupSlug = groupSlug || group.slug || null;
+    }
+
+    return {
+      valid: true,
+      code: normalised,
+      groupId: String(invite.groupId),
+      groupName,
+      groupLogo: groupLogo || null,
+      groupSlug: groupSlug || null,
+      role: invite.role || "member",
+    };
+  } catch (error) {
+    console.error("❌ [Admin] Error reading invite:", error);
+    return { valid: false, reason: "invalid" };
   }
 }
 

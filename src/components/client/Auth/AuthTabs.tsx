@@ -23,9 +23,16 @@ import { handleCreateAccount } from "@/lib/firebase/auth-actions";
 interface AuthTabsProps {
   groupId?: string;
   mode?: "auth" | "signup"; // "auth" shows both, "signup" locks to Join
+  // null keeps the user where they are, for hosts that navigate themselves —
+  // the invite page redeems the code first and then routes into the group.
+  redirectTo?: string | null;
 }
 
-export default function AuthTabs({ groupId, mode = "auth" }: AuthTabsProps) {
+export default function AuthTabs({
+  groupId,
+  mode = "auth",
+  redirectTo = "/",
+}: AuthTabsProps) {
   const theme = useTheme();
   // If mode is signup, force tab to 0 (Join) and stay there
   const [tab, setTab] = useState(mode === "signup" ? 0 : 0);
@@ -74,7 +81,7 @@ export default function AuthTabs({ groupId, mode = "auth" }: AuthTabsProps) {
       if (tab === 0) {
         // Sign Up Flow - Handles group joining via Server Action
         await handleCreateAccount({ email, password, groupId });
-        router.push("/");
+        if (redirectTo) router.push(redirectTo);
       } else {
         // Standard Login Flow - No groupId passed here per your requirement
         await signInWithEmailAndPassword(auth, email, password);

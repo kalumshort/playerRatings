@@ -255,6 +255,22 @@ service cloud.firestore {
              .data.get('ownerId', '') == request.auth.uid;
     }
 
+    // Who redeemed which code. joinGroupByCode() denormalises groupId onto each
+    // doc so this needs one get() instead of chaining through the parent invite.
+    // Written by the Admin SDK only — a client-writable audit trail is no trail.
+    match /groupInvites/{inviteId}/redemptions/{userId} {
+      allow read: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Failed-redemption counters behind joinGroupByCode's rate limit. Fully
+    // server-side: a client that could read or reset these could sidestep it.
+    match /inviteAttempts/{userId} {
+      allow read, write: if false;
+    }
+
     // Role docs are written only by Cloud Functions (Admin SDK). Reads are
     // scoped to the user themselves plus group staff — isGroupAdmin()/
     // isGroupOwner() use exists(), which ignores these read rules.
@@ -282,6 +298,8 @@ service cloud.firestore {
     // Limits: 10 get()/exists() per read or query, 20 per batched write.
     //
     //  canReadGroup      = 1 get + up to 3 exists       = 4 of 10
+    //  groupInvites read  = 1 get                        = 1 of 10
+    //  redemptions read   = 1 get (groupId denormalised) = 1 of 10
     //  rating batch (4 writes, worst case)
     //    playerRatings/{m}/players/{p}  3 exists + 1 get = 4
     //    players/{p}/matches/{m}        3 exists + 1 get = 4

@@ -15,7 +15,7 @@ const {
 const {
   SEASON,
   LEAGUE_ID,
-  VALID_ROLES,
+  INVITABLE_ROLES,
   fetchAllMatchData,
   fetchFootballApi,
   addMemberToGroup,
@@ -582,8 +582,14 @@ exports.joinGroupByCode = onCall(
 
     const normalisedCode = inviteCode.trim().toUpperCase();
 
+    // Cheap pre-check so a scripted guesser is turned away before it costs us a
+    // transaction. The counter itself is only written on failure, below.
+    await assertJoinAttemptsRemaining(uid);
+
+    let joinedGroup = null;
+
     try {
-      await db.runTransaction(async (transaction) => {
+      joinedGroup = await db.runTransaction(async (transaction) => {
         // 1. REFS
         const inviteRef = db.collection("groupInvites").doc(normalisedCode);
         const userRef = db.collection("users").doc(uid);
@@ -594,25 +600,57 @@ exports.joinGroupByCode = onCall(
           transaction.get(userRef),
         ]);
 
-        if (!inviteSnap.exists || !inviteSnap.data().active) {
-          throw new Error("This invite code is invalid or has expired.");
-        }
-        if (!userSnap.exists) throw new Error("User profile not found.");
+        const inviteData = inviteSnap.exists ? inviteSnap.data() : null;
+        const verdict = evaluateInvite(inviteData);
 
-        const inviteData = inviteSnap.data();
+        if (!verdict.ok) {
+          throw new InviteError(
+            verdict.reason === "invalid" ? "not-found" : "failed-precondition",
+            INVITE_FAILURE_MESSAGES[verdict.reason],
+            // Only an unrecognised code looks like guessing. Burning through a
+            // legitimately expired link shouldn't lock anyone out.
+            { countsAsFailure: verdict.reason === "invalid" },
+          );
+        }
+
+        if (!userSnap.exists) {
+          throw new InviteError("not-found", "User profile not found.");
+        }
+
         const { groupId } = inviteData;
 
         // The role is only trusted because createInviteCode verified group
         // ownership before writing it. Still validated, so a malformed invite
-        // can never build an arbitrary collection path.
-        const role = VALID_ROLES.includes(inviteData.role)
+        // can never build an arbitrary collection path. Legacy "owner" invites
+        // created before owner codes were banned are demoted to member.
+        const role = INVITABLE_ROLES.includes(inviteData.role)
           ? inviteData.role
           : "member";
 
         const groupRef = db.collection("groups").doc(String(groupId));
-        const groupSnap = await transaction.get(groupRef);
+        const userJoinedGroupRef = userRef
+          .collection("joinedGroups")
+          .doc(String(groupId));
+
+        const [groupSnap, existingMembershipSnap] = await Promise.all([
+          transaction.get(groupRef),
+          transaction.get(userJoinedGroupRef),
+        ]);
+
         if (!groupSnap.exists) {
-          throw new Error("The associated group no longer exists.");
+          throw new InviteError(
+            "not-found",
+            "The associated group no longer exists.",
+          );
+        }
+
+        // Without this, re-opening an invite link silently rewrote the
+        // membership doc and inflated usageCount against the invite's own limit.
+        if (existingMembershipSnap.exists) {
+          throw new InviteError(
+            "already-exists",
+            "You're already a member of this group.",
+          );
         }
 
         const groupData = groupSnap.data();
@@ -640,15 +678,16 @@ exports.joinGroupByCode = onCall(
           .collection(roleCollection)
           .doc(uid);
 
-        const userJoinedGroupRef = userRef
-          .collection("joinedGroups")
-          .doc(String(groupId));
+        // Per-invite audit trail, so an owner can see who a given link brought in.
+        const redemptionRef = inviteRef.collection("redemptions").doc(uid);
 
         // 4. DATA PREPARATION
+        const displayName = userData.displayName || userData.name || "Fan";
+
         const globalMemberData = {
           uid: uid,
           email: userData.email || "",
-          displayName: userData.displayName || userData.name || "Fan",
+          displayName: displayName,
           joinedAt: FieldValue.serverTimestamp(),
           role: role,
         };
@@ -686,31 +725,87 @@ exports.joinGroupByCode = onCall(
         transaction.set(globalMemberRef, globalMemberData);
         transaction.set(userJoinedGroupRef, userGroupMetadata);
         transaction.update(userRef, userUpdate);
-        transaction.update(inviteRef, { usageCount: FieldValue.increment(1) });
 
-        // 11votes Twist: Sync ownerId to the group doc if the role is 'owner'
-        if (role === "owner") {
-          transaction.update(groupRef, {
-            ownerId: uid,
-            ownerName: userData.displayName || userData.name || "Fan",
-          });
+        const inviteUpdate = { usageCount: FieldValue.increment(1) };
+
+        // Retire the code in the same write that consumes its last use, so the
+        // owner's list and the next joiner both see the truth immediately.
+        if (
+          inviteData.maxUses != null &&
+          (inviteData.usageCount || 0) + 1 >= inviteData.maxUses
+        ) {
+          inviteUpdate.active = false;
+          inviteUpdate.exhaustedAt = FieldValue.serverTimestamp();
         }
-      });
 
-      return { success: true, message: "Successfully joined!" };
+        transaction.update(inviteRef, inviteUpdate);
+        transaction.set(redemptionRef, {
+          uid: uid,
+          displayName: displayName,
+          role: role,
+          groupId: String(groupId),
+          joinedAt: FieldValue.serverTimestamp(),
+        });
+
+        return {
+          groupId: String(groupId),
+          groupName: groupData.name || "Unknown Group",
+          groupSlug: groupData.slug || null,
+          role: role,
+        };
+      });
     } catch (error) {
+      if (error instanceof InviteError) {
+        if (error.countsAsFailure) await registerFailedJoinAttempt(uid);
+        throw new HttpsError(error.httpsCode, error.message);
+      }
+
+      // Anything else is ours, not theirs — log it in full but return nothing
+      // that leaks internal state.
       logger.error("Join By Code Error:", error);
-      throw new HttpsError(
-        "internal",
-        error.message || "Failed to join group.",
-      );
+      throw new HttpsError("internal", "Failed to join group. Please retry.");
     }
+
+    return {
+      success: true,
+      message: `Welcome to ${joinedGroup.groupName}!`,
+      ...joinedGroup,
+    };
   },
 );
 
 // Unambiguous alphabet: no O/0, I/1, so codes survive being read aloud.
 const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const INVITE_CODE_LENGTH = 6;
+
+// Bounds on the owner-configurable invite options.
+const MAX_EXPIRY_DAYS = 365;
+const MAX_INVITE_USES = 500;
+const MAX_INVITE_LABEL_LENGTH = 40;
+
+// Brute-force backpressure for joinGroupByCode. The keyspace is 32^6 (~1.07e9),
+// so guessing is impractical only while attempts are capped — without this an
+// unbounded script both finds codes eventually and bills us a read per guess.
+const JOIN_ATTEMPT_WINDOW_MS = 60 * 60 * 1000;
+const MAX_FAILED_JOIN_ATTEMPTS = 10;
+
+/**
+ * A redemption failure with a known cause, so the outer handler can map it to a
+ * precise HttpsError instead of leaking a raw transaction message to the client.
+ */
+class InviteError extends Error {
+  /**
+   * @param {string} httpsCode - The functions error code to surface.
+   * @param {string} message - Safe, user-facing copy.
+   * @param {object} options - { countsAsFailure } to charge the rate limiter.
+   */
+  constructor(httpsCode, message, { countsAsFailure = false } = {}) {
+    super(message);
+    this.name = "InviteError";
+    this.httpsCode = httpsCode;
+    this.countsAsFailure = countsAsFailure;
+  }
+}
 
 /**
  * Generates a cryptographically random, fixed-length invite code.
@@ -724,6 +819,103 @@ const generateInviteCode = () => {
   return code;
 };
 
+/**
+ * Parses an owner-supplied positive integer option, rejecting anything outside
+ * the allowed range. Absent/null means "no limit" and is preserved as null.
+ * @param {*} value - The raw value from the client.
+ * @param {string} name - Field name, used in the error message.
+ * @param {number} max - Largest accepted value.
+ * @return {number|null} The validated integer, or null when unset.
+ */
+const parsePositiveIntOption = (value, name, max) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > max) {
+    throw new HttpsError(
+      "invalid-argument",
+      `${name} must be a whole number between 1 and ${max}.`,
+    );
+  }
+  return parsed;
+};
+
+/**
+ * Classifies an invite against the rules that make it usable right now.
+ * The /join/[code] page runs the same check server-side via getInvitePreview()
+ * in src/lib/firebase/firebase-admin-queries.ts, so the preview a visitor sees
+ * can never disagree with what redemption actually does. Keep the two in step.
+ * @param {object} invite - The groupInvites doc data, or null when missing.
+ * @return {object} `{ ok }`, plus `reason` ("invalid"|"expired"|"exhausted").
+ */
+const evaluateInvite = (invite) => {
+  if (!invite) return { ok: false, reason: "invalid" };
+  if (invite.active === false) return { ok: false, reason: "invalid" };
+
+  if (invite.expiresAt && invite.expiresAt.toMillis() <= Date.now()) {
+    return { ok: false, reason: "expired" };
+  }
+
+  if (invite.maxUses != null && (invite.usageCount || 0) >= invite.maxUses) {
+    return { ok: false, reason: "exhausted" };
+  }
+
+  return { ok: true };
+};
+
+// User-facing copy for each failure reason. Deliberately identical for "code
+// does not exist" and "code was deactivated" so the endpoint can't be used to
+// enumerate which codes are real.
+const INVITE_FAILURE_MESSAGES = {
+  invalid: "This invite code is invalid or is no longer active.",
+  expired: "This invite link has expired. Ask the group owner for a new one.",
+  exhausted: "This invite link has reached its limit. Ask for a new one.",
+};
+
+/**
+ * Records a failed redemption attempt and throws once a user is over the hourly
+ * cap. Uses its own transaction so the counter survives the caller rolling back.
+ * @param {string} uid - The user making the attempt.
+ */
+const registerFailedJoinAttempt = async (uid) => {
+  const attemptRef = db.collection("inviteAttempts").doc(uid);
+
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(attemptRef);
+    const now = Date.now();
+    const data = snap.exists ? snap.data() : null;
+
+    const windowStart = data?.windowStart?.toMillis?.() ?? 0;
+    const withinWindow = now - windowStart < JOIN_ATTEMPT_WINDOW_MS;
+
+    transaction.set(attemptRef, {
+      count: withinWindow ? (data.count || 0) + 1 : 1,
+      windowStart: withinWindow ? data.windowStart : Timestamp.fromMillis(now),
+      lastAttemptAt: FieldValue.serverTimestamp(),
+    });
+  });
+};
+
+/**
+ * Throws if the user has burned through their failed-attempt budget this hour.
+ * @param {string} uid - The user making the attempt.
+ */
+const assertJoinAttemptsRemaining = async (uid) => {
+  const snap = await db.collection("inviteAttempts").doc(uid).get();
+  if (!snap.exists) return;
+
+  const data = snap.data();
+  const windowStart = data.windowStart?.toMillis?.() ?? 0;
+  const withinWindow = Date.now() - windowStart < JOIN_ATTEMPT_WINDOW_MS;
+
+  if (withinWindow && (data.count || 0) >= MAX_FAILED_JOIN_ATTEMPTS) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Too many incorrect invite codes. Please try again later.",
+    );
+  }
+};
+
 exports.createInviteCode = onCall(
   { maxInstances: MAX_INSTANCES },
   async (request) => {
@@ -733,15 +925,42 @@ exports.createInviteCode = onCall(
       throw new HttpsError("unauthenticated", "You must be logged in.");
     }
 
-    const { groupId, role = "member" } = request.data;
+    const {
+      groupId,
+      role = "member",
+      expiresInDays,
+      maxUses,
+      label,
+    } = request.data;
 
     if (!groupId) {
       throw new HttpsError("invalid-argument", "Missing groupId.");
     }
 
-    if (!VALID_ROLES.includes(role)) {
-      throw new HttpsError("invalid-argument", `Invalid role: ${role}`);
+    // INVITABLE_ROLES, not VALID_ROLES: an "owner" code would be a bearer token
+    // for the whole group. See joinGroupByCode, which no longer honours one.
+    if (!INVITABLE_ROLES.includes(role)) {
+      throw new HttpsError("invalid-argument", `Invalid invite role: ${role}`);
     }
+
+    const expiryDays = parsePositiveIntOption(
+      expiresInDays,
+      "Expiry (days)",
+      MAX_EXPIRY_DAYS,
+    );
+    const usageLimit = parsePositiveIntOption(
+      maxUses,
+      "Max uses",
+      MAX_INVITE_USES,
+    );
+
+    if (label !== undefined && label !== null && typeof label !== "string") {
+      throw new HttpsError("invalid-argument", "Label must be text.");
+    }
+    const trimmedLabel =
+      typeof label === "string"
+        ? label.trim().slice(0, MAX_INVITE_LABEL_LENGTH) || null
+        : null;
 
     try {
       // 2. Ownership Verification
@@ -776,11 +995,22 @@ exports.createInviteCode = onCall(
         const invitePayload = {
           inviteCode,
           groupId: String(groupId),
-          groupName: groupData.name || "Unnamed Group", // Helpful for the joiner's UI
+          // Denormalised for the /join/[code] preview, which renders before the
+          // visitor has any read access to the group doc.
+          groupName: groupData.name || "Unnamed Group",
+          groupLogo: groupData.logoUrl || null,
+          groupSlug: groupData.slug || null,
           createdBy: uid,
           role: role,
           active: true,
           usageCount: 0,
+          label: trimmedLabel,
+          // null on either field means "no limit", which is how every invite
+          // created before this change behaves.
+          maxUses: usageLimit,
+          expiresAt: expiryDays
+            ? Timestamp.fromMillis(Date.now() + expiryDays * 86400000)
+            : null,
           createdAt: FieldValue.serverTimestamp(),
         };
 
@@ -919,6 +1149,16 @@ exports.transferLeagueTeam = onCall(
         const leagueKey = newGroupData.league;
         if (!leagueKey) {
           throw new Error("This group is not associated with a league.");
+        }
+
+        // Same gate as addUserToGroup. Without it this function was a way into
+        // any private group: it writes groupUsers/{id}/members/{uid} — which
+        // firestore.rules treats as group write access — from nothing but a
+        // caller-supplied group id.
+        if (newGroupData.isGroupOpen === false) {
+          throw new Error(
+            "This group is invite-only. Use an invite code to join.",
+          );
         }
 
         // DISCOVER: Check if user already has a team in THIS specific league

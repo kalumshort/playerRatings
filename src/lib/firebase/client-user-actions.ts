@@ -29,6 +29,12 @@ interface JoinGroupRequest {
 interface JoinGroupResponse {
   success: boolean;
   message: string;
+  // Returned so the caller can name the group in a toast and route into it
+  // without a second lookup. Absent on older deployments of the function.
+  groupId?: string;
+  groupName?: string;
+  groupSlug?: string | null;
+  role?: string;
 }
 export const updateUserField = async <T>(
   userId: string | undefined,

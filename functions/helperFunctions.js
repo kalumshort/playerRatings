@@ -19,6 +19,12 @@ const VALID_ROLES = ["member", "admin", "owner"];
 // from an invite created by an existing owner.
 const SELF_JOIN_ROLES = ["member"];
 
+// Roles an owner may hand out through an invite code. "owner" is deliberately
+// absent: redeeming a code must never transfer the group, because a code is a
+// bearer token that can be forwarded, reused and screenshotted. Ownership
+// transfer needs its own explicit, confirmed flow.
+const INVITABLE_ROLES = ["member", "admin"];
+
 /**
  * Generic helper to fetch data from API-Football.
  * @param {string} endpoint - The endpoint path (e.g., "fixtures", "fixtures/statistics").
@@ -315,6 +321,7 @@ module.exports = {
   LEAGUE_ID,
   VALID_ROLES,
   SELF_JOIN_ROLES,
+  INVITABLE_ROLES,
   fetchFootballApi,
   fetchFixtureData,
   fetchAllMatchData,

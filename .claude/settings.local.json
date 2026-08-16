@@ -24,7 +24,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/ --max-time 15)",
       "Bash(bash ssr-check.sh)",
       "Bash(grep -o \"dataset.theme[^;]\\\\{0,60\\\\}\\\\|data-theme[^,;]\\\\{0,50\\\\}\" node_modules/sonner/dist/index.mjs)",
-      "Bash(grep -o \"theme: actualTheme[^,]\\\\{0,40\\\\}\\\\|\\\\\"data-sonner-toaster\\\\\"[^}]\\\\{0,200\\\\}\" node_modules/sonner/dist/index.mjs)"
+      "Bash(grep -o \"theme: actualTheme[^,]\\\\{0,40\\\\}\\\\|\\\\\"data-sonner-toaster\\\\\"[^}]\\\\{0,200\\\\}\" node_modules/sonner/dist/index.mjs)",
+      "Bash(git -C \"c:/Users/kshor/Documents/Websites/player_ratings/11votes-app\" branch --show-current)",
+      "Bash(git -C \"c:/Users/kshor/Documents/Websites/player_ratings/11votes-app\" status --short)",
+      "Bash(npx eslint *)",
+      "Bash(npx next *)"
     ]
   }
 }

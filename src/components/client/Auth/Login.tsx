@@ -8,9 +8,16 @@ import GoogleButton from "./GoogleButton";
 interface LoginProps {
   groupId?: string;
   mode?: "auth" | "signup";
+  // null keeps the user where they are, for hosts that navigate themselves —
+  // the invite page redeems the code first and then routes into the group.
+  redirectTo?: string | null;
 }
 
-export default function Login({ groupId, mode = "auth" }: LoginProps) {
+export default function Login({
+  groupId,
+  mode = "auth",
+  redirectTo = "/",
+}: LoginProps) {
   const theme = useTheme();
   const isSignupOnly = mode === "signup";
 
@@ -31,7 +38,7 @@ export default function Login({ groupId, mode = "auth" }: LoginProps) {
       {/* Pass the mode to AuthTabs. 
           If mode is signup, AuthTabs will hide the "Login" tab automatically.
       */}
-      <AuthTabs groupId={groupId} mode={mode} />
+      <AuthTabs groupId={groupId} mode={mode} redirectTo={redirectTo} />
 
       <Divider
         sx={{
@@ -58,7 +65,7 @@ export default function Login({ groupId, mode = "auth" }: LoginProps) {
       {/* Ensure GoogleButton is also aware of the groupId 
           to trigger the server-side join logic on callback.
       */}
-      <GoogleButton groupId={groupId} />
+      <GoogleButton groupId={groupId} redirectTo={redirectTo} />
 
       {isSignupOnly && (
         <Typography
