@@ -66,6 +66,22 @@ export const AsyncButton = ({
     keepBackground,
   ]);
 
+  // The spinner can't inherit the button's colour — `loadingStyles` sets
+  // `color: transparent !important` to hide the label, which would hide the
+  // spinner too. Derive it from whatever the button is filled with instead.
+  // The old code picked #fff in light and near-white text.primary in dark;
+  // both land at ~1.9:1 on the pale #93BFEC primary, so the spinner was
+  // effectively invisible in *both* modes and the branch changed nothing.
+  const spinnerColor = useMemo(() => {
+    // keepBackground means the caller painted its own gradient; those are the
+    // dark, white-labelled buttons, and we can't measure a gradient here.
+    if (keepBackground) return "#fff";
+    const colorKey = props.color === "secondary" ? "secondary" : "primary";
+    return theme.palette.getContrastText(
+      (theme.palette[colorKey] as any).main,
+    );
+  }, [theme, props.color, keepBackground]);
+
   return (
     <Button
       {...props}
@@ -106,16 +122,7 @@ export const AsyncButton = ({
             display: "flex",
           }}
         >
-          <CircularProgress
-            size={24}
-            thickness={6}
-            sx={{
-              color:
-                theme.palette.mode === "light"
-                  ? "#fff"
-                  : theme.palette.text.primary,
-            }}
-          />
+          <CircularProgress size={24} thickness={6} sx={{ color: spinnerColor }} />
         </Box>
       )}
     </Button>

@@ -18,6 +18,7 @@ import {
   Fade,
   CircularProgress,
   Stack,
+  alpha,
 } from "@mui/material";
 import {
   Search,
@@ -251,7 +252,8 @@ export default function StadiumSwitcher({
               position: "absolute",
               inset: 0,
               zIndex: 20,
-              bgcolor: "rgba(255,255,255,0.7)",
+              // Was a hardcoded rgba(255,255,255,0.7) — a white flash in dark mode.
+              bgcolor: (t) => alpha(t.palette.background.paper, 0.7),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

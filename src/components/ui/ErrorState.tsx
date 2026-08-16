@@ -59,7 +59,8 @@ export default function ErrorState({
               alignItems: "center",
               justifyContent: "center",
               bgcolor: "error.main",
-              color: "common.white",
+              // error.main is the pastel #E89A9A; white on it is ~1.9:1.
+              color: (t) => t.palette.getContrastText(t.palette.error.main),
               mb: 1,
             }}
           >

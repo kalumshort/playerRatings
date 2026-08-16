@@ -17,7 +17,14 @@
       "Read(//tmp/**)",
       "Bash(pkill -f \"next start\")",
       "Bash(npm run *)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(node tune.mjs)",
+      "Bash(node contrast.mjs)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/ --max-time 15)",
+      "Bash(bash ssr-check.sh)",
+      "Bash(grep -o \"dataset.theme[^;]\\\\{0,60\\\\}\\\\|data-theme[^,;]\\\\{0,50\\\\}\" node_modules/sonner/dist/index.mjs)",
+      "Bash(grep -o \"theme: actualTheme[^,]\\\\{0,40\\\\}\\\\|\\\\\"data-sonner-toaster\\\\\"[^}]\\\\{0,200\\\\}\" node_modules/sonner/dist/index.mjs)"
     ]
   }
 }

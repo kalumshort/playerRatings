@@ -2,24 +2,35 @@ import React from "react";
 import { createTheme, Theme, alpha } from "@mui/material/styles";
 
 // ─── PASTEL PALETTE ─────────────────────────────────────────────────────────
+// Surfaces form a four-step ramp per mode: bg < sunken < paper <= raised in
+// dark, and sunken < bg < paper in light. The old values put page and card at
+// 1.06:1 in dark and 1.10:1 in light — below the ~1.2:1 needed to see an edge —
+// while `input` sat *lighter* than `paper` in dark, which inverted every
+// segmented control (selected pill darker than its own track).
+//
+// Ratios below are WCAG 2.1 and were checked against the whole table, not
+// eyeballed. Do not nudge one value alone; card/page, sunken/card and the
+// hairline are load-bearing together.
 export const PALETTE = {
   light: {
-    bg: "#F7F7F8",
+    bg: "#ECECF0", // card/page 1.18:1
+    sunken: "#E4E4EA", // sunken/card 1.27:1
     paper: "#FFFFFF",
+    raised: "#FFFFFF", // light signals "raised" with shadow, not value
     textPrimary: "#18181B",
-    textSecondary: "#71717A",
-    clayShadow: "rgba(0,0,0,0.06)",
-    highlight: "#FFFFFF",
-    input: "#F4F4F5",
+    // Darkened from #71717A: on the new page it was 4.10:1, and it was already
+    // failing at 4.40:1 on the old input colour.
+    textSecondary: "#62626B", // 5.12:1 on page, 4.77:1 on sunken
+    hairline: "rgba(0,0,0,0.12)", // 1.32:1 against paper
   },
   dark: {
     bg: "#09090B",
-    paper: "#141416",
+    sunken: "#121216", // sunken/card 1.14:1
+    paper: "#1F1F25", // card/page 1.21:1
+    raised: "#2A2A31",
     textPrimary: "#FAFAFA",
-    textSecondary: "#A1A1AA",
-    clayShadow: "rgba(255,255,255,0.06)",
-    highlight: "rgba(255,255,255,0.04)",
-    input: "#18181B",
+    textSecondary: "#A1A1AA", // 6.40:1 on card, 5.56:1 on raised
+    hairline: "rgba(255,255,255,0.10)", // 1.35:1 against paper
   },
   primary: "#93BFEC",
   secondary: "#B9A3CC",
@@ -146,24 +157,26 @@ declare module "@mui/material/Paper" {
 }
 
 // ─── SURFACE HELPERS ────────────────────────────────────────────────────────
-// Flat surface mixin: subtle drop shadow in light mode, 1px hairline in dark mode.
+// Lifts a surface off whatever sits behind it. Both modes now get a shadow AND
+// a border: dark mode previously returned `boxShadow: "none"` and leaned
+// entirely on a 0.06-alpha hairline, so it had no working separation at all.
 // Signature kept stable so existing call sites (`clay("lg")`, `clayMixin("sm", ...)`) keep working.
 type ClaySize = "lg" | "md" | "sm";
 const clayMixin = (
   size: ClaySize,
   isLight: boolean,
-  _clayShadow: string,
+  hairline: string,
 ): React.CSSProperties => {
+  const blur = size === "lg" ? 3 : size === "md" ? 2 : 1;
   if (isLight) {
-    const blur = size === "lg" ? 3 : size === "md" ? 2 : 1;
     return {
       border: "none",
-      boxShadow: `0 1px ${blur}px rgba(0,0,0,0.05), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.04)`,
+      boxShadow: `0 1px ${blur}px rgba(0,0,0,0.07), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.05)`,
     };
   }
   return {
-    border: "1px solid rgba(255,255,255,0.06)",
-    boxShadow: "none",
+    border: `1px solid ${hairline}`,
+    boxShadow: `0 1px ${blur}px rgba(0,0,0,0.5), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.35)`,
   };
 };
 
@@ -174,7 +187,10 @@ export const getTheme = (
 ): Theme => {
   const isLight = mode === "light";
   const colors = isLight ? PALETTE.light : PALETTE.dark;
-  const clay = (size: ClaySize) => clayMixin(size, isLight, colors.clayShadow);
+  const clay = (size: ClaySize) => clayMixin(size, isLight, colors.hairline);
+  // Semi-transparent so a hover reads the same on a card, a well or the page.
+  // A fixed colour used to darken on one surface and lighten on another.
+  const hover = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.07)";
 
   return createTheme({
     // ─── PALETTE ──────────────────────────────────────────────────
@@ -184,6 +200,10 @@ export const getTheme = (
       secondary: { main: PALETTE.secondary },
       background: { default: colors.bg, paper: colors.paper },
       text: { primary: colors.textPrimary, secondary: colors.textSecondary },
+      // Was unset, so MUI defaulted it to 0.12 alpha while MuiDivider's own
+      // override used 0.06–0.07. 64 call sites read this token and disagreed
+      // with the component; both now come from one value.
+      divider: colors.hairline,
       success: { main: PALETTE.success },
       error: { main: PALETTE.error },
       warning: { main: PALETTE.warning },
@@ -208,12 +228,10 @@ export const getTheme = (
         ...clay("lg"),
       },
       box: {
-        backgroundColor: colors.input,
+        backgroundColor: colors.sunken,
         borderRadius: "10px",
         boxShadow: "none",
-        border: isLight
-          ? "1px solid rgba(0,0,0,0.04)"
-          : "1px solid rgba(255,255,255,0.05)",
+        border: `1px solid ${colors.hairline}`,
       },
       button: {
         backgroundColor: colors.paper,
@@ -299,11 +317,11 @@ export const getTheme = (
         defaultProps: { elevation: 0, color: "transparent" },
         styleOverrides: {
           root: {
-            backgroundColor: colors.bg,
+            // `paper`, not `bg`: the bar sits over the page and needs to read
+            // as a distinct surface. The divider below is its only other edge.
+            backgroundColor: colors.paper,
             backgroundImage: "none",
-            borderBottom: isLight
-              ? "1px solid rgba(0,0,0,0.06)"
-              : "1px solid rgba(255,255,255,0.06)",
+            borderBottom: `1px solid ${colors.hairline}`,
             boxShadow: "none",
           },
         },
@@ -335,7 +353,7 @@ export const getTheme = (
               backgroundColor: colors.paper,
               borderRadius: 10,
               transition: "background-color 0.3s ease, border-color 0.3s ease",
-              ...clayMixin("md", isLight, colors.clayShadow),
+              ...clayMixin("md", isLight, colors.hairline),
             },
           },
           {
@@ -345,19 +363,17 @@ export const getTheme = (
               backgroundColor: colors.paper,
               borderRadius: 10,
               transition: "background-color 0.3s ease, border-color 0.3s ease",
-              ...clayMixin("sm", isLight, colors.clayShadow),
+              ...clayMixin("sm", isLight, colors.hairline),
             },
           },
           {
             props: { variant: "flat" },
             style: {
               backgroundImage: "none",
-              backgroundColor: colors.input,
+              backgroundColor: colors.sunken,
               borderRadius: 10,
               boxShadow: "none",
-              border: isLight
-                ? "1px solid rgba(0,0,0,0.06)"
-                : "1px solid rgba(255,255,255,0.06)",
+              border: `1px solid ${colors.hairline}`,
             },
           },
         ],
@@ -381,7 +397,7 @@ export const getTheme = (
         styleOverrides: {
           root: {
             borderRadius: 8,
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
             border: "none",
             boxShadow: "none",
           },
@@ -392,12 +408,8 @@ export const getTheme = (
       // DIVIDER
       MuiDivider: {
         styleOverrides: {
-          root: {
-            borderColor: isLight
-              ? "rgba(0,0,0,0.07)"
-              : "rgba(255,255,255,0.06)",
-            margin: "4px 0",
-          },
+          // borderColor now inherits palette.divider — see the note there.
+          root: { margin: "4px 0" },
         },
       },
 
@@ -411,7 +423,7 @@ export const getTheme = (
             fontSize: "0.75rem",
             height: 26,
             transition: "all 0.15s ease",
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
             border: "none",
             boxShadow: "none",
             "&:hover": { filter: "brightness(1.04)" },
@@ -425,7 +437,9 @@ export const getTheme = (
           },
           colorSecondary: {
             backgroundColor: alpha(PALETTE.secondary, 0.18),
-            color: isLight ? "#1b5e35" : PALETTE.secondary,
+            // Was #1b5e35 — a green copy-pasted from colorSuccess below, on a
+            // lavender chip.
+            color: isLight ? "#4a3663" : PALETTE.secondary,
             border: "none",
             boxShadow: "none",
           },
@@ -496,14 +510,12 @@ export const getTheme = (
           outlined: {
             borderWidth: "1px",
             borderStyle: "solid",
-            borderColor: isLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.14)",
+            borderColor: colors.hairline,
             "&:hover": {
               borderColor: isLight
-                ? "rgba(0,0,0,0.2)"
-                : "rgba(255,255,255,0.22)",
-              backgroundColor: isLight
-                ? "rgba(0,0,0,0.03)"
-                : "rgba(255,255,255,0.03)",
+                ? "rgba(0,0,0,0.22)"
+                : "rgba(255,255,255,0.24)",
+              backgroundColor: hover,
             },
           },
           text: {
@@ -528,7 +540,7 @@ export const getTheme = (
           root: {
             borderRadius: 8,
             transition: "background-color 0.15s ease, filter 0.15s ease",
-            "&:hover": { backgroundColor: colors.input },
+            "&:hover": { backgroundColor: hover },
             "&:active": { filter: "brightness(0.96)" },
           },
         },
@@ -539,7 +551,7 @@ export const getTheme = (
         styleOverrides: {
           root: {
             borderRadius: 10,
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
             boxShadow: "none",
             transition: "box-shadow 0.15s ease, background-color 0.15s ease",
             "& .MuiOutlinedInput-notchedOutline": { border: "none" },
@@ -597,7 +609,7 @@ export const getTheme = (
             margin: "2px 6px",
             fontWeight: 500,
             transition: "background-color 0.15s ease",
-            "&:hover": { backgroundColor: colors.input },
+            "&:hover": { backgroundColor: hover },
             "&.Mui-selected": {
               backgroundColor: alpha(accentColor, 0.15),
               color: accentColor,
@@ -608,20 +620,34 @@ export const getTheme = (
         },
       },
 
+      // MENU / POPOVER — the one place `raised` earns its place: a menu is a
+      // Paper floating over a card, so at `paper` it was the same colour as the
+      // thing it covered and only the shadow told them apart.
       MuiMenu: {
         styleOverrides: {
+          paper: { backgroundColor: colors.raised, backgroundImage: "none" },
           list: { padding: "8px" },
         },
       },
 
-      // TABS — flat segmented container
+      MuiPopover: {
+        styleOverrides: {
+          paper: { backgroundColor: colors.raised, backgroundImage: "none" },
+        },
+      },
+
+      // TABS — recessed track, raised selected pill (see MuiTab below)
       MuiTabs: {
         styleOverrides: {
           root: {
             minHeight: 44,
             width: "100%",
             padding: "4px",
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
+            // The track reads clearly inside a card, but sits at only ~1.07:1
+            // directly on the page, where several screens put it. The hairline
+            // gives it an edge on any surface.
+            border: `1px solid ${colors.hairline}`,
             borderRadius: 10,
             boxShadow: "none",
             overflow: "hidden",
@@ -649,24 +675,27 @@ export const getTheme = (
             fontWeight: 700,
             textTransform: "none",
             color: colors.textSecondary,
+            // paper > sunken in both modes now, so the pill reads as raised.
+            // It used to be the other way round in dark: the selected tab was
+            // darker than its own track.
             "&.Mui-selected": {
               backgroundColor: colors.paper,
               color: accentColor,
-              ...clayMixin("sm", isLight, colors.clayShadow),
+              ...clayMixin("sm", isLight, colors.hairline),
             },
           },
         },
       },
 
-      // TOGGLE BUTTON — flat segmented control
+      // TOGGLE BUTTON — recessed track, raised selected pill
       MuiToggleButtonGroup: {
         styleOverrides: {
           root: {
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
             borderRadius: 10,
             boxShadow: "none",
             padding: "3px",
-            border: "none",
+            border: `1px solid ${colors.hairline}`, // same reason as MuiTabs
             gap: "2px",
           },
           grouped: {
@@ -691,7 +720,7 @@ export const getTheme = (
               backgroundColor: colors.paper,
               color: accentColor,
               fontWeight: 700,
-              ...clayMixin("sm", isLight, colors.clayShadow),
+              ...clayMixin("sm", isLight, colors.hairline),
               "&:hover": { backgroundColor: colors.paper },
             },
           },
@@ -739,7 +768,7 @@ export const getTheme = (
             borderRadius: 8,
             margin: "2px 6px",
             transition: "background-color 0.15s ease, color 0.15s ease",
-            "&:hover": { backgroundColor: colors.input },
+            "&:hover": { backgroundColor: hover },
             "&.Mui-selected": {
               backgroundColor: alpha(accentColor, 0.12),
               color: accentColor,
@@ -766,12 +795,12 @@ export const getTheme = (
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: colors.bg,
+            // `paper`, not `bg`: the drawer floats over the page, so painting
+            // it the page colour left it with no edge of its own.
+            backgroundColor: colors.paper,
             backgroundImage: "none",
             borderRadius: "12px 0 0 12px",
-            border: isLight
-              ? "1px solid rgba(0,0,0,0.06)"
-              : "1px solid rgba(255,255,255,0.06)",
+            border: `1px solid ${colors.hairline}`,
             borderRight: "none",
             boxShadow: isLight
               ? "-4px 0 16px rgba(0,0,0,0.08)"
@@ -793,9 +822,11 @@ export const getTheme = (
           root: {
             "& .MuiBackdrop-root": {
               backdropFilter: "blur(8px)",
+              // 0.15 was too weak to detach a white dialog from a light page,
+              // and the page is darker now.
               backgroundColor: isLight
-                ? "rgba(0,0,0,0.15)"
-                : "rgba(0,0,0,0.55)",
+                ? "rgba(0,0,0,0.32)"
+                : "rgba(0,0,0,0.6)",
             },
           },
         },
@@ -892,7 +923,7 @@ export const getTheme = (
           root: {
             borderRadius: 999,
             height: 6,
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
             boxShadow: "none",
           },
           bar: { borderRadius: 999, backgroundColor: accentColor },
@@ -904,7 +935,7 @@ export const getTheme = (
         styleOverrides: {
           root: {
             borderRadius: 8,
-            backgroundColor: colors.input,
+            backgroundColor: colors.sunken,
           },
           wave: {
             "&::after": {
@@ -920,8 +951,10 @@ export const getTheme = (
       MuiTooltip: {
         defaultProps: { arrow: true },
         styleOverrides: {
+          // #27272A in both modes was fine on the old #141416 card but sits at
+          // 1.06:1 on the new one, so a tooltip overlapping a card vanished.
           tooltip: {
-            backgroundColor: isLight ? "#27272A" : "#27272A",
+            backgroundColor: isLight ? "#27272A" : "#3A3A42",
             color: "#FAFAFA",
             borderRadius: 6,
             fontSize: "0.75rem",
@@ -930,7 +963,7 @@ export const getTheme = (
             border: "none",
             boxShadow: "none",
           },
-          arrow: { color: "#27272A" },
+          arrow: { color: isLight ? "#27272A" : "#3A3A42" },
         },
       },
     },

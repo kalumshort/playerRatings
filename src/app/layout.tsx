@@ -7,7 +7,7 @@ import Footer from "@/components/client/Footer/Footer";
 import { getAuthSession } from "@/lib/firebase/getAuth";
 import { cookies } from "next/headers";
 import { DrawerProvider } from "@/components/client/Header/DrawerContext";
-import { Toaster } from "sonner";
+import AppToaster from "@/components/client/AppToaster";
 import NavigationLoader from "@/components/client/Widgets/NavigationLoader";
 import { Suspense } from "react";
 
@@ -72,12 +72,7 @@ export default async function RootLayout({
                   }}
                 >
                   {children}
-                  <Toaster
-                    richColors
-                    position="top-right"
-                    closeButton
-                    duration={4000}
-                  />
+                  <AppToaster />
                 </main>
                 <Footer />
               </DrawerProvider>
