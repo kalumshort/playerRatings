@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useCallback,
   ReactNode,
 } from "react";
 import {
@@ -26,6 +27,13 @@ interface AuthContextType {
   userId: string | null;
   hasPasswordProvider: boolean;
   isSocialOnly: boolean;
+  /**
+   * Re-reads the current user from Firebase and forces dependent state
+   * (notably `hasPasswordProvider`) to recompute. Call this after any
+   * operation that mutates the user in place — linking a provider, changing
+   * email — since those do not fire `onAuthStateChanged`.
+   */
+  refreshUser: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -35,6 +43,9 @@ const defaultContext: AuthContextType = {
   userId: null,
   hasPasswordProvider: false,
   isSocialOnly: true,
+  refreshUser: async () => {
+    console.warn("refreshUser called outside AuthProvider");
+  },
   signOut: async () => {
     console.warn("signOut called outside AuthProvider");
   },
@@ -99,10 +110,22 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  // Firebase mutates the `User` object in place when a provider is linked, so
+  // the object reference never changes and React bails out of re-rendering.
+  // Bumping this counter is what actually forces derived state to recompute.
+  const [authVersion, setAuthVersion] = useState(0);
+
+  const refreshUser = useCallback(async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    setUser(auth.currentUser);
+    setAuthVersion((v) => v + 1);
+  }, []);
 
   const hasPasswordProvider = useMemo(
     () => user?.providerData?.some((p) => p.providerId === "password") ?? false,
-    [user],
+    // authVersion is intentionally a dependency: see the comment above.
+    [user, authVersion],
   );
 
   const isSocialOnly = !hasPasswordProvider;
@@ -156,9 +179,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       userId: user?.uid ?? null,
       hasPasswordProvider,
       isSocialOnly,
+      refreshUser,
       signOut: handleSignOut,
     }),
-    [user, userLoading, hasPasswordProvider, isSocialOnly],
+    [user, userLoading, hasPasswordProvider, isSocialOnly, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

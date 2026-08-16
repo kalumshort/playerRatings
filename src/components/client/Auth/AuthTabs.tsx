@@ -19,6 +19,11 @@ import {
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { handleCreateAccount } from "@/lib/firebase/auth-actions";
+import {
+  isPasswordStrong,
+  getPasswordHelperText,
+  PASSWORD_RULE_SUMMARY,
+} from "@/lib/utils/password-policy";
 
 interface AuthTabsProps {
   groupId?: string;
@@ -54,7 +59,7 @@ export default function AuthTabs({
       case "auth/user-not-found":
         return "Incorrect email or password.";
       case "auth/weak-password":
-        return "Password must be at least 6 characters long.";
+        return "Password is too weak. Please choose a stronger one.";
       case "auth/too-many-requests":
         return "Too many attempts. Please try again later.";
       default:
@@ -62,7 +67,12 @@ export default function AuthTabs({
     }
   };
 
-  const isFormInvalid = !email.trim() || !password.trim();
+  // Strength rules apply to signup only — existing accounts may predate them
+  // and must still be able to log in.
+  const isSignupTab = tab === 0;
+  const passwordStrong = isPasswordStrong(password);
+  const isFormInvalid =
+    !email.trim() || !password.trim() || (isSignupTab && !passwordStrong);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +81,11 @@ export default function AuthTabs({
         text: "Please enter both email and password.",
         isError: true,
       });
+      return;
+    }
+
+    if (isSignupTab && !passwordStrong) {
+      setMessage({ text: PASSWORD_RULE_SUMMARY, isError: true });
       return;
     }
 
@@ -148,6 +163,13 @@ export default function AuthTabs({
           onChange={(e) => setPassword(e.target.value)}
           disabled={loading}
           required
+          error={isSignupTab && password !== "" && !passwordStrong}
+          helperText={
+            isSignupTab ? getPasswordHelperText(password) : undefined
+          }
+          FormHelperTextProps={{
+            sx: { color: passwordStrong ? "success.main" : undefined },
+          }}
           sx={{ mb: 1 }}
         />
 

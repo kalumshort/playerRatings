@@ -36,8 +36,12 @@ export default function AccountTab({
 }: AccountTabProps) {
   const { userData } = useUserData();
   const { groupData } = useGroupData();
-  const { isSocialOnly, signOut } = useAuth();
+  const { user, isSocialOnly, signOut } = useAuth();
   const router = useRouter();
+
+  // Linking a password needs an email to link it to; social accounts are not
+  // guaranteed to expose one.
+  const canAddPassword = Boolean(user?.email);
 
   const [displayName, setDisplayName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -137,13 +141,20 @@ export default function AccountTab({
             <ShieldCheck size={18} /> Authentication
           </Typography>
           {isSocialOnly ? (
-            <Button
-              variant="contained"
-              startIcon={<Key size={18} />}
-              onClick={onOpenSocialAdd}
-            >
-              Add Password to Account
-            </Button>
+            canAddPassword ? (
+              <Button
+                variant="contained"
+                startIcon={<Key size={18} />}
+                onClick={onOpenSocialAdd}
+              >
+                Add Password to Account
+              </Button>
+            ) : (
+              <Alert severity="info">
+                Your account doesn&apos;t have an email address, so a password
+                can&apos;t be added to it.
+              </Alert>
+            )
           ) : (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <Button

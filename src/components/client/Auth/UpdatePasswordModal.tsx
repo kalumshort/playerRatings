@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,6 +22,10 @@ import {
   reauthenticateWithCredential,
   AuthError,
 } from "firebase/auth";
+import {
+  isPasswordStrong,
+  getPasswordHelperText,
+} from "@/lib/utils/password-policy";
 
 export default function UpdatePasswordModal({
   open,
@@ -38,17 +42,25 @@ export default function UpdatePasswordModal({
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Client-side validation
-  const passwordsMatch = newPassword === confirmPassword && newPassword !== "";
-  const isPasswordStrong = newPassword.length >= 8; // extend later if needed
-  const isFormValid =
-    isPasswordStrong && passwordsMatch && currentPassword !== "";
+  // Don't leave plaintext passwords in state after the dialog closes, and
+  // don't reopen onto a stale pre-filled form.
+  useEffect(() => {
+    if (!open) {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowCurrent(false);
+      setShowNew(false);
+      setShowConfirm(false);
+      setLoading(false);
+    }
+  }, [open]);
 
-  const getPasswordHelper = () => {
-    if (!newPassword) return "Minimum 8 characters";
-    if (!isPasswordStrong) return "Password must be at least 8 characters long";
-    return "Strong password!";
-  };
+  // Client-side validation — shared with signup and the social link flow.
+  const passwordsMatch = newPassword === confirmPassword && newPassword !== "";
+  const passwordStrong = isPasswordStrong(newPassword);
+  const isFormValid =
+    passwordStrong && passwordsMatch && currentPassword !== "";
 
   const handleSubmit = async () => {
     if (!auth.currentUser || !isFormValid) return;
@@ -75,8 +87,9 @@ export default function UpdatePasswordModal({
         duration: 4000,
       });
 
-      // Close modal after a short delay to let toast appear
-      setTimeout(onClose, 1200);
+      // Close immediately — the toast is global and outlives the dialog.
+      // Deferring the close left the submit button re-enabled on a valid form.
+      onClose();
     } catch (err: unknown) {
       console.error("Password update failed:", err);
 
@@ -118,7 +131,7 @@ export default function UpdatePasswordModal({
       toast.error(message, {
         duration: 6000,
       });
-    } finally {
+
       setLoading(false);
     }
   };
@@ -170,10 +183,10 @@ export default function UpdatePasswordModal({
             fullWidth
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            error={newPassword !== "" && !isPasswordStrong}
-            helperText={getPasswordHelper()}
+            error={newPassword !== "" && !passwordStrong}
+            helperText={getPasswordHelperText(newPassword)}
             FormHelperTextProps={{
-              sx: { color: isPasswordStrong ? "success.main" : undefined },
+              sx: { color: passwordStrong ? "success.main" : undefined },
             }}
             InputProps={{
               endAdornment: (

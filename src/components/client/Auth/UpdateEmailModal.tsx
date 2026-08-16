@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -35,6 +35,17 @@ export default function UpdateEmailModal({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Don't leave the plaintext password in state after the dialog closes, and
+  // don't reopen onto a stale pre-filled form.
+  useEffect(() => {
+    if (!open) {
+      setCurrentPassword("");
+      setNewEmail("");
+      setShowPassword(false);
+      setLoading(false);
+    }
+  }, [open]);
+
   // Basic client-side validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim());
   const isFormValid =
@@ -66,8 +77,9 @@ export default function UpdateEmailModal({
         duration: 6000,
       });
 
-      // Close after short delay so toast is visible
-      setTimeout(onClose, 1800);
+      // Close immediately — the toast is global and outlives the dialog.
+      // Deferring the close left the submit button re-enabled on a valid form.
+      onClose();
     } catch (err: unknown) {
       console.error("Email update failed:", err);
 
@@ -114,7 +126,7 @@ export default function UpdateEmailModal({
       toast.error(message, {
         duration: 7000,
       });
-    } finally {
+
       setLoading(false);
     }
   };

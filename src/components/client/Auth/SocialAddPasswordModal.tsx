@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,16 +11,22 @@ import {
   IconButton,
   InputAdornment,
   Typography,
+  Alert,
   CircularProgress,
 } from "@mui/material";
 import { X, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase/client";
+import { useAuth } from "@/context/AuthContext";
 import {
   EmailAuthProvider,
   linkWithCredential,
   AuthError,
 } from "firebase/auth";
+import {
+  isPasswordStrong,
+  getPasswordHelperText,
+} from "@/lib/utils/password-policy";
 
 export default function AddPasswordModal({
   open,
@@ -29,59 +35,57 @@ export default function AddPasswordModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { user, refreshUser } = useAuth();
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Password strength checks
-  const passwordStrength = {
-    length: password.length >= 8,
-    hasNumber: /\d/.test(password),
-    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    hasMixedCase: /[a-z]/.test(password) && /[A-Z]/.test(password),
-  };
+  // Never leave a plaintext password sitting in state after the dialog goes
+  // away, and never reopen onto a stale pre-filled form.
+  useEffect(() => {
+    if (!open) {
+      setPassword("");
+      setConfirmPassword("");
+      setShowPassword(false);
+      setShowConfirm(false);
+      setLoading(false);
+    }
+  }, [open]);
 
-  const isStrongEnough =
-    passwordStrength.length &&
-    passwordStrength.hasNumber &&
-    passwordStrength.hasSpecial &&
-    passwordStrength.hasMixedCase;
+  // Linking an email/password credential needs an email to link it to, and
+  // Firebase accounts are not guaranteed to have one.
+  const accountEmail = user?.email ?? null;
 
+  const strongEnough = isPasswordStrong(password);
   const passwordsMatch = password === confirmPassword && password !== "";
-  const isFormValid = isStrongEnough && passwordsMatch;
-
-  const getStrengthMessage = () => {
-    if (!password) return "Minimum 8 characters, number, symbol, mixed case";
-    if (isStrongEnough) return "Strong password!";
-    if (password.length < 8) return "At least 8 characters required";
-    return "Include numbers, symbols, uppercase & lowercase letters";
-  };
+  const isFormValid = Boolean(accountEmail) && strongEnough && passwordsMatch;
 
   const handleSubmit = async () => {
-    if (!auth.currentUser || !isFormValid) return;
+    if (!auth.currentUser || !accountEmail || !isFormValid || loading) return;
 
     setLoading(true);
 
     try {
-      const credential = EmailAuthProvider.credential(
-        auth.currentUser.email!,
-        password,
-      );
+      const credential = EmailAuthProvider.credential(accountEmail, password);
 
       await linkWithCredential(auth.currentUser, credential);
 
-      // Reload to help trigger global auth listeners (e.g. context)
-      await auth.currentUser?.reload();
+      // Tell the auth context to re-read the user, otherwise the account
+      // screen keeps offering "Add Password" until a full page refresh.
+      await refreshUser();
 
       toast.success("Password added successfully!", {
         description: "You can now sign in with email + password too.",
         duration: 5000,
       });
 
-      // Brief delay so toast is visible
-      setTimeout(onClose, 1200);
+      // Close immediately — the toast is global and outlives the dialog.
+      // Deferring the close used to leave the button re-enabled on a valid
+      // form, so a second click hit `auth/provider-already-linked`.
+      onClose();
     } catch (err: unknown) {
       console.error("Failed to link password:", err);
 
@@ -96,6 +100,11 @@ export default function AddPasswordModal({
           message =
             "Email/password authentication is not enabled in your Firebase project.";
           break;
+        case "auth/provider-already-linked":
+          message =
+            "This account already has a password. Use Change Password instead.";
+          break;
+        case "auth/credential-already-in-use":
         case "auth/email-already-in-use":
         case "auth/account-exists-with-different-credential":
           message =
@@ -121,7 +130,7 @@ export default function AddPasswordModal({
       toast.error(message, {
         duration: 7000,
       });
-    } finally {
+
       setLoading(false);
     }
   };
@@ -144,6 +153,13 @@ export default function AddPasswordModal({
 
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
+          {!accountEmail && (
+            <Alert severity="warning">
+              Your account doesn&apos;t have an email address, so a password
+              can&apos;t be added to it.
+            </Alert>
+          )}
+
           <TextField
             label="New Password"
             type={showPassword ? "text" : "password"}
@@ -164,14 +180,14 @@ export default function AddPasswordModal({
                 </InputAdornment>
               ),
             }}
-            error={password !== "" && !isStrongEnough}
-            helperText={getStrengthMessage()}
+            error={password !== "" && !strongEnough}
+            helperText={getPasswordHelperText(password)}
             FormHelperTextProps={{
               sx: {
-                color: isStrongEnough ? "success.main" : "text.secondary",
+                color: strongEnough ? "success.main" : "text.secondary",
               },
             }}
-            disabled={loading}
+            disabled={loading || !accountEmail}
           />
 
           <TextField
@@ -200,7 +216,7 @@ export default function AddPasswordModal({
                 </InputAdornment>
               ),
             }}
-            disabled={loading}
+            disabled={loading || !accountEmail}
           />
 
           <Typography
