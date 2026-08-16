@@ -64,9 +64,15 @@ const buildEventThemes = (theme: any): Record<string, any> => ({
   },
 });
 
-// Helper to identify events uniquely without an ID
+// Helper to identify events uniquely without an ID.
+// NOTE: this is the map key inside groups/{gid}/seasons/{yr}/eventsReactions/{fixtureId}.
+// Changing its format orphans every reaction already recorded.
 const getEventKey = (event: any) =>
   `${event.time.elapsed}_${event.type}_${event.player?.id || "no-id"}`;
+
+// Module-level so the "no reactions" case keeps a stable reference — a fresh
+// {} per row per render would defeat EventRow's memo.
+const EMPTY_REACTIONS: Record<string, number> = {};
 
 export default function Events({ events, groupId, currentYear, fixture }: any) {
   const theme = useTheme() as any;
@@ -93,6 +99,9 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
     return () => unsubscribe();
   }, [groupId, fixture?.id, currentYear]);
 
+  // One config for the whole list rather than one per row per render.
+  const eventThemes = useMemo(() => buildEventThemes(theme), [theme]);
+
   const eventOptions = useMemo(() => {
     if (!events) return [];
     return [
@@ -101,10 +110,32 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
     ];
   }, [events]);
 
+  // Keys are computed over the UNFILTERED list so a row's React identity
+  // survives a filter change. With key={index} the open reaction Popover stayed
+  // bound to whichever event moved into that slot.
+  //
+  // getEventKey is the Firestore map key inside eventsReactions/{fixtureId} and
+  // must not change, but it can genuinely collide (a goal and a VAR-disallowed
+  // goal in the same minute are both type "Goal"), so the React key gets a
+  // suffix while the Firestore key stays untouched.
+  const keyedEvents = useMemo(() => {
+    const seen = new Map<string, number>();
+    return (events ?? []).map((event: any) => {
+      const eventKey = getEventKey(event);
+      const n = seen.get(eventKey) ?? 0;
+      seen.set(eventKey, n + 1);
+      return {
+        event,
+        eventKey,
+        reactKey: n === 0 ? eventKey : `${eventKey}#${n}`,
+      };
+    });
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
-    if (selectedType === "All") return events;
-    return events?.filter((item: any) => item.type === selectedType);
-  }, [events, selectedType]);
+    if (selectedType === "All") return keyedEvents;
+    return keyedEvents.filter(({ event }) => event.type === selectedType);
+  }, [keyedEvents, selectedType]);
 
   if (!events || events.length === 0) {
     return (
@@ -160,20 +191,19 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
       </Box>
 
       <Box sx={{ maxHeight: 600, overflowY: "auto", py: 2 }}>
-        {filteredEvents.map((event: any, index: number) => {
-          const eventKey = getEventKey(event);
-
+        {filteredEvents.map(({ event, eventKey, reactKey }, index: number) => {
           return (
             <EventRow
-              key={index}
+              key={reactKey}
               event={event}
-              reactions={dbReactions[eventKey] || {}}
+              reactions={dbReactions[eventKey] || EMPTY_REACTIONS}
               isLast={index === filteredEvents.length - 1}
               groupId={groupId}
               currentYear={currentYear}
               matchId={fixture.id}
               eventKey={eventKey}
               isMatchLive={isMatchLive}
+              themes={eventThemes}
             />
           );
         })}
@@ -182,7 +212,7 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
   );
 }
 
-const EventRow = ({
+const EventRowBase = ({
   event,
   isLast,
   groupId,
@@ -191,6 +221,7 @@ const EventRow = ({
   reactions,
   eventKey,
   isMatchLive,
+  themes,
 }: any) => {
   const theme = useTheme() as any;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -213,8 +244,9 @@ const EventRow = ({
     }
   };
 
-  const EVENT_THEMES = buildEventThemes(theme);
-  const config = EVENT_THEMES[event.type] || {
+  // Built once by the parent and passed in — this used to rebuild a config
+  // object (with icon components) for every row on every render.
+  const config = themes[event.type] || {
     icon: FlagRounded,
     bg: theme.palette.background.default,
     color: theme.palette.text.secondary,
@@ -276,6 +308,7 @@ const EventRow = ({
         >
           {Object.entries(reactions).map(([emoji, count]: any) => (
             <Chip
+              key={emoji}
               label={`${emoji} ${count}`}
               size="small"
               sx={{
@@ -335,6 +368,10 @@ const EventRow = ({
     </Box>
   );
 };
+
+// Props are now all stable (see EMPTY_REACTIONS and the hoisted themes), so
+// rows stop re-rendering on every live fixture tick.
+const EventRow = React.memo(EventRowBase);
 
 const EventContent = ({ event, label }: any) => {
   if (event.type === "subst") {

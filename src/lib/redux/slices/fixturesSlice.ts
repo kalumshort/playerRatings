@@ -156,13 +156,7 @@ const fixturesSlice = createSlice({
         state.loading = false;
         state.loaded = true;
         state.error = action.payload as string;
-      })
-      .addMatcher(
-        (action) => action.type.includes("updateSingleFixture"),
-        (state, action) => {
-          console.log("🎯 MATCHED ACTION IN REDUCER:", action.type);
-        },
-      );
+      });
   },
 });
 

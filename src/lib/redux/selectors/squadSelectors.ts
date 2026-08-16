@@ -1,35 +1,20 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import { selectActiveClubId, selectCurrentYear } from "./contextSelectors";
 
 const selectSquadSlice = (state: RootState) => state.teamSquads;
-const selectGroupData = (state: RootState) => state.groupData;
-const selectGlobalData = (state: RootState) => state.globalData;
-
-// --- Context Helper ---
-const selectActiveContext = createSelector(
-  [selectGroupData, selectGlobalData],
-  (groupData, globalData) => {
-    const activeGroup = groupData.activeGroupId
-      ? groupData.byGroupId[groupData.activeGroupId]
-      : null;
-    return {
-      clubId: activeGroup?.groupClubId,
-      year: globalData.currentYear,
-    };
-  },
-);
 
 // --- Main Squad Selector ---
 export const selectActiveSquadData = createSelector(
-  [selectSquadSlice, selectActiveContext],
-  (squadSlice, { clubId, year }) => {
+  [selectSquadSlice, selectActiveClubId, selectCurrentYear],
+  (squadSlice, clubId, year) => {
     if (!clubId || !year) return null;
     return squadSlice.byClubId[clubId]?.[year] || null;
   },
 );
 export const selectSeasonSquadData = createSelector(
-  [selectSquadSlice, selectActiveContext],
-  (squadSlice, { clubId, year }) => {
+  [selectSquadSlice, selectActiveClubId, selectCurrentYear],
+  (squadSlice, clubId, year) => {
     if (!clubId || !year) return null;
 
     // The bucket is absent while a newly selected season is still fetching,

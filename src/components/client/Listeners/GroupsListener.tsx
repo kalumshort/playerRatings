@@ -25,6 +25,7 @@ export const GroupsListener = () => {
 
   const [membership, setMembership] = useState<Record<string, string>>({});
   const lastMembershipKey = useRef<string>("");
+  const lastGroupsFingerprint = useRef<string | null>(null);
 
   // PHASE 1: Listen to the "joinedGroups" Sub-collection
   useEffect(() => {
@@ -82,6 +83,10 @@ export const GroupsListener = () => {
     }
 
     dispatch(groupDataStart());
+    // groupDataStart sets loading=true/loaded=false, so the first snapshot of
+    // each new subscription MUST dispatch success or those flags stick. Clear
+    // the fingerprint here; it only suppresses repeats within a subscription.
+    lastGroupsFingerprint.current = null;
 
     const groupsQuery = query(
       collection(clientDB, "groups"),
@@ -100,6 +105,14 @@ export const GroupsListener = () => {
             role: membership[doc.id],
           };
         });
+
+        // Same fingerprint guard FixturesListener and GroupPredictionsListener
+        // already use. Without it every snapshot — including metadata-only
+        // re-emissions — dispatched a brand-new object per group, changing
+        // activeGroup's identity app-wide and re-firing dependent fetches.
+        const fingerprint = JSON.stringify(finalGroupMap);
+        if (lastGroupsFingerprint.current === fingerprint) return;
+        lastGroupsFingerprint.current = fingerprint;
 
         dispatch(groupDataSuccess(finalGroupMap));
       },

@@ -15,11 +15,16 @@ interface CarouselProps {
   fixture: any;
 }
 
+// Module-level defaults: an inline `= {}` / `= []` allocates a fresh object
+// whenever the prop is undefined, which defeats PlayerThumbnail's React.memo.
+const EMPTY_RATINGS: Record<string, number> = {};
+const EMPTY_PLAYERS: any[] = [];
+
 export default function PlayerImageCarousel({
-  combinedPlayers = [],
+  combinedPlayers = EMPTY_PLAYERS,
   currentIndex = 0,
   onSelect,
-  usersMatchPlayerRatings = {},
+  usersMatchPlayerRatings = EMPTY_RATINGS,
   isMobile = false,
   storedUsersMatchMOTM,
   fixture,

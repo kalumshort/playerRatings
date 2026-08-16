@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useSelector, shallowEqual } from "react-redux";
 import { Box, Avatar, Tooltip, styled, Stack } from "@mui/material";
-
-import { RootState } from "@/lib/redux/store";
 
 const StatusDot = styled(Box, {
   shouldForwardProp: (prop) => prop !== "active" && prop !== "type",
@@ -38,13 +35,13 @@ function PlayerThumbnail({
   usersMatchPlayerRatings,
   storedUsersMatchMOTM,
 }: ThumbnailProps) {
-  // 1. STABILIZED SELECTOR
-  // We use the RootState type to ensure the selector is performant
-  const playerData = useSelector(
-    (state: RootState) =>
-      state.teamSquads.byClubId["33" as string]?.[player.id],
-    shallowEqual,
-  );
+  // Previously this subscribed to
+  // `state.teamSquads.byClubId["33"]?.[player.id]` — a hardcoded club id AND
+  // the wrong path (the shape is byClubId[clubId][year].seasonSquad), so it
+  // always resolved to undefined. Every value below already falls back to the
+  // `player` prop, so dropping it changes nothing except removing one store
+  // subscription per thumbnail. Restore via selectSeasonSquadDataObject if the
+  // squad-backed name/photo fallback is ever actually wanted.
 
   const isRated = Boolean(usersMatchPlayerRatings?.[player.id]);
   const isMOTM = storedUsersMatchMOTM === String(player.id);
@@ -52,9 +49,8 @@ function PlayerThumbnail({
 
   const photo =
     player?.photo ||
-    playerData?.photo ||
     `https://media.api-sports.io/football/players/${player.id}.png`;
-  const name = playerData?.name || player.name || "Unknown";
+  const name = player.name || "Unknown";
 
   // 2. INITIALS FALLBACK
   const initials = useMemo(() => {

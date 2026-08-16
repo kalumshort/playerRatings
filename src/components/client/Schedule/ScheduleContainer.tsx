@@ -21,6 +21,7 @@ import {
   selectLatestFixture,
 } from "@/lib/redux/selectors/fixturesSelectors";
 import FixtureListItem from "./FixtureListItem";
+import { RootState } from "@/lib/redux/store";
 import { useClubView } from "@/context/ClubViewProvider";
 import { withSeasonParam } from "@/lib/config/season";
 
@@ -32,15 +33,26 @@ interface ScheduleContainerProps {
   initialFixtures?: any[];
   /** Server-resolved season. Falls back to context where no server page supplies it. */
   season?: string;
+  /**
+   * The club whose perspective W/D/L is computed from. Passed down rather than
+   * read from Redux in each row, so rows render correctly during SSR where the
+   * store is still empty.
+   */
+  clubId?: string | number;
 }
+
+// Module-level so the default doesn't allocate a new array each render and
+// bust the allFixtures memo while the store is still empty.
+const EMPTY_FIXTURES: any[] = [];
 
 export default function ScheduleContainer({
   limitAroundLatest = 0,
   showLink = false,
   scroll = true,
   scrollOnLoad = true,
-  initialFixtures = [],
+  initialFixtures = EMPTY_FIXTURES,
   season: seasonProp,
+  clubId,
 }: ScheduleContainerProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -51,6 +63,14 @@ export default function ScheduleContainer({
 
   const reduxFixtures = useSelector(selectActiveClubFixtures);
   const latestFixture = useSelector(selectLatestFixture);
+
+  // Prefer the server-supplied club id so rows compute W/D/L correctly during
+  // SSR; fall back to the store for the client-only mount (club home page).
+  const storeClubId = useSelector((state: RootState) => {
+    const id = state.groupData.activeGroupId;
+    return id ? state.groupData.byGroupId[id]?.groupClubId : undefined;
+  });
+  const resolvedClubId = Number(clubId ?? storeClubId);
 
   const allFixtures = useMemo(
     () => (reduxFixtures && reduxFixtures.length > 0 ? reduxFixtures : initialFixtures),
@@ -254,6 +274,7 @@ export default function ScheduleContainer({
                           fixture={fixture}
                           handleFixtureClick={handleFixtureClick}
                           highlight={isLatest}
+                          groupClubId={resolvedClubId}
                         />
                       </motion.div>
                     );

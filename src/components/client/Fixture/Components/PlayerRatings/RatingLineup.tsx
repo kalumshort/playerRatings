@@ -77,7 +77,7 @@ export default function RatingLineup({
   const [ratingSrc, setRatingSrc] = useState<RatingSource>("Group");
 
   const matchRatings = useSelector((state: RootState) =>
-    selectMatchRatingsById(fixture.id)(state),
+    selectMatchRatingsById(state, fixture.id),
   );
 
   const { formationRows, subs } = useMemo(() => {
@@ -92,14 +92,17 @@ export default function RatingLineup({
       formationRows: groupByFormation(team.startXI ?? []),
       subs: playedSubs,
     };
-  }, [fixture, groupClubId]);
+    // Narrowed from [fixture] so a live clock tick doesn't rebuild the pitch.
+  }, [fixture?.lineups, fixture?.events, groupClubId]);
 
-  const getRating = (playerId: string | number) => {
+  const getRating = (playerId: string | number): number | null => {
     const pId = String(playerId);
     if (ratingSrc === "Personal") return usersMatchPlayerRatings?.[pId] ?? null;
 
-    const stats = matchRatings?.find((r: any) => r.id === pId);
-    return stats ? stats.totalRating / stats.totalSubmits : null;
+    // Keyed lookup, not .find() — this threw outright when the slot held the
+    // object shape. The totalSubmits guard avoids NaN/Infinity on a zero-submit row.
+    const stats = matchRatings?.[pId];
+    return stats?.totalSubmits ? stats.totalRating / stats.totalSubmits : null;
   };
 
   if (formationRows.length === 0) return null;

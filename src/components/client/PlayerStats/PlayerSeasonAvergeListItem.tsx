@@ -20,7 +20,6 @@ import {
   selectPlayerRatingsById,
 } from "@/lib/redux/selectors/ratingsSelectors";
 import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
-import useGroupData from "@/Hooks/useGroupData";
 import { fetchPlayerRatingsAllMatches } from "@/lib/redux/actions/ratingsActions";
 import { getRatingColor } from "@/lib/utils/football-logic";
 import { useClubView } from "@/context/ClubViewProvider";
@@ -43,23 +42,32 @@ export default function PlayerSeasonAverageListItem({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { activeGroup } = useGroupData();
+  // One scalar subscription instead of useGroupData()'s six — this component
+  // renders once per leaderboard row (30+), and only the id is needed.
+  const activeGroupId = useSelector((state: RootState) => {
+    const id = state.groupData.activeGroupId;
+    return id ? state.groupData.byGroupId[id]?.groupId : undefined;
+  });
+
   const { season: contextSeason } = useClubView();
   // Prefer the server-resolved season: the context mirror lags a render, which
   // would fire a wasted current-season fetch on archived pages.
   const currentYear = seasonProp ?? contextSeason;
 
+  // Depend on the id, not the group object. Depending on the object meant any
+  // group-doc write changed its identity and re-dispatched this fetch for every
+  // row on the leaderboard — 30+ redundant Firestore reads.
   useEffect(() => {
-    if (playerId && activeGroup?.groupId) {
+    if (playerId && activeGroupId) {
       dispatch(
         fetchPlayerRatingsAllMatches({
           playerId,
-          groupId: activeGroup?.groupId,
+          groupId: activeGroupId,
           currentYear,
         }),
       );
     }
-  }, [dispatch, playerId, activeGroup, currentYear]);
+  }, [dispatch, playerId, activeGroupId, currentYear]);
 
   // 1. ATOMIC SELECTORS
   // We select the whole maps but immediately pluck the ID to minimize subscription overhead
@@ -72,7 +80,7 @@ export default function PlayerSeasonAverageListItem({
   );
 
   const allPlayerRatingsMatches = useSelector((state: RootState) =>
-    selectPlayerRatingsById(playerId)(state),
+    selectPlayerRatingsById(state, playerId),
   );
 
   // 2. LOGIC
@@ -83,7 +91,7 @@ export default function PlayerSeasonAverageListItem({
 
   const playedMatchesCount = useMemo(() => {
     if (!allPlayerRatingsMatches) return 0;
-    return Object.keys(allPlayerRatingsMatches.matches).length;
+    return Object.keys(allPlayerRatingsMatches.matches ?? {}).length;
   }, [allPlayerRatingsMatches]);
 
   // 3. RENDER GATING (Handle missing data gracefully)

@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import React, { useMemo } from "react";
 import { keyframes, useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
-import { RootState } from "@/lib/redux/store";
 import { format } from "date-fns";
 
 const pulse = keyframes`
@@ -13,17 +11,19 @@ const pulse = keyframes`
   100% { transform: scale(0.95); opacity: 0.6; }
 `;
 
-export default function FixtureListItem({ fixture, handleFixtureClick, highlight = false }: any) {
+function FixtureListItem({
+  fixture,
+  handleFixtureClick,
+  highlight = false,
+  groupClubId,
+}: any) {
   const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  const activeGroupId = useSelector((state: RootState) => state.groupData.activeGroupId);
-  const activeGroup = useSelector((state: RootState) =>
-    activeGroupId ? state.groupData.byGroupId[activeGroupId] : null,
-  );
-  const groupClubId = Number(activeGroup?.groupClubId);
-
-  useEffect(() => { setMounted(true); }, []);
+  // groupClubId now arrives as a prop. It used to be read from Redux here, which
+  // forced a `mounted` gate returning null on the server and first client
+  // render — every row blank in the SSR HTML, then a second full render of ~50
+  // rows on hydration. Reading it from the store during SSR also gave NaN, so
+  // the W/D/L badge was computed against the wrong team.
 
   const status = fixture.fixture.status.short;
   const isPending = ["NS", "TBD", "PST"].includes(status);
@@ -41,7 +41,7 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
     return won
       ? { result: "W", resultColor: theme.palette.success.main }
       : { result: "L", resultColor: theme.palette.error.main };
-  }, [fixture, groupClubId, isFinished, theme]);
+  }, [fixture.teams, groupClubId, isFinished, theme]);
 
   const formattedDate = useMemo(() => {
     if (!fixture.fixture.timestamp) return { dayMonth: "", time: "" };
@@ -51,8 +51,6 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
       time: format(date, "HH:mm"),
     };
   }, [fixture.fixture.timestamp]);
-
-  if (!mounted) return null;
 
   return (
     <Box
@@ -160,7 +158,12 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
             </Typography>
           )}
           {isPending && (
+            // date-fns formats in the runtime's timezone, so the server (UTC)
+            // and a non-UTC client can legitimately differ. Safe to suppress:
+            // ScheduleContainer swaps initialFixtures for the Redux fixtures as
+            // soon as they land, which re-renders this with the client value.
             <Typography
+              suppressHydrationWarning
               sx={{
                 fontSize: "0.62rem",
                 fontWeight: 700,
@@ -221,6 +224,7 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
         >
           {isPending ? (
             <Typography
+              suppressHydrationWarning
               sx={{
                 fontWeight: 900,
                 fontSize: "1rem",
@@ -295,3 +299,7 @@ export default function FixtureListItem({ fixture, handleFixtureClick, highlight
     </Box>
   );
 }
+
+// ~50 rows on the schedule. Props are a per-row fixture object, a
+// useCallback'd handler, and two primitives, so shallow compare works.
+export default React.memo(FixtureListItem);

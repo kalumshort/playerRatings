@@ -27,11 +27,18 @@ import { getInitialSurname, getRatingColor } from "@/lib/utils/football-logic";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import useAsyncAction from "@/Hooks/useAsyncAction";
 
-export function PlayerRatingCard({
+/**
+ * Deliberately takes narrow props (matchId, events, avgRating) rather than the
+ * whole `fixture` and `matchRatings`. Those two get a new identity on every
+ * live Firestore tick, which would make the React.memo below a no-op across all
+ * 14-18 Swiper slides.
+ */
+function PlayerRatingCardBase({
   player,
-  fixture,
+  matchId,
+  events,
+  avgRating,
   isMobile,
-  matchRatings,
   userId,
   groupId,
   currentYear,
@@ -40,7 +47,6 @@ export function PlayerRatingCard({
   storedMotmId,
 }: any) {
   const theme = useTheme();
-  const matchId = String(fixture.id);
   const isMOTM = storedMotmId === player.id;
 
   // firestore.rules dedupes repeat ratings with permission-denied; before this
@@ -52,22 +58,12 @@ export function PlayerRatingCard({
     },
   );
 
-  const ratingsArray = useMemo(
-    () => (Array.isArray(matchRatings) ? matchRatings : []),
-    [matchRatings],
-  );
-  const isDataLoading = matchRatings === undefined || matchRatings === null;
-
-  const avgRating = useMemo(() => {
-    const stats = ratingsArray.find((r: any) => r.id === String(player.id));
-    return stats
-      ? (stats.totalRating / (stats.totalSubmits || 1)).toFixed(1)
-      : null;
-  }, [ratingsArray, player.id]);
+  // undefined means "not fetched yet"; null means "fetched, nobody rated".
+  const isDataLoading = avgRating === undefined;
 
   const playerEvents = useMemo(() => {
-    if (!fixture?.events) return [];
-    return fixture.events
+    if (!events?.length) return [];
+    return events
       .filter(
         (ev: any) => ev.player?.id === player.id || ev.assist?.id === player.id,
       )
@@ -86,7 +82,7 @@ export function PlayerRatingCard({
         return null;
       })
       .filter(Boolean);
-  }, [fixture.events, player.id]);
+  }, [events, player.id]);
 
   return (
     <Paper
@@ -283,6 +279,10 @@ export function PlayerRatingCard({
     </Paper>
   );
 }
+
+// All remaining props are primitives, a stable array, or stable setters, so the
+// default shallow compare is enough — no custom comparator needed.
+export const PlayerRatingCard = React.memo(PlayerRatingCardBase);
 
 const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
   const theme = useTheme();

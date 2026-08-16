@@ -43,11 +43,13 @@ export default function ChosenLineup({
 
   // 2. FALLBACK CHECK
   // If the formation in the prediction isn't in our config, default to 4-3-3 Holding
+  // userPrediction is undefined for any logged-in user who hasn't predicted yet,
+  // and this tab renders unconditionally — the unguarded read crashed here while
+  // the memo above already used optional chaining.
   const activeFormation = useMemo(() => {
-    return FORMATIONS[userPrediction.formation]
-      ? userPrediction.formation
-      : "4-3-3 Holding";
-  }, [userPrediction.formation]);
+    const formation = userPrediction?.formation;
+    return formation && FORMATIONS[formation] ? formation : "4-3-3 Holding";
+  }, [userPrediction?.formation]);
 
   return (
     <LineupShell

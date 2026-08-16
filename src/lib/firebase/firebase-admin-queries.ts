@@ -169,10 +169,13 @@ export async function getMatchPlayerRatingsServer(
       .collection("players")
       .get();
 
-    const players = playersSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // Keyed by playerId, matching the client thunk and the shape the store
+    // declares. This used to be an array, which meant the same Redux slot held
+    // two incompatible shapes depending on which path filled it.
+    const players: Record<string, any> = {};
+    playersSnapshot.docs.forEach((doc) => {
+      players[doc.id] = { id: doc.id, ...doc.data() };
+    });
 
     // 2. Fetch the aggregate MOTM/Rating summary (The document at the matchId level)
     const motmDoc = await baseRef
@@ -186,7 +189,7 @@ export async function getMatchPlayerRatingsServer(
     };
   } catch (error) {
     console.error("❌ [Admin] Error fetching match player ratings:", error);
-    return { players: [], motm: null };
+    return { players: {}, motm: null };
   }
 }
 

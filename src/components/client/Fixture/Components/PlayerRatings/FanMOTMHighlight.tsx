@@ -7,6 +7,7 @@ import { styled, keyframes } from "@mui/material/styles";
 import { Trophy, Users } from "lucide-react";
 
 import { selectMotmPercentages } from "@/lib/redux/selectors/ratingsSelectors";
+import { RootState } from "@/lib/redux/store";
 
 interface FanMOTMHighlightProps {
   fixtureId: string;
@@ -97,7 +98,9 @@ const ProgressFill = styled(Box)<{ width: number }>(({ theme, width }) => ({
 
 export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
   const theme = useTheme() as any;
-  const motmPercentages = useSelector(selectMotmPercentages(fixtureId));
+  const motmPercentages = useSelector((state: RootState) =>
+    selectMotmPercentages(state, fixtureId),
+  );
   const winner = motmPercentages?.[0];
 
   if (!winner) return null;

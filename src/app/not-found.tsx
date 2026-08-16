@@ -1,3 +1,9 @@
+"use client";
+
+// MUI's Button is a client component, so passing `component={Link}` (a
+// function) from a server component fails serialization. This page has no
+// server-only work, so it just runs on the client.
+
 import Link from "next/link";
 import { Box, Button, Container, Paper, Typography } from "@mui/material";
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";

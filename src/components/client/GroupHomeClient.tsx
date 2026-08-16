@@ -6,8 +6,8 @@ import { useSelector } from "react-redux";
 import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
 import {
   selectActiveClubFixtures,
+  selectActiveClubFixturesLoaded,
   selectFixturesLoading,
-  selectFixturesLoaded,
 } from "@/lib/redux/selectors/fixturesSelectors";
 
 import PageSkeleton from "@/components/ui/PageSkeleton";
@@ -22,17 +22,16 @@ export default function GroupHomeClient() {
 
   const fixtures = useSelector(selectActiveClubFixtures);
   const loading = useSelector(selectFixturesLoading);
-  const loaded = useSelector(selectFixturesLoaded);
-  const { userHomeGroup } = useGroupData();
+  // Bucket presence for THIS club+season, not the global `loaded` flag. That
+  // flag stays true from the previous season across a switch, so the old
+  // `notStarted` heuristic fell through and rendered empty content.
+  const activeSeasonLoaded = useSelector(selectActiveClubFixturesLoaded);
 
-  // "Not started" = store uninitialised, fetch hasn't been dispatched yet.
-  // Without this, the first render sees loading=false, loaded=false and falls
-  // straight through to render empty content — causing the flash.
-  const notStarted = !loaded && !loading;
+  const { userHomeGroup } = useGroupData();
 
   // An in-place skeleton, not <Spinner />: that one is position:fixed / 100vh /
   // z-9999, so switching season blanked the entire app including the header.
-  if (notStarted || loading) {
+  if (!activeSeasonLoaded || loading) {
     return (
       <Box sx={{ mt: { xs: 2, md: 4 } }}>
         <Grid container spacing={3}>

@@ -76,7 +76,10 @@ export default function PlayerRatings({
 
     const combined = [...starters, ...playedSubs, coach].filter(Boolean);
     return { combinedPlayers: combined, lineupExists: starters.length > 0 };
-  }, [fixture]);
+    // Narrowed from [fixture], which both recomputed on every live tick AND
+    // omitted groupData.groupClubId — read in the body, so switching club left
+    // this stale.
+  }, [fixture?.lineups, fixture?.events, groupData?.groupClubId]);
 
   // 3. VOTING PROGRESS
   const unratedCount = useMemo(() => {

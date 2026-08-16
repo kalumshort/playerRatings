@@ -56,10 +56,10 @@ export default function PlayerPageClient({
   );
   const playerData = squadData?.[playerId];
   const allPlayerRatings = useSelector((state: RootState) =>
-    selectPlayerRatingsById(playerId)(state),
+    selectPlayerRatingsById(state, playerId),
   );
   const comparePlayerRatings = useSelector((state: RootState) =>
-    comparePlayerId ? selectPlayerRatingsById(comparePlayerId)(state) : null,
+    comparePlayerId ? selectPlayerRatingsById(state, comparePlayerId) : null,
   );
   const comparePlayerData = comparePlayerId
     ? squadData?.[comparePlayerId]
@@ -67,6 +67,9 @@ export default function PlayerPageClient({
   const previousFixtures = useSelector(selectPreviousFixtures);
 
   const { activeGroup } = useGroupData();
+  // Depend on the id, not the group object: the object's identity changes on
+  // every group-doc snapshot, which re-fired these fetches for no reason.
+  const activeGroupId = activeGroup?.groupId;
 
   // Prefer the server-resolved season: the context mirror lags a render, which
   // would fire a wasted current-season fetch on archived pages.
@@ -75,38 +78,38 @@ export default function PlayerPageClient({
 
   // 2. FETCHING
   useEffect(() => {
-    if (playerId && activeGroup?.groupId) {
+    if (playerId && activeGroupId) {
       dispatch(
         fetchPlayerRatingsAllMatches({
           playerId,
-          groupId: activeGroup?.groupId,
+          groupId: activeGroupId,
           currentYear,
         }),
       );
       dispatch(
         fetchAllPlayersSeasonOverallRating({
-          groupId: activeGroup?.groupId,
+          groupId: activeGroupId,
           currentYear,
         }),
       );
     }
-  }, [dispatch, playerId, activeGroup, currentYear]);
+  }, [dispatch, playerId, activeGroupId, currentYear]);
 
   useEffect(() => {
     setComparePlayerId(null);
   }, [playerId]);
 
   useEffect(() => {
-    if (comparePlayerId && activeGroup?.groupId) {
+    if (comparePlayerId && activeGroupId) {
       dispatch(
         fetchPlayerRatingsAllMatches({
           playerId: comparePlayerId,
-          groupId: activeGroup?.groupId,
+          groupId: activeGroupId,
           currentYear,
         }),
       );
     }
-  }, [dispatch, comparePlayerId, activeGroup, currentYear]);
+  }, [dispatch, comparePlayerId, activeGroupId, currentYear]);
 
   // 3. CALCS
   const seasonAverage = useMemo(() => {

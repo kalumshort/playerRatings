@@ -66,7 +66,11 @@ export default async function SchedulePage({
       }}
     >
       <SeasonOverview stats={stats} played={played} season={season} />
-      <ScheduleContainer initialFixtures={fixtures} season={season} />
+      <ScheduleContainer
+        initialFixtures={fixtures}
+        season={season}
+        clubId={clubId}
+      />
     </Box>
   );
 }

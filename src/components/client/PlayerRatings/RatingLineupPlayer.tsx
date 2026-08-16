@@ -21,7 +21,7 @@ interface PlayerProps {
     name: string;
     photo?: string;
   };
-  playerRating: string | number;
+  playerRating: string | number | null | undefined;
 }
 
 // --- STYLED COMPONENTS ---
@@ -74,10 +74,13 @@ const RatingLineupPlayer = React.memo(
 
     if (!player) return null;
 
-    const displayRating =
-      playerRating && playerRating !== "na"
-        ? Number(playerRating).toFixed(1)
-        : "—";
+    // Callers pass either a number, null, or an already-formatted "—".
+    // The old check (`playerRating && playerRating !== "na"`) let "—" through
+    // because it's truthy, and Number("—").toFixed(1) is the string "NaN",
+    // which rendered on the pitch. The "na" sentinel is dead.
+    // The == null test comes first because Number(null) is 0, not NaN.
+    const numeric = playerRating == null ? NaN : Number(playerRating);
+    const displayRating = Number.isFinite(numeric) ? numeric.toFixed(1) : "—";
 
     return (
       <PlayerWrapper>
