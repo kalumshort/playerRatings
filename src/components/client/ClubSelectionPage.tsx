@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { teamList } from "@/lib/utils/teamList";
 import { handleAddUserToGroup } from "@/lib/firebase/client-actions";
 import { Spinner } from "@/components/ui/Spinner"; // Using your existing Spinner
+import { toast } from "sonner";
 
 export default function ClubSelectionPage() {
   const { user } = useAuth();
@@ -53,7 +54,7 @@ export default function ClubSelectionPage() {
     } catch (e) {
       console.error(e);
       setLoadingTeam(null);
-      alert("Failed to join the team. Please try again.");
+      toast.error("Couldn't join that club. Please try again.");
     }
   };
 
@@ -159,6 +160,8 @@ export default function ClubSelectionPage() {
                   <CardContent sx={{ p: 0, textAlign: "center" }}>
                     <Box
                       component="img"
+                      loading="lazy"
+                      decoding="async"
                       src={team.logo}
                       alt={team.name}
                       sx={{
@@ -211,7 +214,10 @@ export default function ClubSelectionPage() {
           {pendingTeam && (
             <Box
               component="img"
+              loading="lazy"
+              decoding="async"
               src={pendingTeam.logo}
+              alt={pendingTeam.name}
               sx={{ width: 80, height: 80, mb: 2, objectFit: "contain" }}
             />
           )}

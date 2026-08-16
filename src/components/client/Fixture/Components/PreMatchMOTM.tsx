@@ -28,6 +28,8 @@ import { RootState } from "@/lib/redux/store";
 import PlayersSelect from "../../Widgets/PlayersSelect";
 import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
 import { useClubView } from "@/context/ClubViewProvider";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
 interface PreMatchMOTMProps {
   fixture: any;
@@ -84,9 +86,18 @@ export default function PreMatchMOTM({
 
   const topPlayer = result[0];
 
+  const { run: submitMotm, pending: isSubmitting } = useAsyncAction(
+    handlePredictPreMatchMotm,
+    {
+      successMessage: "Player to watch locked in.",
+      errorMessage: "Couldn't lock in your player to watch. Try again.",
+      toastId: `prematch-motm-${matchId}`,
+    },
+  );
+
   const handleSubmit = async () => {
     if (!user || !selectedPlayer) return;
-    await handlePredictPreMatchMotm({
+    await submitMotm({
       matchId,
       playerId: selectedPlayer,
       groupId,
@@ -129,6 +140,7 @@ export default function PreMatchMOTM({
             <Stack direction="row" spacing={2} alignItems="center">
               <Box sx={{ position: "relative" }}>
                 <Avatar
+                  alt={topPlayer.name}
                   src={activeSquad?.[topPlayer.playerId]?.photo}
                   sx={{
                     width: 70, // Slightly smaller to prevent vertical bloat
@@ -290,15 +302,16 @@ export default function PreMatchMOTM({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <Button
+              <AsyncButton
                 onClick={handleSubmit}
                 variant="contained"
                 fullWidth
+                loading={isSubmitting}
                 startIcon={<CheckCircleRounded />}
                 sx={{ fontWeight: 900, py: 1.5, borderRadius: "16px" }}
               >
                 LOCK IN WATCH
-              </Button>
+              </AsyncButton>
             </motion.div>
           ) : (
             <Typography

@@ -137,7 +137,7 @@ export default function AddPasswordModal({
         }}
       >
         Set Account Password
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Close">
           <X size={20} />
         </IconButton>
       </DialogTitle>
@@ -154,6 +154,7 @@ export default function AddPasswordModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowPassword(!showPassword)}
                     edge="end"
                     size="small"
@@ -189,6 +190,7 @@ export default function AddPasswordModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowConfirm(!showConfirm)}
                     edge="end"
                     size="small"

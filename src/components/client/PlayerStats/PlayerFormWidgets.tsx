@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Box,
@@ -22,6 +22,7 @@ import { selectAllMatchRatings } from "@/lib/redux/selectors/ratingsSelectors";
 import { fetchMatchPlayerRatings } from "@/lib/redux/actions/ratingsActions";
 import useGlobalData from "@/Hooks/useGlobalData";
 import useGroupData from "@/Hooks/useGroupData";
+import { withSeasonParam } from "@/lib/config/season";
 
 const RECENT_MATCH_COUNT = 3;
 
@@ -33,11 +34,17 @@ interface PlayerForm {
   photo: string;
 }
 
-export default function PlayerFormWidgets() {
+export default function PlayerFormWidgets({
+  season,
+}: {
+  /** Server-resolved season; falls back to the Redux mirror where not supplied. */
+  season?: string;
+}) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { clubSlug } = useParams();
-  const { currentYear } = useGlobalData();
+  const { currentYear: mirroredYear } = useGlobalData();
+  const currentYear = season ?? mirroredYear;
   const { activeGroupId } = useGroupData();
 
   const previousFixtures = useSelector(selectPreviousFixtures);
@@ -53,21 +60,36 @@ export default function PlayerFormWidgets() {
       .slice(0, RECENT_MATCH_COUNT);
   }, [previousFixtures]);
 
+  // Which match ratings we've already asked for. The guard used to be
+  // `!ratingsMap[mId]` with ratingsMap in the dep array: the effect re-ran each
+  // time a fetch landed, and any request still in flight was dispatched again
+  // because its entry wasn't in the map yet. A ref settles it on first request.
+  const requestedRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!activeGroupId) return;
+
+    // Season or club change invalidates everything we've fetched so far.
+    requestedRef.current = new Set();
+  }, [activeGroupId, currentYear]);
+
+  useEffect(() => {
+    if (!activeGroupId) return;
+
     recentMatches.forEach((match) => {
       const mId = String(match.fixture.id);
-      if (!ratingsMap[mId]) {
-        dispatch(
-          fetchMatchPlayerRatings({
-            matchId: mId,
-            groupId: activeGroupId,
-            currentYear,
-          }),
-        );
-      }
+      if (requestedRef.current.has(mId)) return;
+
+      requestedRef.current.add(mId);
+      dispatch(
+        fetchMatchPlayerRatings({
+          matchId: mId,
+          groupId: activeGroupId,
+          currentYear,
+        }),
+      );
     });
-  }, [recentMatches, activeGroupId, currentYear, ratingsMap, dispatch]);
+  }, [recentMatches, activeGroupId, currentYear, dispatch]);
 
   const { hotPlayer, coldPlayer, isLoading } = useMemo(() => {
     if (!squadData || Object.keys(squadData).length === 0) {
@@ -164,14 +186,24 @@ export default function PlayerFormWidgets() {
             variant="hot"
             player={hotPlayer}
             onClick={() =>
-              router.push(`/${clubSlug}/players/${hotPlayer.playerId}`)
+              router.push(
+                withSeasonParam(
+                  `/${clubSlug}/players/${hotPlayer.playerId}`,
+                  currentYear,
+                ),
+              )
             }
           />
           <FormCard
             variant="cold"
             player={coldPlayer}
             onClick={() =>
-              router.push(`/${clubSlug}/players/${coldPlayer.playerId}`)
+              router.push(
+                withSeasonParam(
+                  `/${clubSlug}/players/${coldPlayer.playerId}`,
+                  currentYear,
+                ),
+              )
             }
           />
         </Stack>

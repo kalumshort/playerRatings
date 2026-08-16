@@ -6,11 +6,11 @@ import { useSelector } from "react-redux";
 import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
 import {
   selectActiveClubFixtures,
+  selectActiveClubFixturesLoaded,
   selectFixturesLoading,
-  selectFixturesLoaded,
 } from "@/lib/redux/selectors/fixturesSelectors";
 
-import { Spinner } from "@/components/ui/Spinner";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import useGroupData from "@/Hooks/useGroupData";
 import LatestFixtureItem from "./Fixture/FixtureHeader/LatestFixtureItem";
 import ScheduleContainer from "./Schedule/ScheduleContainer";
@@ -22,16 +22,28 @@ export default function GroupHomeClient() {
 
   const fixtures = useSelector(selectActiveClubFixtures);
   const loading = useSelector(selectFixturesLoading);
-  const loaded = useSelector(selectFixturesLoaded);
+  // Bucket presence for THIS club+season, not the global `loaded` flag. That
+  // flag stays true from the previous season across a switch, so the old
+  // `notStarted` heuristic fell through and rendered empty content.
+  const activeSeasonLoaded = useSelector(selectActiveClubFixturesLoaded);
+
   const { userHomeGroup } = useGroupData();
 
-  // "Not started" = store uninitialised, fetch hasn't been dispatched yet.
-  // Without this, the first render sees loading=false, loaded=false and falls
-  // straight through to render empty content — causing the flash.
-  const notStarted = !loaded && !loading;
-
-  if (notStarted || loading) {
-    return <Spinner text="Loading Stadium Data..." />;
+  // An in-place skeleton, not <Spinner />: that one is position:fixed / 100vh /
+  // z-9999, so switching season blanked the entire app including the header.
+  if (!activeSeasonLoaded || loading) {
+    return (
+      <Box sx={{ mt: { xs: 2, md: 4 } }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <PageSkeleton rows={3} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <PageSkeleton rows={1} />
+          </Grid>
+        </Grid>
+      </Box>
+    );
   }
 
   return (

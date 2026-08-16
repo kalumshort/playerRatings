@@ -28,6 +28,7 @@ import { useParams } from "next/navigation";
 // --- CLEAN IMPORTS ---
 import { handleLivePlayerStats } from "@/lib/firebase/client-actions";
 import { RootState } from "@/lib/redux/store";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
 interface PlayerActionModalProps {
   open: boolean;
@@ -80,44 +81,48 @@ export default function PlayerActionModal({
   if (!player) return null;
 
   // 3. HANDLERS
-  const handleCastVote = async (
+  // The modal used to close before the write, so a failed vote looked exactly
+  // like a successful one. Closing is now an onSuccess concern.
+  const { run: castVote, pending: isVoting } = useAsyncAction(
+    async (type: string, subInId: string | number | null = null) => {
+      const commonPayload = {
+        groupId,
+        currentYear,
+        matchId: String(fixtureId),
+        timeElapsed: String(elapsedTime),
+        playerId: String(player.id),
+      };
+
+      // One write for both keys: as two sequential writes, a failure between
+      // them counted `sub` without `sub_req_{id}` and corrupted sortedSubs.
+      const statKeys =
+        type === "sub" && subInId ? ["sub", `sub_req_${subInId}`] : [type];
+
+      await handleLivePlayerStats({ ...commonPayload, statKeys });
+    },
+    {
+      errorMessage: "Vote didn't go through. Try again.",
+      toastId: `player-vote-${fixtureId}`,
+      onSuccess: () => {
+        onClose();
+        setView("main");
+      },
+    },
+  );
+
+  const handleCastVote = (
     type: string,
     subInId: string | number | null = null,
-  ) => {
-    onClose();
-    setView("main");
-
-    const commonPayload = {
-      groupId,
-      currentYear,
-      matchId: String(fixtureId),
-      timeElapsed: String(elapsedTime),
-      playerId: String(player.id),
-    };
-
-    try {
-      if (type === "sub" && subInId) {
-        // Vote for the specific sub combo
-        await handleLivePlayerStats({ ...commonPayload, statKey: "sub" });
-        await handleLivePlayerStats({
-          ...commonPayload,
-          statKey: `sub_req_${subInId}`,
-        });
-      } else {
-        // Simple Hot/Cold vote
-        await handleLivePlayerStats({ ...commonPayload, statKey: type });
-      }
-    } catch (err) {
-      console.error("Vote failed:", err);
-    }
-  };
+  ) => castVote(type, subInId);
 
   return (
     <Dialog open={open} onClose={onClose} TransitionComponent={Zoom}>
       <Box sx={{ p: 3, position: "relative" }}>
         {/* CLOSE */}
         <IconButton
+          aria-label="Close player actions"
           onClick={onClose}
+          disabled={isVoting}
           sx={{
             position: "absolute",
             right: 8,
@@ -164,6 +169,7 @@ export default function PlayerActionModal({
                     border="#FFCC80"
                     icon={<WhatshotRounded sx={{ fontSize: 40 }} />}
                     onClick={() => handleCastVote("hot")}
+                    disabled={isVoting}
                   />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
@@ -174,6 +180,7 @@ export default function PlayerActionModal({
                     border="#81D4FA"
                     icon={<AcUnitRounded sx={{ fontSize: 40 }} />}
                     onClick={() => handleCastVote("cold")}
+                    disabled={isVoting}
                   />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
@@ -220,6 +227,7 @@ export default function PlayerActionModal({
                         sub={sub}
                         squadData={squadData}
                         onVote={handleCastVote}
+                        disabled={isVoting}
                       />
                     ))}
                   </Stack>
@@ -247,6 +255,7 @@ export default function PlayerActionModal({
                       sub={sub}
                       squadData={squadData}
                       onVote={handleCastVote}
+                      disabled={isVoting}
                     />
                   ))}
                 </Stack>
@@ -268,10 +277,19 @@ export default function PlayerActionModal({
 
 // --- SUB-COMPONENTS ---
 
-const ActionButton = ({ label, color, bg, border, icon, onClick }: any) => (
+const ActionButton = ({
+  label,
+  color,
+  bg,
+  border,
+  icon,
+  onClick,
+  disabled,
+}: any) => (
   <Button
     fullWidth
     onClick={onClick}
+    disabled={disabled}
     sx={(theme: any) => ({
       ...theme.clay?.button,
       height: 110,
@@ -289,7 +307,7 @@ const ActionButton = ({ label, color, bg, border, icon, onClick }: any) => (
   </Button>
 );
 
-const SubItem = ({ sub, squadData, onVote }: any) => {
+const SubItem = ({ sub, squadData, onVote, disabled }: any) => {
   const player = sub.player;
   if (!player) return null;
 
@@ -297,6 +315,7 @@ const SubItem = ({ sub, squadData, onVote }: any) => {
     <Button
       fullWidth
       onClick={() => onVote("sub", player.id)}
+      disabled={disabled}
       sx={{
         justifyContent: "space-between",
         p: 1,

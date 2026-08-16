@@ -9,14 +9,20 @@ import {
 import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
 import { Box } from "@mui/material";
+import { resolveSeason } from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string }>;
+  searchParams: Promise<{ season?: string }>;
 }
 
-export default async function SchedulePage({ params }: PageProps) {
+export default async function SchedulePage({
+  params,
+  searchParams,
+}: PageProps) {
   // 1. Await params (Required in Next.js 15)
   const { clubSlug } = await params;
+  const { season: seasonParam } = await searchParams;
 
   // 2. FETCH GROUP FIRST
   const group = await getGroupBySlugServer(clubSlug);
@@ -35,9 +41,10 @@ export default async function SchedulePage({ params }: PageProps) {
   }
 
   // 4. DATA FETCHING (Only happens if authorized)
-  const currentYear = "2025";
+  // Allowlisted before it reaches a Firestore path
+  const season = resolveSeason(seasonParam);
   const clubId = group.groupClubId;
-  const fixtures = await getFixturesByClubServer(clubId, currentYear);
+  const fixtures = await getFixturesByClubServer(clubId, season);
 
   // 5. DATA PROCESSING
   const stats = calculateStats(fixtures, clubId);
@@ -49,12 +56,21 @@ export default async function SchedulePage({ params }: PageProps) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        // ScheduleContainer is an inner-scrolling panel, so it needs a bounded
+        // height. 100vh was wrong twice over: it ignores the mobile URL bar,
+        // and it didn't subtract the fixed header spacer, so the bottom of the
+        // list sat below the fold and was unreachable. dvh tracks the visible
+        // viewport; the offsets match the spacer in Header/index.tsx.
+        height: { xs: "calc(100dvh - 64px)", md: "calc(100dvh - 80px)" },
         overflow: "hidden",
       }}
     >
-      <SeasonOverview stats={stats} played={played} />
-      <ScheduleContainer initialFixtures={fixtures} />
+      <SeasonOverview stats={stats} played={played} season={season} />
+      <ScheduleContainer
+        initialFixtures={fixtures}
+        season={season}
+        clubId={clubId}
+      />
     </Box>
   );
 }

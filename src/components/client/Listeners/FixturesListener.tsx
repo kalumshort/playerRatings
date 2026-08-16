@@ -27,8 +27,9 @@ export const FixtureListener = ({
 }: FixturesListenerProps) => {
   const dispatch = useDispatch();
 
-  // Ref to prevent unnecessary dispatches if data hasn't actually changed
-  const lastUpdateRef = useRef<string | null>(null);
+  // Per-key fingerprints, so we can dispatch only the fields that actually
+  // changed rather than the whole document.
+  const lastKeyJsonRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     // 1. Validation & Setup
@@ -39,6 +40,9 @@ export const FixtureListener = ({
     const sYear = String(currentYear);
     const sFixtureId = String(fixtureId);
     const sClubId = String(clubId);
+
+    // New subscription: forget the previous fixture's keys.
+    lastKeyJsonRef.current = {};
 
     // 2. Reference Construction
     const fixtureRef = doc(clientDB, "fixtures", sYear, "fixtures", sFixtureId);
@@ -53,21 +57,37 @@ export const FixtureListener = ({
 
         const data = snapshot.data();
 
-        // Simple stringified check to avoid Redux dispatch loops if data is identical
-        const dataFingerprint = JSON.stringify(data);
+        // Diff per key, not over the whole document.
+        //
+        // A live match emits a snapshot roughly every minute, and usually only
+        // `status.elapsed` has moved. Dispatching the entire doc gave `events`,
+        // `lineups` and `teams` fresh object identities every time, which
+        // invalidated every downstream useMemo keyed on them — the whole
+        // fixture hub recomputed once a minute for a clock tick.
+        //
+        // updateSingleFixture merges ({...prev, ...data}), so sending only the
+        // changed keys leaves the untouched ones reference-stable.
+        const changed: Record<string, unknown> = {};
+        const nextFingerprints: Record<string, string> = {};
 
-        if (lastUpdateRef.current !== dataFingerprint) {
-          lastUpdateRef.current = dataFingerprint;
-
-          dispatch(
-            updateSingleFixture({
-              id: snapshot.id,
-              data: data,
-              year: sYear,
-              clubId: sClubId,
-            }),
-          );
+        for (const [key, value] of Object.entries(data)) {
+          const json = JSON.stringify(value ?? null);
+          nextFingerprints[key] = json;
+          if (lastKeyJsonRef.current[key] !== json) changed[key] = value;
         }
+
+        lastKeyJsonRef.current = nextFingerprints;
+
+        if (Object.keys(changed).length === 0) return;
+
+        dispatch(
+          updateSingleFixture({
+            id: snapshot.id,
+            data: changed,
+            year: sYear,
+            clubId: sClubId,
+          }),
+        );
       },
       (error) => {
         console.error(

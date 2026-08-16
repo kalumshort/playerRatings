@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Globe, Lock, ShieldCheck } from "lucide-react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { toast } from "sonner";
 
 export default function GroupPrivacySettings({ group }: { group: any }) {
   const theme = useTheme();
@@ -37,6 +38,7 @@ export default function GroupPrivacySettings({ group }: { group: any }) {
       });
     } catch (error) {
       console.error("Cloud Function: Mode update failed", error);
+      toast.error("Couldn't change the privacy mode. Try again.");
     } finally {
       setLoading(null);
     }

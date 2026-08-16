@@ -26,3 +26,7 @@ yarn-error.log*
 # next.js
 .next
 .turbo
+# firebase emulator
+firestore-debug.log
+firebase-debug.log
+.firebase/

@@ -161,7 +161,7 @@ export default function ScorePredictionResults({
               <Typography variant="h6" fontWeight={900}>
                 SCORE DISTRIBUTION
               </Typography>
-              <IconButton onClick={() => setOpen(false)} size="small">
+              <IconButton onClick={() => setOpen(false)} size="small" aria-label="Close">
                 <CloseRounded />
               </IconButton>
             </Stack>

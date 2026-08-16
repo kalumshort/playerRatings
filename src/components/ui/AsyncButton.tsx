@@ -15,12 +15,19 @@ import {
 
 interface AsyncButtonProps extends ButtonProps {
   loading?: boolean;
+  /**
+   * Keep the caller's own background while loading. Buttons that paint a
+   * gradient via `background` need this, otherwise the loading state's
+   * `backgroundColor: !important` stomps it mid-flight.
+   */
+  keepBackground?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const AsyncButton = ({
   children,
   loading = false,
+  keepBackground = false,
   onClick,
   sx = {},
   ...props
@@ -42,7 +49,9 @@ export const AsyncButton = ({
       boxShadow: `${pressedShadow} !important`,
       transform: "translateY(2px) !important",
       pointerEvents: "none",
-      backgroundColor: `${mainColor} !important`,
+      ...(keepBackground
+        ? {}
+        : { backgroundColor: `${mainColor} !important` }),
       color: "transparent !important",
       // Ensure icons are hidden too
       "& .MuiButton-startIcon, & .MuiButton-endIcon": {
@@ -54,24 +63,42 @@ export const AsyncButton = ({
     theme.palette.primary.main,
     theme.palette.secondary.main,
     props.color,
+    keepBackground,
   ]);
+
+  // The spinner can't inherit the button's colour — `loadingStyles` sets
+  // `color: transparent !important` to hide the label, which would hide the
+  // spinner too. Derive it from whatever the button is filled with instead.
+  // The old code picked #fff in light and near-white text.primary in dark;
+  // both land at ~1.9:1 on the pale #93BFEC primary, so the spinner was
+  // effectively invisible in *both* modes and the branch changed nothing.
+  const spinnerColor = useMemo(() => {
+    // keepBackground means the caller painted its own gradient; those are the
+    // dark, white-labelled buttons, and we can't measure a gradient here.
+    if (keepBackground) return "#fff";
+    const colorKey = props.color === "secondary" ? "secondary" : "primary";
+    return theme.palette.getContrastText(
+      (theme.palette[colorKey] as any).main,
+    );
+  }, [theme, props.color, keepBackground]);
 
   return (
     <Button
       {...props}
       onClick={!loading ? onClick : undefined}
-      sx={{
-        position: "relative",
-        transition: "all 0.2s ease",
-        fontWeight: 900,
-        borderRadius: "16px",
-
-        // Apply loading styles if active
-        ...(loading ? loadingStyles : {}),
-
-        // Merge external styles
+      // MUI's array form. Spreading an array into an object literal (the
+      // previous shape) produced { "0": {...} } and silently dropped every
+      // caller's sx. Later entries win, so callers can still override.
+      sx={[
+        {
+          position: "relative",
+          transition: "all 0.2s ease",
+          fontWeight: 900,
+          borderRadius: "16px",
+        },
+        loading && loadingStyles,
         ...(Array.isArray(sx) ? sx : [sx]),
-      }}
+      ]}
     >
       {/* Content wrapper */}
       <Box
@@ -95,16 +122,7 @@ export const AsyncButton = ({
             display: "flex",
           }}
         >
-          <CircularProgress
-            size={24}
-            thickness={6}
-            sx={{
-              color:
-                theme.palette.mode === "light"
-                  ? "#fff"
-                  : theme.palette.text.primary,
-            }}
-          />
+          <CircularProgress size={24} thickness={6} sx={{ color: spinnerColor }} />
         </Box>
       )}
     </Button>

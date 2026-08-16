@@ -174,7 +174,11 @@ const PlayerStatRow = ({ rank, player, percentage, color }: any) => {
             height: 20,
             px: 0.5,
             bgcolor: isStarter ? color : "grey.400",
-            color: "#fff",
+            // Was a hardcoded #fff: ~1.9:1 on grey.400, and unpredictable on
+            // `color`, which is the club's own accent.
+            color: theme.palette.getContrastText(
+              isStarter ? color : theme.palette.grey[400],
+            ),
             borderRadius: "10px",
             display: "grid",
             placeItems: "center",

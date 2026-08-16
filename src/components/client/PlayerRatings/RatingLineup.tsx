@@ -42,7 +42,9 @@ export default function RatingLineup({
   const groupClubId = Number(activeGroup?.groupClubId);
 
   // 2. Ratings Data
-  const matchRatings = useSelector(selectMatchRatingsById(fixture.fixture.id));
+  const matchRatings = useSelector((state: any) =>
+    selectMatchRatingsById(state, fixture.fixture.id),
+  );
 
   const handleChange = (event: SelectChangeEvent) => {
     setRatingSrc(event.target.value as "Group" | "Personal");

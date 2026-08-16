@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
 import {
   Box,
   Typography,
@@ -16,79 +15,24 @@ import {
   SwipeableDrawer,
   Grid,
   Avatar,
-  styled,
-  useTheme,
+  Paper,
+  TextField,
+  InputAdornment,
   alpha,
-  Fade,
 } from "@mui/material";
-import { CheckCircle, DeleteSweep, Add as AddIcon } from "@mui/icons-material";
+import { DeleteSweep, SearchRounded } from "@mui/icons-material";
 
 // --- CLEAN IMPORTS ---
 
 import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
-import { FORMATIONS } from "./LineupPredictor";
+import { FORMATIONS, DEFAULT_FORMATION, POSITION_BY_ROW } from "./formations";
+import Pitch from "./Pitch";
+import { PitchPlayer, EmptyPitchSlot } from "./PitchPlayer";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import { handlePredictTeamSubmit } from "@/lib/firebase/client-actions";
+import { toast } from "sonner";
 import { selectActiveSquadMapped } from "@/lib/redux/selectors/squadSelectors";
-
-// --- STYLED COMPONENTS ---
-
-const PitchSurface = styled(Box)(({ theme }) => ({
-  position: "relative",
-  width: "100%",
-  aspectRatio: "0.72",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-around",
-  overflow: "hidden",
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  background: `linear-gradient(180deg, ${theme.palette.success.dark} 0%, ${theme.palette.success.main} 100%)`,
-}));
-
-const PitchMarking = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  borderColor: alpha(theme.palette.common.white, 0.4),
-  borderStyle: "solid",
-  borderWidth: 2,
-  pointerEvents: "none",
-}));
-
-const PlayerSlot = styled(Box)(({ theme }) => ({
-  width: 62,
-  height: 62,
-  cursor: "pointer",
-  position: "relative",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "50%",
-  transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-  backgroundColor: alpha(theme.palette.common.black, 0.15),
-  "&:hover": {
-    transform: "scale(1.1)",
-    backgroundColor: alpha(theme.palette.common.white, 0.2),
-  },
-}));
-
-const RemoveButton = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  top: -2,
-  right: -2,
-  width: 22,
-  height: 22,
-  borderRadius: "50%",
-  backgroundColor: theme.palette.error.main,
-  color: theme.palette.background.paper,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "14px",
-  fontWeight: "bold",
-  zIndex: 10,
-}));
 
 // --- COMPONENT ---
 
@@ -126,40 +70,109 @@ export default function EnhancedLineupPredictor({
     usersMatchData?.chosenTeam || {},
   );
   const [formation, setFormation] = useState(
-    usersMatchData?.formation || "4-3-3 Holding",
+    usersMatchData?.formation || DEFAULT_FORMATION,
   );
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("Goalkeeper");
+  const [query, setQuery] = useState("");
 
   // 3. LOGIC HELPERS
-  const getPositionBySlot = (slotId: number) => {
-    if (slotId === 1) return "Goalkeeper";
-    if ([2, 3, 4, 5, 7].includes(slotId)) return "Defender"; // Flexible based on formationConfig
-    if ([6, 8, 10].includes(slotId)) return "Midfielder";
-    return "Attacker";
-  };
+
+  // Which squad position a slot belongs to, keyed by the formation row it sits
+  // in. The old version was a fixed slot->position map, so in 4-3-3 Holding
+  // tapping the right winger (slot 7) opened the DEFENDER tab.
+  const slotPosition = useMemo(() => {
+    const map: Record<number, string> = {};
+    (FORMATIONS[formation] || FORMATIONS[DEFAULT_FORMATION]).forEach((row) => {
+      row.slots.forEach((s) => {
+        map[s] = POSITION_BY_ROW[row.rowId];
+      });
+    });
+    return map;
+  }, [formation]);
+
+  const trimmedQuery = query.trim().toLowerCase();
+
+  /** The player currently occupying the tapped slot, if any. */
+  const activePlayer =
+    activeSlot != null ? squadData[chosenTeam[activeSlot]] : null;
 
   const filteredSquad = useMemo(() => {
-    return Object.entries(squadData).filter(
-      ([id, p]: [string, any]) =>
-        p.position === selectedTab && !Object.values(chosenTeam).includes(id),
-    );
-  }, [squadData, selectedTab, chosenTeam]);
+    const entries = Object.entries(squadData) as [string, any][];
+
+    // Searching ignores the position tab entirely. That's what makes the
+    // lossy row->position mapping harmless: a wing-back sitting in the `mid`
+    // row is still one keystroke away.
+    if (trimmedQuery) {
+      return entries.filter(([, p]) => {
+        const name = String(p.name ?? "").toLowerCase();
+        const number = String(p.number ?? "");
+        return name.includes(trimmedQuery) || number === trimmedQuery;
+      });
+    }
+
+    // Already-picked players stay visible (marked "In XI") so the commonest
+    // edit of all — two players in the wrong slots — is a single swap.
+    return entries.filter(([, p]) => p.position === selectedTab);
+  }, [squadData, selectedTab, chosenTeam, trimmedQuery]);
 
   // 4. HANDLERS
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setActiveSlot(null);
+    setQuery("");
+  };
+
   const handleSlotClick = (slotId: number) => {
     setActiveSlot(slotId);
-    setSelectedTab(getPositionBySlot(slotId));
+    setSelectedTab(slotPosition[slotId] ?? "Midfielder");
+    setQuery("");
     setIsDrawerOpen(true);
   };
 
+  /**
+   * Assign a player to a slot, swapping if they're already in the XI
+   * elsewhere. Without the swap, moving two players past each other means
+   * removing both first.
+   */
   const handlePlayerPick = (playerId: string) => {
-    if (activeSlot) {
-      setTeam((prev) => ({ ...prev, [activeSlot]: playerId }));
-      setIsDrawerOpen(false);
-      setActiveSlot(null);
-    }
+    if (activeSlot == null) return;
+
+    setTeam((prev) => {
+      const next = { ...prev };
+      const existingSlot = Object.keys(next).find((s) => next[s] === playerId);
+      const displaced = next[activeSlot];
+
+      next[activeSlot] = playerId;
+
+      if (existingSlot && existingSlot !== String(activeSlot)) {
+        if (displaced) next[existingSlot] = displaced;
+        else delete next[existingSlot];
+      }
+      return next;
+    });
+
+    closeDrawer();
+  };
+
+  const handleRemoveActiveSlot = () => {
+    if (activeSlot == null) return;
+    setTeam((prev) => {
+      const next = { ...prev };
+      delete next[activeSlot];
+      return next;
+    });
+    closeDrawer();
+  };
+
+  /** Optimistic clear with an undo, rather than a confirm dialog. */
+  const handleClearAll = () => {
+    const snapshot = chosenTeam;
+    setTeam({});
+    toast("Lineup cleared", {
+      action: { label: "Undo", onClick: () => setTeam(snapshot) },
+    });
   };
 
   const handleConfirm = async () => {
@@ -177,7 +190,11 @@ export default function EnhancedLineupPredictor({
       });
       // Logic for refreshing predictions is handled by the real-time listener
     } catch (error) {
-      console.error(error);
+      console.error("Lineup submission failed:", error);
+      toast.error("Couldn't submit your XI. Try again.", {
+        id: `lineup-${matchId}`,
+        duration: 6000,
+      });
     } finally {
       setLoading(false);
     }
@@ -208,7 +225,7 @@ export default function EnhancedLineupPredictor({
 
         <Button
           startIcon={<DeleteSweep />}
-          onClick={() => setTeam({})}
+          onClick={handleClearAll}
           color="error"
           sx={{ fontWeight: 800 }}
         >
@@ -217,92 +234,30 @@ export default function EnhancedLineupPredictor({
       </Stack>
 
       {/* PITCH */}
-      <PitchSurface>
-        <PitchMarking
-          sx={{
-            top: "-10%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "40%",
-            height: "25%",
-            borderRadius: "50%",
-          }}
-        />
-        <PitchMarking
-          sx={{ top: 0, width: "100%", borderBottomWidth: 2, height: 0 }}
-        />
-        <PitchMarking
-          sx={{
-            bottom: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "70%",
-            height: "18%",
-            borderBottom: "none",
-          }}
-        />
+      <Pitch
+        formation={formation}
+        sx={{ my: 2 }}
+        renderSlot={({ slotId, position }) => {
+          const playerId = chosenTeam[slotId];
+          const player = squadData[playerId];
 
-        {(FORMATIONS[formation] || FORMATIONS["4-3-3 Holding"]).map((row) => (
-          <Box
-            key={row.rowId}
-            sx={{ display: "flex", justifyContent: "space-evenly", zIndex: 1 }}
-          >
-            {row.slots.map((slotId) => {
-              const playerId = chosenTeam[slotId];
-              const player = squadData[playerId];
-
-              return player ? (
-                <Box
-                  key={slotId}
-                  sx={{ position: "relative", textAlign: "center" }}
-                >
-                  <Avatar
-                    src={player.photo}
-                    sx={{
-                      width: 56,
-                      height: 56,
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: "block",
-                      color: "common.white",
-                      mt: 0.5,
-                    }}
-                  >
-                    {player.name.split(" ").pop()}
-                  </Typography>
-                  <RemoveButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTeam((prev) => {
-                        const n = { ...prev };
-                        delete n[slotId];
-                        return n;
-                      });
-                    }}
-                  >
-                    ×
-                  </RemoveButton>
-                </Box>
-              ) : (
-                <PlayerSlot
-                  key={slotId}
-                  onClick={() => handleSlotClick(slotId)}
-                >
-                  <AddIcon
-                    sx={{
-                      color: (t) => alpha(t.palette.common.white, 0.4),
-                      fontSize: 24,
-                    }}
-                  />
-                </PlayerSlot>
-              );
-            })}
-          </Box>
-        ))}
-      </PitchSurface>
+          // Filled slots are tappable to replace — removal lives in the
+          // drawer now, so the pitch carries no micro-controls.
+          return player ? (
+            <PitchPlayer
+              name={player.name.split(" ").pop()}
+              fullName={player.name}
+              photo={player.photo}
+              onClick={() => handleSlotClick(slotId)}
+            />
+          ) : (
+            <EmptyPitchSlot
+              onClick={() => handleSlotClick(slotId)}
+              label={`Add a ${position}`}
+            />
+          );
+        }}
+      />
 
       {/* ACTION */}
       <Box sx={{ mt: 3, textAlign: "center" }}>
@@ -321,82 +276,167 @@ export default function EnhancedLineupPredictor({
       <SwipeableDrawer
         anchor="bottom"
         open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
+        onClose={closeDrawer}
         onOpen={() => setIsDrawerOpen(true)}
+        disableDiscovery
         PaperProps={{
           sx: {
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             maxHeight: "80vh",
-            // Add smooth height transition to the drawer itself
-            transition: "height 0.3s ease-in-out",
           },
         }}
       >
         <Box sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-          <Tabs
-            value={selectedTab}
-            onChange={(_, v) => setSelectedTab(v)}
-            variant="fullWidth"
-            sx={{
-              mb: 2,
-              // Optional: indicator transition
-              "& .MuiTabs-indicator": { transition: "all 0.2s ease-in-out" },
-            }}
-          >
-            <Tab label="GK" value="Goalkeeper" sx={{ fontWeight: 900 }} />
-            <Tab label="DEF" value="Defender" sx={{ fontWeight: 900 }} />
-            <Tab label="MID" value="Midfielder" sx={{ fontWeight: 900 }} />
-            <Tab label="FWD" value="Attacker" sx={{ fontWeight: 900 }} />
-          </Tabs>
-
-          {/* The Wrapper that handles the height transition */}
+          {/* Grab handle */}
           <Box
             sx={{
-              position: "relative",
-              minHeight: 200, // Keeps the drawer from snapping shut if filter is empty
-              transition: "all 0.3s ease-in-out",
+              width: 36,
+              height: 4,
+              borderRadius: 999,
+              bgcolor: "divider",
+              mx: "auto",
+              mb: 1.5,
             }}
+          />
+
+          <Typography
+            variant="overline"
+            sx={{ fontWeight: 900, letterSpacing: 1.5, opacity: 0.6, mb: 1 }}
           >
-            <Grid container spacing={1}>
-              {filteredSquad.map(([id, player]: [string, any]) => (
-                <Grid size={{ xs: 4 }} key={`${selectedTab}-${id}`}>
-                  {/* We add the tab to the key to force a clean re-render for transitions */}
-                  <Fade in={true} timeout={400}>
-                    <Stack
-                      onClick={() => handlePlayerPick(id)}
-                      alignItems="center"
-                      sx={{
-                        p: 1,
-                        borderRadius: 2,
-                        "&:hover": { bgcolor: "action.hover" },
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Avatar
-                        src={player.photo}
-                        sx={{ width: 50, height: 50, mb: 1 }}
-                      />
-                      <Typography
-                        variant="caption"
-                        align="center"
+            {activePlayer
+              ? `Replace ${activePlayer.name}`
+              : `Pick a ${activeSlot != null ? (slotPosition[activeSlot] ?? "player") : "player"}`}
+          </Typography>
+
+          {/* Removal lives here rather than as a 22px badge on the pitch,
+              which was under the touch-target minimum and overlapped its
+              neighbours. */}
+          {activePlayer && (
+            <Button
+              onClick={handleRemoveActiveSlot}
+              startIcon={<DeleteSweep />}
+              color="error"
+              fullWidth
+              sx={{ justifyContent: "flex-start", fontWeight: 800, mb: 1 }}
+            >
+              Remove {activePlayer.name}
+            </Button>
+          )}
+
+          <TextField
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search name or number"
+            size="small"
+            fullWidth
+            // Deliberately not autoFocus: on mobile it throws the keyboard up
+            // over the list before the user has seen it.
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRounded fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 1.5 }}
+          />
+
+          {!trimmedQuery && (
+            <Tabs
+              value={selectedTab}
+              onChange={(_, v) => setSelectedTab(v)}
+              variant="fullWidth"
+              sx={{ mb: 2 }}
+            >
+              <Tab label="GK" value="Goalkeeper" sx={{ fontWeight: 900 }} />
+              <Tab label="DEF" value="Defender" sx={{ fontWeight: 900 }} />
+              <Tab label="MID" value="Midfielder" sx={{ fontWeight: 900 }} />
+              <Tab label="FWD" value="Attacker" sx={{ fontWeight: 900 }} />
+            </Tabs>
+          )}
+
+          <Box sx={{ position: "relative", minHeight: 200 }}>
+            {filteredSquad.length === 0 ? (
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                sx={{ minHeight: 200, opacity: 0.6 }}
+                spacing={1}
+              >
+                <Typography variant="body2" fontWeight={800}>
+                  No players found
+                </Typography>
+                <Typography variant="caption">
+                  Try a different name or number.
+                </Typography>
+              </Stack>
+            ) : (
+              <Grid container spacing={1}>
+                {filteredSquad.map(([id, player]: [string, any]) => {
+                  const pickedSlot = Object.keys(chosenTeam).find(
+                    (s) => chosenTeam[s] === id,
+                  );
+                  const isPicked = Boolean(pickedSlot);
+                  const isThisSlot = pickedSlot === String(activeSlot);
+
+                  return (
+                    <Grid size={{ xs: 4 }} key={id}>
+                      <Stack
+                        onClick={() => handlePlayerPick(id)}
+                        alignItems="center"
                         sx={{
-                          fontWeight: 800,
-                          fontSize: "0.7rem",
-                          // Prevent text jumping
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
+                          p: 1,
+                          borderRadius: 2,
+                          position: "relative",
+                          opacity: isThisSlot ? 0.5 : 1,
+                          "&:hover": { bgcolor: "action.hover" },
+                          cursor: "pointer",
                         }}
                       >
-                        {player.name}
-                      </Typography>
-                    </Stack>
-                  </Fade>
-                </Grid>
-              ))}
-            </Grid>
+                        <Avatar
+                          src={player.photo}
+                          alt={player.name}
+                          sx={{ width: 50, height: 50, mb: 1 }}
+                        />
+                        <Typography
+                          variant="caption"
+                          align="center"
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: "0.7rem",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {player.name}
+                        </Typography>
+
+                        {isPicked && !isThisSlot && (
+                          <Paper
+                            variant="pill"
+                            sx={(t) => ({
+                              position: "absolute",
+                              top: 2,
+                              right: 2,
+                              px: 0.6,
+                              fontSize: "0.55rem",
+                              fontWeight: 900,
+                              bgcolor: alpha(t.palette.primary.main, 0.22),
+                              color: "text.primary",
+                            })}
+                          >
+                            IN XI
+                          </Paper>
+                        )}
+                      </Stack>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
           </Box>
         </Box>
       </SwipeableDrawer>

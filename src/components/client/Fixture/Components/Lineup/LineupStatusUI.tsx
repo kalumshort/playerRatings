@@ -78,8 +78,9 @@ export const StatusLegend = ({ open, setOpen, active }: any) => {
           cursor: "pointer",
         }}
       >
-        <InfoOutlined sx={{ color: "common.white", fontSize: 16, mr: 0.5 }} />
-        <Typography variant="caption" sx={{ color: "common.white" }}>
+        {/* Was common.white on a `pill` Paper, which is #FFFFFF in light mode. */}
+        <InfoOutlined sx={{ color: "text.secondary", fontSize: 16, mr: 0.5 }} />
+        <Typography variant="caption" sx={{ color: "text.primary" }}>
           KEY
         </Typography>
       </Paper>
@@ -97,7 +98,7 @@ export const StatusLegend = ({ open, setOpen, active }: any) => {
         <Typography variant="caption" fontWeight={900}>
           STATUS KEY
         </Typography>
-        <IconButton size="small" onClick={() => setOpen(false)}>
+        <IconButton size="small" onClick={() => setOpen(false)} aria-label="Close">
           <Close fontSize="small" />
         </IconButton>
       </Stack>

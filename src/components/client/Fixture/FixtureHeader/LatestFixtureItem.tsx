@@ -7,6 +7,8 @@ import { selectLatestFixture } from "@/lib/redux/selectors/fixturesSelectors";
 // import { footballClubsColours } from "@/hooks/Helper_Functions";
 import { useParams, useRouter } from "next/navigation";
 import FixtureHeader from "./FixtureHeader";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 // Sub-components (We'll need to modernize these next)
 
@@ -16,6 +18,7 @@ export default function LatestFixtureItem() {
   const latestFixture = useSelector(selectLatestFixture);
   const params = useParams();
   const clubSlug = params?.clubSlug;
+  const { season } = useClubView();
 
   if (!latestFixture) {
     return (
@@ -37,7 +40,13 @@ export default function LatestFixtureItem() {
   // 2. Generate Gradient (Modern MUI approach)
 
   const handleFixtureClick = () => {
-    router.push(`${clubSlug}/fixture/${latestFixture.fixture.id}`);
+    // Leading slash matters: the relative form resolved wrongly from nested routes
+    router.push(
+      withSeasonParam(
+        `/${clubSlug}/fixture/${latestFixture.fixture.id}`,
+        season,
+      ),
+    );
   };
 
   return <FixtureHeader fixture={latestFixture} onClick={handleFixtureClick} />;

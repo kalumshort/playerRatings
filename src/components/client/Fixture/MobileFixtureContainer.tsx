@@ -13,7 +13,9 @@ import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
 import { useClubView } from "@/context/ClubViewProvider";
+import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
+import FixtureUnavailable from "./FixtureUnavailable";
 
 // Components (Ensure these paths match your new Next.js structure)
 
@@ -32,7 +34,11 @@ export default function MobileFixtureContainer({
   groupId,
   groupData,
 }: MobileFixtureContainerProps) {
-  const { isGuestView } = useClubView();
+  // Archived seasons are read-only. The interactive children below already model
+  // "can't interact" as isGuestView, so reuse that switch rather than a parallel one.
+  // currentYear is resolved server-side, so this is right on the first render.
+  const { isGuestView: isGuest } = useClubView();
+  const isGuestView = isGuest || isArchivedSeason(currentYear);
 
   // 1. Match Status Helpers
   const status = fixture?.fixture?.status?.short;
@@ -84,7 +90,9 @@ export default function MobileFixtureContainer({
     }
   }, [tabs, selectedTab]);
 
-  if (tabs.length === 0) return null;
+  if (tabs.length === 0) {
+    return <FixtureUnavailable status={fixture?.fixture?.status?.short} />;
+  }
 
   return (
     <>
@@ -223,12 +231,16 @@ export default function MobileFixtureContainer({
                   isPreMatch={isPreMatch}
                   isGuestView={isGuestView}
                 />
+                {/* Pass the real isGuestView. Hardcoding `true` here hid the
+                    tab bar and forced the consensus branch, so a member could
+                    never see their own XI once the match had started — which
+                    is exactly when the prediction becomes scoreable. */}
                 <LineupPredictorResults
                   fixture={fixture}
                   groupId={groupId}
                   currentYear={currentYear}
                   groupData={groupData}
-                  isGuestView={true}
+                  isGuestView={isGuestView}
                 />
               </>
             )}

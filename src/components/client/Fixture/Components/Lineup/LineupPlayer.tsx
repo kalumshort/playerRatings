@@ -231,6 +231,7 @@ export default function LineupPlayer({
 
         {onDelete && (
           <IconButton
+            aria-label="Remove player from lineup"
             size="small"
             onClick={(e) => {
               e.stopPropagation();
@@ -262,8 +263,14 @@ export default function LineupPlayer({
           noWrap
           sx={{
             mt: 1,
-            color: "common.white",
-            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.8)}`,
+            // Was common.white + a black shadow, which assumed a dark pitch.
+            // Lineup.tsx renders this on a plain Paper, so in light mode the
+            // names were white on white and only the shadow made them legible.
+            color: "text.primary",
+            textShadow:
+              theme.palette.mode === "dark"
+                ? "none"
+                : `0 1px 1px ${alpha(theme.palette.common.white, 0.8)}`,
             textAlign: "center",
             width: "100%",
           }}

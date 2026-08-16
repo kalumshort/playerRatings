@@ -1,9 +1,9 @@
 // src/app/sitemap.ts
 import { MetadataRoute } from "next";
 import { adminDb } from "@/lib/firebase/admin";
+import { CURRENT_SEASON } from "@/lib/config/season";
 
 const BASE_URL = "https://11votes.com";
-const CURRENT_YEAR = "2025";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Logic: 7 days ago in seconds (API-Football uses Unix timestamps)
@@ -12,9 +12,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Fetch data in parallel
   // Note: Added .where filter to fixtures to limit read costs and payload size
   const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
-    adminDb.collection("groups").where("visibility", "==", "public").get(),
+    // `isPublic` is the field the app itself gates on ([clubSlug]/page.tsx),
+    // and the only one updateGroupPrivacy has always written.
+    adminDb.collection("groups").where("isPublic", "==", true).get(),
+    // Current season only — archived `?season=` views are deliberately excluded
+    // and rendered noindex, so they never compete with these canonical URLs.
     adminDb
-      .collection(`fixtures/${CURRENT_YEAR}/fixtures`)
+      .collection(`fixtures/${CURRENT_SEASON}/fixtures`)
       .where("fixture.timestamp", ">=", sevenDaysAgoSeconds)
       .get(),
   ]);

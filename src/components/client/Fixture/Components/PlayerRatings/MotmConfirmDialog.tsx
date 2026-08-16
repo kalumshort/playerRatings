@@ -14,17 +14,20 @@ import {
   Typography,
 } from "@mui/material";
 import { HelpOutlineRounded, WarningRounded } from "@mui/icons-material";
+import { AsyncButton } from "@/components/ui/AsyncButton";
 
 interface MotmConfirmProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
 }
 
 export default function MotmConfirmDialog({
   open,
   onClose,
   onConfirm,
+  loading = false,
 }: MotmConfirmProps) {
   const theme = useTheme();
 
@@ -68,6 +71,7 @@ export default function MotmConfirmDialog({
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
         <Button
           onClick={onClose}
+          disabled={loading}
           sx={{
             fontWeight: 800,
             color: "text.secondary",
@@ -76,11 +80,13 @@ export default function MotmConfirmDialog({
         >
           Wait, go back
         </Button>
-        <Button
+        {/* autoFocus + Enter meant a quick double-press fired two submits. */}
+        <AsyncButton
           onClick={onConfirm}
           variant="contained"
           color="primary"
           autoFocus
+          loading={loading}
           sx={{
             fontWeight: 900,
             borderRadius: "12px",
@@ -89,7 +95,7 @@ export default function MotmConfirmDialog({
           }}
         >
           Submit Anyway
-        </Button>
+        </AsyncButton>
       </DialogActions>
     </Dialog>
   );

@@ -68,17 +68,25 @@ export default function Lineup({
         finalSubsList: teamData?.substitutes || [],
       };
     }
-  }, [fixture, clubId, showLiveStatus]);
+    // Narrowed from [fixture]: the listener now dispatches only changed keys,
+    // so lineups/events keep their identity across an elapsed-only tick and
+    // this no longer recomputes once a minute during a live match.
+  }, [fixture?.lineups, fixture?.events, clubId, showLiveStatus]);
 
   // 3. PITCH GRID ORGANIZER
+  // A Map rather than a sparse array indexed by row number. The old version
+  // crashed on a null `grid`, left holes that `rowPlayers.map` could hit, and
+  // keyed rows by their post-reverse index, which shifts when a row empties.
+  // Sorted descending to keep the previous ordering (GK at the bottom).
   const rows = useMemo(() => {
-    const pitchRows: any[][] = [];
-    activeXI.forEach(({ player }) => {
-      const rowIdx = parseInt(player.grid.split(":")[0]);
-      if (!pitchRows[rowIdx]) pitchRows[rowIdx] = [];
-      pitchRows[rowIdx].push(player);
+    const byRow = new Map<number, any[]>();
+    activeXI.forEach(({ player }: any) => {
+      const parsed = parseInt(String(player?.grid ?? "").split(":")[0], 10);
+      const rowIdx = Number.isFinite(parsed) ? parsed : 0;
+      if (!byRow.has(rowIdx)) byRow.set(rowIdx, []);
+      byRow.get(rowIdx)!.push(player);
     });
-    return pitchRows.reverse(); // Standard football viewing (GK at bottom)
+    return [...byRow.entries()].sort((a, b) => b[0] - a[0]);
   }, [activeXI]);
 
   return (
@@ -146,9 +154,9 @@ export default function Lineup({
           mx: "auto",
         }}
       >
-        {rows.map((rowPlayers, idx) => (
+        {rows.map(([rowIdx, rowPlayers]) => (
           <Box
-            key={idx}
+            key={rowIdx}
             sx={{
               display: "flex",
               justifyContent: "space-evenly",

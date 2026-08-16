@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards, Navigation } from "swiper/modules";
@@ -18,6 +18,9 @@ import { PlayerRatingCard } from "./PlayerRatingCard";
 import { selectMatchRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
 import { RootState } from "@/lib/redux/store";
 import { useSelector } from "react-redux";
+
+// Stable empty reference for fixtures with no events yet.
+const EMPTY_EVENTS: any[] = [];
 
 interface CardStackProps {
   combinedPlayers: any[];
@@ -48,7 +51,7 @@ export default function PlayerRatingsCardStack({
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const matchRatings = useSelector((state: RootState) =>
-    selectMatchRatingsById(fixture.id)(state),
+    selectMatchRatingsById(state, fixture.id),
   );
 
   // 1. DATA SANITIZATION
@@ -57,15 +60,36 @@ export default function PlayerRatingsCardStack({
     [combinedPlayers],
   );
 
-  if (!players.length) return null;
+  const matchId = String(fixture.id);
+  // Stable reference when the fixture has no events yet, so the memoized cards
+  // don't see a fresh [] on every render.
+  const events = fixture?.events ?? EMPTY_EVENTS;
+
+  // Averages computed once here rather than each card scanning the ratings map,
+  // which also lets PlayerRatingCard take a primitive instead of the whole map.
+  const avgRatings = useMemo(() => {
+    const out: Record<string, string | null> = {};
+    players.forEach((p: any) => {
+      const stats = matchRatings?.[String(p.id)];
+      out[String(p.id)] = stats?.totalSubmits
+        ? (stats.totalRating / stats.totalSubmits).toFixed(1)
+        : null;
+    });
+    return out;
+  }, [players, matchRatings]);
 
   // 2. NAVIGATION HANDLER
-  const handleCarouselSelect = (i: number) => {
+  // Must stay above the early return below — hooks can't run conditionally.
+  // Memoized because PlayerThumbnail is React.memo'd and a fresh function here
+  // defeated it on every render.
+  const handleCarouselSelect = useCallback((i: number) => {
     setCurrentIndex(i);
     if (swiperRef.current) {
       swiperRef.current.slideTo(i);
     }
-  };
+  }, []);
+
+  if (!players.length) return null;
 
   return (
     <Box
@@ -126,17 +150,19 @@ export default function PlayerRatingsCardStack({
               key={p.id}
               style={{ borderRadius: "24px", overflow: "hidden" }}
             >
+              {/* Narrow props only: passing `fixture` and `matchRatings`
+                  would hand every card two objects that change identity on
+                  each live tick, making React.memo useless. */}
               <PlayerRatingCard
                 player={p}
-                fixture={fixture}
+                matchId={matchId}
+                events={events}
+                avgRating={avgRatings[String(p.id)]}
                 isMobile={isMobile}
                 groupId={groupId}
                 userId={userId}
                 usersMatchPlayerRating={usersMatchPlayerRatings?.[p.id]}
                 currentYear={currentYear}
-                // Pass ref to child so it can lock/unlock swiping during slider drag
-                swiperRef={swiperRef}
-                matchRatings={matchRatings}
                 setStoredMotmId={setStoredMotmId}
                 storedMotmId={storedMotmId}
               />

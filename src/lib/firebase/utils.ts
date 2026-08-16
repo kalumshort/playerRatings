@@ -6,6 +6,9 @@ import {
   updateDoc,
   collection,
   getDocs,
+  DocumentReference,
+  DocumentSnapshot,
+  Transaction,
 } from "firebase/firestore";
 
 /**
@@ -39,4 +42,24 @@ export async function updateOrSet(path: string, id: string, data: any) {
   } else {
     return await setDoc(docRef, { ...data, createdAt: Date.now() });
   }
+}
+
+/**
+ * Transaction-aware sibling of updateOrSet.
+ *
+ * Applies the same "stamp createdAt on first write" convention, but reuses a
+ * snapshot the caller already read inside the transaction instead of issuing
+ * its own getDoc.
+ */
+export function txUpdateOrSet(
+  tx: Transaction,
+  ref: DocumentReference,
+  snap: DocumentSnapshot,
+  data: any,
+) {
+  return tx.set(
+    ref,
+    snap.exists() ? data : { ...data, createdAt: Date.now() },
+    { merge: true },
+  );
 }

@@ -30,16 +30,12 @@ export const handleCreateAccount = async ({
     email,
     password,
   );
-  const userId = userCredential.user.uid;
-
-  await createUserDoc({ userId, email });
+  // The cloud functions read the uid from the verified auth context, so
+  // neither call needs (or accepts) a userId in the payload.
+  await createUserDoc({ email });
 
   if (groupId) {
-    await addUserToGroup({
-      groupId,
-      userId,
-      userData: { email, role: "user" },
-    });
+    await addUserToGroup({ groupId });
   }
   return userCredential.user;
 };
@@ -58,18 +54,13 @@ export const handleGoogleSignIn = async (groupId?: string) => {
     // Check if they need to be added to the group
     const userData = userSnap.data();
     if (groupId && !userData.groups?.includes(groupId)) {
-      await addUserToGroup({
-        groupId,
-        userId,
-        userData: { email, role: "user" },
-      });
+      await addUserToGroup({ groupId });
     }
     // Update login timestamp
     await updateDoc(userRef, { lastLogin: Timestamp.now() });
   } else {
     // New User via Google
     await createUserDoc({
-      userId,
       email,
       displayName,
       photoURL,
@@ -77,11 +68,7 @@ export const handleGoogleSignIn = async (groupId?: string) => {
     });
 
     if (groupId) {
-      await addUserToGroup({
-        groupId,
-        userId,
-        userData: { email, role: "user" },
-      });
+      await addUserToGroup({ groupId });
     }
   }
   return result.user;

@@ -5,6 +5,7 @@ import { Button, Box, CircularProgress } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import { useRouter } from "next/navigation";
 import { handleGoogleSignIn } from "@/lib/firebase/auth-actions";
+import { toast } from "sonner";
 
 export default function GoogleButton({
   groupId,
@@ -26,6 +27,7 @@ export default function GoogleButton({
       router.push("/");
     } catch (error: any) {
       console.error("Google Auth Error:", error.message);
+      toast.error("Google sign-in failed. Please try again.");
       setLoading(false); // Reset only on error, otherwise the redirect handles it
     }
   };

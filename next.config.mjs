@@ -9,6 +9,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",
       },
+      // Player photos and club crests. Without this entry these URLs can't be
+      // served through next/image at all.
+      {
+        protocol: "https",
+        hostname: "media.api-sports.io",
+      },
     ],
   },
   async rewrites() {

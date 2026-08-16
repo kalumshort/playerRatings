@@ -1,8 +1,25 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useMemo, ReactNode } from "react";
+import { useSelector } from "react-redux";
 
-const ClubViewContext = createContext<{ isGuestView: boolean } | undefined>(
+import { RootState } from "@/lib/redux/store";
+import { isArchivedSeason } from "@/lib/config/season";
+
+interface ClubViewContextValue {
+  isGuestView: boolean;
+  /**
+   * Active season, mirrored from Redux by DataInitializer. Safe in Firestore paths
+   * (allowlisted by resolveSeason). Server components that already know the season
+   * should pass it as a prop instead — this lags by one render on archived pages.
+   */
+  season: string;
+  isArchived: boolean;
+  /** Interactive controls must be disabled when true. */
+  isReadOnly: boolean;
+}
+
+const ClubViewContext = createContext<ClubViewContextValue | undefined>(
   undefined,
 );
 
@@ -13,8 +30,23 @@ export function ClubViewProvider({
   isGuestView: boolean;
   children: ReactNode;
 }) {
+  const season = useSelector(
+    (state: RootState) => state.globalData.currentYear,
+  );
+
+  const value = useMemo<ClubViewContextValue>(() => {
+    const archived = isArchivedSeason(season);
+
+    return {
+      isGuestView,
+      season,
+      isArchived: archived,
+      isReadOnly: isGuestView || archived,
+    };
+  }, [isGuestView, season]);
+
   return (
-    <ClubViewContext.Provider value={{ isGuestView }}>
+    <ClubViewContext.Provider value={value}>
       {children}
     </ClubViewContext.Provider>
   );

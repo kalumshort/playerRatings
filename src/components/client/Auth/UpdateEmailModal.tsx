@@ -130,7 +130,7 @@ export default function UpdateEmailModal({
         }}
       >
         Change Email
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Close">
           <X size={20} />
         </IconButton>
       </DialogTitle>
@@ -147,6 +147,7 @@ export default function UpdateEmailModal({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
+                    aria-label="Toggle password visibility"
                     onClick={() => setShowPassword(!showPassword)}
                     edge="end"
                     size="small"

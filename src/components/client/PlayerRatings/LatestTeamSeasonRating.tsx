@@ -7,10 +7,15 @@ import { Paper, Typography, Box, Button, Skeleton } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
-import { selectActiveClubFixtures } from "@/lib/redux/selectors/fixturesSelectors";
+import {
+  selectActiveClubFixtures,
+  selectActiveClubFixturesLoaded,
+} from "@/lib/redux/selectors/fixturesSelectors";
 import { selectAllPlayerOverallRatings } from "@/lib/redux/selectors/ratingsSelectors";
 import { RootState } from "@/lib/redux/store";
 import RatingLineupPlayer from "./RatingLineupPlayer";
+import { useClubView } from "@/context/ClubViewProvider";
+import { withSeasonParam } from "@/lib/config/season";
 
 const CardContainer = styled(Paper)(({ theme }) => ({
   padding: 24,
@@ -67,10 +72,11 @@ const PlayerRow = styled(Box)({
   zIndex: 2,
 });
 
-const formatRating = (totalRating?: number, totalSubmits?: number) =>
-  totalRating && totalSubmits
-    ? (totalRating / totalSubmits).toFixed(1)
-    : "—";
+// Returns a raw average (or null) and lets RatingLineupPlayer do the
+// formatting. Previously this returned a pre-formatted "—", which the child
+// then ran through Number() and rendered as "NaN".
+const ratingAverage = (totalRating?: number, totalSubmits?: number) =>
+  totalSubmits ? (totalRating ?? 0) / totalSubmits : null;
 
 const buildFormationRows = (players: any[]) => {
   const rows = players.reduce<Record<number, any[]>>((acc, { player }) => {
@@ -124,8 +130,10 @@ export default function LatestTeamSeasonRating() {
     return id ? state.groupData.byGroupId[id] : null;
   });
   const clubId = Number(activeGroup?.groupClubId);
+  const { season } = useClubView();
 
   const allFixtures = useSelector(selectActiveClubFixtures);
+  const fixturesLoaded = useSelector(selectActiveClubFixturesLoaded);
   const playerStats = useSelector(selectAllPlayerOverallRatings);
 
   const formationRows = useMemo(() => {
@@ -140,7 +148,9 @@ export default function LatestTeamSeasonRating() {
     return buildFormationRows(startXI);
   }, [allFixtures, clubId]);
 
-  if (!allFixtures) return <LoadingSkeleton />;
+  // `!allFixtures` was unreachable — selectActiveClubFixtures returns [], never
+  // null — so a season switch showed "No Lineup Data" instead of a skeleton.
+  if (!fixturesLoaded) return <LoadingSkeleton />;
 
   return (
     <CardContainer>
@@ -155,7 +165,10 @@ export default function LatestTeamSeasonRating() {
         </Box>
         <Button
           component={Link}
-          href={`${activeGroup?.slug}/player-stats`}
+          href={withSeasonParam(
+            `/${activeGroup?.slug}/player-stats`,
+            season,
+          )}
           size="small"
           endIcon={<ArrowForwardIcon />}
           variant="contained"
@@ -177,7 +190,10 @@ export default function LatestTeamSeasonRating() {
                   <RatingLineupPlayer
                     key={player.id}
                     player={player}
-                    playerRating={formatRating(stats?.totalRating, stats?.totalSubmits)}
+                    playerRating={ratingAverage(
+                      stats?.totalRating,
+                      stats?.totalSubmits,
+                    )}
                   />
                 );
               })}

@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import {
   Box,
   Typography,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -27,6 +26,8 @@ import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
 import RatingLineup from "./RatingLineup";
 import { updateOrSet } from "@/lib/firebase/utils";
 import { useClubView } from "@/context/ClubViewProvider";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
 export default function PlayerRatings({
   fixture,
@@ -75,7 +76,10 @@ export default function PlayerRatings({
 
     const combined = [...starters, ...playedSubs, coach].filter(Boolean);
     return { combinedPlayers: combined, lineupExists: starters.length > 0 };
-  }, [fixture]);
+    // Narrowed from [fixture], which both recomputed on every live tick AND
+    // omitted groupData.groupClubId — read in the body, so switching club left
+    // this stale.
+  }, [fixture?.lineups, fixture?.events, groupData?.groupClubId]);
 
   // 3. VOTING PROGRESS
   const unratedCount = useMemo(() => {
@@ -87,9 +91,11 @@ export default function PlayerRatings({
   const isSubmittable = unratedCount === 0;
 
   // 4. SUBMISSION HANDLER
-  const performSubmission = async (motmId: string | null) => {
-    if (!userId) return;
-    try {
+  // Closing the dialog is an onSuccess concern — on failure it must stay open
+  // so the user can retry rather than being dropped back with no explanation.
+  const { run: performSubmission, pending: isSubmitting } = useAsyncAction(
+    async (motmId: string | null) => {
+      if (!userId) return;
       if (motmId) {
         await handleMatchMotmVote({
           matchId,
@@ -102,16 +108,16 @@ export default function PlayerRatings({
         await updateOrSet(
           `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
           matchId,
-          {
-            ratingsSubmitted: true,
-          },
+          { ratingsSubmitted: true },
         );
       }
-      setOpenConfirmDialog(false);
-    } catch (err) {
-      console.error("❌ Error submitting ratings:", err);
-    }
-  };
+    },
+    {
+      successMessage: "Ratings submitted. Thanks for voting!",
+      errorMessage: "You've already submitted your ratings for this match.",
+      onSuccess: () => setOpenConfirmDialog(false),
+    },
+  );
 
   // --- RENDER LOGIC ---
 
@@ -162,10 +168,11 @@ export default function PlayerRatings({
       />
 
       <Box sx={{ mt: 4, textAlign: "center" }}>
-        <Button
+        <AsyncButton
           variant="contained"
           size="large"
-          disabled={!isSubmittable}
+          loading={isSubmitting}
+          disabled={!isSubmittable || isSubmitting}
           onClick={() =>
             !storedMotmId
               ? setOpenConfirmDialog(true)
@@ -174,7 +181,7 @@ export default function PlayerRatings({
           sx={{ borderRadius: "12px", px: 6, fontWeight: 900 }}
         >
           SUBMIT ALL RATINGS
-        </Button>
+        </AsyncButton>
 
         <Stack spacing={1} sx={{ mt: 2 }}>
           {unratedCount > 0 && (
@@ -192,6 +199,7 @@ export default function PlayerRatings({
 
       <MotmConfirmDialog
         open={openConfirmDialog}
+        loading={isSubmitting}
         onClose={() => setOpenConfirmDialog(false)}
         onConfirm={() => performSubmission(null)}
       />

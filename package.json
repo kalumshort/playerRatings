@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:rules": "firebase emulators:exec --only firestore \"node test/rules.test.mjs\""
   },
   "keywords": [],
   "author": "",
@@ -38,6 +39,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@types/node": "^25.2.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3"

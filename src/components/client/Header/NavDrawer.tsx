@@ -72,7 +72,8 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
       PaperProps={{
         sx: {
           width: isMobile ? "280px" : "320px",
-          background: theme.palette.background.default,
+          // Background comes from the MuiDrawer override; it was pinned to
+          // background.default here, i.e. the same colour as the page underneath.
           backdropFilter: "blur(20px)",
           borderLeft: `1px solid ${theme.palette.divider}`,
         },
@@ -93,7 +94,7 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
           <Typography variant="h6" sx={{ color: accentColor, fontWeight: 800 }}>
             {user && activeGroup ? activeGroup.name : "11VOTES"}
           </Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={onClose} aria-label="Close navigation menu">
             <X size={20} />
           </IconButton>
         </Box> */}

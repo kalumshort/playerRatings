@@ -7,12 +7,32 @@ import {
 
 // --- TYPES ---
 
+export interface PlayerRatingEntry {
+  id: string;
+  totalRating?: number;
+  totalSubmits?: number;
+  [key: string]: any;
+}
+
+/**
+ * Match ratings are always keyed by playerId.
+ *
+ * Three states, all distinguishable and all meaningful:
+ *   undefined -> never fetched      (render a skeleton)
+ *   {}        -> fetched, no votes  (render "—")
+ *   populated -> data
+ * So never substitute a shared empty object for `undefined`.
+ */
+export type PlayerRatingsMap = Record<string, PlayerRatingEntry>;
+
 interface RatingsState {
   byGroupId: {
     [groupId: string]: {
+      /** Season this bucket holds. Ratings are cleared when the user switches season. */
+      season?: string;
       matches: {
         [matchId: string]: {
-          players: Record<string, any>;
+          players: PlayerRatingsMap;
           motm: any;
         };
       };
@@ -38,12 +58,60 @@ const initialState: RatingsState = {
   error: null,
 };
 
-// --- HELPER ---
+// --- HELPERS ---
 
-const initGroupBucket = (state: RatingsState, groupId: string) => {
-  if (!state.byGroupId[groupId]) {
-    state.byGroupId[groupId] = { matches: {}, players: {} };
+/**
+ * Coerce match ratings into the keyed-by-playerId shape.
+ *
+ * Two writers feed this slot and they used to disagree: the admin SDK query
+ * returns an array of { id, ...data }, while the client thunk returns an object
+ * keyed by playerId. Consumers picked one shape each, so whichever wrote last
+ * decided whether the ratings pitch rendered, showed "—", or threw
+ * `matchRatings.find is not a function`.
+ *
+ * Normalising in the reducer makes this the single choke point — every current
+ * and future writer lands in the same shape regardless of where it came from.
+ * The `id` is stamped onto each entry so an entry stays self-describing when
+ * passed down as a prop.
+ */
+export const normalizePlayerRatings = (data: unknown): PlayerRatingsMap => {
+  if (!data || typeof data !== "object") return {};
+
+  if (Array.isArray(data)) {
+    return data.reduce<PlayerRatingsMap>((acc, entry: any) => {
+      if (entry?.id == null) return acc;
+      const id = String(entry.id);
+      acc[id] = { ...entry, id };
+      return acc;
+    }, {});
   }
+
+  return Object.entries(data as Record<string, any>).reduce<PlayerRatingsMap>(
+    (acc, [key, entry]) => {
+      if (!entry || typeof entry !== "object") return acc;
+      acc[key] = { ...entry, id: String(key) };
+      return acc;
+    },
+    {},
+  );
+};
+
+// `season` is only passed by fetches that know which season they loaded. When it
+// differs from what the bucket holds, the cached ratings belong to another season
+// and must be dropped rather than merged. Listener reducers omit it and are no-ops here.
+const initGroupBucket = (
+  state: RatingsState,
+  groupId: string,
+  season?: string,
+) => {
+  const existing = state.byGroupId[groupId];
+
+  if (!existing || (season && existing.season && existing.season !== season)) {
+    state.byGroupId[groupId] = { matches: {}, players: {}, season };
+  } else if (season) {
+    existing.season = season;
+  }
+
   return state.byGroupId[groupId];
 };
 
@@ -62,7 +130,7 @@ const ratingsSlice = createSlice({
       const group = initGroupBucket(state, groupId);
       if (!group.matches[matchId])
         group.matches[matchId] = { players: {}, motm: {} };
-      group.matches[matchId].players = data;
+      group.matches[matchId].players = normalizePlayerRatings(data);
     },
 
     // 2. Update MOTM votes (from listeners)
@@ -134,8 +202,8 @@ const ratingsSlice = createSlice({
       .addCase(
         fetchAllPlayersSeasonOverallRating.fulfilled,
         (state, action) => {
-          const { groupId, players } = action.payload;
-          const bucket = initGroupBucket(state, groupId);
+          const { groupId, season, players } = action.payload;
+          const bucket = initGroupBucket(state, groupId, season);
           Object.entries(players).forEach(([playerId, playerData]) => {
             if (!bucket.players[playerId]) {
               bucket.players[playerId] = { seasonOverall: {}, matches: {} };
@@ -151,9 +219,13 @@ const ratingsSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchMatchPlayerRatings.fulfilled, (state, action) => {
-        const { groupId, matchId, playerRatings, motmData } = action.payload;
-        const bucket = initGroupBucket(state, groupId);
-        bucket.matches[matchId] = { players: playerRatings, motm: motmData };
+        const { groupId, season, matchId, playerRatings, motmData } =
+          action.payload;
+        const bucket = initGroupBucket(state, groupId, season);
+        bucket.matches[matchId] = {
+          players: normalizePlayerRatings(playerRatings),
+          motm: motmData ?? null,
+        };
         state.loading = false;
       })
       .addCase(fetchMatchPlayerRatings.rejected, (state, action) => {
@@ -167,8 +239,8 @@ const ratingsSlice = createSlice({
       })
       .addCase(fetchPlayerRatingsAllMatches.fulfilled, (state, action) => {
         if (!action.payload) return;
-        const { groupId, playerId, matchesData } = action.payload;
-        const bucket = initGroupBucket(state, groupId);
+        const { groupId, season, playerId, matchesData } = action.payload;
+        const bucket = initGroupBucket(state, groupId, season);
         if (!bucket.players[playerId]) {
           bucket.players[playerId] = { seasonOverall: {}, matches: {} };
         }

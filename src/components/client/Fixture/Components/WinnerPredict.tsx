@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   Avatar,
   useTheme,
   Fade,
+  CircularProgress,
 } from "@mui/material";
 import { CheckCircleRounded, EmojiEventsRounded } from "@mui/icons-material";
 import { useSelector } from "react-redux";
@@ -18,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
 import { handlePredictWinningTeam } from "@/lib/firebase/client-actions";
 import { useClubView } from "@/context/ClubViewProvider";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
 interface WinnerPredictProps {
   fixture: any;
@@ -65,16 +67,32 @@ export default function WinnerPredict({
     away: totalVotes > 0 ? (away / totalVotes) * 100 : 0,
   };
 
-  const handleWinningTeamPredict = async (choice: string) => {
-    if (showResults || !user || !groupId) return;
+  // Which tile is mid-flight, so the spinner lands on the one that was tapped.
+  const [pendingChoice, setPendingChoice] = useState<string | null>(null);
 
-    await handlePredictWinningTeam({
-      matchId,
-      choice: choice as "home" | "draw" | "away",
-      groupId,
-      userId: user.uid,
-      currentYear,
-    });
+  const { run: submitPrediction, pending } = useAsyncAction(
+    handlePredictWinningTeam,
+    {
+      errorMessage: "Couldn't record your pick. Tap to try again.",
+      toastId: `winner-${matchId}`,
+    },
+  );
+
+  const handleWinningTeamPredict = async (choice: string) => {
+    if (showResults || pending || !user || !groupId) return;
+
+    setPendingChoice(choice);
+    try {
+      await submitPrediction({
+        matchId,
+        choice: choice as "home" | "draw" | "away",
+        groupId,
+        userId: user.uid,
+        currentYear,
+      });
+    } finally {
+      setPendingChoice(null);
+    }
   };
 
   return (
@@ -113,6 +131,9 @@ export default function WinnerPredict({
           my: 2, // Margin to keep it away from header/footer
           alignItems: "center", // Vertically center the row
           justifyContent: "center",
+          // Belt-and-braces with the ref guard in useAsyncAction: stop a second
+          // tile being tapped while the first vote is still in flight.
+          pointerEvents: pending ? "none" : undefined,
         }}
       >
         {(["home", "draw", "away"] as const).map((type) => {
@@ -125,7 +146,29 @@ export default function WinnerPredict({
               component={motion.div}
               layout
               onClick={() => handleWinningTeamPredict(type)}
+              // Primary voting control — it was a plain div, so keyboard users
+              // couldn't reach it and screen readers announced nothing.
+              role={showResults ? undefined : "button"}
+              tabIndex={showResults ? undefined : 0}
+              aria-label={
+                type === "draw"
+                  ? "Predict a draw"
+                  : `Predict ${fixture.teams[type]?.name} to win`
+              }
+              aria-pressed={showResults ? undefined : isSelected}
+              aria-busy={pendingChoice === type || undefined}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (showResults) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleWinningTeamPredict(type);
+                }
+              }}
               sx={(theme: any) => ({
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
                 // flex: 1 makes them equal width, but we remove the height stretch
                 flex: 1,
                 position: "relative",
@@ -172,6 +215,22 @@ export default function WinnerPredict({
                 />
               )}
 
+              {pendingChoice === type && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: (t) => `${t.palette.background.paper}CC`,
+                    zIndex: 2,
+                  }}
+                >
+                  <CircularProgress size={24} thickness={5} />
+                </Box>
+              )}
+
               <Box sx={{ zIndex: 1, textAlign: "center", width: "100%" }}>
                 {type === "draw" ? (
                   <Box
@@ -196,6 +255,7 @@ export default function WinnerPredict({
                 ) : (
                   <Avatar
                     src={fixture.teams[type].logo}
+                    alt=""
                     variant="rounded"
                     sx={{
                       width: 40,

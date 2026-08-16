@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { StatBox } from "./StatBox";
 import { HtmlTooltip } from "@/components/ui/HtmlTooltip";
+import SeasonSwitcher from "../Widgets/SeasonSwitcher";
+import { formatSeason, isArchivedSeason } from "@/lib/config/season";
 
 interface FixtureTeam {
   id: number;
@@ -31,14 +33,20 @@ interface Stats {
 interface SeasonOverviewProps {
   stats: Stats;
   played: GameResult[];
+  season: string;
 }
 
 const BAR_HEIGHT: Record<"W" | "D" | "L", number> = { W: 52, D: 34, L: 18 };
 
-export default function SeasonOverview({ stats, played }: SeasonOverviewProps) {
+export default function SeasonOverview({
+  stats,
+  played,
+  season,
+}: SeasonOverviewProps) {
   const theme = useTheme();
   const points = stats.w * 3 + stats.d;
   const last5 = played.slice(-5);
+  const archived = isArchivedSeason(season);
 
   const getColor = (result: "W" | "D" | "L") => {
     if (result === "W") return theme.palette.success.main;
@@ -68,19 +76,23 @@ export default function SeasonOverview({ stats, played }: SeasonOverviewProps) {
           >
             SEASON OVERVIEW
           </Typography>
-          {/* <Chip
-            label={`${points} pts`}
+          <SeasonSwitcher season={season} />
+        </Box>
+
+        {archived && (
+          <Chip
+            label={`Viewing the ${formatSeason(season)} archive — read only`}
             size="small"
             sx={{
-              fontWeight: 800,
-              fontSize: "0.7rem",
+              mb: 3,
+              width: "100%",
+              fontWeight: 700,
+              fontSize: "0.65rem",
               bgcolor: "background.default",
-              color: "text.primary",
-              height: 22,
-              "& .MuiChip-label": { px: 1 },
+              color: "text.secondary",
             }}
-          /> */}
-        </Box>
+          />
+        )}
 
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 4 }}>

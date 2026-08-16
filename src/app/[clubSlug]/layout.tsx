@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { adminDb } from "@/lib/firebase/admin";
 import { notFound } from "next/navigation";
 import { getAuthSession } from "@/lib/firebase/getAuth";
@@ -54,8 +55,6 @@ export default async function ClubLayout({ children, params }) {
     createdAt: rawData.createdAt?.toMillis?.() || rawData.createdAt || null,
   } as any;
 
-  const currentYear = "2025";
-  console.log(userRole, "USER ROLE IN LAYOUT");
   // Logic: If they have a role other than 'guest', they are a member of this club
   const isUsersClub = userRole !== "guest";
   const isGuestView = !isUsersClub || !userId;
@@ -65,11 +64,14 @@ export default async function ClubLayout({ children, params }) {
       {/* Pushes the full-fat data (including role) to Redux immediately */}
       <GroupClientInitializer groupData={groupData} />
 
-      <DataInitializer
-        clubId={groupData?.groupClubId}
-        currentYear={currentYear}
-        groupId={groupData?.id}
-      />
+      {/* Reads ?season= (layouts can't) and mirrors it into Redux. Renders null,
+          so suspending on searchParams costs nothing and never blocks the page. */}
+      <Suspense fallback={null}>
+        <DataInitializer
+          clubId={groupData?.groupClubId}
+          groupId={groupData?.id}
+        />
+      </Suspense>
 
       <ClubBanner
         isGuestView={isGuestView}

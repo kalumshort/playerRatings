@@ -20,10 +20,15 @@ export const makeStore = () => {
       playerRatings: ratingsReducer,
     },
     // Middleware is usually fine by default,
-    // but we ensure serializableCheck is handled for Firebase
+    // but we ensure serializableCheck is handled for Firebase.
+    // immutableCheck is off for the same reason: it deep-scans the whole state
+    // (a full season of fixtures, events and every rating) on every dispatch,
+    // and a live match dispatches every minute. Both checks are dev-only —
+    // RTK strips them in production — so this only affects dev ergonomics.
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: false,
+        immutableCheck: false,
       }),
   });
 };

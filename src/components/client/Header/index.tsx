@@ -15,7 +15,13 @@ export default function Header() {
     <>
       {/* Pass the toggle function to your navbar */}
       <Navbar setDrawerOpen={toggleDrawer} isMobile={isMobile} />
-      <Box sx={{ height: isMobile ? 64 : 80 }} />
+      {/*
+        Pure CSS breakpoints, not useMediaQuery: without ssrMatchMedia the hook
+        returns false during SSR, so this spacer rendered at 80px on the server
+        and snapped to 64px after hydration — a visible jump on every mobile
+        page load. The media query is correct before any JS runs.
+      */}
+      <Box sx={{ height: { xs: 64, md: 80 } }} />
       <NavDrawer
         open={isOpen}
         onClose={() => toggleDrawer(false)}

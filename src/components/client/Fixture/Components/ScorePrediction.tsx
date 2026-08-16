@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  Button,
   IconButton,
   Typography,
   Paper,
@@ -26,6 +25,8 @@ import { useAuth } from "@/context/AuthContext";
 import { RootState } from "@/lib/redux/store";
 import ScorePredictionResults from "./ScorePredictionResults";
 import { useClubView } from "@/context/ClubViewProvider";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
 interface ScorePredictionProps {
   fixture: any;
@@ -56,10 +57,19 @@ export default function ScorePrediction({
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
 
+  const { run: submitScore, pending: isSubmitting } = useAsyncAction(
+    handlePredictTeamScore,
+    {
+      successMessage: "Prediction locked in.",
+      errorMessage: "Couldn't save your score prediction. Try again.",
+      toastId: `score-${matchId}`,
+    },
+  );
+
   const handleTeamScoreSubmit = async () => {
     if (!user || !groupId) return;
 
-    await handlePredictTeamScore({
+    await submitScore({
       matchId,
       score: `${homeScore}-${awayScore}`,
       homeGoals: homeScore,
@@ -136,10 +146,11 @@ export default function ScorePrediction({
 
       {/* --- SUBMIT BUTTON --- */}
       <Fade in={true}>
-        <Button
+        <AsyncButton
           onClick={handleTeamScoreSubmit}
           variant="contained"
           fullWidth
+          loading={isSubmitting}
           disabled={!user}
           startIcon={<CheckCircleRounded />}
           sx={{
@@ -153,7 +164,7 @@ export default function ScorePrediction({
           }}
         >
           CONFIRM {homeScore}-{awayScore}
-        </Button>
+        </AsyncButton>
       </Fade>
     </Paper>
   );
@@ -195,6 +206,7 @@ const TeamScoreInputCompact = ({ team, score, setScore }: any) => {
 
       <Stack direction="row" spacing={1} alignItems="center">
         <IconButton
+          aria-label={`Decrease ${team.name} score`}
           onClick={() => setScore((prev: number) => Math.max(0, prev - 1))}
           disabled={score === 0}
           sx={{
@@ -236,6 +248,7 @@ const TeamScoreInputCompact = ({ team, score, setScore }: any) => {
         </Box>
 
         <IconButton
+          aria-label={`Increase ${team.name} score`}
           onClick={() => setScore((prev: number) => prev + 1)}
           sx={{
             ...theme.clay?.button,

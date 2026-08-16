@@ -24,12 +24,21 @@ import {
 import { handlePlayerRatingSubmit } from "@/lib/firebase/client-actions";
 import EventBadge from "./EventBadge";
 import { getInitialSurname, getRatingColor } from "@/lib/utils/football-logic";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+import useAsyncAction from "@/Hooks/useAsyncAction";
 
-export function PlayerRatingCard({
+/**
+ * Deliberately takes narrow props (matchId, events, avgRating) rather than the
+ * whole `fixture` and `matchRatings`. Those two get a new identity on every
+ * live Firestore tick, which would make the React.memo below a no-op across all
+ * 14-18 Swiper slides.
+ */
+function PlayerRatingCardBase({
   player,
-  fixture,
+  matchId,
+  events,
+  avgRating,
   isMobile,
-  matchRatings,
   userId,
   groupId,
   currentYear,
@@ -38,25 +47,23 @@ export function PlayerRatingCard({
   storedMotmId,
 }: any) {
   const theme = useTheme();
-  const matchId = String(fixture.id);
   const isMOTM = storedMotmId === player.id;
 
-  const ratingsArray = useMemo(
-    () => (Array.isArray(matchRatings) ? matchRatings : []),
-    [matchRatings],
+  // firestore.rules dedupes repeat ratings with permission-denied; before this
+  // the rejection was swallowed and the tap simply did nothing.
+  const { run: submitRating, pending: isSubmitting } = useAsyncAction(
+    handlePlayerRatingSubmit,
+    {
+      errorMessage: "You've already rated this player.",
+    },
   );
-  const isDataLoading = matchRatings === undefined || matchRatings === null;
 
-  const avgRating = useMemo(() => {
-    const stats = ratingsArray.find((r: any) => r.id === String(player.id));
-    return stats
-      ? (stats.totalRating / (stats.totalSubmits || 1)).toFixed(1)
-      : null;
-  }, [ratingsArray, player.id]);
+  // undefined means "not fetched yet"; null means "fetched, nobody rated".
+  const isDataLoading = avgRating === undefined;
 
   const playerEvents = useMemo(() => {
-    if (!fixture?.events) return [];
-    return fixture.events
+    if (!events?.length) return [];
+    return events
       .filter(
         (ev: any) => ev.player?.id === player.id || ev.assist?.id === player.id,
       )
@@ -75,7 +82,7 @@ export function PlayerRatingCard({
         return null;
       })
       .filter(Boolean);
-  }, [fixture.events, player.id]);
+  }, [events, player.id]);
 
   return (
     <Paper
@@ -130,6 +137,7 @@ export function PlayerRatingCard({
       <Stack p={4} pt={8} spacing={2} alignItems="center">
         <Box sx={{ position: "relative" }}>
           <Avatar
+            alt={player.name}
             src={
               player.photo ||
               `https://media.api-sports.io/football/players/${player.id}.png`
@@ -254,8 +262,9 @@ export function PlayerRatingCard({
           /* Rating Input State */
           <ClayRatingInput
             userId={userId}
+            submitting={isSubmitting}
             onSubmit={(val: number) =>
-              handlePlayerRatingSubmit({
+              submitRating({
                 matchId,
                 playerId: player.id,
                 rating: val,
@@ -271,7 +280,11 @@ export function PlayerRatingCard({
   );
 }
 
-const ClayRatingInput = ({ onSubmit, userId }: any) => {
+// All remaining props are primitives, a stable array, or stable setters, so the
+// default shallow compare is enough — no custom comparator needed.
+export const PlayerRatingCard = React.memo(PlayerRatingCardBase);
+
+const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
   const theme = useTheme();
   const [val, setVal] = useState(6.0);
   const step = userId === "4hPrbr7QlZSVqm8VB4F8kRXUtDf2" ? 0.1 : 0.5;
@@ -281,6 +294,8 @@ const ClayRatingInput = ({ onSubmit, userId }: any) => {
     <Stack spacing={3} alignItems="center" sx={{ width: "100%" }}>
       <Stack direction="row" alignItems="center" spacing={3}>
         <IconButton
+          aria-label="Decrease rating"
+          disabled={submitting}
           onClick={() => setVal((p) => Math.max(1, p - step))}
           sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
         >
@@ -312,6 +327,8 @@ const ClayRatingInput = ({ onSubmit, userId }: any) => {
         </Box>
 
         <IconButton
+          aria-label="Increase rating"
+          disabled={submitting}
           onClick={() => setVal((p) => Math.min(10, p + step))}
           sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
         >
@@ -319,10 +336,12 @@ const ClayRatingInput = ({ onSubmit, userId }: any) => {
         </IconButton>
       </Stack>
 
-      <Button
+      <AsyncButton
         fullWidth
         variant="contained"
         size="large"
+        loading={submitting}
+        keepBackground
         onClick={() => onSubmit(val)}
         sx={{
           borderRadius: "10px",
@@ -334,7 +353,7 @@ const ClayRatingInput = ({ onSubmit, userId }: any) => {
         }}
       >
         SUBMIT RATING
-      </Button>
+      </AsyncButton>
     </Stack>
   );
 };
