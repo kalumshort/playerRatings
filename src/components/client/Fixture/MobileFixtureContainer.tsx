@@ -231,12 +231,16 @@ export default function MobileFixtureContainer({
                   isPreMatch={isPreMatch}
                   isGuestView={isGuestView}
                 />
+                {/* Pass the real isGuestView. Hardcoding `true` here hid the
+                    tab bar and forced the consensus branch, so a member could
+                    never see their own XI once the match had started — which
+                    is exactly when the prediction becomes scoreable. */}
                 <LineupPredictorResults
                   fixture={fixture}
                   groupId={groupId}
                   currentYear={currentYear}
                   groupData={groupData}
-                  isGuestView={true}
+                  isGuestView={isGuestView}
                 />
               </>
             )}

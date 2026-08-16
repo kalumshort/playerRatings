@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
 import {
   Box,
   Collapse,
@@ -15,9 +14,8 @@ import {
 import { InfoOutlined, GroupsRounded } from "@mui/icons-material";
 
 // --- HELPERS & CONFIG ---
-import { FORMATIONS } from "./LineupPredictor";
+import { calculateCommunityXI } from "./lineupUtils";
 
-import { RootState } from "@/lib/redux/store";
 import LineupShell from "./LineupShell";
 
 interface ConsensusLineupProps {
@@ -25,68 +23,6 @@ interface ConsensusLineupProps {
   squadData: any;
   groupData: any;
 }
-
-/**
- * Logic to determine the Community's preferred formation and
- * the #1 player for every slot (1-11).
- */
-const calculateCommunityXI = (matchPredictions: any) => {
-  if (!matchPredictions?.formations || !matchPredictions?.positionConsensus) {
-    return null;
-  }
-
-  // 1. Determine Winning Formation
-  let winningFormation = "4-3-3 Holding";
-  let maxFormationVotes = 0;
-  const totalFormationVotes = Object.values(
-    matchPredictions.formations as Record<string, number>,
-  ).reduce((a, b) => a + b, 0);
-
-  Object.entries(matchPredictions.formations as Record<string, number>).forEach(
-    ([fmt, votes]) => {
-      if (votes > maxFormationVotes) {
-        maxFormationVotes = votes;
-        winningFormation = fmt;
-      }
-    },
-  );
-
-  // 2. Determine Top Player per Slot
-  const lineup: Record<string, { playerId: string; percentage: number }> = {};
-
-  for (let i = 1; i <= 11; i++) {
-    const slotId = i.toString();
-    const bucket = matchPredictions.positionConsensus[slotId];
-
-    if (bucket) {
-      const sortedPlayers = Object.entries(
-        bucket as Record<string, number>,
-      ).sort(([, a], [, b]) => b - a);
-
-      const [winnerId, winnerVotes] = sortedPlayers[0];
-      const totalSlotVotes = sortedPlayers.reduce((acc, [, v]) => acc + v, 0);
-
-      if (winnerId) {
-        lineup[i] = {
-          playerId: winnerId,
-          percentage:
-            totalSlotVotes > 0
-              ? Math.round((winnerVotes / totalSlotVotes) * 100)
-              : 0,
-        };
-      }
-    }
-  }
-
-  return {
-    formation: winningFormation,
-    formationPercentage:
-      totalFormationVotes > 0
-        ? Math.round((maxFormationVotes / totalFormationVotes) * 100)
-        : 0,
-    lineup,
-  };
-};
 
 export default function ConsensusLineup({
   matchPredictions,
@@ -216,7 +152,6 @@ export default function ConsensusLineup({
       <LineupShell
         team={mappedTeam}
         formation={consensus.formation}
-        formationConfig={FORMATIONS}
         title={`${groupData.name}  Preferred XI`}
         enableSave={true}
       />

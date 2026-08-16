@@ -12,7 +12,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { PersonRounded, GroupsRounded } from "@mui/icons-material";
-import { useParams } from "next/navigation";
 
 // TYPES
 import { RootState } from "@/lib/redux/store";
@@ -105,6 +104,9 @@ export default function LineupPredictorResults({
               <ChosenLineup
                 squadData={squadData}
                 userPrediction={userPrediction}
+                fixture={fixture}
+                groupData={groupData}
+                matchPredictions={matchPredictions}
               />
             </Box>
           </Fade>

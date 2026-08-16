@@ -180,7 +180,9 @@ export default function DesktopFixtureHub({
 
         {EventsEl}
         {StatsEl}
-        <LineupPredictorResults {...commonProps} isGuestView={true} />
+        {/* commonProps already carries the real isGuestView — the hardcoded
+            `true` that used to be here locked members out of their own XI. */}
+        <LineupPredictorResults {...commonProps} />
 
         {ConsensusEl}
       </MasonryGrid>
