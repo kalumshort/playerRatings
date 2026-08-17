@@ -47,14 +47,24 @@ export default async function ClubLayout({ children, params }) {
   }
 
   // 4. Construct Payload (Sanitize Timestamps for Client Serialization)
-  const groupData = {
-    ...rawData,
-    id: groupId,
-    groupId: groupId,
-    role: userRole, // Baked in from server
-    updatedAt: rawData.updatedAt?.toMillis?.() || rawData.updatedAt || null,
-    createdAt: rawData.createdAt?.toMillis?.() || rawData.createdAt || null,
-  } as any;
+  //
+  // Every Timestamp, not a named list of two. A Firestore Timestamp is a class
+  // instance, and React refuses to pass one from a server to a client
+  // component — it throws and takes the whole subtree with it. Naming fields
+  // individually meant the reconcile adding `archivedAt` silently broke every
+  // archived club page, which is exactly the page that field exists to power.
+  const groupData = Object.fromEntries(
+    Object.entries(rawData).map(([key, value]) => [
+      key,
+      typeof (value as any)?.toMillis === "function"
+        ? (value as any).toMillis()
+        : value,
+    ]),
+  ) as any;
+
+  groupData.id = groupId;
+  groupData.groupId = groupId;
+  groupData.role = userRole; // Baked in from server
 
   // Logic: If they have a role other than 'guest', they are a member of this club
   const isUsersClub = userRole !== "guest";

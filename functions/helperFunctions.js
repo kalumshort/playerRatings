@@ -389,13 +389,12 @@ const uniqueSlug = (name, teamId, takenSlugs) => {
  * left alone so archived club pages stay publicly readable — existing members
  * keep their history, they just can't vote in a season that will never have data.
  *
- * @param {object} args - { db, apiTeams, season, dryRun }.
- * @return {Promise<object>} Summary of intended/applied changes.
+ * @param {object} args - { db, apiTeams, season }.
+ * @return {Promise<object>} Summary of applied changes.
  */
-const reconcileClubGroups = async ({ db, apiTeams, season, dryRun = false }) => {
+const reconcileClubGroups = async ({ db, apiTeams, season }) => {
   const seasonStr = String(season);
   const summary = {
-    dryRun,
     skipped: false,
     created: [],
     reactivated: [],
@@ -446,22 +445,20 @@ const reconcileClubGroups = async ({ db, apiTeams, season, dryRun = false }) => 
       takenSlugs.add(slug);
       summary.created.push({ teamId, name: team.name, slug });
 
-      if (!dryRun) {
-        batch.set(ref, {
-          name: team.name || `Club ${teamId}`,
-          slug,
-          groupClubId: teamId,
-          logoUrl,
-          league: LEAGUE_KEY,
-          groupType: "club",
-          visibility: "public",
-          isPublic: true,
-          isGroupOpen: true,
-          status: "active",
-          lastActiveSeason: seasonStr,
-          createdAt: FieldValue.serverTimestamp(),
-        });
-      }
+      batch.set(ref, {
+        name: team.name || `Club ${teamId}`,
+        slug,
+        groupClubId: teamId,
+        logoUrl,
+        league: LEAGUE_KEY,
+        groupType: "club",
+        visibility: "public",
+        isPublic: true,
+        isGroupOpen: true,
+        status: "active",
+        lastActiveSeason: seasonStr,
+        createdAt: FieldValue.serverTimestamp(),
+      });
       continue;
     }
 
@@ -490,7 +487,7 @@ const reconcileClubGroups = async ({ db, apiTeams, season, dryRun = false }) => 
       summary.reactivated.push({ teamId, name: team.name });
     }
 
-    if (!dryRun) batch.set(ref, update, { merge: true });
+    batch.set(ref, update, { merge: true });
   }
 
   // --- B. Clubs that have dropped out ---
@@ -505,21 +502,19 @@ const reconcileClubGroups = async ({ db, apiTeams, season, dryRun = false }) => 
 
     summary.archived.push({ teamId, name: data.name, lastActiveSeason });
 
-    if (!dryRun) {
-      batch.set(
-        db.collection("groups").doc(teamId),
-        {
-          status: "archived",
-          isGroupOpen: false,
-          lastActiveSeason,
-          archivedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
-    }
+    batch.set(
+      db.collection("groups").doc(teamId),
+      {
+        status: "archived",
+        isGroupOpen: false,
+        lastActiveSeason,
+        archivedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
   }
 
-  if (!dryRun) await batch.commit();
+  await batch.commit();
 
   return summary;
 };

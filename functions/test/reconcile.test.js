@@ -281,27 +281,7 @@ const getClub = async (id) =>
     assert.equal(club.lastActiveSeason, String(SEASON));
   });
 
-  console.log("\nDry run and idempotence");
-  await it("a dry run reports changes but writes none", async () => {
-    await resetDb();
-    await seedClub(46);
-
-    const summary = await reconcileClubGroups({
-      db,
-      apiTeams: apiTeams([[33, "Manchester United"]]),
-      season: SEASON,
-      dryRun: true,
-    });
-
-    assert.equal(summary.dryRun, true);
-    assert.equal(summary.created.length, 20);
-    assert.equal(summary.archived.length, 1);
-
-    // Nothing actually changed on disk.
-    assert.equal((await getClub(46)).status, "active");
-    assert.equal((await db.collection("groups").doc("33").get()).exists, false);
-  });
-
+  console.log("\nIdempotence");
   await it("a second run is a no-op", async () => {
     await resetDb();
     const teams = apiTeams([[33, "Manchester United"]]);

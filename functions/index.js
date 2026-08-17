@@ -17,13 +17,11 @@ const {
   LEAGUE_ID,
   INVITABLE_ROLES,
   fetchAllMatchData,
-  fetchFootballApi,
   addMemberToGroup,
   removeMemberFromGroup,
   queueOldMembershipCleanup,
-  reconcileClubGroups,
-  writeClubDirectory,
 } = require("./helperFunctions");
+const { runUpdateJob } = require("./updateJob");
 const {
   TRACKED_LEAGUES,
   syncLeagueTeams,
@@ -43,14 +41,6 @@ const CONTACT_EMAIL = "kalum@11votes.com";
 
 // Default ceiling so a traffic spike or retry storm can't scale out unbounded.
 const MAX_INSTANCES = 10;
-
-// When set, the nightly club reconcile logs the creates/archives it would make
-// without writing any of them. Leave it on for the first run after deploying a
-// season rollover, confirm the promoted/relegated clubs in the logs, then unset
-// it. Anything other than "1"/"true" counts as off.
-const RECONCILE_DRY_RUN = ["1", "true"].includes(
-  String(process.env.RECONCILE_DRY_RUN || "").toLowerCase(),
-);
 
 // UIDs allowed to run admin-only callables. Comma-separated, set in
 // functions/.env. Default-deny: with nothing configured, nobody passes, so an
@@ -167,165 +157,7 @@ exports.updateFixtures = onSchedule(
   },
   async (event) => {
     try {
-      // ======================================================
-      // PART 1: GET THE LIST OF TEAMS
-      // ======================================================
-      logger.info(`Fetching team list for League ${LEAGUE_ID}...`);
-
-      const teams = await fetchFootballApi("teams", {
-        league: LEAGUE_ID,
-        season: SEASON,
-      });
-
-      // ======================================================
-      // PART 1.5: RECONCILE THE CLUB REGISTRY
-      // ======================================================
-      // `teams` is whatever the league table says *today*, so this is where
-      // promotion and relegation land: newly promoted clubs get a groups/ doc
-      // created for them, and clubs that have dropped out are frozen as a
-      // read-only archive. Wrapped separately so a reconcile failure never
-      // costs us the fixture run below.
-      try {
-        const summary = await reconcileClubGroups({
-          db,
-          apiTeams: teams,
-          season: SEASON,
-          dryRun: RECONCILE_DRY_RUN,
-        });
-
-        if (summary.skipped) {
-          logger.error(
-            `Club reconcile SKIPPED: the API returned ${teams.length} teams, ` +
-              `below the minimum expected for a full league. Nothing archived.`,
-          );
-        } else {
-          logger.info(
-            `Club reconcile${summary.dryRun ? " (DRY RUN — no writes)" : ""}: ` +
-              `${summary.created.length} created, ` +
-              `${summary.reactivated.length} reactivated, ` +
-              `${summary.archived.length} archived, ` +
-              `${summary.backfilled.length} slugs backfilled.`,
-            summary,
-          );
-        }
-
-        // Always rebuilt, even on a dry run — it only mirrors what the group
-        // docs already say, so it can't get ahead of them.
-        const directory = await writeClubDirectory({ db, season: SEASON });
-        logger.info(`Club directory written with ${directory.length} clubs.`);
-      } catch (reconcileError) {
-        logger.error("Club reconcile failed:", reconcileError.message);
-      }
-
-      const uniqueMatchesMap = {};
-
-      logger.info(`Processing ${teams.length} teams...`);
-
-      // ======================================================
-      // PART 2: LOOP TEAMS (Fixtures + Squads)
-      // ======================================================
-      // Only this season's clubs. Archived clubs are deliberately absent: their
-      // last active season stays on disk exactly as it was, which is what makes
-      // the frozen club pages work.
-      for (const teamObj of teams) {
-        const teamId = teamObj.team.id;
-        const teamName = teamObj.team.name;
-
-        // 🛡️ Safety: Try/Catch inside loop ensures one bad team doesn't crash the whole script
-        try {
-          // --- A. FETCH FIXTURES ---
-          const teamFixtures =
-            (await fetchFootballApi("fixtures", {
-              team: teamId,
-              season: SEASON,
-            })) || [];
-
-          // Add to map (Deduplication happens here automatically)
-          teamFixtures.forEach((fixtureObj) => {
-            const matchId = fixtureObj.fixture.id;
-            uniqueMatchesMap[matchId] = {
-              matchId: matchId.toString(),
-              homeTeamId: fixtureObj.teams.home.id,
-              awayTeamId: fixtureObj.teams.away.id,
-              status: fixtureObj.fixture.status.short,
-              kickoffTime: fixtureObj.fixture.date,
-              timestamp: fixtureObj.fixture.timestamp,
-              leagueId: fixtureObj.league.id,
-              leagueName: fixtureObj.league.name,
-              fixture: fixtureObj.fixture,
-              league: fixtureObj.league,
-              teams: fixtureObj.teams,
-              goals: fixtureObj.goals,
-              score: fixtureObj.score,
-            };
-          });
-
-          // --- B. FETCH SQUADS ---
-          const squadData = await fetchFootballApi("players/squads", {
-            team: teamId,
-          });
-
-          // 🛡️ Safety: Default to empty array if undefined
-          const squadPlayers = squadData[0]?.players || [];
-          const playerIds = squadPlayers.map((player) => player.id);
-
-          const teamSquadsRef = db
-            .collection(`teamSquads/${teamId}/season`)
-            .doc(SEASON.toString());
-
-          const teamSquadsDoc = await teamSquadsRef.get();
-
-          const existingSeasonSquad = teamSquadsDoc.exists
-            ? teamSquadsDoc.data().seasonSquad || []
-            : [];
-
-          const updatedSeasonSquad = [
-            ...existingSeasonSquad,
-            ...squadPlayers.filter(
-              (newPlayer) =>
-                !existingSeasonSquad.some((p) => p.id === newPlayer.id),
-            ),
-          ];
-
-          await teamSquadsRef.set(
-            {
-              activeSquad: squadPlayers,
-              playerIds: playerIds,
-              seasonSquad: updatedSeasonSquad,
-              lastUpdated: FieldValue.serverTimestamp(),
-            },
-            { merge: true },
-          );
-
-          logger.info(`Processed ${teamName} (Fixtures & Squad)`);
-        } catch (teamError) {
-          logger.error(`Error processing team ${teamName}:`, teamError.message);
-          // Loop continues!
-        }
-      }
-
-      // ======================================================
-      // PART 3: BATCH WRITE MATCHES
-      // ======================================================
-      const uniqueMatchesArray = Object.values(uniqueMatchesMap);
-      logger.info(
-        `Writing ${uniqueMatchesArray.length} unique matches to Firestore...`,
-      );
-
-      // BulkWriter throttles and retries for us — a bare Promise.all here fires
-      // several hundred concurrent writes.
-      const writer = db.bulkWriter();
-
-      uniqueMatchesArray.forEach((matchData) => {
-        writer.set(
-          db.collection(`fixtures/${SEASON}/fixtures`).doc(matchData.matchId),
-          matchData,
-          { merge: true },
-        );
-      });
-
-      await writer.close();
-      logger.info(`Done. Matches and Squads updated.`);
+      await runUpdateJob({ db, season: SEASON, leagueId: LEAGUE_ID, logger });
     } catch (error) {
       // Rethrow: swallowing here makes a total failure look like a successful run.
       logger.error("Critical error in daily update:", error.message, error);
