@@ -146,6 +146,10 @@ async function main() {
     });
     await setDoc(doc(db, `fixtures/${YEAR}/fixtures/f1`), { id: "f1" });
     await setDoc(doc(db, `teamSquads/33/season/${YEAR}`), { players: [] });
+    await setDoc(doc(db, "config/clubDirectory"), {
+      season: YEAR,
+      clubs: [{ teamId: "33", name: "Public FC", slug: "pub" }],
+    });
   });
 
   const member = testEnv.authenticatedContext(MEMBER).firestore();
@@ -169,6 +173,14 @@ async function main() {
     assertSucceeds(getDoc(doc(anon, `fixtures/${YEAR}/fixtures/f1`))));
   await it("anonymous can read team squads", () =>
     assertSucceeds(getDoc(doc(anon, `teamSquads/33/season/${YEAR}`))));
+  // The club picker reads this signed out, so it must be world-readable — and
+  // Admin-SDK-only for writes, since it decides which clubs the app offers.
+  await it("anonymous can read the club directory", () =>
+    assertSucceeds(getDoc(doc(anon, "config/clubDirectory"))));
+  await it("a signed-in user CANNOT write the club directory", () =>
+    assertFails(setDoc(doc(member, "config/clubDirectory"), { clubs: [] })));
+  await it("a signed-in user CANNOT read other config docs", () =>
+    assertFails(getDoc(doc(member, "config/somethingElse"))));
 
   console.log("\nWrite access requires a group role (#1)");
   await it("outsider CANNOT write predictions on a PUBLIC group", () =>

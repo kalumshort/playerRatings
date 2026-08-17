@@ -15,6 +15,12 @@ interface ClubViewContextValue {
    */
   season: string;
   isArchived: boolean;
+  /**
+   * The club itself has left the league — every season is frozen, not just
+   * past ones. Distinct from `isArchived`, which is about the season being
+   * viewed, so the banner can explain the difference.
+   */
+  isClubArchived: boolean;
   /** Interactive controls must be disabled when true. */
   isReadOnly: boolean;
 }
@@ -25,9 +31,11 @@ const ClubViewContext = createContext<ClubViewContextValue | undefined>(
 
 export function ClubViewProvider({
   isGuestView,
+  isClubArchived = false,
   children,
 }: {
   isGuestView: boolean;
+  isClubArchived?: boolean;
   children: ReactNode;
 }) {
   const season = useSelector(
@@ -41,9 +49,12 @@ export function ClubViewProvider({
       isGuestView,
       season,
       isArchived: archived,
-      isReadOnly: isGuestView || archived,
+      isClubArchived,
+      // A relegated club is read-only in every season, including the one it
+      // was last active in — there will never be new data to vote on.
+      isReadOnly: isGuestView || archived || isClubArchived,
     };
-  }, [isGuestView, season]);
+  }, [isGuestView, isClubArchived, season]);
 
   return (
     <ClubViewContext.Provider value={value}>

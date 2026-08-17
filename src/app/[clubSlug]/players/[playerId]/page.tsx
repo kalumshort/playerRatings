@@ -3,7 +3,8 @@ import { Metadata } from "next";
 
 import PlayerPageClient from "@/components/client/PlayerPage/PlayerPageClient";
 import { adminDb } from "@/lib/firebase/admin";
-import { resolveSeason } from "@/lib/config/season";
+import { getGroupBySlugServer } from "@/lib/firebase/firebase-admin-queries";
+import { archivedClubSeason, resolveSeason } from "@/lib/config/season";
 
 interface Props {
   params: Promise<{ clubSlug: string; playerId: string }>;
@@ -26,9 +27,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Page({ params, searchParams }: Props) {
-  const { playerId } = await params;
-  // Resolved server-side so the rating fetches start on the right season
-  const season = resolveSeason((await searchParams).season);
+  const { clubSlug, playerId } = await params;
+  const group = await getGroupBySlugServer(clubSlug);
+
+  // Resolved server-side so the rating fetches start on the right season. An
+  // archived club falls back to its last active season.
+  const season = resolveSeason(
+    (await searchParams).season,
+    archivedClubSeason(group),
+  );
 
   return <PlayerPageClient playerId={playerId} season={season} />;
 }

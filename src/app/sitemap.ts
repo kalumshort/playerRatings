@@ -29,6 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   groupsSnapshot.forEach((doc) => {
     const data = doc.data();
+
+    // Archived clubs stay publicly readable, but their current-season pages are
+    // empty by design and their archived seasons render noindex. Filtered in
+    // memory rather than as a `!=` query, which would force a composite index.
+    if (data.status === "archived") return;
+
     if (data.slug && data.groupClubId) {
       clubIdToSlugMap[Number(data.groupClubId)] = data.slug;
 

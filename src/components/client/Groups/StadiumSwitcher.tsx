@@ -40,7 +40,8 @@ import {
   updateUserField,
 } from "@/lib/firebase/client-user-actions";
 import InviteCodeEntry from "./InviteCodeEntry";
-import { teamList } from "@/lib/utils/teamList";
+import useClubDirectory from "@/Hooks/useClubDirectory";
+import { selectJoinableClubs } from "@/lib/clubDirectory";
 import useGroupData from "@/Hooks/useGroupData";
 import { toast } from "sonner";
 
@@ -58,6 +59,11 @@ export default function StadiumSwitcher({
   const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
+
+  // The club list for the transfer market. Read only while the dialog is open,
+  // and cached across opens. Replaces the old hardcoded teamList, so relegated
+  // clubs stop being offered the night they drop out of the league.
+  const { directory, loading: directoryLoading } = useClubDirectory(open);
 
   // Unified Styling Helper
   const sharedCardSx = (isActive: boolean) => ({
@@ -104,7 +110,7 @@ export default function StadiumSwitcher({
   }, [groups]);
 
   const filteredMarket = useMemo(() => {
-    return teamList.filter((team) => {
+    return selectJoinableClubs(directory).filter((team) => {
       const matchesSearch = team.name
         .toLowerCase()
         .includes(search.toLowerCase());
@@ -114,7 +120,7 @@ export default function StadiumSwitcher({
         String(userData?.leagueTeams?.[transferLeagueKey!]);
       return matchesSearch && matchesLeague && isNotCurrent;
     });
-  }, [search, transferLeagueKey, userData]);
+  }, [directory, search, transferLeagueKey, userData]);
 
   const handleConfirmTransfer = () => {
     if (isPending || !transferLeagueKey || !pendingSelection) return;
@@ -247,7 +253,7 @@ export default function StadiumSwitcher({
           <Fade in={true}>
             <Box sx={{ textAlign: "center", py: 2 }}>
               <Avatar
-                src={pendingSelection.logo}
+                src={pendingSelection.logoUrl}
                 sx={{
                   width: 100,
                   height: 100,
@@ -348,6 +354,11 @@ export default function StadiumSwitcher({
                       !lastTransfer ||
                       differenceInDays(new Date(), lastTransfer) >= 30;
 
+                    // The club has left the league. Nothing new will ever be
+                    // written for it, so surface that here rather than let the
+                    // user sit on a slot that can't do anything.
+                    const isArchivedClub = clubData?.status === "archived";
+
                     return (
                       <Fade in key={leagueId}>
                         <Paper
@@ -365,7 +376,10 @@ export default function StadiumSwitcher({
                           }}
                         >
                           <Avatar
-                            src={clubData?.logo}
+                            /* Group docs store the crest as `logoUrl`; `logo`
+                               was never written, so this always fell through
+                               to the Globe placeholder. */
+                            src={clubData?.logoUrl || clubData?.logo}
                             sx={{
                               width: 54,
                               height: 54,
@@ -400,6 +414,31 @@ export default function StadiumSwitcher({
                             >
                               {clubData?.name || "Loading..."}
                             </Typography>
+
+                            {isArchivedClub && (
+                              <Chip
+                                size="small"
+                                icon={<AlertTriangle size={13} />}
+                                label="Left the league — transfer to keep voting"
+                                color="warning"
+                                variant="outlined"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTransferLeagueKey(leagueId);
+                                }}
+                                sx={{
+                                  mt: 0.75,
+                                  height: "auto",
+                                  fontWeight: 700,
+                                  fontSize: "0.65rem",
+                                  "& .MuiChip-label": {
+                                    px: 0.75,
+                                    py: 0.4,
+                                    whiteSpace: "normal",
+                                  },
+                                }}
+                              />
+                            )}
                           </Box>
 
                           <IconButton
@@ -457,6 +496,18 @@ export default function StadiumSwitcher({
                   onChange={(e) => setSearch(e.target.value)}
                   sx={{ mb: 2 }}
                 />
+                {directoryLoading && filteredMarket.length === 0 && (
+                  <Box sx={{ py: 4, textAlign: "center" }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                )}
+                {!directoryLoading && filteredMarket.length === 0 && (
+                  <Box sx={{ py: 3, textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No clubs match that search.
+                    </Typography>
+                  </Box>
+                )}
                 <Grid container spacing={1}>
                   {filteredMarket.map((team) => (
                     <Grid size={{ xs: 4, sm: 3 }} key={team.teamId}>
@@ -477,7 +528,7 @@ export default function StadiumSwitcher({
                         }}
                       >
                         <Avatar
-                          src={team.logo}
+                          src={team.logoUrl}
                           sx={{ width: 40, height: 40, borderRadius: 0 }}
                         />
                         <Typography

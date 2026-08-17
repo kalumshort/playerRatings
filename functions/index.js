@@ -21,7 +21,13 @@ const {
   addMemberToGroup,
   removeMemberFromGroup,
   queueOldMembershipCleanup,
+  reconcileClubGroups,
+  writeClubDirectory,
 } = require("./helperFunctions");
+const {
+  TRACKED_LEAGUES,
+  syncLeagueTeams,
+} = require("./leagueCatalogue");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 
 const nodemailer = require("nodemailer");
@@ -37,6 +43,36 @@ const CONTACT_EMAIL = "kalum@11votes.com";
 
 // Default ceiling so a traffic spike or retry storm can't scale out unbounded.
 const MAX_INSTANCES = 10;
+
+// When set, the nightly club reconcile logs the creates/archives it would make
+// without writing any of them. Leave it on for the first run after deploying a
+// season rollover, confirm the promoted/relegated clubs in the logs, then unset
+// it. Anything other than "1"/"true" counts as off.
+const RECONCILE_DRY_RUN = ["1", "true"].includes(
+  String(process.env.RECONCILE_DRY_RUN || "").toLowerCase(),
+);
+
+// UIDs allowed to run admin-only callables. Comma-separated, set in
+// functions/.env. Default-deny: with nothing configured, nobody passes, so an
+// unset value can never leave an admin function open.
+const ADMIN_UIDS = String(process.env.ADMIN_UIDS || "")
+  .split(",")
+  .map((uid) => uid.trim())
+  .filter(Boolean);
+
+/**
+ * Gate for callables that only the site operator should run.
+ * @param {string|undefined} uid - The caller's auth uid.
+ */
+const assertAdmin = (uid) => {
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Auth required.");
+  }
+
+  if (!ADMIN_UIDS.includes(uid)) {
+    throw new HttpsError("permission-denied", "Admins only.");
+  }
+};
 
 initializeApp();
 
@@ -141,6 +177,46 @@ exports.updateFixtures = onSchedule(
         season: SEASON,
       });
 
+      // ======================================================
+      // PART 1.5: RECONCILE THE CLUB REGISTRY
+      // ======================================================
+      // `teams` is whatever the league table says *today*, so this is where
+      // promotion and relegation land: newly promoted clubs get a groups/ doc
+      // created for them, and clubs that have dropped out are frozen as a
+      // read-only archive. Wrapped separately so a reconcile failure never
+      // costs us the fixture run below.
+      try {
+        const summary = await reconcileClubGroups({
+          db,
+          apiTeams: teams,
+          season: SEASON,
+          dryRun: RECONCILE_DRY_RUN,
+        });
+
+        if (summary.skipped) {
+          logger.error(
+            `Club reconcile SKIPPED: the API returned ${teams.length} teams, ` +
+              `below the minimum expected for a full league. Nothing archived.`,
+          );
+        } else {
+          logger.info(
+            `Club reconcile${summary.dryRun ? " (DRY RUN — no writes)" : ""}: ` +
+              `${summary.created.length} created, ` +
+              `${summary.reactivated.length} reactivated, ` +
+              `${summary.archived.length} archived, ` +
+              `${summary.backfilled.length} slugs backfilled.`,
+            summary,
+          );
+        }
+
+        // Always rebuilt, even on a dry run — it only mirrors what the group
+        // docs already say, so it can't get ahead of them.
+        const directory = await writeClubDirectory({ db, season: SEASON });
+        logger.info(`Club directory written with ${directory.length} clubs.`);
+      } catch (reconcileError) {
+        logger.error("Club reconcile failed:", reconcileError.message);
+      }
+
       const uniqueMatchesMap = {};
 
       logger.info(`Processing ${teams.length} teams...`);
@@ -148,6 +224,9 @@ exports.updateFixtures = onSchedule(
       // ======================================================
       // PART 2: LOOP TEAMS (Fixtures + Squads)
       // ======================================================
+      // Only this season's clubs. Archived clubs are deliberately absent: their
+      // last active season stays on disk exactly as it was, which is what makes
+      // the frozen club pages work.
       for (const teamObj of teams) {
         const teamId = teamObj.team.id;
         const teamName = teamObj.team.name;
@@ -363,6 +442,83 @@ exports.scheduledLiveMatchUpdate = onSchedule(
   },
 );
 
+/**
+ * Snapshots the top four English tiers and the major world leagues into
+ * leagues/season/{season}/{leagueId}, with a doc per team underneath.
+ *
+ * Manual rather than scheduled: league membership changes once a season, so a
+ * nightly run would spend calls confirming nothing changed. Run it after a
+ * season rolls over.
+ *
+ *   firebase functions:shell
+ *   syncLeagueCatalogue({}, { auth: { uid: "<your-admin-uid>" } })
+ *
+ * Optional data: { season } to target a different year, { leagueIds: [39, 40] }
+ * to sync a subset.
+ */
+exports.syncLeagueCatalogue = onCall(
+  {
+    maxInstances: 1,
+    timeoutSeconds: 300,
+    memory: "512MiB",
+    secrets: [FOOTBALL_API_KEY],
+  },
+  async (request) => {
+    assertAdmin(request.auth?.uid);
+
+    const season = request.data?.season
+      ? String(request.data.season)
+      : String(SEASON);
+
+    // Allowlisted against TRACKED_LEAGUES inside syncLeagueTeams, so a
+    // caller-supplied id can never reach the API or a Firestore path.
+    const leagueIds = Array.isArray(request.data?.leagueIds)
+      ? request.data.leagueIds.map(Number).filter(Number.isInteger)
+      : null;
+
+    if (!/^\d{4}$/.test(season)) {
+      throw new HttpsError("invalid-argument", "season must be a 4-digit year.");
+    }
+
+    try {
+      const summary = await syncLeagueTeams({ db, season, leagueIds });
+
+      logger.info(
+        `League catalogue: ${summary.leaguesWritten}/${summary.leaguesRequested} ` +
+          `leagues, ${summary.teamsWritten} teams, season ${season}.`,
+        summary,
+      );
+
+      // An empty league is almost always a wrong id in TRACKED_LEAGUES. Logged
+      // loudly because the run otherwise looks like a success.
+      if (summary.empty.length) {
+        logger.error(
+          `League catalogue: ${summary.empty.length} league(s) returned nothing ` +
+            `— check these ids in TRACKED_LEAGUES.`,
+          summary.empty,
+        );
+      }
+
+      return { success: true, ...summary };
+    } catch (error) {
+      logger.error("League catalogue sync failed:", error);
+      throw new HttpsError("internal", error.message || "Sync failed.");
+    }
+  },
+);
+
+/**
+ * The league ids the catalogue covers, with the name each one is expected to
+ * resolve to. Read this before a sync to confirm what you're about to fetch.
+ */
+exports.listTrackedLeagues = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    assertAdmin(request.auth?.uid);
+    return { leagues: TRACKED_LEAGUES };
+  },
+);
+
 exports.sitemap = onRequest(
   { timeoutSeconds: 60, memory: "256MiB", maxInstances: MAX_INSTANCES },
   async (req, res) => {
@@ -391,6 +547,13 @@ exports.sitemap = onRequest(
         // Default-deny: only publish groups explicitly marked public.
         // `isPublic` is the field the app itself gates on.
         if (data.isPublic !== true) {
+          return;
+        }
+
+        // Archived clubs stay publicly readable, but their current-season pages
+        // are empty by design and their archived seasons render noindex. Keep
+        // them out of the sitemap rather than advertise dead-end URLs.
+        if (data.status === "archived") {
           return;
         }
         // Ensure the group has a slug and a mapped club ID
@@ -497,6 +660,16 @@ exports.addUserToGroup = onCall(
 
       if (!groupSnap.exists) {
         throw new HttpsError("not-found", "Group not found.");
+      }
+
+      // Archived clubs are closed too (the reconcile sets isGroupOpen: false),
+      // but "invite-only" is the wrong thing to tell a user here — they picked
+      // a club that has left the league. Check it first for the clearer message.
+      if (groupSnap.data().status === "archived") {
+        throw new HttpsError(
+          "failed-precondition",
+          "That club is no longer in the Premier League. Pick a club from this season.",
+        );
       }
 
       // Only block groups explicitly closed. Many existing group docs predate
@@ -1149,6 +1322,13 @@ exports.transferLeagueTeam = onCall(
         const leagueKey = newGroupData.league;
         if (!leagueKey) {
           throw new Error("This group is not associated with a league.");
+        }
+
+        // A relegated club is a dead end — never let a transfer land in one.
+        if (newGroupData.status === "archived") {
+          throw new Error(
+            "That club is no longer in the Premier League. Pick a club from this season.",
+          );
         }
 
         // Same gate as addUserToGroup. Without it this function was a way into

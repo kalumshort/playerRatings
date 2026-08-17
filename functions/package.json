@@ -3,6 +3,10 @@
   "description": "Cloud Functions for Firebase",
   "scripts": {
     "lint": "eslint .",
+    "sync:leagues": "node scripts/syncLeagues.js",
+    "test": "firebase emulators:exec --only firestore --project reconcile-test \"node test/reconcile.test.js && node test/leagueCatalogue.test.js\"",
+    "test:reconcile": "firebase emulators:exec --only firestore --project reconcile-test \"node test/reconcile.test.js\"",
+    "test:catalogue": "firebase emulators:exec --only firestore --project catalogue-test \"node test/leagueCatalogue.test.js\"",
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",

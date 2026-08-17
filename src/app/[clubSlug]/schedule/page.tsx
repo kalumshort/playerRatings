@@ -9,7 +9,7 @@ import {
 import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
 import { Box } from "@mui/material";
-import { resolveSeason } from "@/lib/config/season";
+import { archivedClubSeason, resolveSeason } from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string }>;
@@ -41,8 +41,10 @@ export default async function SchedulePage({
   }
 
   // 4. DATA FETCHING (Only happens if authorized)
-  // Allowlisted before it reaches a Firestore path
-  const season = resolveSeason(seasonParam);
+  // Allowlisted before it reaches a Firestore path. An archived club falls back
+  // to its last active season, so a bare /schedule shows real fixtures rather
+  // than an empty current season.
+  const season = resolveSeason(seasonParam, archivedClubSeason(group));
   const clubId = group.groupClubId;
   const fixtures = await getFixturesByClubServer(clubId, season);
 

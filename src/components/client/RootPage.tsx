@@ -11,6 +11,7 @@ import { selectIsUserLoaded } from "@/lib/redux/selectors/userSelectors";
 import { Spinner } from "@/components/ui/Spinner";
 import HomePage from "@/components/client/HomePage";
 import ClubSelectionPage from "@/components/client/ClubSelectionPage";
+import { DirectoryClub } from "@/lib/clubDirectory";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ interface ServerUserData {
 interface RootPageProps {
   initialIsLoggedIn: boolean;
   serverUserData: ServerUserData | null;
+  /** Joinable clubs, resolved server-side from config/clubDirectory. */
+  clubs: DirectoryClub[];
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -32,6 +35,7 @@ interface RootPageProps {
 export default function RootPage({
   initialIsLoggedIn,
   serverUserData,
+  clubs,
 }: RootPageProps) {
   const { user, userLoading } = useAuth();
   const { userHomeGroup, groupDataLoaded, groupDataLoading } = useGroupData();
@@ -72,7 +76,7 @@ export default function RootPage({
   // the race where the client auth hasn't hydrated yet but the server already
   // confirmed a session — prevents a logged-in user briefly seeing <HomePage />.
   if (!user && !initialIsLoggedIn) {
-    return <HomePage />;
+    return <HomePage clubs={clubs} />;
   }
 
   // ── 4. Smart Data Guard ─────────────────────────────────────────────────────
@@ -100,7 +104,7 @@ export default function RootPage({
   const finalSlug = userHomeGroup?.slug ?? serverUserData?.userHomeGroup?.slug;
 
   if (!finalSlug) {
-    return <ClubSelectionPage />;
+    return <ClubSelectionPage clubs={clubs} />;
   }
 
   // ── 6. Redirecting Fallback ─────────────────────────────────────────────────

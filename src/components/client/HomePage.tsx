@@ -31,7 +31,7 @@ import {
 } from "@mui/icons-material";
 import { Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { teamList } from "@/lib/utils/teamList";
+import { DirectoryClub } from "@/lib/clubDirectory";
 import AuthDialog from "@/components/client/Auth/AuthDialog";
 import MoodAreaChart from "@/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart";
 
@@ -98,17 +98,17 @@ const scrollToClubs = () => {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
-export default function HomePage() {
+export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
   const theme = useTheme() as any;
   const [searchTerm, setSearchTerm] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
 
-  const filteredTeams = teamList.filter((t) =>
+  const filteredTeams = clubs.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const displayedTeams =
-    searchTerm.length === 0 ? teamList.slice(0, 4) : filteredTeams;
+    searchTerm.length === 0 ? clubs.slice(0, 4) : filteredTeams;
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 0 }}>
@@ -900,7 +900,7 @@ function Phase3Demo() {
 // ────────────────────────────────────────────────────────────────────────────
 // ClubCard — unchanged
 // ────────────────────────────────────────────────────────────────────────────
-const ClubCard = ({ team }: { team: any }) => {
+const ClubCard = ({ team }: { team: DirectoryClub }) => {
   const theme = useTheme() as any;
 
   return (
@@ -924,7 +924,7 @@ const ClubCard = ({ team }: { team: any }) => {
         }}
       >
         <Avatar
-          src={team.logo}
+          src={team.logoUrl}
           alt={team.name}
           sx={{
             width: { xs: 64, md: 80 },

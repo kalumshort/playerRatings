@@ -4,12 +4,25 @@ import { getAuthSession } from "@/lib/firebase/getAuth";
 import RootPage from "@/components/client/RootPage";
 import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase/admin";
+import { getClubDirectoryServer } from "@/lib/firebase/firebase-admin-queries";
+import { selectJoinableClubs } from "@/lib/clubDirectory";
 //test
 export default async function Page() {
   const { isLoggedIn, userId } = await getAuthSession();
 
+  // The club list for the picker and the marketing grid. Comes from
+  // config/clubDirectory, rebuilt nightly, so promotion/relegation needs no
+  // deploy. Only active clubs — a relegated club is never offered as a choice.
+  const clubs = selectJoinableClubs(await getClubDirectoryServer());
+
   if (!isLoggedIn || !userId) {
-    return <RootPage initialIsLoggedIn={false} serverUserData={null} />;
+    return (
+      <RootPage
+        initialIsLoggedIn={false}
+        serverUserData={null}
+        clubs={clubs}
+      />
+    );
   }
 
   let groupSlug = null;
@@ -56,6 +69,7 @@ export default async function Page() {
     <RootPage
       initialIsLoggedIn={true}
       serverUserData={{ ...userData, groupSlug }}
+      clubs={clubs}
     />
   );
 }

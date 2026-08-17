@@ -19,11 +19,17 @@ import { useAuth } from "@/context/AuthContext";
 interface DataInitializerProps {
   clubId: string;
   groupId?: string;
+  /**
+   * Season to load when there's no `?season=`. Archived clubs pass their last
+   * active season so the page lands on data instead of an empty current season.
+   */
+  defaultSeason?: string | null;
 }
 
 export default function DataInitializer({
   clubId,
   groupId,
+  defaultSeason,
 }: DataInitializerProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { userId } = useAuth();
@@ -32,7 +38,7 @@ export default function DataInitializer({
   // this component owns it and mirrors the result into Redux for everything else.
   // It renders null, so the Suspense boundary it needs costs nothing.
   const searchParams = useSearchParams();
-  const currentYear = resolveSeason(searchParams.get("season"));
+  const currentYear = resolveSeason(searchParams.get("season"), defaultSeason);
 
   // 1. Guarded selectors: Ensure we don't try to access nested state if IDs are missing
   const hasFixtures = useSelector(

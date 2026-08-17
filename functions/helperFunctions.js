@@ -10,6 +10,21 @@ const BASE_URL = "https://v3.football.api-sports.io";
 const SEASON = 2026;
 const LEAGUE_ID = 39; // Premier League
 
+// The leagueKey written onto club group docs. Drives the one-team-per-league
+// invariant in addMemberToGroup and the transfer market in the UI.
+const LEAGUE_KEY = "premier-league";
+
+// A full Premier League season is 20 clubs. The nightly reconcile refuses to
+// archive anything if the API returns fewer than this — a partial or
+// mislabelled response would otherwise mark live clubs as relegated.
+const MIN_EXPECTED_TEAMS = 20;
+
+// The public doc the client reads to render the club picker and transfer
+// market. One doc, one read, no composite index — and it sidesteps the fact
+// that a wildcard list query over `groups` can't satisfy the get()-based
+// isGroupPublic() check in firestore.rules.
+const CLUB_DIRECTORY_PATH = { collection: "config", doc: "clubDirectory" };
+
 // Roles a user may hold in a group. Anything outside this list is rejected
 // before it reaches a Firestore path, because `groupUsers/{groupId}/admins/{uid}`
 // grants group write access via firestore.rules.
@@ -316,9 +331,249 @@ const removeMemberFromGroup = async (db, groupId, uid) => {
   }
 };
 
+// --- CLUB REGISTRY ---
+//
+// `groups/{teamId}` doubles as the club registry: the doc id is the
+// API-Football team id. The nightly reconcile below is what makes
+// promotion/relegation work without hand-editing the Firestore console.
+
+/**
+ * "Nottingham Forest" -> "nottingham-forest".
+ * @param {string} name - The club name from the API.
+ * @return {string} A URL-safe slug.
+ */
+const slugify = (name) =>
+  String(name || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+/**
+ * A club group is one the reconcile is allowed to create/archive. Community and
+ * private groups must never be touched, so both conditions have to hold: the
+ * doc id is the numeric API team id, and the doc identifies itself as a club.
+ * `groupType` is checked too because some hand-created docs predate `league`.
+ * @param {string} docId - The group document id.
+ * @param {object} data - The group document data.
+ * @return {boolean} True when the reconcile owns this doc.
+ */
+const isClubGroup = (docId, data) =>
+  /^\d+$/.test(String(docId)) &&
+  (data?.groupType === "club" || data?.league === LEAGUE_KEY);
+
+/**
+ * Picks a slug that no existing group has already claimed.
+ * @param {string} name - The club name from the API.
+ * @param {string} teamId - The API team id, used to break collisions.
+ * @param {Set<string>} takenSlugs - Slugs already in use across all groups.
+ * @return {string} An unclaimed slug.
+ */
+const uniqueSlug = (name, teamId, takenSlugs) => {
+  const base = slugify(name) || `club-${teamId}`;
+
+  if (!takenSlugs.has(base)) return base;
+
+  // The [clubSlug] route resolves a slug with `where slug == ... limit 1`, so a
+  // duplicate would shadow an existing club. Suffix and log for manual cleanup.
+  return `${base}-${teamId}`;
+};
+
+/**
+ * Reconciles `groups` against this season's league table.
+ *
+ * Promoted clubs are created, survivors are marked active, and clubs that have
+ * dropped out are frozen: `status: "archived"` plus `isGroupOpen: false`, which
+ * the three join paths already reject. `isPublic`/`visibility` are deliberately
+ * left alone so archived club pages stay publicly readable — existing members
+ * keep their history, they just can't vote in a season that will never have data.
+ *
+ * @param {object} args - { db, apiTeams, season, dryRun }.
+ * @return {Promise<object>} Summary of intended/applied changes.
+ */
+const reconcileClubGroups = async ({ db, apiTeams, season, dryRun = false }) => {
+  const seasonStr = String(season);
+  const summary = {
+    dryRun,
+    skipped: false,
+    created: [],
+    reactivated: [],
+    archived: [],
+    backfilled: [],
+  };
+
+  const apiById = new Map();
+
+  for (const entry of apiTeams || []) {
+    const id = entry?.team?.id;
+    if (id === undefined || id === null) continue;
+    apiById.set(String(id), entry.team);
+  }
+
+  // SAFETY: a short response means the API failed, throttled us, or hasn't
+  // published the new season yet. Archiving off that would wipe out live clubs,
+  // so bail before any write. Fixtures for whatever did come back still run.
+  if (apiById.size < MIN_EXPECTED_TEAMS) {
+    summary.skipped = true;
+    return summary;
+  }
+
+  const groupsSnapshot = await db.collection("groups").get();
+  const takenSlugs = new Set();
+  const clubDocs = new Map();
+
+  groupsSnapshot.forEach((doc) => {
+    const data = doc.data() || {};
+
+    // Every slug in the collection, not just clubs — the route looks up slugs
+    // across all groups, so a community group can collide with a new club.
+    if (data.slug) takenSlugs.add(data.slug);
+    if (isClubGroup(doc.id, data)) clubDocs.set(doc.id, data);
+  });
+
+  const batch = db.batch();
+
+  // --- A. Clubs in this season's league ---
+  for (const [teamId, team] of apiById) {
+    const ref = db.collection("groups").doc(teamId);
+    const existing = clubDocs.get(teamId);
+    const logoUrl =
+      team.logo || `https://media.api-sports.io/football/teams/${teamId}.png`;
+
+    if (!existing) {
+      const slug = uniqueSlug(team.name, teamId, takenSlugs);
+      takenSlugs.add(slug);
+      summary.created.push({ teamId, name: team.name, slug });
+
+      if (!dryRun) {
+        batch.set(ref, {
+          name: team.name || `Club ${teamId}`,
+          slug,
+          groupClubId: teamId,
+          logoUrl,
+          league: LEAGUE_KEY,
+          groupType: "club",
+          visibility: "public",
+          isPublic: true,
+          isGroupOpen: true,
+          status: "active",
+          lastActiveSeason: seasonStr,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      continue;
+    }
+
+    const update = {
+      name: team.name || existing.name || `Club ${teamId}`,
+      logoUrl,
+      groupClubId: teamId,
+      league: LEAGUE_KEY,
+      groupType: "club",
+      status: "active",
+      lastActiveSeason: seasonStr,
+    };
+
+    // Backfill a slug rather than leave the club unroutable.
+    if (!existing.slug) {
+      update.slug = uniqueSlug(team.name, teamId, takenSlugs);
+      takenSlugs.add(update.slug);
+      summary.backfilled.push({ teamId, slug: update.slug });
+    }
+
+    // Only force the club back open when it was frozen. Touching isGroupOpen on
+    // every run would silently undo an owner's updateGroupPrivacy choice.
+    if (existing.status === "archived") {
+      update.isGroupOpen = true;
+      update.archivedAt = FieldValue.delete();
+      summary.reactivated.push({ teamId, name: team.name });
+    }
+
+    if (!dryRun) batch.set(ref, update, { merge: true });
+  }
+
+  // --- B. Clubs that have dropped out ---
+  for (const [teamId, data] of clubDocs) {
+    if (apiById.has(teamId)) continue;
+    if (data.status === "archived") continue;
+
+    // On the very first run nothing has lastActiveSeason yet. A club missing
+    // from this season's table was last in it the season before.
+    const lastActiveSeason =
+      data.lastActiveSeason || String(Number(season) - 1);
+
+    summary.archived.push({ teamId, name: data.name, lastActiveSeason });
+
+    if (!dryRun) {
+      batch.set(
+        db.collection("groups").doc(teamId),
+        {
+          status: "archived",
+          isGroupOpen: false,
+          lastActiveSeason,
+          archivedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+  }
+
+  if (!dryRun) await batch.commit();
+
+  return summary;
+};
+
+/**
+ * Rebuilds `config/clubDirectory` — the single public doc the client reads to
+ * render the club picker and transfer market, replacing the old hardcoded
+ * teamList. Re-reads `groups` so it reflects the just-committed reconcile.
+ * @param {object} args - { db, season }.
+ */
+const writeClubDirectory = async ({ db, season }) => {
+  const groupsSnapshot = await db.collection("groups").get();
+  const clubs = [];
+
+  groupsSnapshot.forEach((doc) => {
+    const data = doc.data() || {};
+    if (!isClubGroup(doc.id, data)) return;
+    if (data.isPublic === false) return;
+
+    clubs.push({
+      teamId: doc.id,
+      name: data.name || "",
+      slug: data.slug || "",
+      logoUrl:
+        data.logoUrl ||
+        `https://media.api-sports.io/football/teams/${doc.id}.png`,
+      status: data.status === "archived" ? "archived" : "active",
+      lastActiveSeason: data.lastActiveSeason || null,
+    });
+  });
+
+  // Active first, then alphabetical — the order the picker renders in.
+  clubs.sort((a, b) => {
+    if (a.status !== b.status) return a.status === "active" ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  await db
+    .collection(CLUB_DIRECTORY_PATH.collection)
+    .doc(CLUB_DIRECTORY_PATH.doc)
+    .set({
+      season: String(season),
+      clubs,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+  return clubs;
+};
+
 module.exports = {
   SEASON,
   LEAGUE_ID,
+  LEAGUE_KEY,
+  MIN_EXPECTED_TEAMS,
   VALID_ROLES,
   SELF_JOIN_ROLES,
   INVITABLE_ROLES,
@@ -328,4 +583,8 @@ module.exports = {
   addMemberToGroup,
   removeMemberFromGroup,
   queueOldMembershipCleanup,
+  slugify,
+  isClubGroup,
+  reconcileClubGroups,
+  writeClubDirectory,
 };

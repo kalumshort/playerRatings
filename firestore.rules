@@ -242,6 +242,15 @@ service cloud.firestore {
       allow read: if true;
     }
 
+    // The club picker and transfer market read this one doc instead of listing
+    // `groups`. A wildcard list query over `groups` can't satisfy the get()-based
+    // isGroupPublic() check below, and this keeps the club list to a single read.
+    // Rebuilt nightly by updateFixtures via the Admin SDK.
+    match /config/clubDirectory {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // --- D. INVITES & MEMBERSHIP ---
     // Owner-only, matching createInviteCode()'s own ownerId check. Note the
     // create branch reads request.resource: on create `resource` is null, so

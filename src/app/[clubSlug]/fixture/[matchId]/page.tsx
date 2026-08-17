@@ -10,7 +10,11 @@ import {
 import FixtureClientWrapper from "@/components/client/Fixture/FixtureClientWrapper";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
-import { isArchivedSeason, resolveSeason } from "@/lib/config/season";
+import {
+  archivedClubSeason,
+  isArchivedSeason,
+  resolveSeason,
+} from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string; matchId: string }>;
@@ -21,8 +25,13 @@ export async function generateMetadata({
   params,
   searchParams,
 }: PageProps): Promise<Metadata> {
-  const { matchId } = await params;
-  const season = resolveSeason((await searchParams).season);
+  const { clubSlug, matchId } = await params;
+  // getGroupBySlugServer is cache()d, so this shares the page's own lookup.
+  const group = await getGroupBySlugServer(clubSlug);
+  const season = resolveSeason(
+    (await searchParams).season,
+    archivedClubSeason(group),
+  );
 
   try {
     const fixture = await getFixtureByIdServer(matchId, season);
@@ -50,7 +59,6 @@ export default async function FixturePage({
   searchParams,
 }: PageProps) {
   const { clubSlug, matchId } = await params;
-  const season = resolveSeason((await searchParams).season);
 
   console.log(`--- [DEBUG] Starting Page Load for ${clubSlug}/${matchId} ---`);
 
@@ -64,6 +72,13 @@ export default async function FixturePage({
     console.error(`[NOT_FOUND]: Group not found for slug "${clubSlug}"`);
     notFound();
   }
+
+  // Resolved after the group: an archived club falls back to its last active
+  // season, so a bare fixture link still finds the match.
+  const season = resolveSeason(
+    (await searchParams).season,
+    archivedClubSeason(group),
+  );
 
   console.log(
     `[DEBUG]: Group found (${group.id}), User ID: ${userId ?? "Guest"}`,

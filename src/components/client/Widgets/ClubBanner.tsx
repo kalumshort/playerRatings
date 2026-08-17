@@ -28,6 +28,7 @@ interface GuestClubBannerProps {
     name: string;
     isGroupOpen: boolean;
     groupType: "club" | "group";
+    status?: string;
   };
   isGuestView: boolean;
   userId?: string | null;
@@ -42,6 +43,11 @@ export default function GuestClubBanner({
   const [isJoinOpen, setIsJoinOpen] = useState(false);
 
   if (!isGuestView) return null;
+
+  // A club that has left the league can't be joined — addUserToGroup rejects it
+  // server-side, so offering the button would only produce an error toast.
+  // ArchivedClubNotice explains the state instead.
+  const canJoin = groupData.status !== "archived";
 
   const handleBackToClub = () => {
     window.location.href = "/";
@@ -69,7 +75,7 @@ export default function GuestClubBanner({
               >
                 Back to My Club
               </Button>
-              {groupData.isGroupOpen && (
+              {groupData.isGroupOpen && canJoin && (
                 <Button
                   size="small"
                   onClick={() => setIsJoinOpen(true)} // Opens membership dialog
@@ -81,6 +87,7 @@ export default function GuestClubBanner({
               )}
             </>
           ) : (
+            canJoin &&
             (groupData.isGroupOpen || groupData.groupType === "club") && (
               <Button
                 size="small"

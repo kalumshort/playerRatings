@@ -13,6 +13,15 @@ export interface Group {
   league?: string;
   isPublic?: boolean;
   isGroupOpen?: boolean;
+  groupType?: "club" | "group";
+  /**
+   * Club lifecycle, maintained by the nightly reconcile in updateFixtures.
+   * "archived" means the club has left the league: no new fixtures or squads
+   * will be written, so its pages are frozen at `lastActiveSeason` and go
+   * read-only. Absent on community groups.
+   */
+  status?: "active" | "archived";
+  lastActiveSeason?: string | null;
 }
 
 interface GroupState {

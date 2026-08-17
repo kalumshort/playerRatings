@@ -2,6 +2,58 @@ import "server-only";
 import { adminDb } from "./admin";
 import { Fixture } from "@/types/football";
 import { cache } from "react";
+import {
+  ClubDirectory,
+  EMPTY_CLUB_DIRECTORY,
+  normaliseClubDirectory,
+} from "@/lib/clubDirectory";
+import { CURRENT_SEASON } from "@/lib/config/season";
+
+/**
+ * Builds the directory straight from `groups`, for the window between deploying
+ * this code and updateFixtures first writing config/clubDirectory. Without it
+ * the club picker would render empty until the next 00:00 run. Server-only: the
+ * client can't run this query, because the groups read rule calls get() on a
+ * wildcard the list has no way to bind.
+ */
+async function buildClubDirectoryFromGroups(): Promise<ClubDirectory> {
+  const snapshot = await adminDb
+    .collection("groups")
+    .where("league", "==", "premier-league")
+    .get();
+
+  return normaliseClubDirectory({
+    season: CURRENT_SEASON,
+    clubs: snapshot.docs
+      .filter((doc) => /^\d+$/.test(doc.id) && doc.data().isPublic !== false)
+      .map((doc) => ({ teamId: doc.id, ...doc.data() })),
+  });
+}
+
+/**
+ * The club list for the picker and the marketing homepage. One doc read,
+ * rebuilt nightly by the updateFixtures Cloud Function. Wrapped in cache() so
+ * a single render pays for it once.
+ *
+ * Never throws — a club picker that 500s is worse than one that comes up short.
+ */
+export const getClubDirectoryServer = cache(
+  async (): Promise<ClubDirectory> => {
+    try {
+      const snapshot = await adminDb
+        .collection("config")
+        .doc("clubDirectory")
+        .get();
+
+      if (snapshot.exists) return normaliseClubDirectory(snapshot.data());
+
+      return await buildClubDirectoryFromGroups();
+    } catch (error) {
+      console.error("❌ Club directory fetch failed:", error);
+      return EMPTY_CLUB_DIRECTORY;
+    }
+  },
+);
 
 export async function getFixturesByClubServer(
   clubId: string,
@@ -43,7 +95,10 @@ export async function getFixturesByClubServer(
     return [];
   }
 }
-export async function getGroupBySlugServer(slug: string) {
+// cache()d because layout, page and generateMetadata all resolve the same slug
+// within one render — and every season-aware route now needs the group's
+// archived status before it can pick a season.
+export const getGroupBySlugServer = cache(async (slug: string) => {
   try {
     const snapshot = await adminDb
       .collection("groups")
@@ -74,7 +129,7 @@ export async function getGroupBySlugServer(slug: string) {
     console.error("❌ Error fetching group by slug:", error);
     return null;
   }
-}
+});
 
 export async function getFixtureByIdServer(
   matchId: string,

@@ -20,20 +20,29 @@ import { motion } from "framer-motion";
 
 // CUSTOM HOOKS & DATA
 import { useAuth } from "@/context/AuthContext";
-import { teamList } from "@/lib/utils/teamList";
+import { DirectoryClub } from "@/lib/clubDirectory";
+import { getClubAccent } from "@/lib/utils/clubBranding";
 import { handleAddUserToGroup } from "@/lib/firebase/client-actions";
 import { Spinner } from "@/components/ui/Spinner"; // Using your existing Spinner
 import { toast } from "sonner";
 
-export default function ClubSelectionPage() {
+interface ClubSelectionPageProps {
+  /**
+   * Joinable clubs for this season, resolved server-side from the club
+   * directory. Relegated clubs are already filtered out upstream.
+   */
+  clubs: DirectoryClub[];
+}
+
+export default function ClubSelectionPage({ clubs }: ClubSelectionPageProps) {
   const { user } = useAuth();
   const theme = useTheme() as any;
 
   // States
-  const [loadingTeam, setLoadingTeam] = useState<any | null>(null);
-  const [pendingTeam, setPendingTeam] = useState<any | null>(null);
+  const [loadingTeam, setLoadingTeam] = useState<DirectoryClub | null>(null);
+  const [pendingTeam, setPendingTeam] = useState<DirectoryClub | null>(null);
 
-  const handleTeamClick = (team: any) => {
+  const handleTeamClick = (team: DirectoryClub) => {
     if (loadingTeam) return;
     setPendingTeam(team);
   };
@@ -136,8 +145,8 @@ export default function ClubSelectionPage() {
 
       {/* CLUB GRID */}
       <Grid container spacing={2.5} justifyContent="center">
-        {teamList.map((team) => {
-          const clubColor = team.accent || "#212121";
+        {clubs.map((team) => {
+          const clubColor = getClubAccent(team.teamId);
 
           return (
             <Grid key={team.teamId} size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}>
@@ -162,7 +171,7 @@ export default function ClubSelectionPage() {
                       component="img"
                       loading="lazy"
                       decoding="async"
-                      src={team.logo}
+                      src={team.logoUrl}
                       alt={team.name}
                       sx={{
                         width: 80,
@@ -216,7 +225,7 @@ export default function ClubSelectionPage() {
               component="img"
               loading="lazy"
               decoding="async"
-              src={pendingTeam.logo}
+              src={pendingTeam.logoUrl}
               alt={pendingTeam.name}
               sx={{ width: 80, height: 80, mb: 2, objectFit: "contain" }}
             />
