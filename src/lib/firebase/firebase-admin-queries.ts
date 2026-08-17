@@ -8,6 +8,12 @@ import {
   normaliseClubDirectory,
 } from "@/lib/clubDirectory";
 import { CURRENT_SEASON } from "@/lib/config/season";
+import {
+  EMPTY_SHOWCASE,
+  HomepageShowcase,
+  ShowcaseEvent,
+  ShowcasePlayer,
+} from "@/lib/homepageShowcase";
 
 /**
  * Builds the directory straight from `groups`, for the window between deploying
@@ -51,6 +57,156 @@ export const getClubDirectoryServer = cache(
     } catch (error) {
       console.error("❌ Club directory fetch failed:", error);
       return EMPTY_CLUB_DIRECTORY;
+    }
+  },
+);
+
+/** Event types the pulse chart draws a marker for. */
+const SHOWCASE_EVENT_TYPES = ["Goal", "Card", "subst"];
+
+/**
+ * How many recent fixtures to consider. The most recent one is often a friendly
+ * whose only events are substitutions, which makes for a dull pulse chart — so
+ * look back a few and prefer one that actually has a goal in it.
+ */
+const SHOWCASE_FIXTURE_WINDOW = 6;
+
+/**
+ * "Player to watch" should look like a matchwinner. Squads come back in
+ * GK-DEF-MID-FWD order, so taking the first three without this gives three
+ * centre-backs.
+ */
+const SHOWCASE_POSITION_RANK: Record<string, number> = {
+  Attacker: 0,
+  Midfielder: 1,
+  Defender: 2,
+};
+
+/**
+ * Real entities for the marketing homepage demos: a real fixture for the
+ * crests, its real goals and cards for the pulse chart, and real squad players
+ * with photos.
+ *
+ * Prefers the most recently finished fixture over an upcoming one, because a
+ * finished match is the only thing that carries a real `events` array.
+ *
+ * Both queries filter and order on `timestamp` alone, so neither needs a
+ * composite index beyond the single-field ones Firestore creates automatically.
+ *
+ * Never throws and never partially fails — the homepage renders fully without
+ * any of this, which is what happens on a cold season.
+ */
+export const getHomepageShowcase = cache(
+  async (): Promise<HomepageShowcase> => {
+    try {
+      const fixturesRef = adminDb
+        .collection("fixtures")
+        .doc(CURRENT_SEASON)
+        .collection("fixtures");
+
+      const nowSeconds = Math.floor(Date.now() / 1000);
+
+      // select() keeps the payload to the four fields used here. Fixture docs
+      // also carry lineups and full match statistics, which would make reading
+      // a window of them far heavier than it needs to be.
+      const fields = ["teams", "events", "status", "timestamp"] as const;
+
+      let snapshot = await fixturesRef
+        .where("timestamp", "<", nowSeconds)
+        .orderBy("timestamp", "desc")
+        .limit(SHOWCASE_FIXTURE_WINDOW)
+        .select(...fields)
+        .get();
+
+      if (snapshot.empty) {
+        snapshot = await fixturesRef
+          .where("timestamp", ">=", nowSeconds)
+          .orderBy("timestamp", "asc")
+          .limit(1)
+          .select(...fields)
+          .get();
+      }
+
+      if (snapshot.empty) return EMPTY_SHOWCASE;
+
+      // Most goals wins. The docs arrive newest-first and the sort is stable,
+      // so ties fall back to the most recent match.
+      const goalCount = (candidate: any) =>
+        (candidate.data().events || []).filter((e: any) => e?.type === "Goal")
+          .length;
+
+      const doc = [...snapshot.docs].sort(
+        (a, b) => goalCount(b) - goalCount(a),
+      )[0];
+      const data = doc.data();
+      const home = data.teams?.home;
+      const away = data.teams?.away;
+
+      if (!home?.id || !away?.id) return EMPTY_SHOWCASE;
+
+      const logoFor = (id: number | string) =>
+        `https://media.api-sports.io/football/teams/${id}.png`;
+
+      // Goals and cards first, then subs fill any remaining slots — a straight
+      // chronological slice gets swallowed by the wall of half-time
+      // substitutions and the chart ends up showing no goals at all.
+      const usableEvents = (data.events || []).filter(
+        (event: any) =>
+          event?.time?.elapsed != null &&
+          SHOWCASE_EVENT_TYPES.includes(event.type),
+      );
+
+      const events: ShowcaseEvent[] = [
+        ...usableEvents.filter((e: any) => e.type !== "subst"),
+        ...usableEvents.filter((e: any) => e.type === "subst"),
+      ]
+        .slice(0, 8)
+        .map((event: any) => ({
+          time: { elapsed: event.time.elapsed, extra: event.time.extra ?? null },
+          type: event.type,
+          detail: event.detail ?? "",
+          player: { name: event.player?.name ?? "" },
+          assist: { name: event.assist?.name ?? "" },
+        }))
+        .sort((a, b) => a.time.elapsed - b.time.elapsed);
+
+      const squadDoc = await adminDb
+        .collection("teamSquads")
+        .doc(String(home.id))
+        .collection("season")
+        .doc(CURRENT_SEASON)
+        .get();
+
+      const players: ShowcasePlayer[] = (squadDoc.data()?.activeSquad || [])
+        .filter((player: any) => player?.id && player?.name)
+        // Goalkeepers are never a plausible "player to watch" pick.
+        .filter((player: any) => player.position !== "Goalkeeper")
+        .sort(
+          (a: any, b: any) =>
+            (SHOWCASE_POSITION_RANK[a.position] ?? 3) -
+            (SHOWCASE_POSITION_RANK[b.position] ?? 3),
+        )
+        .slice(0, 3)
+        .map((player: any) => ({
+          id: String(player.id),
+          name: player.name,
+          photo: player.photo || "",
+        }));
+
+      return {
+        fixture: {
+          matchId: doc.id,
+          homeName: home.name || "",
+          homeLogo: home.logo || logoFor(home.id),
+          awayName: away.name || "",
+          awayLogo: away.logo || logoFor(away.id),
+        },
+        players,
+        events,
+      };
+    } catch (error) {
+      console.error("❌ Homepage showcase fetch failed:", error);
+      return EMPTY_SHOWCASE;
     }
   },
 );

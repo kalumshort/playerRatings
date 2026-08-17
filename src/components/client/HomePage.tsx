@@ -32,63 +32,72 @@ import {
 import { Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DirectoryClub } from "@/lib/clubDirectory";
+import {
+  EMPTY_SHOWCASE,
+  HomepageShowcase,
+  ShowcaseFixture,
+  ShowcasePlayer,
+} from "@/lib/homepageShowcase";
 import AuthDialog from "@/components/client/Auth/AuthDialog";
+import DemoFrame from "@/components/client/Home/DemoFrame";
 import MoodAreaChart from "@/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart";
 
 // --- FEATURE DATA ---
+// Each tile describes something the app actually does today. Keep it that way:
+// if a line here can't be pointed at a component, it doesn't belong.
 const features = [
   {
-    title: "Predictions",
-    desc: "Lock in scorelines before kick-off.",
-    icon: <TouchApp color="secondary" />,
-  },
-  {
-    title: "Pre-Match MOTM",
-    desc: "Call your Man of the Match early.",
-    icon: <Star sx={{ color: "#FFC8DD" }} />,
-  },
-  {
     title: "Consensus XI",
-    desc: "Build formations and see fan agreement.",
+    desc: "The crowd's starting XI on a pitch, with the percentage that picked each player for that exact slot.",
     icon: <Groups color="primary" />,
   },
   {
-    title: "Live Manager",
-    desc: "Rate real-time performance and tactics.",
-    icon: <Psychology />,
+    title: "Your differentials",
+    desc: "See where you disagree with the crowd — then how many of the real starters you called once the team sheet drops.",
+    icon: <TouchApp color="secondary" />,
+  },
+  {
+    title: "19 formations",
+    desc: "From 4-3-3 Holding to a 4-3-2-1 Xmas Tree. Pick the shape, then fill it.",
+    icon: <Psychology color="primary" />,
   },
   {
     title: "Live Pulse",
-    desc: "Visualize collective fan emotion.",
-    icon: <Timeline sx={{ color: "#FFC8DD" }} />,
+    desc: "Tap your mood as it swings. The whole crowd's emotion becomes one chart, with the goals and cards marked on it.",
+    icon: <Timeline color="secondary" />,
   },
   {
-    title: "Post-Match Ratings",
-    desc: "The definitive fan-led rating system.",
-    icon: <AutoGraph color="primary" />,
+    title: "Manager mode",
+    desc: "Call players hot or cold while they play. Enough sub requests and the shout shows up on the pitch.",
+    icon: <Bolt color="primary" />,
   },
   {
-    title: "Data Analytics",
-    desc: "Track form charts across the season.",
-    icon: <QueryStats color="secondary" />,
+    title: "Ratings open at 80'",
+    desc: "Not before. Rate every player who featured, and the votes crown the Fan Man of the Match.",
+    icon: <AutoGraph color="secondary" />,
+  },
+  {
+    title: "The whole season",
+    desc: "Every fixture, league and cup. A rating leaderboard, per-player form graphs, and head-to-head comparisons.",
+    icon: <QueryStats color="primary" />,
   },
 ];
 
 const whyPoints = [
   {
     title: "Fan-led, not pundit-led",
-    desc: "The XI is what fans pick. The MOTM is what fans vote. No expert panels, no algorithms — just the people who watched.",
+    desc: "The XI is what fans pick. The Man of the Match is what fans vote. No expert panels, no algorithm deciding who was good.",
     icon: <Groups color="primary" sx={{ fontSize: 32 }} />,
   },
   {
-    title: "Built for the 90 minutes",
-    desc: "Pre-match predictions, live mood, post-match ratings — every tool is designed around the rhythm of matchday.",
-    icon: <Bolt color="secondary" sx={{ fontSize: 32 }} />,
+    title: "One club at a time",
+    desc: "You follow a single club, and switching is a transfer with a 30-day wait. That's what stops a consensus from being brigaded by people who weren't watching.",
+    icon: <Star color="secondary" sx={{ fontSize: 32 }} />,
   },
   {
-    title: "Your club, your terrace",
-    desc: "Every club gets its own consensus space. Your votes, your XI, your verdict — where it actually matters.",
-    icon: <Star sx={{ color: "#FFC8DD", fontSize: 32 }} />,
+    title: "Built for the 90 minutes",
+    desc: "The app changes as the match does — predictions before kick-off, mood while it's live, ratings once it's nearly done.",
+    icon: <Bolt color="primary" sx={{ fontSize: 32 }} />,
   },
 ];
 
@@ -98,17 +107,23 @@ const scrollToClubs = () => {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
-export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
+export default function HomePage({
+  clubs,
+  showcase = EMPTY_SHOWCASE,
+}: {
+  clubs: DirectoryClub[];
+  /** Real fixture, squad players and match events for the demo panels. */
+  showcase?: HomepageShowcase;
+}) {
   const theme = useTheme() as any;
   const [searchTerm, setSearchTerm] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
 
-  const filteredTeams = clubs.filter((t) =>
+  // Every club, always. This used to show clubs.slice(0, 4) until you typed,
+  // which hid the one genuinely real thing on the page behind a search box.
+  const displayedTeams = clubs.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
-  const displayedTeams =
-    searchTerm.length === 0 ? clubs.slice(0, 4) : filteredTeams;
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 0 }}>
@@ -142,7 +157,10 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
             <Typography
               variant="h1"
               sx={{
-                fontSize: { xs: "3rem", md: "5rem" },
+                // Fluid below md: a flat 3rem made "CLUB'S PULSE" wider than a
+                // 375px screen, and that one line was stretching the whole
+                // page's scroll width — every section inherited the overflow.
+                fontSize: { xs: "clamp(2.25rem, 11vw, 3rem)", md: "5rem" },
                 lineHeight: 0.9,
                 letterSpacing: -1,
                 fontWeight: 900,
@@ -157,11 +175,18 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ maxWidth: 540, fontWeight: 500, lineHeight: 1.5 }}
+              sx={{ maxWidth: 560, fontWeight: 500, lineHeight: 1.5 }}
             >
-              Predict the result. Build the XI. Rate the performance. 11Votes
-              turns thousands of fan voices into one official matchday
-              consensus — for every club.
+              Predict the result. Build the XI. Rate the performance. Every vote
+              your club casts becomes one matchday consensus — and you find out
+              how close you were.
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", opacity: 0.75, fontWeight: 600 }}
+            >
+              Premier League clubs — more leagues coming.
             </Typography>
 
             <Stack
@@ -210,13 +235,33 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
           variant="overline"
           sx={{
             display: "block",
-            mb: 2,
+            mb: 1,
             letterSpacing: 2,
             color: "text.secondary",
             fontWeight: 800,
           }}
         >
           NO ACCOUNT NEEDED TO LOOK AROUND
+        </Typography>
+
+        {/* The count comes from the directory, never a literal — the nightly
+            reconcile changes which clubs exist when teams go up or down. */}
+        <Typography
+          align="center"
+          sx={{
+            mb: 4,
+            fontSize: "1.05rem",
+            color: "text.secondary",
+            maxWidth: 520,
+            mx: "auto",
+          }}
+        >
+          {clubs.length > 0 && (
+            <Box component="span" sx={{ fontWeight: 800, color: "text.primary" }}>
+              All {clubs.length} Premier League clubs.{" "}
+            </Box>
+          )}
+          You follow one club at a time — more leagues coming.
         </Typography>
 
         <Paper
@@ -253,7 +298,9 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.05 }}
+                  // Capped so the last club in a 20-card grid doesn't wait a
+                  // full second to appear.
+                  transition={{ delay: Math.min(index, 8) * 0.04 }}
                 >
                   <ClubCard team={team} />
                 </motion.div>
@@ -261,6 +308,20 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
             ))}
           </AnimatePresence>
         </Grid>
+
+        {/* Two different empty states. The directory genuinely can be empty —
+            it's rebuilt nightly — and rendering nothing at all looks broken. */}
+        {displayedTeams.length === 0 && (
+          <Typography
+            align="center"
+            color="text.secondary"
+            sx={{ py: 6, fontSize: "1.05rem" }}
+          >
+            {clubs.length === 0
+              ? "Clubs are being set up for the new season — check back shortly."
+              : `No club matches "${searchTerm}".`}
+          </Typography>
+        )}
       </Container>
 
       {/* 3. JOURNEY — Three phases. One consensus. */}
@@ -297,21 +358,26 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
             <JourneyRow
               eyebrow="BEFORE KICKOFF"
               title="Predict together"
-              body="Lock in your scoreline, pick your Pre-Match Man of the Match, and build the XI you'd start. Watch the fan consensus form in real-time as votes pour in."
-              demo={<Phase1Demo />}
+              body="Lock in your scoreline, name the player you think decides it, and build the XI you'd start. Then see the crowd's XI — and exactly which picks you're backing yourself on."
+              demo={
+                <Phase1Demo
+                  fixture={showcase.fixture}
+                  players={showcase.players}
+                />
+              }
             />
             <JourneyRow
               eyebrow="LIVE"
               title="Feel the pulse"
-              body="Tap your mood as the match swings. The Live Pulse aggregates the whole stadium's emotion — goals, shocks, frustration, joy — into one shared chart."
-              demo={<Phase2Demo />}
+              body="Tap your mood as the match swings. Every fan's emotion collapses into one chart, minute by minute, with the goals and cards marked on it — so you can see the moment it turned."
+              demo={<Phase2Demo events={showcase.events} />}
               reverse
             />
             <JourneyRow
               eyebrow="FULL TIME"
               title="Crown the MOTM"
-              body="Rate every player. The community's votes crown the official Fan Man of the Match — no pundits, no algorithm, just the consensus of the people who watched."
-              demo={<Phase3Demo />}
+              body="Ratings open at the 80th minute. Score every player who featured, compare yours against the group average, and the votes crown the Fan Man of the Match."
+              demo={<Phase3Demo player={showcase.players[0] ?? null} />}
             />
           </Stack>
         </Container>
@@ -332,7 +398,7 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
             color="text.secondary"
             sx={{ mb: 6, fontSize: "1.05rem" }}
           >
-            One app. Pre-match to post-match. Every fixture.
+            Pre-match to post-match. Every fixture, league and cup.
           </Typography>
 
           <Grid container spacing={3} justifyContent="center">
@@ -457,7 +523,7 @@ export default function HomePage({ clubs }: { clubs: DirectoryClub[] }) {
               Your voice. Your XI. Your verdict.
             </Typography>
             <Typography color="text.secondary" sx={{ fontSize: "1.15rem", maxWidth: 440 }}>
-              Sign up free. No ads. No nonsense. Just football.
+              Free to join. Pick your club and have your say on the next one.
             </Typography>
             <Button
               onClick={() => setAuthOpen(true)}
@@ -579,41 +645,57 @@ function JourneyRow({
 
 // ────────────────────────────────────────────────────────────────────────────
 // Phase 1 — Predict together (mini WinnerPredict + Pre-Match MOTM thumbnails)
+//
+// Crests, club names and player names/photos are real, pulled from Firestore by
+// getHomepageShowcase(). The split below is illustrative — hence the EXAMPLE
+// label from DemoFrame — but it is never presented as a recorded vote count.
 // ────────────────────────────────────────────────────────────────────────────
-const PHASE1_PREDICTION = { home: 47, draw: 22, away: 31 };
-const PHASE1_PLAYERS = [
-  { name: "M. Carter", initials: "MC", topPick: true, votes: 38 },
-  { name: "J. Silva", initials: "JS", topPick: false, votes: 21 },
-  { name: "L. Akande", initials: "LA", topPick: false, votes: 14 },
-];
+const EXAMPLE_SPLIT = { home: 47, draw: 22, away: 31 };
+const EXAMPLE_PLAYER_SHARE = [38, 21, 14];
 
-function Phase1Demo() {
+function Phase1Demo({
+  fixture,
+  players,
+}: {
+  fixture: ShowcaseFixture | null;
+  players: ShowcasePlayer[];
+}) {
   const theme = useTheme() as any;
-  const p = PHASE1_PREDICTION;
+  const p = EXAMPLE_SPLIT;
+
   return (
-    <Paper
-      sx={{
-        ...theme.clay?.card,
-        p: { xs: 3, md: 4 },
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-      }}
-    >
+    <DemoFrame>
+      <Stack spacing={4}>
       {/* Mini winner predict */}
       <Box>
         <Stack
           direction="row"
           justifyContent="space-between"
-          alignItems="baseline"
-          sx={{ mb: 1.5 }}
+          alignItems="center"
+          sx={{ mb: 1.5, pr: 9 }}
         >
           <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6 }}>
             Result prediction
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.5 }}>
-            2,481 votes
-          </Typography>
+          {fixture && (
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <Avatar
+                src={fixture.homeLogo}
+                alt={fixture.homeName}
+                sx={{ width: 20, height: 20, bgcolor: "transparent" }}
+                imgProps={{ style: { objectFit: "contain" } }}
+              />
+              <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.7 }}>
+                v
+              </Typography>
+              <Avatar
+                src={fixture.awayLogo}
+                alt={fixture.awayName}
+                sx={{ width: 20, height: 20, bgcolor: "transparent" }}
+                imgProps={{ style: { objectFit: "contain" } }}
+              />
+            </Stack>
+          )}
         </Stack>
         <Box
           sx={{
@@ -663,10 +745,14 @@ function Phase1Demo() {
             {p.away}%
           </Box>
         </Box>
-        <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>HOME</Typography>
+        <Stack direction="row" justifyContent="space-between" sx={{ mt: 1, gap: 1 }}>
+          <Typography variant="caption" noWrap sx={{ fontWeight: 700, maxWidth: "40%" }}>
+            {fixture?.homeName?.toUpperCase() || "HOME"}
+          </Typography>
           <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>DRAW</Typography>
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>AWAY</Typography>
+          <Typography variant="caption" noWrap sx={{ fontWeight: 700, maxWidth: "40%" }}>
+            {fixture?.awayName?.toUpperCase() || "AWAY"}
+          </Typography>
         </Stack>
       </Box>
 
@@ -678,139 +764,178 @@ function Phase1Demo() {
         >
           Player to watch
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="flex-start">
-          {PHASE1_PLAYERS.map((pl) => (
-            <Box
-              key={pl.name}
-              sx={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 0.75,
-              }}
-            >
-              <Box sx={{ position: "relative" }}>
-                <Avatar
+        <Stack
+          direction="row"
+          spacing={{ xs: 1, sm: 2 }}
+          alignItems="flex-start"
+          justifyContent="center"
+        >
+          {players.map((pl, i) => {
+            const topPick = i === 0;
+
+            return (
+              <Box
+                key={pl.id}
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 0.75,
+                }}
+              >
+                <Box sx={{ position: "relative" }}>
+                  <Avatar
+                    src={pl.photo || undefined}
+                    alt={pl.name}
+                    sx={{
+                      width: { xs: 48, sm: 56 },
+                      height: { xs: 48, sm: 56 },
+                      fontWeight: 900,
+                      bgcolor: topPick
+                        ? alpha(theme.palette.primary.main, 0.2)
+                        : alpha(theme.palette.text.primary, 0.08),
+                      color: topPick ? "primary.main" : "text.primary",
+                      border: topPick
+                        ? `1px solid ${theme.palette.primary.main}`
+                        : "1px solid transparent",
+                    }}
+                  >
+                    {pl.name.charAt(0)}
+                  </Avatar>
+                  {topPick && (
+                    <Chip
+                      label="TOP"
+                      size="small"
+                      sx={{
+                        position: "absolute",
+                        bottom: -8,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        bgcolor: "primary.main",
+                        color: "primary.contrastText",
+                        fontWeight: 900,
+                        fontSize: "0.6rem",
+                        height: 18,
+                      }}
+                    />
+                  )}
+                </Box>
+                <Typography
+                  variant="caption"
+                  noWrap
                   sx={{
-                    width: 56,
-                    height: 56,
-                    fontWeight: 900,
-                    bgcolor: pl.topPick
-                      ? alpha(theme.palette.primary.main, 0.2)
-                      : alpha(theme.palette.text.primary, 0.08),
-                    color: pl.topPick ? "primary.main" : "text.primary",
-                    border: pl.topPick
-                      ? `1px solid ${theme.palette.primary.main}`
-                      : "1px solid transparent",
+                    fontWeight: 700,
+                    mt: topPick ? 1 : 0,
+                    textAlign: "center",
+                    maxWidth: "100%",
                   }}
                 >
-                  {pl.initials}
-                </Avatar>
-                {pl.topPick && (
-                  <Chip
-                    label="TOP"
-                    size="small"
-                    sx={{
-                      position: "absolute",
-                      bottom: -8,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      bgcolor: "primary.main",
-                      color: "primary.contrastText",
-                      fontWeight: 900,
-                      fontSize: "0.6rem",
-                      height: 18,
-                    }}
-                  />
-                )}
+                  {pl.name}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.6 }}>
+                  {EXAMPLE_PLAYER_SHARE[i] ?? 0}%
+                </Typography>
               </Box>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, mt: pl.topPick ? 1 : 0, textAlign: "center" }}
-              >
-                {pl.name}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.6 }}>
-                {pl.votes}%
-              </Typography>
-            </Box>
-          ))}
+            );
+          })}
+
+          {/* Squad data can be absent on a cold season — the panel still has
+              to stand up, so fall back to describing the feature. */}
+          {players.length === 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ py: 3, textAlign: "center" }}
+            >
+              Pick the player you think decides the match, and see who the rest
+              of your club backed.
+            </Typography>
+          )}
         </Stack>
       </Box>
-    </Paper>
+      </Stack>
+    </DemoFrame>
   );
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Phase 2 — Live Pulse (real MoodAreaChart with mock match-mood data)
+// Phase 2 — Live Pulse
+//
+// This renders the production MoodAreaChart. The events drawn on it are real,
+// taken from a real finished fixture by getHomepageShowcase(); the mood curve
+// is an illustrative shape, because a chart of the handful of real reactions
+// recorded so far would show nothing useful.
+//
+// Includes every mood the chart knows about (moodConfig.MOODS) — `hopeful` was
+// previously missing from every bucket, so that band always rendered flat zero.
 // ────────────────────────────────────────────────────────────────────────────
-// Format: { [minute]: { excited, happy, nervous, sad, angry } }
-const PHASE2_MOODS: Record<string, Record<string, number>> = {
-  "5":  { excited: 12, happy: 28, nervous: 15, sad: 2,  angry: 1 },
-  "12": { excited: 8,  happy: 24, nervous: 22, sad: 6,  angry: 3 },
-  "20": { excited: 4,  happy: 14, nervous: 30, sad: 14, angry: 8 },
-  "28": { excited: 38, happy: 42, nervous: 8,  sad: 2,  angry: 1 },  // GOAL
-  "36": { excited: 22, happy: 38, nervous: 16, sad: 4,  angry: 2 },
-  "45": { excited: 14, happy: 28, nervous: 24, sad: 10, angry: 5 },
-  "52": { excited: 6,  happy: 12, nervous: 22, sad: 26, angry: 18 }, // CONCEDED
-  "60": { excited: 4,  happy: 10, nervous: 28, sad: 24, angry: 22 },
-  "68": { excited: 8,  happy: 18, nervous: 30, sad: 16, angry: 10 },
-  "76": { excited: 18, happy: 32, nervous: 22, sad: 8,  angry: 4 },
-  "84": { excited: 28, happy: 38, nervous: 14, sad: 4,  angry: 2 },
-  "89": { excited: 56, happy: 30, nervous: 6,  sad: 2,  angry: 1 },  // WINNER
-  "90": { excited: 62, happy: 28, nervous: 4,  sad: 1,  angry: 1 },
+const EXAMPLE_MOOD_ARC: Record<string, Record<string, number>> = {
+  "5":  { excited: 12, happy: 28, hopeful: 20, nervous: 15, sad: 2,  angry: 1 },
+  "12": { excited: 8,  happy: 24, hopeful: 18, nervous: 22, sad: 6,  angry: 3 },
+  "20": { excited: 4,  happy: 14, hopeful: 12, nervous: 30, sad: 14, angry: 8 },
+  "28": { excited: 38, happy: 42, hopeful: 16, nervous: 8,  sad: 2,  angry: 1 },
+  "36": { excited: 22, happy: 38, hopeful: 19, nervous: 16, sad: 4,  angry: 2 },
+  "45": { excited: 14, happy: 28, hopeful: 17, nervous: 24, sad: 10, angry: 5 },
+  "52": { excited: 6,  happy: 12, hopeful: 10, nervous: 22, sad: 26, angry: 18 },
+  "60": { excited: 4,  happy: 10, hopeful: 9,  nervous: 28, sad: 24, angry: 22 },
+  "68": { excited: 8,  happy: 18, hopeful: 21, nervous: 30, sad: 16, angry: 10 },
+  "76": { excited: 18, happy: 32, hopeful: 26, nervous: 22, sad: 8,  angry: 4 },
+  "84": { excited: 28, happy: 38, hopeful: 22, nervous: 14, sad: 4,  angry: 2 },
+  "89": { excited: 56, happy: 30, hopeful: 12, nervous: 6,  sad: 2,  angry: 1 },
+  "90": { excited: 62, happy: 28, hopeful: 8,  nervous: 4,  sad: 1,  angry: 1 },
 };
 
-function Phase2Demo() {
-  const theme = useTheme() as any;
+function Phase2Demo({ events }: { events: HomepageShowcase["events"] }) {
   return (
-    <Paper
-      sx={{
-        ...theme.clay?.card,
-        height: 320,
-        overflow: "hidden",
-      }}
-    >
-      <MoodAreaChart matchMoods={PHASE2_MOODS} />
-    </Paper>
+    <DemoFrame padded={false}>
+      <Box sx={{ height: 320, overflow: "hidden" }}>
+        <MoodAreaChart matchMoods={EXAMPLE_MOOD_ARC} events={events} />
+      </Box>
+    </DemoFrame>
   );
 }
 
 // ────────────────────────────────────────────────────────────────────────────
 // Phase 3 — MOTM crown (static replica of FanMOTMHighlight, no Redux)
+//
+// The winner is a real player from a real squad. The vote share is illustrative
+// — the largest real MOTM result to date is a handful of votes — so the panel
+// carries the EXAMPLE label like the others.
 // ────────────────────────────────────────────────────────────────────────────
-const PHASE3_WINNER = { name: "M. CARTER", percentage: 38, initials: "MC" };
+const EXAMPLE_MOTM_SHARE = 38;
 
-function Phase3Demo() {
+function Phase3Demo({ player }: { player: ShowcasePlayer | null }) {
   const theme = useTheme() as any;
-  const w = PHASE3_WINNER;
+  // Mirror FanMOTMHighlight rather than re-inventing its palette: the demo
+  // should look like the thing it is demonstrating.
   const goldStart = theme.palette.motm?.goldStart || "#FFE27A";
   const goldEnd = theme.palette.motm?.goldEnd || "#F5B300";
+  const trophyColor = theme.palette.motm?.bronze || theme.palette.common.white;
 
   return (
-    <Paper
-      sx={{
-        ...theme.clay?.card,
-        position: "relative",
-        p: { xs: 4, md: 5 },
-        pt: 5,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        overflow: "hidden",
-        background: `radial-gradient(circle at 50% 0%, ${alpha(
-          theme.palette.primary.main,
-          0.18,
-        )} 0%, ${theme.palette.background.paper} 65%)`,
-      }}
-    >
+    <DemoFrame padded={false}>
+      <Box
+        sx={{
+          position: "relative",
+          p: { xs: 4, md: 5 },
+          pt: 5,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          background: `radial-gradient(circle at 50% 0%, ${alpha(
+            theme.palette.primary.main,
+            0.18,
+          )} 0%, ${theme.palette.background.paper} 65%)`,
+        }}
+      >
       <Chip
-        label={`${w.percentage}% OF VOTES`}
+        label={`${EXAMPLE_MOTM_SHARE}% OF VOTES`}
         size="small"
         sx={{
           position: "absolute",
-          top: 18,
+          top: 52,
           right: 18,
           fontWeight: 800,
           letterSpacing: 1,
@@ -820,6 +945,8 @@ function Phase3Demo() {
 
       <Box sx={{ position: "relative", mb: 2 }}>
         <Avatar
+          src={player?.photo || undefined}
+          alt={player?.name || "Man of the Match"}
           sx={{
             width: 128,
             height: 128,
@@ -829,7 +956,7 @@ function Phase3Demo() {
             fontWeight: 900,
           }}
         >
-          {w.initials}
+          {player?.name?.charAt(0) ?? <Trophy size={44} />}
         </Avatar>
         <Box
           sx={{
@@ -842,10 +969,10 @@ function Phase3Demo() {
             display: "grid",
             placeItems: "center",
             background: `linear-gradient(145deg, ${goldStart} 0%, ${goldEnd} 100%)`,
-            boxShadow: "0 4px 12px rgba(245,179,0,0.4)",
+            boxShadow: `0 4px 12px ${alpha(goldEnd, 0.4)}`,
           }}
         >
-          <Trophy size={22} color="#fff" strokeWidth={2.5} />
+          <Trophy size={22} color={trophyColor} strokeWidth={2.5} />
         </Box>
       </Box>
 
@@ -864,7 +991,7 @@ function Phase3Demo() {
           textAlign: "center",
         }}
       >
-        {w.name}
+        {player?.name ?? "Voted by the fans"}
       </Typography>
 
       <Box
@@ -881,7 +1008,7 @@ function Phase3Demo() {
         <Box
           sx={{
             height: "100%",
-            width: `${w.percentage}%`,
+            width: `${EXAMPLE_MOTM_SHARE}%`,
             borderRadius: 999,
             background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(
               theme.palette.primary.light,
@@ -893,7 +1020,8 @@ function Phase3Demo() {
       <Typography variant="body2" sx={{ mt: 1.5, opacity: 0.55, letterSpacing: 1 }}>
         The fans have spoken
       </Typography>
-    </Paper>
+      </Box>
+    </DemoFrame>
   );
 }
 

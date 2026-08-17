@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import HomePage from "@/components/client/HomePage";
 import ClubSelectionPage from "@/components/client/ClubSelectionPage";
 import { DirectoryClub } from "@/lib/clubDirectory";
+import { EMPTY_SHOWCASE, HomepageShowcase } from "@/lib/homepageShowcase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ interface RootPageProps {
   serverUserData: ServerUserData | null;
   /** Joinable clubs, resolved server-side from config/clubDirectory. */
   clubs: DirectoryClub[];
+  /** Real entities for the marketing demos. Only used when logged out. */
+  showcase?: HomepageShowcase;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -36,6 +39,7 @@ export default function RootPage({
   initialIsLoggedIn,
   serverUserData,
   clubs,
+  showcase = EMPTY_SHOWCASE,
 }: RootPageProps) {
   const { user, userLoading } = useAuth();
   const { userHomeGroup, groupDataLoaded, groupDataLoading } = useGroupData();
@@ -60,15 +64,17 @@ export default function RootPage({
   }, [user, userHomeGroup, serverUserData, router]);
 
   // ── 2. Auth Loading Guard ───────────────────────────────────────────────────
-  // Show a context-aware spinner while Firebase resolves the session.
-  // If the server already confirmed a login, use "Syncing" so returning users
-  // don't see a generic "Verifying" flash.
-  if (userLoading) {
-    return initialIsLoggedIn ? (
-      <Spinner text="Syncing your football profile..." />
-    ) : (
-      <Spinner text="Verifying session..." />
-    );
+  // Only wait on Firebase when the server said there IS a session.
+  //
+  // This used to block on `userLoading` unconditionally. During SSR that is
+  // always true, so the server HTML for a logged-out visitor was nothing but a
+  // spinner — which is what crawlers and link previews saw of the marketing
+  // page, despite it being priority 1 in the sitemap. For a visitor with no
+  // session cookie, the marketing page IS the answer; there is nothing to wait
+  // for. If client-side auth later resolves a user (a live session with an
+  // expired cookie), the effect above still redirects them to their club.
+  if (userLoading && initialIsLoggedIn) {
+    return <Spinner text="Syncing your football profile..." />;
   }
 
   // ── 3. Unauthenticated Guard ────────────────────────────────────────────────
@@ -76,7 +82,7 @@ export default function RootPage({
   // the race where the client auth hasn't hydrated yet but the server already
   // confirmed a session — prevents a logged-in user briefly seeing <HomePage />.
   if (!user && !initialIsLoggedIn) {
-    return <HomePage clubs={clubs} />;
+    return <HomePage clubs={clubs} showcase={showcase} />;
   }
 
   // ── 4. Smart Data Guard ─────────────────────────────────────────────────────

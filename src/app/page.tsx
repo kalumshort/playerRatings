@@ -4,16 +4,40 @@ import { getAuthSession } from "@/lib/firebase/getAuth";
 import RootPage from "@/components/client/RootPage";
 import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase/admin";
-import { getClubDirectoryServer } from "@/lib/firebase/firebase-admin-queries";
+import {
+  getClubDirectoryServer,
+  getHomepageShowcase,
+} from "@/lib/firebase/firebase-admin-queries";
 import { selectJoinableClubs } from "@/lib/clubDirectory";
-//test
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "11Votes — Fan Player Ratings, Predictions & Consensus XI",
+  description:
+    "Predict the result, build the XI, and rate every player. 11Votes turns your club's votes into one matchday consensus — then shows you how close you were.",
+  alternates: { canonical: "https://11votes.com" },
+  openGraph: {
+    title: "11Votes — The Fan Consensus Network",
+    description:
+      "Predict the result, build the XI, and rate every player. Free to join, for every Premier League club.",
+    url: "https://11votes.com",
+    type: "website",
+  },
+};
+
 export default async function Page() {
   const { isLoggedIn, userId } = await getAuthSession();
 
   // The club list for the picker and the marketing grid. Comes from
   // config/clubDirectory, rebuilt nightly, so promotion/relegation needs no
   // deploy. Only active clubs — a relegated club is never offered as a choice.
-  const clubs = selectJoinableClubs(await getClubDirectoryServer());
+  // The showcase supplies real crests, squad names and match events so the
+  // homepage demos aren't built on invented players.
+  const [directory, showcase] = await Promise.all([
+    getClubDirectoryServer(),
+    getHomepageShowcase(),
+  ]);
+  const clubs = selectJoinableClubs(directory);
 
   if (!isLoggedIn || !userId) {
     return (
@@ -21,6 +45,7 @@ export default async function Page() {
         initialIsLoggedIn={false}
         serverUserData={null}
         clubs={clubs}
+        showcase={showcase}
       />
     );
   }
@@ -70,6 +95,7 @@ export default async function Page() {
       initialIsLoggedIn={true}
       serverUserData={{ ...userData, groupSlug }}
       clubs={clubs}
+      showcase={showcase}
     />
   );
 }
