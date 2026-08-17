@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { fetchUserSeasonMatches } from "../actions/userActions";
 
 interface UserDataState {
   loading: boolean;
@@ -6,6 +7,12 @@ interface UserDataState {
   loaded: boolean;
   accountData: any; // We'll refine this as we see your Firestore User schema
   matches: Record<string, any>;
+  /**
+   * Which `${groupId}:${season}` has been bulk-loaded, so DataInitializer can
+   * tell "not fetched yet" from "fetched and genuinely empty". Match ids are
+   * unique across seasons, so `matches` itself stays a flat map.
+   */
+  matchesSeasonKey: string | null;
 }
 
 const initialState: UserDataState = {
@@ -14,6 +21,7 @@ const initialState: UserDataState = {
   loaded: false,
   accountData: {},
   matches: {},
+  matchesSeasonKey: null,
 };
 
 const userDataSlice = createSlice({
@@ -48,6 +56,7 @@ const userDataSlice = createSlice({
       state.loaded = false;
       state.accountData = {};
       state.matches = {};
+      state.matchesSeasonKey = null;
     },
     fetchUserMatchData(
       state,
@@ -56,6 +65,14 @@ const userDataSlice = createSlice({
       const { matchId, data } = action.payload;
       state.matches[matchId] = data;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchUserSeasonMatches.fulfilled, (state, action) => {
+      // Merge, don't replace: the per-match listener may already have written a
+      // fresher copy of the match currently on screen.
+      state.matches = { ...action.payload.matches, ...state.matches };
+      state.matchesSeasonKey = action.payload.key;
+    });
   },
 });
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import SeasonOverview from "@/components/client/Schedule/SeasonOverview";
-import ScheduleContainer from "@/components/client/Schedule/ScheduleContainer";
+import ScheduleView from "@/components/client/Schedule/ScheduleView";
 import {
   getFixturesByClubServer,
   getGroupBySlugServer,
@@ -54,19 +54,19 @@ export default async function SchedulePage({
     <Box
       component="main"
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        // ScheduleContainer is an inner-scrolling panel, so it needs a bounded
-        // height. 100vh was wrong twice over: it ignores the mobile URL bar,
-        // and it didn't subtract the fixed header spacer, so the bottom of the
-        // list sat below the fold and was unreachable. dvh tracks the visible
-        // viewport; the offsets match the spacer in Header/index.tsx.
-        height: { xs: "calc(100dvh - 64px)", md: "calc(100dvh - 80px)" },
-        overflow: "hidden",
+        // The page scrolls normally now. This used to be a bounded dvh column
+        // wrapping an inner-scrolling panel with the scrollbar hidden, which
+        // left the list with no scroll affordance and a nested scroll region
+        // that fought the browser on both mobile and desktop.
+        maxWidth: 1200,
+        mx: "auto",
+        px: { xs: 1, md: 3 },
+        pt: 2,
+        pb: 8,
       }}
     >
       <SeasonOverview stats={stats} played={played} season={season} />
-      <ScheduleContainer
+      <ScheduleView
         initialFixtures={fixtures}
         season={season}
         clubId={clubId}

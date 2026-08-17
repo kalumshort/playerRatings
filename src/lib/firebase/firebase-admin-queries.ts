@@ -6,7 +6,7 @@ import { cache } from "react";
 export async function getFixturesByClubServer(
   clubId: string,
   currentYear: string,
-) {
+): Promise<Fixture[]> {
   try {
     const teamIdNumber = Number(clubId);
 
@@ -30,11 +30,14 @@ export async function getFixturesByClubServer(
       .get();
 
     return snapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
-      .filter((fixture: any) => !["1371777", "1402829"].includes(fixture.id));
+      .map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          }) as Fixture,
+      )
+      .filter((fixture) => !["1371777", "1402829"].includes(fixture.id));
   } catch (error) {
     console.error("❌ Server Fetch Error:", error);
     return [];

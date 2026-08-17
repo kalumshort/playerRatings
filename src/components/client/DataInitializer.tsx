@@ -8,8 +8,13 @@ import { RootState, AppDispatch } from "@/lib/redux/store";
 import { fetchFixtures } from "@/lib/redux/slices/fixturesSlice";
 import { fetchTeamSquad } from "@/lib/redux/slices/squadSlice";
 import { fetchAllPlayersSeasonOverallRating } from "@/lib/redux/actions/ratingsActions";
+import {
+  fetchUserSeasonMatches,
+  userSeasonMatchesKey,
+} from "@/lib/redux/actions/userActions";
 import { setCurrentYear } from "@/lib/redux/slices/globalSlice";
 import { resolveSeason } from "@/lib/config/season";
+import { useAuth } from "@/context/AuthContext";
 
 interface DataInitializerProps {
   clubId: string;
@@ -21,6 +26,7 @@ export default function DataInitializer({
   groupId,
 }: DataInitializerProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const { userId } = useAuth();
 
   // The single client-side reader of ?season=. Layouts don't get searchParams, so
   // this component owns it and mirrors the result into Redux for everything else.
@@ -44,6 +50,13 @@ export default function DataInitializer({
     const bucket = state.playerRatings.byGroupId[groupId];
     // Ratings cached for a different season must not be reused
     return !!bucket?.players && bucket.season === currentYear;
+  });
+  const hasUserMatches = useSelector((state: RootState) => {
+    if (!groupId || !currentYear) return false;
+    return (
+      state.userData.matchesSeasonKey ===
+      userSeasonMatchesKey(groupId, currentYear)
+    );
   });
 
   // Mirror the active season into Redux so the year-aware selectors
@@ -77,13 +90,22 @@ export default function DataInitializer({
     if (groupId && !hasSeasonRatings) {
       dispatch(fetchAllPlayersSeasonOverallRating({ groupId, currentYear }));
     }
+
+    // 6. Fetch the user's own per-match progress for the whole season, so the
+    // schedule can show what's already been rated/predicted. Signed-in only —
+    // a guest has nothing to read and the rules would reject the query.
+    if (userId && groupId && !hasUserMatches) {
+      dispatch(fetchUserSeasonMatches({ groupId, season: currentYear }));
+    }
   }, [
     clubId,
     currentYear,
     groupId,
+    userId,
     hasFixtures,
     hasSquad,
     hasSeasonRatings,
+    hasUserMatches,
     dispatch,
   ]);
 

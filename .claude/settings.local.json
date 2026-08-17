@@ -30,7 +30,8 @@
       "Bash(npx eslint *)",
       "Bash(npx next *)",
       "PowerShell(npx next lint)",
-      "PowerShell(npm run build)"
+      "PowerShell(npm run build)",
+      "Bash(rm -f /c/Users/kshor/AppData/Local/Temp/claude/c--Users-kshor-Documents-Websites-player-ratings-11votes-app/02a64934-2bbc-42db-b862-c88c422b6c8b/scratchpad/dev2.log)"
     ]
   }
 }
