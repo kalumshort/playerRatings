@@ -9,7 +9,7 @@ import JoinInviteClient from "@/components/client/Groups/JoinInviteClient";
 // An invite is a private, one-off link. Keeping it out of the index also keeps
 // the group name behind it out of search results.
 export const metadata: Metadata = {
-  title: "Join a group | 11votes",
+  title: "Join a group",
   robots: { index: false, follow: false },
 };
 

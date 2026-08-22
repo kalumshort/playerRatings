@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans, Space_Mono } from "next/font/google";
 import ThemeRegistry from "@/components/client/ThemeRegistry";
 import StoreProvider from "@/lib/redux/StoreProvider";
@@ -33,6 +34,35 @@ const spaceMono = Space_Mono({
   variable: "--font-space-mono",
   display: "swap",
 });
+
+/**
+ * Site-wide metadata defaults. There were none before, which is why
+ * `/[clubSlug]/schedule` and `/profile` rendered with no <title> at all.
+ *
+ * `metadataBase` is what lets relative OG image paths resolve — without it
+ * `opengraph-image.tsx` cannot produce an absolute URL and Next warns at build.
+ *
+ * The `%s | 11Votes` template means no child route should carry its own
+ * "| 11Votes" suffix; the homepage opts out with `title.absolute`.
+ */
+export const metadata: Metadata = {
+  metadataBase: new URL("https://11votes.com"),
+  title: {
+    default: "11Votes — Fan Player Ratings, Predictions & Consensus XI",
+    template: "%s | 11Votes",
+  },
+  description:
+    "Predict the result, build the XI, and rate every player. 11Votes turns your club's votes into one matchday consensus.",
+  applicationName: "11Votes",
+  openGraph: {
+    siteName: "11Votes",
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+};
 
 export default async function RootLayout({
   children,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import SeasonOverview from "@/components/client/Schedule/SeasonOverview";
@@ -9,11 +10,46 @@ import {
 import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
 import { Box } from "@mui/material";
-import { archivedClubSeason, resolveSeason } from "@/lib/config/season";
+import {
+  archivedClubSeason,
+  isArchivedSeason,
+  resolveSeason,
+} from "@/lib/config/season";
 
 interface PageProps {
   params: Promise<{ clubSlug: string }>;
   searchParams: Promise<{ season?: string }>;
+}
+
+/**
+ * This route had no metadata at all, so it rendered with no <title>.
+ *
+ * The canonical deliberately drops `?season=`: the bare URL is the current
+ * season, and archived seasons are noindexed rather than pointed at it, since
+ * they show genuinely different fixtures.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { clubSlug } = await params;
+  // getGroupBySlugServer is cache()d, so this shares the page's own lookup.
+  const group = await getGroupBySlugServer(clubSlug);
+  if (!group) return { title: "Club Not Found" };
+
+  const season = resolveSeason(
+    (await searchParams).season,
+    archivedClubSeason(group),
+  );
+
+  return {
+    title: `${group.name} Fixtures & Results`,
+    description: `Every ${group.name} fixture and result this season — league, cups and Europe — with fan ratings for each match.`,
+    alternates: { canonical: `https://11votes.com/${clubSlug}/schedule` },
+    ...(isArchivedSeason(season) && {
+      robots: { index: false, follow: true },
+    }),
+  };
 }
 
 export default async function SchedulePage({

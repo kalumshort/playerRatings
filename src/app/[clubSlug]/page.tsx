@@ -11,6 +11,8 @@ import {
 } from "@/lib/firebase/firebase-admin-queries";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, sportsTeamJsonLd } from "@/lib/seo/jsonLd";
 
 interface Props {
   params: Promise<{ clubSlug: string }>;
@@ -26,19 +28,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .limit(1)
     .get();
 
-  if (groupQuery.empty) return { title: "Club Not Found | 11Votes" };
+  if (groupQuery.empty) return { title: "Club Not Found" };
 
   const group = groupQuery.docs[0].data();
   const groupName = group.name || group.groupName || "Football";
 
   return {
-    title: `${groupName} Player Ratings & Fan Hub | 11Votes`,
+    title: `${groupName} Player Ratings & Fan Hub`,
     description: `The ultimate ${groupName} fan community. Rate players after every match, track season stats, and see the real-time fan consensus.`,
     alternates: {
       canonical: `https://11votes.com/${clubSlug}`,
     },
     openGraph: {
-      title: `${groupName} Player Ratings | 11Votes`,
+      title: `${groupName} Player Ratings`,
       description: `The ultimate ${groupName} fan community.`,
       url: `https://11votes.com/${clubSlug}`,
       type: "website",
@@ -69,5 +71,24 @@ export default async function ClubPage({ params }: Props) {
   // We don't need to fetch data here because the Layout already did it
   // and put it in Redux via the Initializer.
   // We just render the Client Component that holds your layout logic.
-  return <GroupHomeClient />;
+  return (
+    <>
+      <JsonLd
+        data={[
+          sportsTeamJsonLd({
+            name: group.name,
+            slug: clubSlug,
+            logoUrl: group.logoUrl,
+          }),
+          // Places the club hub directly under Home. This is the signal that
+          // actually expresses site hierarchy to Google.
+          breadcrumbJsonLd([
+            { name: "Home", path: "" },
+            { name: group.name, path: `/${clubSlug}` },
+          ]),
+        ]}
+      />
+      <GroupHomeClient />
+    </>
+  );
 }

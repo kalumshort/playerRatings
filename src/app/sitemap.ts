@@ -5,27 +5,63 @@ import { CURRENT_SEASON } from "@/lib/config/season";
 
 const BASE_URL = "https://11votes.com";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Logic: 7 days ago in seconds (API-Football uses Unix timestamps)
-  const sevenDaysAgoSeconds = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+/**
+ * Regenerate daily.
+ *
+ * Without this the route is fully static: the prerender manifest showed
+ * `initialRevalidate=false`, meaning the sitemap was a snapshot frozen at the
+ * last deploy and never picked up new fixtures. Daily matches the cadence of
+ * the nightly updateFixtures job, and keeps the Firestore cost to roughly one
+ * collection scan per day.
+ */
+export const revalidate = 86400;
 
-  // 1. Fetch data in parallel
-  // Note: Added .where filter to fixtures to limit read costs and payload size
+/**
+ * The league key club groups are tagged with. Mirrors LEAGUE_KEY in
+ * functions/helperFunctions.js — `src/` and `functions/` are separate packages
+ * and cannot import each other.
+ */
+const LEAGUE_KEY = "premier-league";
+
+/**
+ * Last substantive edit to the legal/contact pages. Hardcoded because a real
+ * date is the whole point of lastModified — `new Date()` on every request
+ * tells Google the page changed right now, every time, which trains it to
+ * ignore the field entirely.
+ */
+const STATIC_PAGE_UPDATED = new Date("2026-01-15");
+
+/**
+ * Whether a group doc is an auto-generated club hub rather than a user-created
+ * community group.
+ *
+ * Mirrors `isClubGroup` in functions/helperFunctions.js:362. The
+ * groupType-or-league disjunction is load-bearing: some hand-created club docs
+ * predate the `league` field, so testing `groupType` alone would silently drop
+ * real clubs. Without this filter, community groups like "The United Stand"
+ * were being submitted alongside actual Premier League clubs.
+ */
+const isClubGroup = (docId: string, data: FirebaseFirestore.DocumentData) =>
+  /^\d+$/.test(String(docId)) &&
+  (data?.groupType === "club" || data?.league === LEAGUE_KEY);
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Current season only — archived `?season=` views are deliberately excluded
+  // and rendered noindex, so they never compete with these canonical URLs.
+  //
+  // The whole season, not a trailing window: a finished match carries a full
+  // set of fan ratings and is evergreen content. The previous 7-day floor
+  // dropped those permanently.
   const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
     // `isPublic` is the field the app itself gates on ([clubSlug]/page.tsx),
     // and the only one updateGroupPrivacy has always written.
     adminDb.collection("groups").where("isPublic", "==", true).get(),
-    // Current season only — archived `?season=` views are deliberately excluded
-    // and rendered noindex, so they never compete with these canonical URLs.
-    adminDb
-      .collection(`fixtures/${CURRENT_SEASON}/fixtures`)
-      .where("fixture.timestamp", ">=", sevenDaysAgoSeconds)
-      .get(),
+    adminDb.collection(`fixtures/${CURRENT_SEASON}/fixtures`).get(),
   ]);
 
-  // 2. Build the Lookup Map (Numeric ID -> Slug)
-  const clubIdToSlugMap: Record<number, string> = {};
-  const groupUrls: MetadataRoute.Sitemap = [];
+  // Numeric API team id -> slug, for mapping fixtures onto club hubs.
+  const clubIdToSlug: Record<number, string> = {};
+  const clubSlugs: string[] = [];
 
   groupsSnapshot.forEach((doc) => {
     const data = doc.data();
@@ -34,60 +70,80 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // empty by design and their archived seasons render noindex. Filtered in
     // memory rather than as a `!=` query, which would force a composite index.
     if (data.status === "archived") return;
+    if (!isClubGroup(doc.id, data)) return;
+    if (!data.slug || !data.groupClubId) return;
 
-    if (data.slug && data.groupClubId) {
-      clubIdToSlugMap[Number(data.groupClubId)] = data.slug;
+    clubIdToSlug[Number(data.groupClubId)] = data.slug;
+    clubSlugs.push(data.slug);
+  });
 
-      groupUrls.push({
-        url: `${BASE_URL}/${data.slug}`,
-        lastModified: new Date(),
-        changeFrequency: "weekly",
+  const clubUrls: MetadataRoute.Sitemap = clubSlugs.flatMap((slug) => [
+    { url: `${BASE_URL}/${slug}`, priority: 0.9 },
+    { url: `${BASE_URL}/${slug}/schedule`, priority: 0.6 },
+    { url: `${BASE_URL}/${slug}/player-stats`, priority: 0.6 },
+  ]);
+
+  // --- Fixtures ---------------------------------------------------------
+  // A fixture is listed under BOTH clubs when both have a hub. That is not
+  // duplicate content: predictions and ratings are fetched per group, so each
+  // club's page shows its own fans' consensus, and each carries a
+  // self-referential canonical.
+  const fixtureUrls: MetadataRoute.Sitemap = [];
+
+  fixturesSnapshot.forEach((doc) => {
+    const data = doc.data();
+    const homeSlug = clubIdToSlug[data.teams?.home?.id];
+    const awaySlug = clubIdToSlug[data.teams?.away?.id];
+
+    // Kickoff time, so lastModified means something. Falls back to undefined
+    // rather than "now" when a doc predates the field.
+    const kickoff =
+      typeof data.timestamp === "number"
+        ? new Date(data.timestamp * 1000)
+        : undefined;
+
+    for (const slug of new Set([homeSlug, awaySlug].filter(Boolean))) {
+      fixtureUrls.push({
+        url: `${BASE_URL}/${slug}/fixture/${doc.id}`,
+        lastModified: kickoff,
         priority: 0.8,
       });
     }
   });
 
-  // 3. Process filtered Fixtures
-  const fixtureUrls: MetadataRoute.Sitemap = [];
+  // --- Player pages: deliberately NOT listed yet ------------------------
+  // These should be the strongest long-tail pages on the site, but they are
+  // not currently fit to submit. Two independent problems, both verified by
+  // sampling 20 squad player URLs across different clubs — 20/20 failed:
+  //
+  //   1. `generateMetadata` reads `players/{playerId}`, but squads live under
+  //      `teamSquads/{clubId}/season/{season}`.activeSquad. The global
+  //      collection does not cover them, so every page titles itself
+  //      "Player Not Found".
+  //   2. The body is entirely client-rendered — server HTML is a skeleton, so
+  //      there is no content for a crawler even once the title is fixed.
+  //
+  // Submitting ~674 URLs in that state is worse than omitting them. Re-enable
+  // by building from the same teamSquads read the homepage showcase uses, once
+  // the page server-renders its player.
 
-  fixturesSnapshot.forEach((doc) => {
-    const fixtureData = doc.data();
-    const fixtureId = doc.id;
-    const homeTeamId = fixtureData.teams?.home?.id;
-    const awayTeamId = fixtureData.teams?.away?.id;
-
-    // Check if the home team has a corresponding group in 11votes
-    if (clubIdToSlugMap[homeTeamId]) {
-      fixtureUrls.push({
-        url: `${BASE_URL}/${clubIdToSlugMap[homeTeamId]}/fixture/${fixtureId}`,
-        lastModified: new Date(),
-        changeFrequency: "always",
-        priority: 0.9,
-      });
-    }
-
-    // Check if the away team has a corresponding group (only if different slug)
-    if (
-      clubIdToSlugMap[awayTeamId] &&
-      clubIdToSlugMap[awayTeamId] !== clubIdToSlugMap[homeTeamId]
-    ) {
-      fixtureUrls.push({
-        url: `${BASE_URL}/${clubIdToSlugMap[awayTeamId]}/fixture/${fixtureId}`,
-        lastModified: new Date(),
-        changeFrequency: "always",
-        priority: 0.9,
-      });
-    }
-  });
+  // Indexable, but the lowest priority on the site. `priority` is a hint Google
+  // documents as ignored; it is kept here to state intent, not to expect an
+  // effect. Hierarchy is actually communicated by the BreadcrumbList JSON-LD.
+  const staticUrls: MetadataRoute.Sitemap = [
+    "/privacy",
+    "/terms",
+    "/contact",
+  ].map((path) => ({
+    url: `${BASE_URL}${path}`,
+    lastModified: STATIC_PAGE_UPDATED,
+    priority: 0.2,
+  }));
 
   return [
-    {
-      url: BASE_URL,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    ...groupUrls,
+    { url: BASE_URL, priority: 1 },
+    ...clubUrls,
     ...fixtureUrls,
+    ...staticUrls,
   ];
 }

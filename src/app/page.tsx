@@ -9,10 +9,16 @@ import {
   getHomepageShowcase,
 } from "@/lib/firebase/firebase-admin-queries";
 import { selectJoinableClubs } from "@/lib/clubDirectory";
+import JsonLd from "@/components/seo/JsonLd";
+import { websiteJsonLd } from "@/lib/seo/jsonLd";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "11Votes — Fan Player Ratings, Predictions & Consensus XI",
+  // `absolute` opts out of the root layout's "%s | 11Votes" template — the
+  // brand name is already in this title and would otherwise appear twice.
+  title: {
+    absolute: "11Votes — Fan Player Ratings, Predictions & Consensus XI",
+  },
   description:
     "Predict the result, build the XI, and rate every player. 11Votes turns your club's votes into one matchday consensus — then shows you how close you were.",
   alternates: { canonical: "https://11votes.com" },
@@ -41,12 +47,17 @@ export default async function Page() {
 
   if (!isLoggedIn || !userId) {
     return (
-      <RootPage
-        initialIsLoggedIn={false}
-        serverUserData={null}
-        clubs={clubs}
-        showcase={showcase}
-      />
+      <>
+        {/* Binds the brand entity to `/`. Only rendered on the logged-out
+            marketing view — the logged-in path redirects to a club. */}
+        <JsonLd data={websiteJsonLd()} />
+        <RootPage
+          initialIsLoggedIn={false}
+          serverUserData={null}
+          clubs={clubs}
+          showcase={showcase}
+        />
+      </>
     );
   }
 

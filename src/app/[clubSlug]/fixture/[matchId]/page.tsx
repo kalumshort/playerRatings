@@ -15,6 +15,8 @@ import {
   isArchivedSeason,
   resolveSeason,
 } from "@/lib/config/season";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, sportsEventJsonLd } from "@/lib/seo/jsonLd";
 
 interface PageProps {
   params: Promise<{ clubSlug: string; matchId: string }>;
@@ -39,9 +41,16 @@ export async function generateMetadata({
 
     const { home, away } = fixture.teams;
     return {
-      title: `${home.name} vs ${away.name} - Player Ratings | 11Votes`,
-      description: `Rate the players for ${home.name} vs ${away.name}.`,
+      title: `${home.name} vs ${away.name} - Player Ratings`,
+      description: `Fan player ratings, predictions and the Man of the Match vote for ${home.name} vs ${away.name}.`,
       openGraph: { images: [home.logo, away.logo] },
+      // Self-referential, and deliberately so. The same fixture under two club
+      // slugs is NOT duplicate content: predictions and ratings are fetched per
+      // group (getMatchPredictionsServer(group.id, ...)), so each club's page
+      // shows its own fans' consensus.
+      alternates: {
+        canonical: `https://11votes.com/${clubSlug}/fixture/${matchId}`,
+      },
       // Archived seasons aren't in the sitemap and must not compete
       // with the canonical current-season URLs.
       ...(isArchivedSeason(season) && {
@@ -119,13 +128,37 @@ export default async function FixturePage({
   );
 
   return (
-    <FixtureClientWrapper
-      initialFixture={fixture}
-      initialPredictions={predictions}
-      initialRatings={ratingsData}
-      group={group}
-      matchId={matchId}
-      currentYear={season}
-    />
+    <>
+      <JsonLd
+        data={[
+          sportsEventJsonLd({
+            homeName: fixture.teams.home.name,
+            awayName: fixture.teams.away.name,
+            homeLogo: fixture.teams.home.logo,
+            awayLogo: fixture.teams.away.logo,
+            startDate: fixture.fixture?.date,
+            status: fixture.fixture?.status?.short,
+            venue: fixture.fixture?.venue?.name,
+            url: `/${clubSlug}/fixture/${matchId}`,
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", path: "" },
+            { name: group.name, path: `/${clubSlug}` },
+            {
+              name: `${fixture.teams.home.name} v ${fixture.teams.away.name}`,
+              path: `/${clubSlug}/fixture/${matchId}`,
+            },
+          ]),
+        ]}
+      />
+      <FixtureClientWrapper
+        initialFixture={fixture}
+        initialPredictions={predictions}
+        initialRatings={ratingsData}
+        group={group}
+        matchId={matchId}
+        currentYear={season}
+      />
+    </>
   );
 }
