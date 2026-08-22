@@ -83,6 +83,13 @@ const SHOWCASE_POSITION_RANK: Record<string, number> = {
 };
 
 /**
+ * Squad players kept for the lineup/ratings demos. Enough to fill an XI from
+ * any formation with room for positional gaps, without shipping a 30-man squad
+ * in the homepage payload.
+ */
+const SHOWCASE_SQUAD_LIMIT = 20;
+
+/**
  * Real entities for the marketing homepage demos: a real fixture for the
  * crests, its real goals and cards for the pulse chart, and real squad players
  * with photos.
@@ -177,8 +184,18 @@ export const getHomepageShowcase = cache(
         .doc(CURRENT_SEASON)
         .get();
 
-      const players: ShowcasePlayer[] = (squadDoc.data()?.activeSquad || [])
-        .filter((player: any) => player?.id && player?.name)
+      const namedSquad = (squadDoc.data()?.activeSquad || []).filter(
+        (player: any) => player?.id && player?.name,
+      );
+
+      const toShowcasePlayer = (player: any): ShowcasePlayer => ({
+        id: String(player.id),
+        name: player.name,
+        photo: player.photo || "",
+        position: player.position || "",
+      });
+
+      const players: ShowcasePlayer[] = namedSquad
         // Goalkeepers are never a plausible "player to watch" pick.
         .filter((player: any) => player.position !== "Goalkeeper")
         .sort(
@@ -187,11 +204,14 @@ export const getHomepageShowcase = cache(
             (SHOWCASE_POSITION_RANK[b.position] ?? 3),
         )
         .slice(0, 3)
-        .map((player: any) => ({
-          id: String(player.id),
-          name: player.name,
-          photo: player.photo || "",
-        }));
+        .map(toShowcasePlayer);
+
+      // The lineup and ratings demos build an XI, so this keeps goalkeepers and
+      // positions. Capped because the whole squad would be dead weight in the
+      // server-rendered payload — the demos never show more than eleven.
+      const squad: ShowcasePlayer[] = namedSquad
+        .slice(0, SHOWCASE_SQUAD_LIMIT)
+        .map(toShowcasePlayer);
 
       return {
         fixture: {
@@ -202,6 +222,7 @@ export const getHomepageShowcase = cache(
           awayLogo: away.logo || logoFor(away.id),
         },
         players,
+        squad,
         events,
       };
     } catch (error) {

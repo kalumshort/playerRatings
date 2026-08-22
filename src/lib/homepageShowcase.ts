@@ -21,6 +21,8 @@ export interface ShowcasePlayer {
   id: string;
   name: string;
   photo: string;
+  /** API-Football squad position. Absent on the legacy `players` list. */
+  position?: string;
 }
 
 /** Shape MoodAreaChart expects — a subset of the API-Football event object. */
@@ -34,7 +36,17 @@ export interface ShowcaseEvent {
 
 export interface HomepageShowcase {
   fixture: ShowcaseFixture | null;
+  /**
+   * Three outfield players for the "player to watch" panel. Kept separate from
+   * `squad` so that panel keeps its existing shape — it wants exactly three,
+   * ranked attacker-first, and never a goalkeeper.
+   */
   players: ShowcasePlayer[];
+  /**
+   * A wider slice of the same squad, goalkeepers included and positions kept,
+   * so the lineup and ratings demos can assemble a plausible XI.
+   */
+  squad: ShowcasePlayer[];
   /** Real goals/cards/subs from `fixture`, drawn on the pulse chart. */
   events: ShowcaseEvent[];
 }
@@ -46,5 +58,6 @@ export interface HomepageShowcase {
 export const EMPTY_SHOWCASE: HomepageShowcase = {
   fixture: null,
   players: [],
+  squad: [],
   events: [],
 };

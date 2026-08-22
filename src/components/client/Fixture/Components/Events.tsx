@@ -31,7 +31,8 @@ import { toast } from "sonner";
 import { clientDB } from "@/lib/firebase/client";
 import { isLive } from "@/lib/utils/football-logic";
 
-const EMOJI_OPTIONS = [
+/** Exported so the homepage reactions demo shows the real set, not a copy. */
+export const EMOJI_OPTIONS = [
   "🔥",
   "⚽",
   "🤩",

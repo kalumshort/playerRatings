@@ -37,7 +37,8 @@
       "Bash('/c/Program Files \\(x86\\)/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --no-sandbox --hide-scrollbars --virtual-time-budget=20000 --window-size=900,1500 --screenshot=C:/Users/kshor/AppData/Local/Temp/claude/c--Users-kshor-Documents-Websites-player-ratings-11votes-app/e807b79e-da64-42ce-bf26-67fcd58d6260/scratchpad/journey.png 'http://localhost:3000/#journey')",
       "Bash(grep -nE '\"#[0-9A-Fa-f]{3,8}\"|rgba\\\\\\(' src/components/client/HomePage.tsx)",
       "Bash(grep -nE '\"#[0-9A-Fa-f]{3,8}\"|rgba\\\\\\(' src/components/client/Home/DemoFrame.tsx)",
-      "Bash(awk '/return \\\\\\(/{f=1} f&&/<Box/{print NR\": \"$0; c++} c>2{exit}' src/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart.tsx)"
+      "Bash(awk '/return \\\\\\(/{f=1} f&&/<Box/{print NR\": \"$0; c++} c>2{exit}' src/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart.tsx)",
+      "Bash(curl -s http://localhost:3000/ -o __TRACKED_VAR__/home.html -w 'HTTP %{http_code}  bytes=%{size_download}\\\\n')"
     ]
   }
 }
