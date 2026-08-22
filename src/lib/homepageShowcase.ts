@@ -28,6 +28,14 @@ export interface ShowcasePlayer {
   photo: string;
   /** API-Football squad position: Goalkeeper | Defender | Midfielder | Attacker. */
   position?: string;
+  /**
+   * False when `photo` resolves to API-Football's grey silhouette rather than
+   * a real headshot. The CDN serves that placeholder with a 200, so this can
+   * only be known by checking — see verifyPhotos in firebase-admin-queries.
+   *
+   * Undefined means "not checked"; treat it as usable.
+   */
+  hasPhoto?: boolean;
 }
 
 /** Shape MoodAreaChart expects — a subset of the API-Football event object. */
@@ -86,7 +94,14 @@ const POSITION_RANK: Record<string, number> = {
 };
 
 /**
- * The faces a demo panel should lead with: outfield players, attackers first.
+ * The faces a demo panel should lead with: outfield players, attackers first,
+ * and among equals the ones who actually have a headshot.
+ *
+ * The photo tiebreak matters because these panels are mostly face — the "on
+ * fire" tile is a 42px avatar and nothing else, so leading with a player whose
+ * photo is the CDN's grey silhouette makes the panel look broken. A missing
+ * photo only ever demotes a player, never drops him: if nobody in the squad
+ * has one, the panel still renders real names.
  *
  * Shared so the predictions, pulse and ratings panels rank players the same
  * way instead of each slicing the squad differently.
@@ -98,11 +113,17 @@ export const outfieldHighlights = (
   squad
     .filter((player) => player.position !== "Goalkeeper")
     .slice()
-    .sort(
-      (a, b) =>
+    .sort((a, b) => {
+      const byPosition =
         (POSITION_RANK[a.position ?? ""] ?? 3) -
-        (POSITION_RANK[b.position ?? ""] ?? 3),
-    )
+        (POSITION_RANK[b.position ?? ""] ?? 3);
+      if (byPosition !== 0) return byPosition;
+
+      // `undefined` means unchecked, which counts as usable.
+      const aPhoto = a.hasPhoto === false ? 1 : 0;
+      const bPhoto = b.hasPhoto === false ? 1 : 0;
+      return aPhoto - bPhoto;
+    })
     .slice(0, count);
 
 /**

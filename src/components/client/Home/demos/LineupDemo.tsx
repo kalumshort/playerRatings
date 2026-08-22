@@ -53,9 +53,20 @@ export default function LineupDemo({ club }: { club: ShowcaseClub | null }) {
   const assigned = new Map<number, ShowcasePlayer>();
   const used = new Set<string>();
 
+  // Prefer a player in the right position who actually has a headshot, then
+  // anyone in that position, then anyone at all. Position beats photo — an XI
+  // in the wrong shape reads worse than one with a couple of grey avatars —
+  // but where the squad has slack, real faces win.
   const take = (position: string) => {
-    const match = squad.find((p) => !used.has(p.id) && p.position === position);
-    const pick = match ?? squad.find((p) => !used.has(p.id));
+    const available = squad.filter((p) => !used.has(p.id));
+    const inPosition = available.filter((p) => p.position === position);
+
+    const pick =
+      inPosition.find((p) => p.hasPhoto !== false) ??
+      inPosition[0] ??
+      available.find((p) => p.hasPhoto !== false) ??
+      available[0];
+
     if (pick) used.add(pick.id);
     return pick;
   };

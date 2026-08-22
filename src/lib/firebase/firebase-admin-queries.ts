@@ -140,6 +140,71 @@ const toShowcasePlayer = (player: any): ShowcasePlayer => ({
 });
 
 /**
+ * Byte size of API-Football's "no headshot" placeholder.
+ *
+ * The CDN answers 200 with this grey silhouette for any real player id it has
+ * no photo for, so a failed <img> load can't be used to detect it — only the
+ * size can. Verified fixed at 5192 bytes across eight unrelated player ids
+ * (a genuinely non-existent id 404s instead, so this never mislabels one).
+ *
+ * If the CDN ever reskins the placeholder this stops matching, and the only
+ * consequence is that photo-less players stop being demoted — the panels keep
+ * working. Failing that way round is deliberate.
+ */
+const PLACEHOLDER_PHOTO_BYTES = 5192;
+
+/** How long to wait on the CDN before giving up on a photo check. */
+const PHOTO_CHECK_TIMEOUT_MS = 3000;
+
+/**
+ * Memo across requests within a server instance. Player photos essentially
+ * never change, and this keeps a cache miss on the showcase from re-checking
+ * faces it has already seen.
+ */
+const photoCheckCache = new Map<string, boolean>();
+
+/**
+ * Marks which players actually have a headshot.
+ *
+ * Runs inside the cached loader, so this costs one round of HEAD requests per
+ * hour rather than per page view. Fails open: any network error leaves the
+ * player unmarked, which `outfieldHighlights` treats as usable — a possibly
+ * grey avatar beats dropping a real player over a flaky request.
+ */
+async function verifyPhotos(players: ShowcasePlayer[]): Promise<void> {
+  await Promise.all(
+    players.map(async (player) => {
+      if (!player.photo) {
+        player.hasPhoto = false;
+        return;
+      }
+
+      const cached = photoCheckCache.get(player.photo);
+      if (cached !== undefined) {
+        player.hasPhoto = cached;
+        return;
+      }
+
+      try {
+        const response = await fetch(player.photo, {
+          method: "HEAD",
+          signal: AbortSignal.timeout(PHOTO_CHECK_TIMEOUT_MS),
+        });
+
+        const bytes = Number(response.headers.get("content-length"));
+        const ok =
+          response.ok && bytes > 0 && bytes !== PLACEHOLDER_PHOTO_BYTES;
+
+        photoCheckCache.set(player.photo, ok);
+        player.hasPhoto = ok;
+      } catch {
+        // Leave unmarked — see the fail-open note above.
+      }
+    }),
+  );
+}
+
+/**
  * A positionally balanced slice of a squad, keeping the source order within
  * each position so the first-choice players come first.
  *
@@ -269,6 +334,14 @@ async function loadHomepageShowcase(): Promise<HomepageShowcase> {
         events: data ? buildEvents(data) : [],
       });
     });
+
+    // Only the outfielders — they are the ones the face-led panels pick from,
+    // and keepers are never surfaced as a headshot.
+    await verifyPhotos(
+      clubs.flatMap((club) =>
+        club.squad.filter((player) => player.position !== "Goalkeeper"),
+      ),
+    );
 
     return { clubs };
   } catch (error) {
