@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, Box, Chip, Stack, Typography, alpha, useTheme } from "@mui/material";
-import { ShowcaseFixture, ShowcasePlayer } from "@/lib/homepageShowcase";
+import { ShowcaseClub, outfieldHighlights } from "@/lib/homepageShowcase";
 import DemoFrame from "@/components/client/Home/DemoFrame";
 
 /**
@@ -15,18 +15,15 @@ const EXAMPLE_SPLIT = { home: 47, draw: 22, away: 31 };
 const EXAMPLE_PLAYER_SHARE = [38, 21, 14];
 const EXAMPLE_SCORE = { home: 2, away: 1 };
 
-export default function PredictionsDemo({
-  fixture,
-  players,
-}: {
-  fixture: ShowcaseFixture | null;
-  players: ShowcasePlayer[];
-}) {
+export default function PredictionsDemo({ club }: { club: ShowcaseClub | null }) {
   const theme = useTheme() as any;
   const p = EXAMPLE_SPLIT;
+  const fixture = club?.fixture ?? null;
+  // Attackers first — a "player to watch" row of centre-backs reads wrong.
+  const players = outfieldHighlights(club?.squad ?? [], 3);
 
   return (
-    <DemoFrame>
+    <DemoFrame club={club}>
       <Stack spacing={3.5}>
         {/* --- Winner --- */}
         <Box>
@@ -34,7 +31,7 @@ export default function PredictionsDemo({
             direction="row"
             justifyContent="space-between"
             alignItems="center"
-            sx={{ mb: 1.5, pr: 9 }}
+            sx={{ mb: 1.5 }}
           >
             <Typography
               variant="overline"

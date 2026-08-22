@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Stack, Typography, alpha } from "@mui/material";
-import { ShowcasePlayer } from "@/lib/homepageShowcase";
+import { ShowcaseClub, ShowcasePlayer } from "@/lib/homepageShowcase";
 import DemoFrame from "@/components/client/Home/DemoFrame";
 import Pitch from "@/components/client/Fixture/Components/Lineup/Pitch";
 import PitchPlayer, {
@@ -43,7 +43,8 @@ const EmptySlotMark = () => (
   />
 );
 
-export default function LineupDemo({ squad }: { squad: ShowcasePlayer[] }) {
+export default function LineupDemo({ club }: { club: ShowcaseClub | null }) {
+  const squad = club?.squad ?? [];
   const layout = FORMATIONS[DEMO_FORMATION] ?? [];
 
   // Fill each slot with a squad player whose position suits the row it sits in,
@@ -72,10 +73,12 @@ export default function LineupDemo({ squad }: { squad: ShowcasePlayer[] }) {
   ).length;
 
   return (
-    <DemoFrame padded={false}>
-      <Box sx={{ p: { xs: 2, md: 2.5 } }}>
+    <DemoFrame padded={false} club={club}>
+      {/* px/pb, not the `p` shorthand — a responsive `p` would override `pt`
+          at md and the club rail would sit on top of the heading. */}
+      <Box sx={{ px: { xs: 2, md: 2.5 }, pb: { xs: 2, md: 2.5 }, pt: 5 }}>
         {/* Accuracy banner — mirrors LineupPredictorUserSquad's post-match head */}
-        <Stack spacing={0.5} sx={{ mb: 1.5, pr: 9 }}>
+        <Stack spacing={0.5} sx={{ mb: 1.5 }}>
           <Typography
             variant="overline"
             sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6, lineHeight: 1.4 }}

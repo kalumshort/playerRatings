@@ -2,7 +2,11 @@
 
 import { Avatar, Box, Stack, Typography, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { HomepageShowcase, ShowcasePlayer } from "@/lib/homepageShowcase";
+import {
+  ShowcaseClub,
+  ShowcasePlayer,
+  outfieldHighlights,
+} from "@/lib/homepageShowcase";
 import DemoFrame from "@/components/client/Home/DemoFrame";
 import MoodAreaChart from "@/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart";
 import { MOODS } from "@/components/client/Fixture/Components/FanMoodSelector/moodConfig";
@@ -36,25 +40,22 @@ const EXAMPLE_MOOD_ARC: Record<string, Record<string, number>> = {
 
 const EXAMPLE_SUB_SHOUTS = 7;
 
-export default function LivePulseDemo({
-  events,
-  squad,
-}: {
-  events: HomepageShowcase["events"];
-  squad: ShowcasePlayer[];
-}) {
+export default function LivePulseDemo({ club }: { club: ShowcaseClub | null }) {
+  const events = club?.events ?? [];
   // Two different players if the squad allows it, so the hot and cold tiles
   // aren't the same face twice.
-  const hotPlayer = squad[0] ?? null;
-  const coldPlayer = squad[1] ?? null;
+  const highlights = outfieldHighlights(club?.squad ?? [], 3);
+  const hotPlayer = highlights[0] ?? null;
+  const coldPlayer = highlights[1] ?? null;
+  const subPlayer = highlights[2] ?? null;
 
   return (
-    <DemoFrame padded={false}>
+    <DemoFrame padded={false} club={club}>
       {/* --- Vibe check --- */}
-      <Box sx={{ px: { xs: 2, md: 2.5 }, pt: 2.5, pb: 1 }}>
+      <Box sx={{ px: { xs: 2, md: 2.5 }, pt: 5, pb: 1 }}>
         <Typography
           variant="overline"
-          sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6, display: "block", mb: 1, pr: 9 }}
+          sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6, display: "block", mb: 1 }}
         >
           Vibe check
         </Typography>
@@ -144,7 +145,7 @@ export default function LivePulseDemo({
                 {EXAMPLE_SUB_SHOUTS}
               </Box>
               <Typography variant="caption" noWrap sx={{ fontWeight: 700 }}>
-                {squad[2] ? squad[2].name.split(/\s+/).slice(-1)[0] : "sub shouts"}
+                {subPlayer ? subPlayer.name.split(/\s+/).slice(-1)[0] : "sub shouts"}
               </Typography>
             </Stack>
           </Box>

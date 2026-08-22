@@ -2,6 +2,7 @@ import "server-only";
 import { adminDb } from "./admin";
 import { Fixture } from "@/types/football";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import {
   ClubDirectory,
   EMPTY_CLUB_DIRECTORY,
@@ -10,7 +11,9 @@ import {
 import { CURRENT_SEASON } from "@/lib/config/season";
 import {
   EMPTY_SHOWCASE,
+  FEATURE_CLUBS,
   HomepageShowcase,
+  ShowcaseClub,
   ShowcaseEvent,
   ShowcasePlayer,
 } from "@/lib/homepageShowcase";
@@ -65,171 +68,227 @@ export const getClubDirectoryServer = cache(
 const SHOWCASE_EVENT_TYPES = ["Goal", "Card", "subst"];
 
 /**
- * How many recent fixtures to consider. The most recent one is often a friendly
- * whose only events are substitutions, which makes for a dull pulse chart — so
- * look back a few and prefer one that actually has a goal in it.
+ * How many recent fixtures to scan for the feature clubs.
+ *
+ * One query, filtered in memory, rather than a per-club query: a
+ * `where(homeTeamId).orderBy(timestamp)` would need a composite index, and
+ * five of them would need five. This window has to be wide enough that each of
+ * the five clubs appears in it — they play weekly, so ~120 recent fixtures
+ * across all competitions comfortably covers a month.
  */
-const SHOWCASE_FIXTURE_WINDOW = 6;
+const SHOWCASE_FIXTURE_WINDOW = 120;
 
 /**
- * "Player to watch" should look like a matchwinner. Squads come back in
- * GK-DEF-MID-FWD order, so taking the first three without this gives three
- * centre-backs.
+ * How many players to keep per position, per club.
+ *
+ * Must be a per-position quota, not a flat `slice(0, n)`. activeSquad comes
+ * back in GK-DEF-MID-FWD order, so a flat slice of a 30-man squad kept the
+ * keepers and defenders and cut every striker — which then made the
+ * attacker-first panels lead with fringe midfielders.
+ *
+ * Totals ~22: enough to fill an XI in any of the 19 formations with slack,
+ * without shipping five full squads in the server-rendered payload.
  */
-const SHOWCASE_POSITION_RANK: Record<string, number> = {
-  Attacker: 0,
-  Midfielder: 1,
-  Defender: 2,
+const SHOWCASE_POSITION_QUOTA: Record<string, number> = {
+  Goalkeeper: 2,
+  Defender: 7,
+  Midfielder: 8,
+  Attacker: 5,
 };
 
-/**
- * Squad players kept for the lineup/ratings demos. Enough to fill an XI from
- * any formation with room for positional gaps, without shipping a 30-man squad
- * in the homepage payload.
- */
-const SHOWCASE_SQUAD_LIMIT = 20;
+/** How long the showcase is cached for. See getHomepageShowcase. */
+const SHOWCASE_TTL_SECONDS = 3600;
+
+const logoFor = (id: number | string) =>
+  `https://media.api-sports.io/football/teams/${id}.png`;
+
+/** Goals and cards, then subs — see buildEvents. */
+const goalCount = (data: any) =>
+  (data?.events || []).filter((e: any) => e?.type === "Goal").length;
 
 /**
- * Real entities for the marketing homepage demos: a real fixture for the
- * crests, its real goals and cards for the pulse chart, and real squad players
- * with photos.
- *
- * Prefers the most recently finished fixture over an upcoming one, because a
- * finished match is the only thing that carries a real `events` array.
- *
- * Both queries filter and order on `timestamp` alone, so neither needs a
- * composite index beyond the single-field ones Firestore creates automatically.
- *
- * Never throws and never partially fails — the homepage renders fully without
- * any of this, which is what happens on a cold season.
+ * Goals and cards first, then subs fill any remaining slots — a straight
+ * chronological slice gets swallowed by the wall of half-time substitutions
+ * and the chart ends up showing no goals at all.
  */
-export const getHomepageShowcase = cache(
-  async (): Promise<HomepageShowcase> => {
-    try {
-      const fixturesRef = adminDb
-        .collection("fixtures")
-        .doc(CURRENT_SEASON)
-        .collection("fixtures");
+function buildEvents(data: any): ShowcaseEvent[] {
+  const usable = (data?.events || []).filter(
+    (event: any) =>
+      event?.time?.elapsed != null && SHOWCASE_EVENT_TYPES.includes(event.type),
+  );
 
-      const nowSeconds = Math.floor(Date.now() / 1000);
+  return [
+    ...usable.filter((e: any) => e.type !== "subst"),
+    ...usable.filter((e: any) => e.type === "subst"),
+  ]
+    .slice(0, 8)
+    .map((event: any) => ({
+      time: { elapsed: event.time.elapsed, extra: event.time.extra ?? null },
+      type: event.type,
+      detail: event.detail ?? "",
+      player: { name: event.player?.name ?? "" },
+      assist: { name: event.assist?.name ?? "" },
+    }))
+    .sort((a, b) => a.time.elapsed - b.time.elapsed);
+}
 
-      // select() keeps the payload to the four fields used here. Fixture docs
-      // also carry lineups and full match statistics, which would make reading
-      // a window of them far heavier than it needs to be.
-      const fields = ["teams", "events", "status", "timestamp"] as const;
+const toShowcasePlayer = (player: any): ShowcasePlayer => ({
+  id: String(player.id),
+  name: player.name,
+  photo: player.photo || "",
+  position: player.position || "",
+});
 
-      let snapshot = await fixturesRef
-        .where("timestamp", "<", nowSeconds)
-        .orderBy("timestamp", "desc")
-        .limit(SHOWCASE_FIXTURE_WINDOW)
-        .select(...fields)
-        .get();
+/**
+ * A positionally balanced slice of a squad, keeping the source order within
+ * each position so the first-choice players come first.
+ *
+ * Players whose position isn't one of the four known values are kept up to the
+ * midfielder quota — free-text positions do occur, and dropping them silently
+ * would thin out a squad for no visible reason.
+ */
+function pickSquad(activeSquad: any[]): ShowcasePlayer[] {
+  const taken: Record<string, number> = {};
+  const picked: ShowcasePlayer[] = [];
 
-      if (snapshot.empty) {
-        snapshot = await fixturesRef
-          .where("timestamp", ">=", nowSeconds)
-          .orderBy("timestamp", "asc")
-          .limit(1)
-          .select(...fields)
-          .get();
-      }
+  for (const player of activeSquad) {
+    if (!player?.id || !player?.name) continue;
 
-      if (snapshot.empty) return EMPTY_SHOWCASE;
+    const position = player.position || "Midfielder";
+    const quota = SHOWCASE_POSITION_QUOTA[position] ?? 2;
 
-      // Most goals wins. The docs arrive newest-first and the sort is stable,
-      // so ties fall back to the most recent match.
-      const goalCount = (candidate: any) =>
-        (candidate.data().events || []).filter((e: any) => e?.type === "Goal")
-          .length;
+    if ((taken[position] ?? 0) >= quota) continue;
+    taken[position] = (taken[position] ?? 0) + 1;
+    picked.push(toShowcasePlayer(player));
+  }
 
-      const doc = [...snapshot.docs].sort(
-        (a, b) => goalCount(b) - goalCount(a),
-      )[0];
-      const data = doc.data();
-      const home = data.teams?.home;
-      const away = data.teams?.away;
+  return picked;
+}
 
-      if (!home?.id || !away?.id) return EMPTY_SHOWCASE;
+/**
+ * Real entities for the marketing homepage demos, one club per feature row.
+ *
+ * Each of the five clubs in FEATURE_CLUBS gets its own crest, its own squad and
+ * its own real recent match, so the five panels show five recognisable teams
+ * instead of repeating whichever club happened to play most recently.
+ *
+ * Cost: one fixture query plus five squad doc reads. `/` is a dynamic route
+ * (it reads the session cookie), so without the unstable_cache wrapper below
+ * that would run on every single homepage request. React's `cache()` only
+ * dedupes within one request, which is not the problem here.
+ *
+ * Never throws and never partially fails — a club with no squad is simply
+ * dropped, and the homepage renders fully with none of this, which is what
+ * happens on a cold season.
+ */
+async function loadHomepageShowcase(): Promise<HomepageShowcase> {
+  try {
+    const fixturesRef = adminDb
+      .collection("fixtures")
+      .doc(CURRENT_SEASON)
+      .collection("fixtures");
 
-      const logoFor = (id: number | string) =>
-        `https://media.api-sports.io/football/teams/${id}.png`;
+    const nowSeconds = Math.floor(Date.now() / 1000);
 
-      // Goals and cards first, then subs fill any remaining slots — a straight
-      // chronological slice gets swallowed by the wall of half-time
-      // substitutions and the chart ends up showing no goals at all.
-      const usableEvents = (data.events || []).filter(
-        (event: any) =>
-          event?.time?.elapsed != null &&
-          SHOWCASE_EVENT_TYPES.includes(event.type),
-      );
+    // select() keeps the payload to the fields used here. Fixture docs also
+    // carry lineups and full match statistics, which would make reading a
+    // window of them far heavier than it needs to be.
+    const fields = ["teams", "events", "status", "timestamp"] as const;
 
-      const events: ShowcaseEvent[] = [
-        ...usableEvents.filter((e: any) => e.type !== "subst"),
-        ...usableEvents.filter((e: any) => e.type === "subst"),
-      ]
-        .slice(0, 8)
-        .map((event: any) => ({
-          time: { elapsed: event.time.elapsed, extra: event.time.extra ?? null },
-          type: event.type,
-          detail: event.detail ?? "",
-          player: { name: event.player?.name ?? "" },
-          assist: { name: event.assist?.name ?? "" },
-        }))
-        .sort((a, b) => a.time.elapsed - b.time.elapsed);
+    // Finished matches only: they are the only ones carrying a real `events`
+    // array, which the pulse and reactions panels are built from.
+    const snapshot = await fixturesRef
+      .where("timestamp", "<", nowSeconds)
+      .orderBy("timestamp", "desc")
+      .limit(SHOWCASE_FIXTURE_WINDOW)
+      .select(...fields)
+      .get();
 
-      const squadDoc = await adminDb
-        .collection("teamSquads")
-        .doc(String(home.id))
-        .collection("season")
-        .doc(CURRENT_SEASON)
-        .get();
+    const directory = await getClubDirectoryServer();
+    const nameById = new Map(
+      directory.clubs.map((club) => [String(club.teamId), club.name]),
+    );
 
-      const namedSquad = (squadDoc.data()?.activeSquad || []).filter(
-        (player: any) => player?.id && player?.name,
-      );
+    const squadDocs = await Promise.all(
+      FEATURE_CLUBS.map((club) =>
+        adminDb
+          .collection("teamSquads")
+          .doc(club.teamId)
+          .collection("season")
+          .doc(CURRENT_SEASON)
+          .get()
+          .catch(() => null),
+      ),
+    );
 
-      const toShowcasePlayer = (player: any): ShowcasePlayer => ({
-        id: String(player.id),
-        name: player.name,
-        photo: player.photo || "",
-        position: player.position || "",
+    const clubs: ShowcaseClub[] = [];
+
+    FEATURE_CLUBS.forEach((featureClub, i) => {
+      const squadDoc = squadDocs[i];
+      const squad = pickSquad(squadDoc?.data()?.activeSquad || []);
+
+      // No squad means no faces, and every panel for this row is about the
+      // players. Drop the club rather than render an empty pitch.
+      if (squad.length === 0) return;
+
+      // This club's best recent match: most goals, so the pulse chart has a
+      // shape and the reactions feed has something to react to. The docs
+      // arrive newest-first and the sort is stable, so ties fall back to the
+      // most recent.
+      const candidates = snapshot.docs.filter((doc) => {
+        const teams = doc.data().teams;
+        return (
+          String(teams?.home?.id) === featureClub.teamId ||
+          String(teams?.away?.id) === featureClub.teamId
+        );
       });
 
-      const players: ShowcasePlayer[] = namedSquad
-        // Goalkeepers are never a plausible "player to watch" pick.
-        .filter((player: any) => player.position !== "Goalkeeper")
-        .sort(
-          (a: any, b: any) =>
-            (SHOWCASE_POSITION_RANK[a.position] ?? 3) -
-            (SHOWCASE_POSITION_RANK[b.position] ?? 3),
-        )
-        .slice(0, 3)
-        .map(toShowcasePlayer);
+      const best = [...candidates].sort(
+        (a, b) => goalCount(b.data()) - goalCount(a.data()),
+      )[0];
 
-      // The lineup and ratings demos build an XI, so this keeps goalkeepers and
-      // positions. Capped because the whole squad would be dead weight in the
-      // server-rendered payload — the demos never show more than eleven.
-      const squad: ShowcasePlayer[] = namedSquad
-        .slice(0, SHOWCASE_SQUAD_LIMIT)
-        .map(toShowcasePlayer);
+      const data = best?.data();
+      const home = data?.teams?.home;
+      const away = data?.teams?.away;
 
-      return {
-        fixture: {
-          matchId: doc.id,
-          homeName: home.name || "",
-          homeLogo: home.logo || logoFor(home.id),
-          awayName: away.name || "",
-          awayLogo: away.logo || logoFor(away.id),
-        },
-        players,
+      clubs.push({
+        teamId: featureClub.teamId,
+        name: nameById.get(featureClub.teamId) || featureClub.name,
+        logo: logoFor(featureClub.teamId),
         squad,
-        events,
-      };
-    } catch (error) {
-      console.error("❌ Homepage showcase fetch failed:", error);
-      return EMPTY_SHOWCASE;
-    }
-  },
+        fixture:
+          best && home?.id && away?.id
+            ? {
+                matchId: best.id,
+                homeName: home.name || "",
+                homeLogo: home.logo || logoFor(home.id),
+                awayName: away.name || "",
+                awayLogo: away.logo || logoFor(away.id),
+              }
+            : null,
+        events: data ? buildEvents(data) : [],
+      });
+    });
+
+    return { clubs };
+  } catch (error) {
+    console.error("❌ Homepage showcase fetch failed:", error);
+    return EMPTY_SHOWCASE;
+  }
+}
+
+/**
+ * Cached across requests for an hour. The underlying data only changes when
+ * the nightly job runs, so serving a slightly stale showcase is free, while
+ * re-reading it per homepage view is not.
+ *
+ * `cache()` still wraps it so repeated calls inside one render share a result.
+ */
+export const getHomepageShowcase = cache(
+  unstable_cache(loadHomepageShowcase, ["homepage-showcase", CURRENT_SEASON], {
+    revalidate: SHOWCASE_TTL_SECONDS,
+    tags: ["homepage-showcase"],
+  }),
 );
 
 export async function getFixturesByClubServer(

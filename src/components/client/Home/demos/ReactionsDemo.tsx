@@ -2,7 +2,7 @@
 
 import { Box, Stack, Typography, alpha } from "@mui/material";
 import { motion } from "framer-motion";
-import { HomepageShowcase, ShowcaseEvent } from "@/lib/homepageShowcase";
+import { ShowcaseClub, ShowcaseEvent } from "@/lib/homepageShowcase";
 import DemoFrame from "@/components/client/Home/DemoFrame";
 import { EMOJI_OPTIONS } from "@/components/client/Fixture/Components/Events";
 
@@ -42,11 +42,8 @@ const eventLook = (event: ShowcaseEvent) => {
   return { glyph: "🔄", tint: "#93BFEC" };
 };
 
-export default function ReactionsDemo({
-  events,
-}: {
-  events: HomepageShowcase["events"];
-}) {
+export default function ReactionsDemo({ club }: { club: ShowcaseClub | null }) {
+  const events = club?.events ?? [];
   // Goals first — they're the events people actually react to. Falls back to
   // whatever the fixture had if it was a goalless one.
   const ranked = [
@@ -55,10 +52,10 @@ export default function ReactionsDemo({
   ].slice(0, 3);
 
   return (
-    <DemoFrame>
+    <DemoFrame club={club}>
       <Typography
         variant="overline"
-        sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6, display: "block", mb: 2, pr: 9 }}
+        sx={{ fontWeight: 800, letterSpacing: 2, opacity: 0.6, display: "block", mb: 2 }}
       >
         Match feed
       </Typography>

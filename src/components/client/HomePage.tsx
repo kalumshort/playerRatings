@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Box, Container, Stack } from "@mui/material";
 import { DirectoryClub } from "@/lib/clubDirectory";
-import { EMPTY_SHOWCASE, HomepageShowcase } from "@/lib/homepageShowcase";
+import {
+  EMPTY_SHOWCASE,
+  HomepageShowcase,
+  clubForRow,
+} from "@/lib/homepageShowcase";
 import AuthDialog from "@/components/client/Auth/AuthDialog";
 
 import Hero from "@/components/client/Home/Hero";
@@ -46,9 +50,11 @@ export default function HomePage({
   const [authOpen, setAuthOpen] = useState(false);
   const openAuth = () => setAuthOpen(true);
 
-  // `squad` is newer than `players`; a cached payload from before it existed
-  // would leave it undefined, and the pitch demo maps over it.
-  const squad = showcase.squad ?? [];
+  // One club per row, in FEATURE_CLUBS order: Manchester United, Arsenal,
+  // Liverpool, Chelsea, Manchester City. Five recognisable squads down the
+  // page instead of the same one five times. Any row whose club is missing
+  // (cold season, failed read) falls back to the panel's own empty state.
+  const rowClub = (index: number) => clubForRow(showcase, index);
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
@@ -61,12 +67,7 @@ export default function HomePage({
             title="Call it before kick-off"
             body="Pick the winner, set the scoreline, and name the player you think decides it — then watch the crowd's numbers move."
             specs={["Winner", "Scoreline", "Player to watch"]}
-            demo={
-              <PredictionsDemo
-                fixture={showcase.fixture}
-                players={showcase.players}
-              />
-            }
+            demo={<PredictionsDemo club={rowClub(0)} />}
           />
 
           <FeatureRow
@@ -74,7 +75,7 @@ export default function HomePage({
             title="Build the XI you'd start"
             body="Pick a shape, fill eleven slots, and find out how many of the real starters you called."
             specs={["19 formations", "Consensus XI", "Hit / miss scoring", "Shareable PNG"]}
-            demo={<LineupDemo squad={squad} />}
+            demo={<LineupDemo club={rowClub(1)} />}
             reverse
           />
 
@@ -83,7 +84,7 @@ export default function HomePage({
             title="Feel it, and manage it"
             body="Tap your mood as the match swings, call players hot or cold, and shout for a substitution while it still matters."
             specs={["6 moods", "Minute by minute", "🔥 hot / ❄️ cold", "Sub shouts"]}
-            demo={<LivePulseDemo events={showcase.events} squad={squad} />}
+            demo={<LivePulseDemo club={rowClub(2)} />}
           />
 
           <FeatureRow
@@ -91,7 +92,7 @@ export default function HomePage({
             title="React to the moment"
             body="Eleven emoji, on any goal, card or substitution, landing live on the match feed."
             specs={["11 reactions", "Goals, cards, subs", "Live feed"]}
-            demo={<ReactionsDemo events={showcase.events} />}
+            demo={<ReactionsDemo club={rowClub(3)} />}
             reverse
           />
 
@@ -100,7 +101,7 @@ export default function HomePage({
             title="Rate them. Crown one."
             body="Ratings open at the 80th minute — not before. Score everyone who featured, and the votes crown the Fan Man of the Match."
             specs={["1.0 – 10.0", "Opens at 80'", "You vs team average", "Season leaderboard"]}
-            demo={<RatingsDemo player={showcase.players[0] ?? squad[0] ?? null} />}
+            demo={<RatingsDemo club={rowClub(4)} />}
           />
         </Stack>
       </Container>

@@ -11,7 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { Trophy } from "lucide-react";
-import { ShowcasePlayer } from "@/lib/homepageShowcase";
+import { ShowcaseClub, outfieldHighlights } from "@/lib/homepageShowcase";
 import DemoFrame from "@/components/client/Home/DemoFrame";
 import { getRatingColor } from "@/lib/utils/football-logic";
 
@@ -29,8 +29,10 @@ const EXAMPLE_RATING = 8.5;
 const EXAMPLE_TEAM_AVG = 7.8;
 const EXAMPLE_MOTM_SHARE = 38;
 
-export default function RatingsDemo({ player }: { player: ShowcasePlayer | null }) {
+export default function RatingsDemo({ club }: { club: ShowcaseClub | null }) {
   const theme = useTheme() as any;
+  // The Man of the Match should look like one: attackers first.
+  const player = outfieldHighlights(club?.squad ?? [], 1)[0] ?? null;
 
   // Mirror FanMOTMHighlight rather than re-inventing its palette: the demo
   // should look like the thing it is demonstrating.
@@ -40,7 +42,7 @@ export default function RatingsDemo({ player }: { player: ShowcasePlayer | null 
   const ratingColor = getRatingColor(EXAMPLE_RATING);
 
   return (
-    <DemoFrame padded={false}>
+    <DemoFrame padded={false} club={club}>
       {/* --- MOTM crown --- */}
       <Box
         sx={{
