@@ -33,7 +33,7 @@ import { selectPreviousFixtures } from "@/lib/redux/selectors/fixturesSelectors"
 import { selectPlayerRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
 import { selectSeasonSquadData } from "@/lib/redux/selectors/squadSelectors";
 import PlayerRatingsLineGraph from "./PlayerPageRatingsGraph";
-import { getRatingColor } from "@/lib/utils/football-logic";
+import { getRatingTextSx } from "@/lib/utils/football-logic";
 
 export default function PlayerPageClient({
   playerId,
@@ -148,7 +148,8 @@ export default function PlayerPageClient({
     );
   }
 
-  const ratingColor = getRatingColor(seasonAverage);
+  // Pastel fill, outlined in light mode — see getRatingTextSx.
+  const ratingSx = getRatingTextSx(seasonAverage, theme.palette.mode);
   const comparePlayerInfo = comparePlayerData
     ? {
         id: String(comparePlayerData.id),
@@ -262,8 +263,10 @@ export default function PlayerPageClient({
                     variant="h3"
                     sx={{
                       fontWeight: 700,
-                      color: seasonAverage > 0 ? ratingColor : "text.disabled",
                       lineHeight: 1,
+                      ...(seasonAverage > 0
+                        ? ratingSx
+                        : { color: "text.disabled" }),
                     }}
                   >
                     {seasonAverage > 0 ? seasonAverage.toFixed(1) : "-.-"}
@@ -388,12 +391,13 @@ function SeasonRatingValue({
   smaller?: boolean;
   label?: string;
 }) {
-  const color =
+  const theme = useTheme();
+  const valueSx =
     value <= 0
-      ? "text.disabled"
+      ? { color: "text.disabled" }
       : useRatingColor
-        ? getRatingColor(value)
-        : accent;
+        ? getRatingTextSx(value, theme.palette.mode)
+        : { color: accent };
 
   return (
     <Box sx={{ textAlign: "center" }}>
@@ -411,8 +415,8 @@ function SeasonRatingValue({
         sx={{
           fontWeight: 700,
           fontSize: smaller ? "2rem" : "3rem",
-          color,
           lineHeight: 1,
+          ...valueSx,
         }}
       >
         {value > 0 ? value.toFixed(1) : "-.-"}

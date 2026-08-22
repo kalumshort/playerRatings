@@ -19,7 +19,9 @@ import { UsersMatchDataListener } from "../Listeners/UsersMatchDataListener";
 import MobileFixtureContainer from "./MobileFixtureContainer";
 import DesktopFixtureHub from "./DesktopFixtureHub";
 import { GroupPredictionsListener } from "../Listeners/GroupPredictionsListener";
+import { GroupRatingsListener } from "../Listeners/GroupRatingsListener";
 import { selectFixtureById } from "@/lib/redux/selectors/fixturesSelectors";
+import { isFinished, isLive } from "@/lib/utils/football-logic";
 
 export default function FixtureClientWrapper({
   initialFixture,
@@ -82,6 +84,10 @@ export default function FixtureClientWrapper({
   const isPreMatch = ["NS", "TBD"].includes(fixture?.fixture?.status?.short);
   const showPredictions = isPreMatch;
 
+  // Ratings only exist from 80' onwards, so a pre-match or postponed page has
+  // no reason to hold two idle subscriptions open.
+  const showRatings = isLive(fixture) || isFinished(fixture);
+
   return (
     <Box sx={{ width: "100%", pb: 5 }}>
       {/* --- REAL-TIME LISTENERS --- */}
@@ -95,6 +101,13 @@ export default function FixtureClientWrapper({
         matchId={matchId}
         currentYear={currentYear}
       />
+      {showRatings && (
+        <GroupRatingsListener
+          groupId={groupId}
+          matchId={matchId}
+          currentYear={currentYear}
+        />
+      )}
       {user && groupId && (
         <UsersMatchDataListener
           groupId={groupId}

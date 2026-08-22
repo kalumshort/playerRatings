@@ -21,6 +21,11 @@ interface AsyncButtonProps extends ButtonProps {
    * `backgroundColor: !important` stomps it mid-flight.
    */
   keepBackground?: boolean;
+  /**
+   * Colour for the loading spinner. Needed when `keepBackground` paints a
+   * background this component can't measure — see spinnerColor below.
+   */
+  loadingIndicatorColor?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -28,6 +33,7 @@ export const AsyncButton = ({
   children,
   loading = false,
   keepBackground = false,
+  loadingIndicatorColor,
   onClick,
   sx = {},
   ...props
@@ -73,14 +79,20 @@ export const AsyncButton = ({
   // both land at ~1.9:1 on the pale #93BFEC primary, so the spinner was
   // effectively invisible in *both* modes and the branch changed nothing.
   const spinnerColor = useMemo(() => {
-    // keepBackground means the caller painted its own gradient; those are the
-    // dark, white-labelled buttons, and we can't measure a gradient here.
-    if (keepBackground) return "#fff";
+    // An explicit colour always wins — the caller knows what it painted.
+    if (loadingIndicatorColor) return loadingIndicatorColor;
+    // keepBackground means the caller painted its own gradient, which we can't
+    // measure here. The old #fff fallback assumed those were all dark buttons;
+    // the rating submit button is a PASTEL gradient, so its spinner rendered at
+    // 1.13:1 and simply wasn't there. Fall back to the text colour instead,
+    // which at least tracks the mode, and pass loadingIndicatorColor when the
+    // background is known.
+    if (keepBackground) return theme.palette.text.primary;
     const colorKey = props.color === "secondary" ? "secondary" : "primary";
     return theme.palette.getContrastText(
       (theme.palette[colorKey] as any).main,
     );
-  }, [theme, props.color, keepBackground]);
+  }, [theme, props.color, keepBackground, loadingIndicatorColor]);
 
   return (
     <Button

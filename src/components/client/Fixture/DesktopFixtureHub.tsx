@@ -150,13 +150,19 @@ export default function DesktopFixtureHub({
   }
 
   // --- LIVE ---
-  // Round-robin with DOM order [Lineup, Mood, Stats, Events] →
-  //   col1: Lineup, Stats   col2: Mood, Events
+  // Round-robin with DOM order [PlayerRatings, Lineup, Mood, Stats, Events] →
+  //   col1: PlayerRatings, Mood, Events   col2: Lineup, Stats
   // Consensus is a separate full-width row below.
+  //
+  // PlayerRatings belongs here as well as in FINISHED: ratings open at 80' with
+  // the match still running, and leaving it out of this branch made that whole
+  // window mobile-only. It gates itself on elapsed >= 80, so before then it
+  // renders its own "RATINGS OPEN AT 80'" placeholder.
   if (isLive) {
     return (
       <Stack spacing={4}>
         <MasonryGrid cols={2}>
+          <PlayerRatings {...commonProps} />
           <Lineup {...commonProps} />
           <MoodSelector {...commonProps} />
           {EventsEl}

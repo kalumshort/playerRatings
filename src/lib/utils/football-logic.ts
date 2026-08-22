@@ -70,6 +70,10 @@ export const getResultColor = (result, theme) => {
   if (result === "D") return theme.palette.warning.main;
   return theme.palette.error.main;
 };
+/**
+ * The rating ramp. Tuned against the dark card (#1F1F25), where it sits between
+ * 7:1 and 14.5:1 and reads perfectly.
+ */
 export const getRatingColor = (r: number) => {
   // World Class / Elite
   if (r >= 9.0) return "#7AE582"; // Vivid Green
@@ -86,6 +90,55 @@ export const getRatingColor = (r: number) => {
   // Disastrous
   return "#FF8585"; // Deep Red
 };
+
+// Near-black, matching the light palette's textPrimary rather than pure #000 so
+// the outline sits in the same family as the rest of the type.
+const RATING_STROKE = "#18181B";
+
+/**
+ * sx for a rating rendered as TEXT, keeping the pastel fill.
+ *
+ * The ramp was never checked against a light surface, and as text on white
+ * every band fails badly on its own:
+ *
+ *     9.0+ 1.57:1   8.0 1.43:1   7.0 1.31:1   6.0 1.13:1
+ *     5.0  1.36:1   4.0 1.77:1   <4  2.35:1
+ *
+ * 6.0 is the rating input's default value, so the first number a light-mode
+ * voter ever saw was drawn at 1.13:1.
+ *
+ * Rather than darken the palette, light mode outlines the glyph in near-black,
+ * so the letterform is carried by a 16:1 edge while the fill keeps saying which
+ * band the rating is in. `paint-order: stroke fill` puts the stroke BEHIND the
+ * fill so it hugs the outside of the glyph instead of eating into it; where
+ * that's unsupported the stroke centres on the edge, which still reads at these
+ * weights (everything using this is >= 700).
+ *
+ * Dark mode gets no stroke — the pastels already clear 6:1 there, and a
+ * near-black outline on a near-black card would only erode the glyph.
+ *
+ * Note this is a legibility fix, not a WCAG-conformant one: the contrast
+ * algorithm only ever compares fill to background, and has no notion of an
+ * outline.
+ *
+ * Scale `strokeWidth` with the type: 1px suits the 2-3rem card numbers, 0.6px
+ * the ~1.35rem chips. Going heavier at chip size starts closing up the counters
+ * in 6 and 8 on the paler bands.
+ */
+export const getRatingTextSx = (
+  r: number,
+  mode: "light" | "dark",
+  strokeWidth = "1px",
+) => ({
+  color: getRatingColor(r),
+  ...(mode === "light"
+    ? {
+        WebkitTextStrokeWidth: strokeWidth,
+        WebkitTextStrokeColor: RATING_STROKE,
+        paintOrder: "stroke fill",
+      }
+    : {}),
+});
 
 export type MatchStatus = "prematch" | "inplay" | "postmatch" | "cancelled";
 

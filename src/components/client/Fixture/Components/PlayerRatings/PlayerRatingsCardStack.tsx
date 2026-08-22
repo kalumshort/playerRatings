@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards, Navigation } from "swiper/modules";
@@ -30,7 +30,8 @@ interface CardStackProps {
   usersMatchPlayerRatings: any;
   currentYear: string;
   storedUsersMatchMOTM: string | null;
-  setStoredMotmId: React.Dispatch<React.SetStateAction<string | null>>;
+  /** Not a raw setState — the owner also persists the pick to Firestore. */
+  setStoredMotmId: (playerId: string | null) => void;
   storedMotmId: string | null;
 }
 
@@ -67,10 +68,18 @@ export default function PlayerRatingsCardStack({
 
   // Averages computed once here rather than each card scanning the ratings map,
   // which also lets PlayerRatingCard take a primitive instead of the whole map.
+  //
+  // Carries through the three states ratingsSlice documents rather than
+  // flattening them: undefined = never fetched (the card shows a Skeleton),
+  // null = fetched but nobody rated this player (the card shows "—"), string =
+  // a real average. Assigning null in the unfetched case made the Skeleton in
+  // PlayerRatingCard unreachable and hid the difference from the user.
   const avgRatings = useMemo(() => {
-    const out: Record<string, string | null> = {};
+    const out: Record<string, string | null | undefined> = {};
+    if (!matchRatings) return out;
+
     players.forEach((p: any) => {
-      const stats = matchRatings?.[String(p.id)];
+      const stats = matchRatings[String(p.id)];
       out[String(p.id)] = stats?.totalSubmits
         ? (stats.totalRating / stats.totalSubmits).toFixed(1)
         : null;
@@ -88,6 +97,30 @@ export default function PlayerRatingsCardStack({
       swiperRef.current.slideTo(i);
     }
   }, []);
+
+  // 3. RESUME POSITION
+  // Submitting a rating deliberately does NOT advance the deck — the user
+  // drives navigation, by swiping or via the thumbnail rail.
+  //
+  // Resume where the user left off.
+  //
+  // Seeds once, and only when the user actually has ratings to skip past — the
+  // ratings map arrives asynchronously, so latching on the first render (when
+  // it's still undefined) would burn the one attempt and always leave the deck
+  // at 0. An empty map needs no seeding, since index 0 is already correct.
+  const hasSeededRef = useRef(false);
+  useEffect(() => {
+    if (hasSeededRef.current || !players.length) return;
+    if (!usersMatchPlayerRatings) return;
+    if (!Object.keys(usersMatchPlayerRatings).length) return;
+
+    hasSeededRef.current = true;
+
+    const first = players.findIndex(
+      (p: any) => usersMatchPlayerRatings[p.id] === undefined,
+    );
+    if (first > 0) handleCarouselSelect(first);
+  }, [players, usersMatchPlayerRatings, handleCarouselSelect]);
 
   if (!players.length) return null;
 
@@ -135,11 +168,6 @@ export default function PlayerRatingsCardStack({
           modules={[EffectCards, Navigation]}
           onSwiper={(s) => (swiperRef.current = s)}
           onSlideChange={(s) => setCurrentIndex(s.activeIndex)}
-          /* IMPORTANT: These classes prevent the Swiper from moving 
-             when the user is interacting with the Rating Slider.
-          */
-          noSwiping
-          noSwipingClass="no-swipe"
           style={{
             width: isMobile ? "90%" : "100%",
             overflow: "visible",

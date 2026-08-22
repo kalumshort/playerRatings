@@ -316,6 +316,11 @@ service cloud.firestore {
     //    users/... (isOwner)                             = 0
     //                                             total   11 of 20
     //
+    //  MOTM batch (2 writes, worst case)
+    //    playerRatings/{m}              3 exists + 1 get = 4
+    //    users/... (isOwner)                             = 0
+    //                                             total    4 of 20
+    //
     // A plain member short-circuits on the first exists(), so the typical cost
     // is ~5. Adding another per-write lookup, or a fifth write to the rating
     // batch, needs this recomputed first.

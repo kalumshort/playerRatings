@@ -388,6 +388,19 @@ export const handleEventReaction = async (params: {
   );
 };
 
+/**
+ * One writeBatch, not two parallel writes.
+ *
+ * These two documents are a pair, and Promise.all let them diverge. If the
+ * group aggregate landed but the user doc failed, `motmVote` stayed absent, so
+ * notYetVotedMotm() in firestore.rules still passed and the same user could
+ * vote again — a double-counted MOTM vote. The other order silently lost the
+ * vote while still locking the user out. A batch commits or fails as a unit.
+ *
+ * Rules budget for this batch: playerRatings/{matchId} costs canWriteGroup
+ * (<=3 exists) + notYetVotedMotm (1 get) = 4; the user doc is isOwner, = 0.
+ * 4 of the 20 allowed per batched write.
+ */
 export const handleMatchMotmVote = async (params: {
   matchId: string;
   playerId: string;
@@ -398,30 +411,47 @@ export const handleMatchMotmVote = async (params: {
   validateParams(params);
   const { matchId, playerId, groupId, userId, currentYear } = params;
 
-  const groupRef = doc(
-    clientDB,
-    `groups/${groupId}/seasons/${currentYear}/playerRatings`,
-    matchId,
-  );
-  const userPath = `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`;
+  const batch = writeBatch(clientDB);
 
-  await Promise.all([
-    setDoc(
-      groupRef,
-      {
-        motmTotalVotes: increment(1),
-        playerVotes: {
-          [playerId]: increment(1),
-        },
-      },
-
-      { merge: true },
+  batch.set(
+    doc(
+      clientDB,
+      `groups/${groupId}/seasons/${currentYear}/playerRatings`,
+      matchId,
     ),
-    updateOrSet(userPath, matchId, {
+    {
+      motmTotalVotes: increment(1),
+      playerVotes: {
+        [playerId]: increment(1),
+      },
+    },
+    { merge: true },
+  );
+
+  // No createdAt stamp, matching how handlePlayerRatingSubmit writes this same
+  // document — the per-player ratings always land first, so it already exists.
+  batch.set(
+    doc(
+      clientDB,
+      `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+      matchId,
+    ),
+    {
       motmVote: playerId,
       ratingsSubmitted: true,
-    }),
-  ]);
+    },
+    { merge: true },
+  );
+
+  try {
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ MOTM Vote Batch Failed:", error);
+    // Preserve error.code — rules dedupe repeat votes with permission-denied,
+    // which the UI reports as "you've already submitted this".
+    throw error;
+  }
 };
 
 export const handlePlayerRatingSubmit = async (data: any) => {

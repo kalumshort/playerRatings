@@ -63,7 +63,13 @@ const Medal = styled(Box)(({ theme }) => ({
 const HeroAvatar = styled(Avatar)(({ theme }) => ({
   width: 128,
   height: 128,
-  backgroundColor: theme.palette.grey[800],
+  // grey[800] was a fixed dark disc behind the winner in light mode. This sits
+  // on HeroCard (a Paper), so background.default is the contrasting surface —
+  // same reasoning as PitchPlayer's `.pitch-avatar`.
+  backgroundColor: theme.palette.background.default,
+  // selectMotmPercentages falls back to img: "", so the initial-letter fallback
+  // renders fairly often and needs a colour that isn't the background.
+  color: theme.palette.text.secondary,
 }));
 
 const ProgressTrack = styled(Box)(({ theme }) => ({

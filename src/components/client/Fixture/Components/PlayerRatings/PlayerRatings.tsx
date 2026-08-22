@@ -1,18 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "next/navigation";
-import {
-  Box,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Stack,
-} from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { Box, Typography, Stack } from "@mui/material";
 
 // --- CLEAN IMPORTS ---
 import { handleMatchMotmVote } from "@/lib/firebase/client-actions";
@@ -24,8 +14,8 @@ import { RootState } from "@/lib/redux/store";
 import MotmConfirmDialog from "./MotmConfirmDialog";
 import PlayerRatingsCardStack from "./PlayerRatingsCardStack";
 import RatingLineup from "./RatingLineup";
-import { updateOrSet } from "@/lib/firebase/utils";
-import { useClubView } from "@/context/ClubViewProvider";
+import { setDocument } from "@/lib/firebase/utils";
+import { isFinished, isLive } from "@/lib/utils/football-logic";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import useAsyncAction from "@/Hooks/useAsyncAction";
 
@@ -48,6 +38,40 @@ export default function PlayerRatings({
   );
 
   const isMatchRatingsSubmitted = usersMatchData?.ratingsSubmitted;
+
+  // 1b. MOTM PICK PERSISTENCE
+  // The pick used to live only in component state, so a refresh partway through
+  // voting lost it silently while the individual ratings survived. It's parked
+  // on the user's own match doc as `pendingMotm` until submission promotes it
+  // to the real `motmVote`; users/** is fully self-writable, so no rules change.
+  const pendingMotm: string | null = usersMatchData?.pendingMotm ?? null;
+
+  const hasSeededMotmRef = useRef(false);
+  useEffect(() => {
+    if (hasSeededMotmRef.current || !pendingMotm) return;
+    hasSeededMotmRef.current = true;
+    setStoredMotmId(pendingMotm);
+  }, [pendingMotm]);
+
+  // Stable identity: this is passed through the card stack to React.memo'd cards.
+  const handleSelectMotm = useCallback(
+    (playerId: string | null) => {
+      setStoredMotmId(playerId);
+      if (!userId) return;
+
+      // Fire-and-forget. A failure here costs the user nothing they can see —
+      // the pick still works for this session, it just won't survive a reload —
+      // so it deliberately doesn't get a toast or a pending spinner.
+      setDocument(
+        `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+        matchId,
+        { pendingMotm: playerId },
+      ).catch((err) =>
+        console.warn("[PlayerRatings] Could not persist MOTM pick:", err),
+      );
+    },
+    [userId, groupId, currentYear, matchId],
+  );
 
   // 2. PLAYER LOGIC (Consolidated)
   // Extracts starters, subs who actually played, and the coach
@@ -105,7 +129,9 @@ export default function PlayerRatings({
           playerId: String(motmId),
         });
       } else {
-        await updateOrSet(
+        // setDocument, not updateOrSet: this only ever adds a field, and
+        // updateOrSet spends an extra getDoc deciding between update and set.
+        await setDocument(
           `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
           matchId,
           { ratingsSubmitted: true },
@@ -121,8 +147,14 @@ export default function PlayerRatings({
 
   // --- RENDER LOGIC ---
 
-  // A. Game not far enough along
-  if (fixture.fixture.status.elapsed < 80) {
+  // A. Game not far enough along.
+  // Goes through getFixtureState rather than reading `elapsed` raw: `elapsed`
+  // is null on any fixture without a live clock, and `null < 80` is true, which
+  // pinned finished matches on "RATINGS OPEN AT 80'" with no way to open them.
+  const elapsed = fixture?.fixture?.status?.elapsed ?? 0;
+  const canRate = isFinished(fixture) || (isLive(fixture) && elapsed >= 80);
+
+  if (!canRate) {
     return (
       <Box sx={{ p: 6, textAlign: "center", opacity: 0.5 }}>
         <Typography variant="body2" fontWeight={800}>
@@ -163,7 +195,7 @@ export default function PlayerRatings({
         usersMatchPlayerRatings={usersMatchData?.players}
         storedUsersMatchMOTM={storedMotmId}
         userId={userId}
-        setStoredMotmId={setStoredMotmId}
+        setStoredMotmId={handleSelectMotm}
         storedMotmId={storedMotmId}
       />
 

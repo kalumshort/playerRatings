@@ -22,6 +22,12 @@ export const PALETTE = {
     // failing at 4.40:1 on the old input colour.
     textSecondary: "#62626B", // 5.12:1 on page, 4.77:1 on sunken
     hairline: "rgba(0,0,0,0.12)", // 1.32:1 against paper
+    // A raised surface needs a stronger edge than a divider drawn inside one:
+    // the white card sits on the #ECECF0 page at 1.18:1, so at the hairline's
+    // 0.12 the boundary is doing almost nothing. 0.18 reads as a clean edge
+    // (1.53:1 on the card, 1.30:1 against the page) without turning into a
+    // drawn outline the way 0.24+ does.
+    edge: "rgba(0,0,0,0.18)",
   },
   dark: {
     bg: "#09090B",
@@ -31,6 +37,9 @@ export const PALETTE = {
     textPrimary: "#FAFAFA",
     textSecondary: "#A1A1AA", // 6.40:1 on card, 5.56:1 on raised
     hairline: "rgba(255,255,255,0.10)", // 1.35:1 against paper
+    // Dark already separates its surfaces by value (card/page 1.21:1) and the
+    // shadow reads against a near-black page, so the edge stays at the hairline.
+    edge: "rgba(255,255,255,0.10)",
   },
   primary: "#93BFEC",
   secondary: "#B9A3CC",
@@ -157,26 +166,40 @@ declare module "@mui/material/Paper" {
 }
 
 // ─── SURFACE HELPERS ────────────────────────────────────────────────────────
-// Lifts a surface off whatever sits behind it. Both modes now get a shadow AND
-// a border: dark mode previously returned `boxShadow: "none"` and leaned
-// entirely on a 0.06-alpha hairline, so it had no working separation at all.
+// Lifts a surface off whatever sits behind it. Both modes get a shadow AND a
+// border: dark mode previously returned `boxShadow: "none"` and leaned entirely
+// on a 0.06-alpha hairline, so it had no working separation at all.
+//
+// Light mode used to contradict that and return `border: "none"`, leaning
+// entirely on shadows at 0.07/0.05 alpha. Those are almost invisible over the
+// #ECECF0 page — a white card on it is only 1.18:1 — so cards had no readable
+// edge, while `clay.box` and Paper's `flat` variant DID draw one. That mismatch
+// is why light mode looked half-finished: some surfaces were outlined and the
+// main ones weren't.
+//
+// Takes the `edge` token, not `hairline`. They're different jobs: hairline is
+// palette.divider (64 call sites, drawn INSIDE a surface), edge bounds a raised
+// surface against the page and needs more weight in light mode. Nudge
+// PALETTE.light.edge to taste — 0.24 reads as a deliberate outline, 0.12 all
+// but disappears.
+//
 // Signature kept stable so existing call sites (`clay("lg")`, `clayMixin("sm", ...)`) keep working.
 type ClaySize = "lg" | "md" | "sm";
 const clayMixin = (
   size: ClaySize,
   isLight: boolean,
-  hairline: string,
+  edge: string,
 ): React.CSSProperties => {
   const blur = size === "lg" ? 3 : size === "md" ? 2 : 1;
-  if (isLight) {
-    return {
-      border: "none",
-      boxShadow: `0 1px ${blur}px rgba(0,0,0,0.07), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.05)`,
-    };
-  }
+  // The border is unconditional now, so "both modes get an edge" is structural
+  // rather than something two branches have to keep agreeing on. Only the
+  // shadow differs: it carries real weight on a near-black page, and has to
+  // stay feather-light on a light one or every card looks smudged.
   return {
-    border: `1px solid ${hairline}`,
-    boxShadow: `0 1px ${blur}px rgba(0,0,0,0.5), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.35)`,
+    border: `1px solid ${edge}`,
+    boxShadow: isLight
+      ? `0 1px ${blur}px rgba(0,0,0,0.07), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.05)`
+      : `0 1px ${blur}px rgba(0,0,0,0.5), 0 ${blur}px ${blur * 2}px rgba(0,0,0,0.35)`,
   };
 };
 
@@ -187,7 +210,7 @@ export const getTheme = (
 ): Theme => {
   const isLight = mode === "light";
   const colors = isLight ? PALETTE.light : PALETTE.dark;
-  const clay = (size: ClaySize) => clayMixin(size, isLight, colors.hairline);
+  const clay = (size: ClaySize) => clayMixin(size, isLight, colors.edge);
   // Semi-transparent so a hover reads the same on a card, a well or the page.
   // A fixed colour used to darken on one surface and lighten on another.
   const hover = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.07)";
@@ -353,7 +376,7 @@ export const getTheme = (
               backgroundColor: colors.paper,
               borderRadius: 10,
               transition: "background-color 0.3s ease, border-color 0.3s ease",
-              ...clayMixin("md", isLight, colors.hairline),
+              ...clayMixin("md", isLight, colors.edge),
             },
           },
           {
@@ -363,7 +386,7 @@ export const getTheme = (
               backgroundColor: colors.paper,
               borderRadius: 10,
               transition: "background-color 0.3s ease, border-color 0.3s ease",
-              ...clayMixin("sm", isLight, colors.hairline),
+              ...clayMixin("sm", isLight, colors.edge),
             },
           },
           {
@@ -397,7 +420,7 @@ export const getTheme = (
         styleOverrides: {
           root: {
             borderRadius: 8,
-            backgroundColor: colors.sunken,
+            // backgroundColor: colors.sunken,
             border: "none",
             boxShadow: "none",
           },
@@ -480,7 +503,8 @@ export const getTheme = (
             textTransform: "none",
             fontWeight: 700,
             fontFamily: "var(--font-jakarta), sans-serif",
-            transition: "background-color 0.15s ease, filter 0.15s ease, border-color 0.15s ease",
+            transition:
+              "background-color 0.15s ease, filter 0.15s ease, border-color 0.15s ease",
             boxShadow: "none",
             border: "none",
             "&:hover": { filter: "brightness(1.05)" },
@@ -681,7 +705,7 @@ export const getTheme = (
             "&.Mui-selected": {
               backgroundColor: colors.paper,
               color: accentColor,
-              ...clayMixin("sm", isLight, colors.hairline),
+              ...clayMixin("sm", isLight, colors.edge),
             },
           },
         },
@@ -720,7 +744,7 @@ export const getTheme = (
               backgroundColor: colors.paper,
               color: accentColor,
               fontWeight: 700,
-              ...clayMixin("sm", isLight, colors.hairline),
+              ...clayMixin("sm", isLight, colors.edge),
               "&:hover": { backgroundColor: colors.paper },
             },
           },
@@ -824,9 +848,7 @@ export const getTheme = (
               backdropFilter: "blur(8px)",
               // 0.15 was too weak to detach a white dialog from a light page,
               // and the page is darker now.
-              backgroundColor: isLight
-                ? "rgba(0,0,0,0.32)"
-                : "rgba(0,0,0,0.6)",
+              backgroundColor: isLight ? "rgba(0,0,0,0.32)" : "rgba(0,0,0,0.6)",
             },
           },
         },

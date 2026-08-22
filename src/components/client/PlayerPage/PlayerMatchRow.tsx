@@ -5,7 +5,11 @@ import { Avatar, Box, Stack, Typography, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
-import { getRatingColor, getResultColor } from "@/lib/utils/football-logic";
+import {
+  getRatingColor,
+  getRatingTextSx,
+  getResultColor,
+} from "@/lib/utils/football-logic";
 import { useClubView } from "@/context/ClubViewProvider";
 import { withSeasonParam } from "@/lib/config/season";
 
@@ -286,12 +290,16 @@ function CompareRatingChip({
   accent: string;
   useRatingColor?: boolean;
 }) {
-  const color =
+  const theme = useTheme();
+  // This chip sits on a card, so in light mode the number is a pastel on a
+  // light surface. Outline it rather than recolour it — 1.35rem/900 takes a
+  // slightly thinner stroke than the big card numbers.
+  const ratingSx =
     rating == null
-      ? "text.disabled"
+      ? { color: "text.disabled" }
       : useRatingColor
-        ? getRatingColor(rating)
-        : accent;
+        ? getRatingTextSx(rating, theme.palette.mode, "0.6px")
+        : { color: accent };
 
   return (
     <Box
@@ -326,8 +334,8 @@ function CompareRatingChip({
         sx={{
           fontWeight: 900,
           fontSize: "1.35rem",
-          color,
           lineHeight: 1,
+          ...ratingSx,
         }}
       >
         {rating != null ? rating.toFixed(1) : "—"}

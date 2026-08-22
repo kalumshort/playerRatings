@@ -343,23 +343,31 @@ async function main() {
         return batch.commit();
       })(),
     ));
-  // handleMatchMotmVote fires these as two independent promises rather than a
-  // batch, so the tests mirror that ordering exactly.
-  await it("member CAN vote MOTM once (live unbatched shape)", () =>
-    assertSucceeds(
-      setDoc(doc(member, p.matchRatings(PUB)), motmVote(PLAYER), {
-        merge: true,
-      }),
-    ));
-  await it("...and their own motmVote record is accepted", () =>
-    assertSucceeds(
-      setDoc(
-        doc(member, p.userMatch(MEMBER, PUB)),
-        { motmVote: PLAYER, ratingsSubmitted: true },
-        { merge: true },
-      ),
-    ));
-  await it("member CANNOT vote MOTM twice", () =>
+  // handleMatchMotmVote commits both documents in ONE batch. It used to fire
+  // them as two independent promises, which let them diverge: if the group
+  // tally landed but the user doc didn't, `motmVote` stayed absent, so
+  // notYetVotedMotm() still passed and the same member could vote again.
+  // These tests mirror the batched shape so that regression can't come back.
+  const motmBatch = (db, playerId) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, p.matchRatings(PUB)), motmVote(playerId), {
+      merge: true,
+    });
+    batch.set(
+      doc(db, p.userMatch(MEMBER, PUB)),
+      { motmVote: playerId, ratingsSubmitted: true },
+      { merge: true },
+    );
+    return batch.commit();
+  };
+
+  await it("member CAN vote MOTM once (batched shape)", () =>
+    assertSucceeds(motmBatch(member, PLAYER)));
+  // The double-count this batch exists to prevent: the first commit wrote
+  // motmVote onto the user doc, so notYetVotedMotm() now denies the whole batch.
+  await it("member CANNOT vote MOTM twice (batch denied as a unit)", () =>
+    assertFails(motmBatch(member, "p2")));
+  await it("member CANNOT bump the tally alone after voting", () =>
     assertFails(
       setDoc(doc(member, p.matchRatings(PUB)), motmVote("p2"), {
         merge: true,

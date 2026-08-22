@@ -2,6 +2,7 @@
 
 import React from "react";
 import {
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,7 +35,11 @@ export default function MotmConfirmDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      // The Cancel button disables itself while the submit is in flight, but
+      // the backdrop and Esc didn't — dismissing mid-write dropped the user
+      // back with no indication of whether the vote landed.
+      onClose={loading ? undefined : onClose}
+      disableEscapeKeyDown={loading}
       PaperProps={{
         sx: {
           backgroundColor: alpha(theme.palette.background.paper, 0.95),
@@ -63,8 +68,14 @@ export default function MotmConfirmDialog({
             lineHeight: 1.5,
           }}
         >
-          You haven't selected a **Man of the Match**. Are you sure you want to
-          lock in your ratings without picking a standout performer?
+          {/* Markdown doesn't render inside JSX — this used to ship the
+              literal asterisks to the user. */}
+          You haven't selected a{" "}
+          <Box component="span" fontWeight={900} color="text.primary">
+            Man of the Match
+          </Box>
+          . Are you sure you want to lock in your ratings without picking a
+          standout performer?
         </DialogContentText>
       </DialogContent>
 

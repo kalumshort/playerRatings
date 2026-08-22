@@ -193,7 +193,14 @@ export default function LineupPlayer({
           sx={{
             width: "100%",
             height: "100%",
-            bgcolor: "grey.900",
+            // background.default, not grey.900: the api-sports player PNGs are
+            // cut-outs, so this colour shows through and needs to follow the
+            // mode. grey.900 (#212121) was a dark slab behind every player in
+            // light mode. Matches PitchPlayer's `.pitch-avatar`.
+            bgcolor: "background.default",
+            // Keeps MUI's fallback glyph visible — it defaults to
+            // background.default, which is now the background too.
+            color: "text.secondary",
           }}
         />
 

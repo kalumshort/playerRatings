@@ -90,7 +90,9 @@ export function PitchPlayer({
             // hover only where hover actually exists — a scale/tint sticks
             // after tap on touch devices
             "@media (hover: hover)": {
-              "&:hover": { backgroundColor: alpha(t.palette.primary.main, 0.1) },
+              "&:hover": {
+                backgroundColor: alpha(t.palette.primary.main, 0.1),
+              },
             },
             "&:active": { filter: "brightness(0.96)" },
             "&:focus-visible": {
@@ -113,9 +115,7 @@ export function PitchPlayer({
       <Box sx={{ position: "relative", lineHeight: 0 }}>
         <Avatar className="pitch-avatar" src={photo} alt={fullName || name} />
 
-        {status !== "default" && (
-          <StatusGlyph status={status} />
-        )}
+        {status !== "default" && <StatusGlyph status={status} />}
 
         {badge ? (
           <Paper

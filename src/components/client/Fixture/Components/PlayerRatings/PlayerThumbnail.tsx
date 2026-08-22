@@ -87,7 +87,15 @@ function PlayerThumbnail({
             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: isActive ? "scale(1.15)" : "scale(1)",
             filter: isRated ? "grayscale(0.2) brightness(1.1)" : "none",
-            bgcolor: "grey.800",
+            // paper, NOT background.default like the other player avatars: this
+            // rail sits directly on the page, so background.default would make
+            // the thumbnail vanish into it whenever the photo is missing or a
+            // transparent cut-out. On a Paper surface the choice inverts.
+            // grey.800 was a fixed dark disc in both modes.
+            bgcolor: "background.paper",
+            // The initials below are the fallback — MUI colours those with
+            // background.default by default, which would be near-invisible here.
+            color: "text.secondary",
           }}
         >
           {initials}

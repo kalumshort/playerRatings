@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -23,7 +23,11 @@ import {
 } from "@mui/icons-material";
 import { handlePlayerRatingSubmit } from "@/lib/firebase/client-actions";
 import EventBadge from "./EventBadge";
-import { getInitialSurname, getRatingColor } from "@/lib/utils/football-logic";
+import {
+  getInitialSurname,
+  getRatingColor,
+  getRatingTextSx,
+} from "@/lib/utils/football-logic";
 import { AsyncButton } from "@/components/ui/AsyncButton";
 import useAsyncAction from "@/Hooks/useAsyncAction";
 
@@ -47,16 +51,37 @@ function PlayerRatingCardBase({
   storedMotmId,
 }: any) {
   const theme = useTheme();
-  const isMOTM = storedMotmId === player.id;
+  // Ids are normalised to strings at this single point of entry. API-Football
+  // player ids are numbers while the coach's is already `coach_{id}`, and both
+  // PlayerImageCarousel and PlayerThumbnail compare against String(player.id) —
+  // storing the raw number meant those two comparisons were never true, so the
+  // ★ overlay and the MOTM status dot never rendered in the thumbnail rail.
+  const playerKey = String(player.id);
+  const isMOTM = storedMotmId === playerKey;
+
+  // The card only leaves the input state once the write round-trips through
+  // Firestore and back via UsersMatchDataListener. On a stadium connection
+  // that's a visibly dead beat, so hold the value locally in the meantime.
+  // Only "YOUR VOTE" is optimistic — TEAM AVG stays on real data.
+  const [optimisticRating, setOptimisticRating] = useState<number | null>(null);
 
   // firestore.rules dedupes repeat ratings with permission-denied; before this
   // the rejection was swallowed and the tap simply did nothing.
-  const { run: submitRating, pending: isSubmitting } = useAsyncAction(
-    handlePlayerRatingSubmit,
-    {
-      errorMessage: "You've already rated this player.",
-    },
-  );
+  const {
+    run: submitRating,
+    pending: isSubmitting,
+    error: submitError,
+  } = useAsyncAction(handlePlayerRatingSubmit, {
+    errorMessage: "You've already rated this player.",
+  });
+
+  // Roll back on rejection so the user lands back on the input rather than
+  // seeing a score that never persisted.
+  useEffect(() => {
+    if (submitError) setOptimisticRating(null);
+  }, [submitError]);
+
+  const displayedRating = usersMatchPlayerRating ?? optimisticRating;
 
   // undefined means "not fetched yet"; null means "fetched, nobody rated".
   const isDataLoading = avgRating === undefined;
@@ -112,7 +137,7 @@ function PlayerRatingCardBase({
             variant={isMOTM ? "contained" : "outlined"}
             color="secondary"
             size="small"
-            onClick={() => setStoredMotmId(isMOTM ? null : player.id)}
+            onClick={() => setStoredMotmId(isMOTM ? null : playerKey)}
             startIcon={isMOTM ? <StarRounded /> : <StarOutlineRounded />}
             sx={{
               px: 2,
@@ -202,7 +227,7 @@ function PlayerRatingCardBase({
             height={100}
             sx={{ borderRadius: "12px" }}
           />
-        ) : usersMatchPlayerRating ? (
+        ) : displayedRating != null ? (
           /* 2. ONLY SHOW AVG AFTER SUBMISSION */
           <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
             <Box
@@ -225,9 +250,9 @@ function PlayerRatingCardBase({
               <Typography
                 variant="h3"
                 fontWeight={900}
-                sx={{ color: getRatingColor(usersMatchPlayerRating) }}
+                sx={getRatingTextSx(displayedRating, theme.palette.mode)}
               >
-                {usersMatchPlayerRating.toFixed(1)}
+                {displayedRating.toFixed(1)}
               </Typography>
             </Box>
 
@@ -252,7 +277,7 @@ function PlayerRatingCardBase({
               <Typography
                 variant="h3"
                 fontWeight={900}
-                sx={{ color: getRatingColor(Number(avgRating)) }}
+                sx={getRatingTextSx(Number(avgRating), theme.palette.mode)}
               >
                 {avgRating || "—"}
               </Typography>
@@ -263,7 +288,8 @@ function PlayerRatingCardBase({
           <ClayRatingInput
             userId={userId}
             submitting={isSubmitting}
-            onSubmit={(val: number) =>
+            onSubmit={(val: number) => {
+              setOptimisticRating(val);
               submitRating({
                 matchId,
                 playerId: player.id,
@@ -271,8 +297,8 @@ function PlayerRatingCardBase({
                 userId,
                 groupId,
                 currentYear,
-              })
-            }
+              });
+            }}
           />
         )}
       </Box>
@@ -280,8 +306,9 @@ function PlayerRatingCardBase({
   );
 }
 
-// All remaining props are primitives, a stable array, or stable setters, so the
-// default shallow compare is enough — no custom comparator needed.
+// All remaining props are primitives, a stable array, or a stable callback
+// (`setStoredMotmId` is useCallback'd by its owner), so the default shallow
+// compare is enough — no custom comparator needed.
 export const PlayerRatingCard = React.memo(PlayerRatingCardBase);
 
 const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
@@ -310,6 +337,19 @@ const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
             justifyContent: "center",
           }}
         >
+          {/* Track. The pastel arc alone is ~1.1:1 on a white card, so the
+              gauge had no readable extent in light mode; the track gives the
+              arc an edge to be seen against without changing its colour. */}
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={110}
+            thickness={5}
+            sx={{
+              color: alpha(theme.palette.text.primary, 0.12),
+              position: "absolute",
+            }}
+          />
           <CircularProgress
             variant="determinate"
             value={val * 10}
@@ -320,7 +360,10 @@ const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
           <Typography
             variant="h4"
             fontWeight={950}
-            sx={{ position: "absolute", color: activeColor }}
+            sx={{
+              position: "absolute",
+              ...getRatingTextSx(val, theme.palette.mode),
+            }}
           >
             {val.toFixed(1)}
           </Typography>
@@ -342,6 +385,8 @@ const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
         size="large"
         loading={submitting}
         keepBackground
+        // The gradient is pastel, so the spinner needs the dark tone to be seen.
+        loadingIndicatorColor={theme.palette.text.primary}
         onClick={() => onSubmit(val)}
         sx={{
           borderRadius: "10px",
