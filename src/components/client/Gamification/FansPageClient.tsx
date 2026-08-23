@@ -10,16 +10,19 @@ import { PREDICTION } from "@/lib/gamification/xpConfig";
 /**
  * The fan progress page: your standing, then the boards.
  *
- * Two ladders, kept apart on purpose. Fan XP is earned purely by taking part
- * and is what the club and global boards rank. Prediction points score
- * accuracy and sit on their own board, so a fan who never predicts can still
- * top the one that matters — the app runs on opinion, and opinion has no
- * correct answer to reward.
+ * Two ladders, kept apart on purpose. Fan XP is earned purely by taking part;
+ * prediction points score accuracy and sit on their own board, so a fan who
+ * never predicts can still top the one that matters — the app runs on opinion,
+ * and opinion has no correct answer to reward.
+ *
+ * Both boards are scoped to this club. A cross-club board was tried and
+ * dropped: the app is one-club-at-a-time and the rivalry that matters is with
+ * the people in your own stand, not a global table the biggest fanbases would
+ * always own.
  */
 export default function FansPageClient({
   clubName,
   clubEntries,
-  globalEntries,
   predictorEntries,
   currentUid,
   rank,
@@ -28,7 +31,6 @@ export default function FansPageClient({
 }: {
   clubName: string;
   clubEntries: LeaderboardEntry[];
-  globalEntries: LeaderboardEntry[];
   predictorEntries: LeaderboardEntry[];
   currentUid: string | null;
   rank: { rank: number; total: number } | null;
@@ -108,7 +110,6 @@ export default function FansPageClient({
           sx={{ mb: 2 }}
         >
           <Tab label={clubName} sx={{ fontWeight: 800 }} />
-          <Tab label="All clubs" sx={{ fontWeight: 800 }} />
           <Tab label="Predictors" sx={{ fontWeight: 800 }} />
         </Tabs>
 
@@ -121,16 +122,8 @@ export default function FansPageClient({
           />
         )}
 
-        {tab === 1 && (
-          <Leaderboard
-            entries={globalEntries}
-            currentUid={currentUid}
-            title="Most involved fans, every club"
-            emptyMessage="Nobody has taken part yet this season."
-          />
-        )}
 
-        {tab === 2 && (
+        {tab === 1 && (
           <Stack spacing={2}>
             {/* What earns points, stated up front. Accuracy is the one place
                 being right counts, so the rules should be visible rather than

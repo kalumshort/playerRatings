@@ -9,7 +9,6 @@ import {
 import { getUserIdFromSession } from "@/lib/auth-server";
 import {
   getClubLeaderboard,
-  getGlobalLeaderboard,
   getPredictorLeaderboard,
   getUserProgress,
   getUserRank,
@@ -81,9 +80,8 @@ export default async function FansPage({ params, searchParams }: PageProps) {
     archivedClubSeason(group),
   );
 
-  const [clubEntries, globalEntries, predictorEntries] = await Promise.all([
+  const [clubEntries, predictorEntries] = await Promise.all([
     getClubLeaderboard(group.id, 50, season),
-    getGlobalLeaderboard(50, season),
     getPredictorLeaderboard(group.id, 50, season),
   ]);
 
@@ -122,7 +120,6 @@ export default async function FansPage({ params, searchParams }: PageProps) {
         <FansPageClient
           clubName={group.name}
           clubEntries={clubEntries}
-          globalEntries={globalEntries}
           predictorEntries={predictorEntries}
           currentUid={userId}
           rank={rank}

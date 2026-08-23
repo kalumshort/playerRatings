@@ -95,31 +95,6 @@ export const getClubLeaderboard = cache(
   },
 );
 
-/** Top fans across every club for a season. */
-export const getGlobalLeaderboard = cache(
-  async (
-    limit = 50,
-    season: string = CURRENT_SEASON,
-  ): Promise<LeaderboardEntry[]> => {
-    try {
-      const snapshot = await adminDb
-        .collection("userSeasonProgress")
-        .where("season", "==", season)
-        .orderBy("xp", "desc")
-        .limit(limit)
-        .get();
-
-      return snapshot.docs
-        .map(toEntry)
-        .filter((entry) => entry.xp > 0)
-        .map((entry, i) => ({ ...entry, rank: i + 1 }));
-    } catch (error) {
-      console.error("❌ Global leaderboard read failed:", error);
-      return [];
-    }
-  },
-);
-
 /**
  * The accuracy board: same club, ranked by prediction points instead of XP.
  *
