@@ -1,3 +1,5 @@
+const { FieldValue } = require("firebase-admin/firestore");
+
 const { computeMatchXp } = require("./computeMatchXp");
 const { publishableName, writeSeasonRow } = require("./progressStore");
 
@@ -43,6 +45,10 @@ async function runGamificationReconcile({
   // Every uid touched this run, so the all-time totals pass below knows who to
   // rebuild without rescanning `users`.
   const seenUids = new Set();
+
+  // Redacted names resolved this run, reused when refreshing the cached copy
+  // on userProgress rather than re-reading every user doc a second time.
+  const names = new Map();
 
   const groupsSnap = await db.collection("groups").get();
 
@@ -97,14 +103,20 @@ async function runGamificationReconcile({
         }
       }
 
-      // A user with a membership but no participation still gets a row at 0,
-      // so joining a club shows you on the board rather than nowhere.
-      const progressSnap = await db
-        .collection("userProgress")
+      // Read from `users/{uid}`, not the cached copy on userProgress: this
+      // nightly pass is what makes a rename — or a change of mind about
+      // appearing anonymously — actually propagate to the leaderboard.
+      const userSnap = await db
+        .collection("users")
         .doc(uid)
         .get()
         .catch(() => null);
 
+      const displayName = publishableName(userSnap?.data());
+      names.set(uid, displayName);
+
+      // A user with a membership but no participation still gets a row at 0,
+      // so joining a club shows you on the board rather than nowhere.
       writeSeasonRow({
         db,
         writer,
@@ -113,7 +125,7 @@ async function runGamificationReconcile({
         season: seasonKey,
         xp,
         matchesParticipated,
-        displayName: publishableName(progressSnap?.data()),
+        displayName,
       });
       summary.rows++;
       seenUids.add(uid);
@@ -146,9 +158,17 @@ async function runGamificationReconcile({
       0,
     );
 
+    // Refresh the cached name alongside the total. Without re-stamping
+    // `nameSyncedAt` the trigger would keep serving whatever it cached on the
+    // very first write, and a rename would never reach a leaderboard.
     totalsWriter.set(
       db.collection("userProgress").doc(uid),
-      { uid, totalXp },
+      {
+        uid,
+        totalXp,
+        displayName: names.get(uid) ?? null,
+        nameSyncedAt: FieldValue.serverTimestamp(),
+      },
       { merge: true },
     );
     summary.totalsFixed++;

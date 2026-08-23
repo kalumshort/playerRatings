@@ -21,6 +21,7 @@ initializeApp({ projectId: "gamification-test" });
 const db = getFirestore();
 
 const { runGamificationReconcile } = require("../gamification/reconcileJob");
+const { applyXpDelta } = require("../gamification/progressStore");
 const { XP } = require("../gamification/xpConfig");
 
 const SEASON = "2026";
@@ -178,28 +179,67 @@ async function row() {
     }
   });
 
-  await it("redacts the display name of an opted-out fan", async () => {
+  await it("publishes the display name from the user doc", async () => {
+    // Regression: nothing ever wrote displayName onto userProgress, so every
+    // leaderboard row rendered "Anonymous" forever. The name has to be read
+    // from users/{uid}, which is the only place it actually lives.
     await resetDb();
     await seed([{ result: "home" }]);
-    await db
-      .collection("userProgress")
-      .doc(UID)
-      .set({ displayName: "Kalum", anonymous: true });
-
-    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
-
-    // Redaction has to happen at write time: this collection is world-readable.
-    assert.equal((await row()).displayName, null);
-  });
-
-  await it("publishes the display name of a fan who has not opted out", async () => {
-    await resetDb();
-    await seed([{ result: "home" }]);
-    await db.collection("userProgress").doc(UID).set({ displayName: "Kalum" });
+    await db.collection("users").doc(UID).set({ displayName: "Kalum" });
 
     await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
 
     assert.equal((await row()).displayName, "Kalum");
+  });
+
+  await it("redacts the display name of an opted-out fan", async () => {
+    await resetDb();
+    await seed([{ result: "home" }]);
+    await db
+      .collection("users")
+      .doc(UID)
+      .set({ displayName: "Kalum", leaderboardAnonymous: true });
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    // Redaction has to happen at write time: both collections are
+    // world-readable, so the real name must never be written to either.
+    assert.equal((await row()).displayName, null);
+    const progress = await db.collection("userProgress").doc(UID).get();
+    assert.equal(progress.data().displayName, null);
+  });
+
+  await it("propagates a rename to the leaderboard and the cache", async () => {
+    await resetDb();
+    await seed([{ result: "home" }]);
+    await db.collection("users").doc(UID).set({ displayName: "Old Name" });
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+    assert.equal((await row()).displayName, "Old Name");
+
+    await db.collection("users").doc(UID).set({ displayName: "New Name" });
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    assert.equal((await row()).displayName, "New Name");
+    // The cache must be re-stamped too, or the trigger keeps serving the old
+    // name between nightly runs.
+    const progress = await db.collection("userProgress").doc(UID).get();
+    assert.equal(progress.data().displayName, "New Name");
+    assert.ok(progress.data().nameSyncedAt);
+  });
+
+  await it("sets matchesParticipated even when it was never initialised", async () => {
+    // Regression: the trigger only incremented this when XP crossed zero, so a
+    // doc whose participation predated the trigger never got the field at all.
+    await resetDb();
+    await seed([{ result: "home" }, { result: "away" }]);
+    await db
+      .collection("userSeasonProgress")
+      .doc(`${SEASON}_${GROUP}_${UID}`)
+      .set({ uid: UID, xp: 20 }); // no matchesParticipated
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    assert.equal((await row()).matchesParticipated, 2);
   });
 
   await it("rebuilds all-time XP as the sum of every season row", async () => {
@@ -231,6 +271,84 @@ async function row() {
 
     assert.ok(summary.rows > 0);
     assert.equal(await row(), undefined);
+  });
+
+  // --- The live trigger's write path -----------------------------------
+  console.log("\nXP delta (live trigger path)\n");
+
+  /**
+   * Runs applyXpDelta the way the trigger does.
+   * @param {number} xpDelta - Signed XP change.
+   * @param {boolean} nowParticipating - Whether XP crossed zero this write.
+   * @return {Promise<void>}
+   */
+  const applyAsTrigger = (xpDelta, nowParticipating) =>
+    applyXpDelta({
+      db,
+      uid: UID,
+      groupId: GROUP,
+      season: SEASON,
+      xpDelta,
+      nowParticipating,
+    });
+
+  await it("a first-ever award seeds the name from the user doc", async () => {
+    await resetDb();
+    await db.collection("users").doc(UID).set({ displayName: "Kalum" });
+
+    await applyAsTrigger(XP.predictWinner, true);
+
+    assert.equal((await row()).displayName, "Kalum");
+    assert.equal((await row()).xp, XP.predictWinner);
+  });
+
+  await it("a first-ever award respects the anonymity opt-out", async () => {
+    await resetDb();
+    await db
+      .collection("users")
+      .doc(UID)
+      .set({ displayName: "Kalum", leaderboardAnonymous: true });
+
+    await applyAsTrigger(XP.predictWinner, true);
+
+    assert.equal((await row()).displayName, null);
+  });
+
+  await it("initialises matchesParticipated on a pre-existing doc", async () => {
+    // The exact production case: predictions existed before the trigger was
+    // deployed, so the first event is an UPDATE and nowParticipating is false.
+    await resetDb();
+    await db.collection("users").doc(UID).set({ displayName: "Kalum" });
+
+    await applyAsTrigger(XP.predictScore, false);
+
+    assert.equal((await row()).matchesParticipated, 1);
+  });
+
+  await it("does not double-count matches on later writes", async () => {
+    await resetDb();
+    await db.collection("users").doc(UID).set({ displayName: "Kalum" });
+
+    await applyAsTrigger(XP.predictWinner, true);
+    await applyAsTrigger(XP.predictScore, false);
+    await applyAsTrigger(XP.motmVote, false);
+
+    assert.equal((await row()).matchesParticipated, 1);
+  });
+
+  await it("caches the name so repeat awards do not re-read the user", async () => {
+    await resetDb();
+    await db.collection("users").doc(UID).set({ displayName: "Kalum" });
+    await applyAsTrigger(XP.predictWinner, true);
+
+    // Rename at source; the cached value must win until reconcile refreshes it.
+    await db.collection("users").doc(UID).set({ displayName: "Renamed" });
+    await applyAsTrigger(XP.predictScore, false);
+
+    assert.equal((await row()).displayName, "Kalum");
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+    // Seeded membership is needed for reconcile to see this user at all.
   });
 
   await resetDb();

@@ -26,17 +26,57 @@ const seasonRowId = (season, groupId, uid) => `${season}_${groupId}_${uid}`;
 /**
  * The display name to publish on a leaderboard.
  *
- * Redaction happens HERE, at write time, rather than when rendering: the
- * leaderboard collection is world-readable, so an opted-out user's real name
- * must never be written into it in the first place.
+ * Reads `users/{uid}`, not `userProgress`. The user doc is the only place the
+ * name and the opt-out actually live: `userProgress` is server-only, so a user
+ * could never set an `anonymous` flag on it, and an opt-out you cannot reach is
+ * not an opt-out. `users/**` is self-writable, which is exactly right for a
+ * preference — the worst a user can do is rename themselves.
  *
- * @param {object|null} progress - The userProgress doc, if any.
+ * Redaction happens HERE, at write time, rather than when rendering: both
+ * gamification collections are world-readable, so an opted-out user's real name
+ * must never be written into either of them in the first place.
+ *
+ * @param {object|null|undefined} userDoc - The `users/{uid}` document.
  * @return {string|null} A publishable name, or null when anonymous/unknown.
  */
-function publishableName(progress) {
-  if (!progress || progress.anonymous === true) return null;
-  const name = String(progress.displayName || "").trim();
-  return name.length > 0 ? name : null;
+function publishableName(userDoc) {
+  if (!userDoc || userDoc.leaderboardAnonymous === true) return null;
+  const name = String(userDoc.displayName || "").trim();
+  // Cap the length so one fan cannot stretch every leaderboard row.
+  return name.length > 0 ? name.slice(0, 40) : null;
+}
+
+/**
+ * The name to put on this user's rows, preferring the cached copy.
+ *
+ * The trigger runs on every participation write — ~14 times during one rating
+ * card — so re-reading `users/{uid}` each time would be pure waste. The
+ * redacted name is cached onto `userProgress` and `nameSyncedAt` marks it as
+ * resolved; the nightly reconcile always re-reads, so a rename or a change of
+ * mind about anonymity propagates within a day.
+ *
+ * `nameSyncedAt` rather than a null check on the name itself, because null is a
+ * legitimate cached value for an anonymous user and would otherwise re-read
+ * forever.
+ *
+ * @param {FirebaseFirestore.Firestore} db - Admin Firestore.
+ * @param {string} uid - The user.
+ * @param {object|undefined} progressData - Existing userProgress data, if any.
+ * @return {Promise<object>} `{ name, fresh }` — the publishable name, and
+ *   whether it was just resolved (so the caller knows to cache it).
+ */
+async function resolvePublishedName(db, uid, progressData) {
+  if (progressData?.nameSyncedAt) {
+    return { name: progressData.displayName ?? null, fresh: false };
+  }
+
+  const userSnap = await db
+    .collection("users")
+    .doc(uid)
+    .get()
+    .catch(() => null);
+
+  return { name: publishableName(userSnap?.data()), fresh: true };
 }
 
 /**
@@ -74,10 +114,39 @@ async function applyXpDelta({
     .collection("userSeasonProgress")
     .doc(seasonRowId(season, groupId, uid));
 
+  const [progressSnap, rowSnap] = await Promise.all([
+    progressRef.get(),
+    rowRef.get(),
+  ]);
+
   // The name is denormalised onto the row so a leaderboard is one query with
   // no fan-out read per entry.
-  const progressSnap = await progressRef.get();
-  const displayName = publishableName(progressSnap.data());
+  const { name: displayName, fresh } = await resolvePublishedName(
+    db,
+    uid,
+    progressSnap.data(),
+  );
+
+  /*
+   * Matches played, which must survive a user whose participation predates
+   * this trigger existing.
+   *
+   * `nowParticipating` alone only fires when XP crosses 0, so for a doc that
+   * already had predictions on it the first event we ever see is an UPDATE
+   * with xpBefore > 0 — and the counter was never written at all. Anchoring on
+   * the row instead: if there is no row yet and this match earned anything,
+   * that is at least one match. The nightly reconcile writes the true absolute
+   * figure over the top.
+   */
+  const rowData = rowSnap.data();
+  const hasCounter = typeof rowData?.matchesParticipated === "number";
+
+  let matchesPatch = {};
+  if (!hasCounter) {
+    matchesPatch = { matchesParticipated: 1 };
+  } else if (nowParticipating) {
+    matchesPatch = { matchesParticipated: FieldValue.increment(1) };
+  }
 
   const batch = db.batch();
 
@@ -86,6 +155,8 @@ async function applyXpDelta({
     {
       uid,
       totalXp: FieldValue.increment(xpDelta),
+      // Cached redacted name, plus the marker that says it is resolved.
+      ...(fresh ? { displayName, nameSyncedAt: FieldValue.serverTimestamp() } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },
@@ -99,9 +170,7 @@ async function applyXpDelta({
       groupId: String(groupId),
       displayName,
       xp: FieldValue.increment(xpDelta),
-      ...(nowParticipating
-        ? { matchesParticipated: FieldValue.increment(1) }
-        : {}),
+      ...matchesPatch,
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },

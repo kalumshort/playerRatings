@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemButton,
   Alert,
+  Switch,
 } from "@mui/material";
 import { User, LogOut, ShieldCheck, Mail, Key } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -213,6 +214,43 @@ export default function AccountTab({
             DARK MODE
           </Typography>
           <ThemeToggle />
+        </Box>
+
+        {/* The opt-out has to live on users/{uid}: userProgress is
+            server-only, so a flag stored there could never be set by the
+            person it applies to. The server reads this and writes
+            `displayName: null` onto the public rows, so an anonymous fan's
+            name never reaches a readable document at all. */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "15px",
+          }}
+        >
+          <Box>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              HIDE ME ON LEADERBOARDS
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", color: "text.disabled", fontSize: "0.65rem" }}
+            >
+              You still earn XP — you appear as Anonymous.
+            </Typography>
+          </Box>
+          <Switch
+            checked={Boolean(userData.leaderboardAnonymous)}
+            onChange={(e) =>
+              updateUserField(
+                user!.uid,
+                "leaderboardAnonymous",
+                e.target.checked,
+              )
+            }
+            inputProps={{ "aria-label": "Hide me on leaderboards" }}
+          />
         </Box>
       </Paper>
 
