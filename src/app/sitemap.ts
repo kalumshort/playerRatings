@@ -45,6 +45,24 @@ const isClubGroup = (docId: string, data: FirebaseFirestore.DocumentData) =>
   /^\d+$/.test(String(docId)) &&
   (data?.groupType === "club" || data?.league === LEAGUE_KEY);
 
+/**
+ * The URLs that need no database: the homepage and the legal pages.
+ *
+ * This route is prerendered at build time, so it is the one page in the app
+ * that genuinely reads Firestore during `next build`. When credentials are
+ * absent — a CI check, a fresh clone without `.env.local` — falling back to
+ * these keeps the build alive instead of failing the whole thing over a file
+ * that is regenerated daily anyway.
+ */
+const staticOnlySitemap = (): MetadataRoute.Sitemap => [
+  { url: BASE_URL, priority: 1 },
+  ...["/privacy", "/terms", "/contact"].map((path) => ({
+    url: `${BASE_URL}${path}`,
+    lastModified: STATIC_PAGE_UPDATED,
+    priority: 0.2,
+  })),
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Current season only — archived `?season=` views are deliberately excluded
   // and rendered noindex, so they never compete with these canonical URLs.
@@ -52,12 +70,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // The whole season, not a trailing window: a finished match carries a full
   // set of fan ratings and is evergreen content. The previous 7-day floor
   // dropped those permanently.
-  const [groupsSnapshot, fixturesSnapshot] = await Promise.all([
-    // `isPublic` is the field the app itself gates on ([clubSlug]/page.tsx),
-    // and the only one updateGroupPrivacy has always written.
-    adminDb.collection("groups").where("isPublic", "==", true).get(),
-    adminDb.collection(`fixtures/${CURRENT_SEASON}/fixtures`).get(),
-  ]);
+  let groupsSnapshot;
+  let fixturesSnapshot;
+
+  try {
+    [groupsSnapshot, fixturesSnapshot] = await Promise.all([
+      // `isPublic` is the field the app itself gates on ([clubSlug]/page.tsx),
+      // and the only one updateGroupPrivacy has always written.
+      adminDb.collection("groups").where("isPublic", "==", true).get(),
+      adminDb.collection(`fixtures/${CURRENT_SEASON}/fixtures`).get(),
+    ]);
+  } catch (error) {
+    // Loud on purpose. A near-empty sitemap shipping to production would be a
+    // silent SEO regression, so this has to be findable in the build log.
+    console.error(
+      "❌ Sitemap could not reach Firestore — emitting static URLs only. " +
+        "A production build should NOT hit this:",
+      error,
+    );
+    return staticOnlySitemap();
+  }
 
   // Numeric API team id -> slug, for mapping fixtures onto club hubs.
   const clubIdToSlug: Record<number, string> = {};

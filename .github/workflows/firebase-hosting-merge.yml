@@ -22,6 +22,10 @@ jobs:
         env:
           ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           ADMIN_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          # src/lib/firebase/admin.ts reads ADMIN_PROJECT_ID. This was set as
+          # PROJECT_ID, which nothing reads, so the Admin SDK had no project id
+          # and every build died collecting page data.
+          ADMIN_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
           PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
