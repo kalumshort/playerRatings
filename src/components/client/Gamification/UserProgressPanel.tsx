@@ -5,25 +5,34 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { clientDB } from "@/lib/firebase/client";
 import { useAuth } from "@/context/AuthContext";
 import useUserData from "@/Hooks/useUserData";
+import useGroupData from "@/Hooks/useGroupData";
 import { CURRENT_SEASON } from "@/lib/config/season";
 import LevelProgress from "./LevelProgress";
+import XpBar from "./XpBar";
 
 /**
- * The signed-in fan's own progress.
+ * The signed-in fan's own progress, live.
  *
- * Reads `userProgress` and `userSeasonProgress` straight from the client:
- * both are world-readable and written only by Cloud Functions, so there is
- * nothing to hide and no server hop to add. Live, because XP lands via a
- * Firestore trigger moments after a match action and watching it move is the
- * point.
+ * Reads `userProgress` and `userSeasonProgress` straight from the client: both
+ * are world-readable and written only by Cloud Functions, so there is nothing
+ * to hide and no server hop to add. Live, because XP lands via a Firestore
+ * trigger moments after a match action and watching it move is the point.
  *
- * Renders a zeroed panel rather than nothing for a fan who has not taken part
- * yet — the rows only exist once the trigger or the nightly reconcile has run,
- * and an empty space would read as broken.
+ * Renders zeroed rather than nothing for a fan who has not taken part yet —
+ * the rows only exist once the trigger or the nightly reconcile has run, and
+ * an empty space would read as broken.
  */
-export default function UserProgressPanel({ compact = false }) {
+export default function UserProgressPanel({
+  variant = "full",
+  onNavigate,
+}: {
+  /** "bar" is the slim nav-drawer strip; "full" is the progress page card. */
+  variant?: "full" | "bar";
+  onNavigate?: () => void;
+}) {
   const { user } = useAuth();
   const { userData } = useUserData();
+  const { activeGroup } = useGroupData();
   const groupId = userData?.activeGroup;
 
   const [totalXp, setTotalXp] = useState(0);
@@ -60,12 +69,24 @@ export default function UserProgressPanel({ compact = false }) {
 
   if (!user) return null;
 
+  if (variant === "bar") {
+    // A fan who has signed up but not joined a club has no progress page to
+    // send to, so the bar renders without a link rather than to a dead route.
+    const slug = activeGroup?.slug;
+    return (
+      <XpBar
+        totalXp={totalXp}
+        href={slug ? `/${slug}/fans` : null}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
   return (
     <LevelProgress
       totalXp={totalXp}
       seasonXp={seasonXp}
       matchesParticipated={matches}
-      compact={compact}
     />
   );
 }

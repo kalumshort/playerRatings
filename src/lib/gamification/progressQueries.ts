@@ -112,6 +112,48 @@ export const getGlobalLeaderboard = cache(
 );
 
 /**
+ * Where a fan sits on their club's board, and how many they're up against.
+ *
+ * A count aggregation rather than reading the rows: a fan outside the top 50
+ * still has a rank, and paging the whole board to find them would be absurd.
+ * Uses the same (season, groupId, xp) index the leaderboard query needs.
+ *
+ * Ties resolve optimistically — two fans on identical XP both read as the
+ * higher rank, which is the friendlier of the two lies.
+ */
+export const getUserRank = cache(
+  async (
+    groupId: string,
+    xp: number,
+    season: string = CURRENT_SEASON,
+  ): Promise<{ rank: number; total: number } | null> => {
+    if (!groupId || xp <= 0) return null;
+
+    try {
+      const base = adminDb
+        .collection("userSeasonProgress")
+        .where("season", "==", season)
+        .where("groupId", "==", String(groupId));
+
+      const [ahead, total] = await Promise.all([
+        base.where("xp", ">", xp).count().get(),
+        base.where("xp", ">", 0).count().get(),
+      ]);
+
+      return {
+        rank: ahead.data().count + 1,
+        total: total.data().count,
+      };
+    } catch (error) {
+      // A missing index surfaces here; the page drops the rank line rather
+      // than failing, since the board itself is the point.
+      console.error("❌ Rank read failed:", error);
+      return null;
+    }
+  },
+);
+
+/**
  * One user's own progress: all-time XP plus this season at their club.
  *
  * Never throws — the profile page renders a zeroed panel rather than an error

@@ -7,14 +7,19 @@ import {
   isGroupMemberServer,
 } from "@/lib/firebase/firebase-admin-queries";
 import { getUserIdFromSession } from "@/lib/auth-server";
-import { getClubLeaderboard } from "@/lib/gamification/progressQueries";
+import {
+  getClubLeaderboard,
+  getGlobalLeaderboard,
+  getUserProgress,
+  getUserRank,
+} from "@/lib/gamification/progressQueries";
 import {
   archivedClubSeason,
   isArchivedSeason,
   resolveSeason,
 } from "@/lib/config/season";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
-import Leaderboard from "@/components/client/Gamification/Leaderboard";
+import FansPageClient from "@/components/client/Gamification/FansPageClient";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/jsonLd";
 
@@ -75,7 +80,18 @@ export default async function FansPage({ params, searchParams }: PageProps) {
     archivedClubSeason(group),
   );
 
-  const entries = await getClubLeaderboard(group.id, 50, season);
+  const [clubEntries, globalEntries] = await Promise.all([
+    getClubLeaderboard(group.id, 50, season),
+    getGlobalLeaderboard(50, season),
+  ]);
+
+  // Only meaningful for a signed-in fan, and only once they have any XP.
+  const progress = userId
+    ? await getUserProgress(userId, group.id, season)
+    : null;
+  const rank = progress
+    ? await getUserRank(group.id, progress.seasonXp, season)
+    : null;
 
   return (
     <>
@@ -101,10 +117,12 @@ export default async function FansPage({ params, searchParams }: PageProps) {
           </Typography>
         </Box>
 
-        <Leaderboard
-          entries={entries}
+        <FansPageClient
+          clubName={group.name}
+          clubEntries={clubEntries}
+          globalEntries={globalEntries}
           currentUid={userId}
-          title={`This season · ${entries.length} fan${entries.length === 1 ? "" : "s"}`}
+          rank={rank}
         />
       </Container>
     </>

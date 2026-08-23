@@ -107,9 +107,11 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
             {/* Level and XP. Above the nav rather than in the footer: it is
                 the first thing a returning fan looks for, and the drawer
                 unmounts its children when closed, so the two progress
-                listeners only run while it is actually open. */}
+                listeners only run while it is actually open.
+                Taps through to the full progress page, and closes the drawer
+                on the way so the fan isn't left staring at the nav. */}
             <Box sx={{ mb: 2 }}>
-              <UserProgressPanel />
+              <UserProgressPanel variant="bar" onNavigate={onClose} />
             </Box>
 
             {/* Admin Section */}
