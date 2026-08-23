@@ -30,6 +30,7 @@ import ThemeToggle from "../Theme/ThemeToggle";
 import SwitcherTrigger from "../Groups/SwitcherTrigger";
 import useGroupData from "@/Hooks/useGroupData";
 import useUserData from "@/Hooks/useUserData";
+import UserProgressPanel from "@/components/client/Gamification/UserProgressPanel";
 
 // import GroupExplorer from "./GroupExplorer";
 
@@ -103,6 +104,14 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
           <Login />
         ) : (
           <Box sx={{ flexGrow: 1 }}>
+            {/* Level and XP. Above the nav rather than in the footer: it is
+                the first thing a returning fan looks for, and the drawer
+                unmounts its children when closed, so the two progress
+                listeners only run while it is actually open. */}
+            <Box sx={{ mb: 2 }}>
+              <UserProgressPanel />
+            </Box>
+
             {/* Admin Section */}
             {/* {isGroupAdmin && (
               <Paper

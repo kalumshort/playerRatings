@@ -29,48 +29,60 @@ export default function LevelProgress({
 
   return (
     <Paper sx={{ ...theme.clay?.card, p: { xs: 2.5, md: 3 } }}>
+      {/* Sized to survive a 280px drawer: the middle column is the only thing
+          allowed to shrink, and the level name wraps rather than truncating —
+          losing half of "Fan Favourite" to an ellipsis is worse than two
+          lines. Without minWidth:0 the row refuses to shrink at all and the
+          XP chip spills outside the card. */}
       <Stack
         direction="row"
         alignItems="center"
-        justifyContent="space-between"
         sx={{ mb: 1.5, gap: 1 }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.25}>
-          <Box
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            flexShrink: 0,
+            borderRadius: "50%",
+            display: "grid",
+            placeItems: "center",
+            fontWeight: 900,
+            fontSize: "1rem",
+            color: theme.palette.motm?.bronze ?? theme.palette.common.white,
+            background: `linear-gradient(145deg, ${
+              theme.palette.motm?.goldStart ?? "#FFE27A"
+            } 0%, ${theme.palette.motm?.goldEnd ?? "#F5B300"} 100%)`,
+          }}
+        >
+          {level.level}
+        </Box>
+
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography
+            variant="caption"
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              display: "grid",
-              placeItems: "center",
+              display: "block",
               fontWeight: 900,
-              fontSize: "1rem",
-              color: theme.palette.motm?.bronze ?? theme.palette.common.white,
-              background: `linear-gradient(145deg, ${
-                theme.palette.motm?.goldStart ?? "#FFE27A"
-              } 0%, ${theme.palette.motm?.goldEnd ?? "#F5B300"} 100%)`,
+              letterSpacing: 1.5,
+              opacity: 0.6,
+              lineHeight: 1.3,
             }}
           >
-            {level.level}
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              sx={{ display: "block", fontWeight: 900, letterSpacing: 1.5, opacity: 0.6 }}
-            >
-              YOUR LEVEL
-            </Typography>
-            <Typography noWrap sx={{ fontWeight: 900, fontSize: "1.15rem", lineHeight: 1.2 }}>
-              {level.name}
-            </Typography>
-          </Box>
-        </Stack>
+            LEVEL
+          </Typography>
+          <Typography sx={{ fontWeight: 900, fontSize: "1.05rem", lineHeight: 1.2 }}>
+            {level.name}
+          </Typography>
+        </Box>
 
         <Chip
           label={`${totalXp.toLocaleString()} XP`}
           size="small"
           sx={{
+            flexShrink: 0,
             fontWeight: 900,
+            fontSize: "0.7rem",
             bgcolor: alpha(theme.palette.primary.main, 0.14),
             color: "text.primary",
           }}
@@ -115,7 +127,7 @@ export default function LevelProgress({
 
       {!compact && (
         <Stack direction="row" spacing={1.5} sx={{ mt: 2.5 }}>
-          <Stat label="THIS SEASON" value={`${seasonXp.toLocaleString()} XP`} />
+          <Stat label="SEASON" value={`${seasonXp.toLocaleString()} XP`} />
           <Stat label="MATCHES" value={String(matchesParticipated)} />
         </Stack>
       )}
@@ -127,8 +139,9 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
   <Box
     sx={(t) => ({
       flex: 1,
+      minWidth: 0,
       borderRadius: "10px",
-      px: 1.5,
+      px: 1,
       py: 1,
       textAlign: "center",
       border: `1px solid ${t.palette.divider}`,
@@ -136,10 +149,24 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
   >
     <Typography
       variant="caption"
-      sx={{ display: "block", fontWeight: 900, fontSize: "0.6rem", letterSpacing: 1, opacity: 0.65 }}
+      noWrap
+      sx={{
+        display: "block",
+        fontWeight: 900,
+        fontSize: "0.6rem",
+        letterSpacing: 1,
+        opacity: 0.65,
+      }}
     >
       {label}
     </Typography>
-    <Typography sx={{ fontWeight: 900, fontSize: "1.1rem" }}>{value}</Typography>
+    {/* nowrap: at drawer width "640 XP" was breaking across two lines and
+        knocking the two tiles out of alignment. */}
+    <Typography
+      noWrap
+      sx={{ fontWeight: 900, fontSize: "1.05rem", lineHeight: 1.3 }}
+    >
+      {value}
+    </Typography>
   </Box>
 );

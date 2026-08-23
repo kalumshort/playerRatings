@@ -23,7 +23,6 @@ import { updateUserField } from "@/lib/firebase/client-user-actions";
 import ThemeToggle from "@/components/client/Theme/ThemeToggle";
 import SwitcherTrigger from "../Groups/SwitcherTrigger";
 import useGroupData from "@/Hooks/useGroupData";
-import UserProgressPanel from "@/components/client/Gamification/UserProgressPanel";
 
 interface AccountTabProps {
   onOpenEmail: () => void;
@@ -71,16 +70,6 @@ export default function AccountTab({
 
   return (
     <Box>
-      <Typography
-        variant="caption"
-        sx={{ color: "text.secondary", ml: 1, fontWeight: 700 }}
-      >
-        YOUR SEASON
-      </Typography>
-      <Box sx={{ mb: 3, mt: 1 }}>
-        <UserProgressPanel />
-      </Box>
-
       <Typography
         variant="caption"
         sx={{ color: "text.secondary", ml: 1, fontWeight: 700 }}
