@@ -14,11 +14,14 @@ export default function LevelProgress({
   totalXp,
   seasonXp,
   matchesParticipated,
+  currentStreak = 0,
   compact = false,
 }: {
   totalXp: number;
   seasonXp: number;
   matchesParticipated: number;
+  /** Consecutive club matches taken part in. 0 or 1 renders nothing. */
+  currentStreak?: number;
   /** Drops the season stats row, for tighter surfaces. */
   compact?: boolean;
 }) {
@@ -129,6 +132,11 @@ export default function LevelProgress({
         <Stack direction="row" spacing={1.5} sx={{ mt: 2.5 }}>
           <Stat label="SEASON" value={`${seasonXp.toLocaleString()} XP`} />
           <Stat label="MATCHES" value={String(matchesParticipated)} />
+          {/* A "1 match streak" is just the last match restated, so the tile
+              only appears once a run actually means something. */}
+          {currentStreak > 1 && (
+            <Stat label="STREAK" value={`🔥 ${currentStreak}`} />
+          )}
         </Stack>
       )}
     </Paper>

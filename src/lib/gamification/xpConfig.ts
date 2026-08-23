@@ -91,6 +91,17 @@ export const PREDICTION = {
   playerToWatchInvolved: 20,
 } as const;
 
+/** Eleven hits is the most the per-hit award can pay. */
+export const PREDICTION_CAPS = { xiHits: 11 } as const;
+
+/** Highest prediction points a single match can yield. */
+export const MAX_MATCH_PREDICTION_POINTS =
+  PREDICTION.correctResult +
+  PREDICTION.exactScore +
+  PREDICTION.xiHit * PREDICTION_CAPS.xiHits +
+  PREDICTION.perfectXi +
+  PREDICTION.playerToWatchInvolved;
+
 /**
  * Levels, lowest first. Derived from total XP on read and never stored, so
  * retuning these can never leave a stored level stale.

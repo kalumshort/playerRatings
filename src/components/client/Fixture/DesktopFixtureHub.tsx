@@ -13,6 +13,7 @@ import Statistics from "./Components/Statistics";
 import Events from "./Components/Events";
 import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
+import MatchXpCard from "@/components/client/Gamification/MatchXpCard";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
 import FixtureUnavailable from "./FixtureUnavailable";
 
@@ -161,6 +162,9 @@ export default function DesktopFixtureHub({
   if (isLive) {
     return (
       <Stack spacing={4}>
+        {!isGuestView && (
+          <MatchXpCard fixture={fixture} groupData={groupData} />
+        )}
         <MasonryGrid cols={2}>
           <PlayerRatings {...commonProps} />
           <Lineup {...commonProps} />
@@ -179,6 +183,7 @@ export default function DesktopFixtureHub({
   // Consensus is a separate full-width row below.
   return (
     <Stack spacing={4}>
+      {!isGuestView && <MatchXpCard fixture={fixture} groupData={groupData} />}
       <MasonryGrid cols={2}>
         <MoodSelector {...commonProps} />
         <PlayerRatings {...commonProps} />

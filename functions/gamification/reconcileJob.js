@@ -8,6 +8,64 @@ const { publishableName, writeSeasonRow } = require("./progressStore");
 const FINISHED_STATUSES = ["FT", "AET", "PEN"];
 
 /**
+ * A club's finished fixtures, oldest first.
+ *
+ * Streaks are counted over the matches the club actually played, not over the
+ * docs the fan happens to have — a fan who missed three matches has no doc for
+ * them at all, so counting their own docs would report an unbroken streak
+ * through the games they skipped.
+ *
+ * @param {Map<string, object>} fixtures - Finished fixtures by match id.
+ * @param {string} clubId - API team id of the club.
+ * @return {Array<string>} Match ids in kickoff order.
+ */
+function clubFixturesInOrder(fixtures, clubId) {
+  const target = String(clubId);
+
+  return [...fixtures.entries()]
+    .filter(
+      ([, data]) =>
+        String(data.homeTeamId) === target || String(data.awayTeamId) === target,
+    )
+    .sort((a, b) => (Number(a[1].timestamp) || 0) - (Number(b[1].timestamp) || 0))
+    .map(([id]) => id);
+}
+
+/**
+ * Current and best run of consecutive club matches the fan took part in.
+ *
+ * "Took part" is any XP at all, which is the same bar the participation
+ * counter uses — one mood tap counts, and that is deliberate on an app about
+ * turning up.
+ *
+ * The current streak is counted from the most recent match backwards, so it
+ * reflects "am I on a run right now"; the best is the longest anywhere in the
+ * season.
+ *
+ * @param {Array<string>} orderedMatchIds - Club fixtures, oldest first.
+ * @param {Set<string>} participatedIds - Matches the fan earned XP in.
+ * @return {object} `{ currentStreak, bestStreak }`.
+ */
+function computeStreaks(orderedMatchIds, participatedIds) {
+  let best = 0;
+  let running = 0;
+
+  for (const matchId of orderedMatchIds) {
+    running = participatedIds.has(matchId) ? running + 1 : 0;
+    if (running > best) best = running;
+  }
+
+  // Walk back from the latest match; the first gap ends the current run.
+  let current = 0;
+  for (let i = orderedMatchIds.length - 1; i >= 0; i--) {
+    if (!participatedIds.has(orderedMatchIds[i])) break;
+    current++;
+  }
+
+  return { currentStreak: current, bestStreak: best };
+}
+
+/**
  * Every finished fixture of the season, keyed by match id.
  *
  * Loaded once and shared across every user, because prediction scoring needs
@@ -104,6 +162,10 @@ async function runGamificationReconcile({
      */
     const clubId = String(groupDoc.data()?.groupClubId ?? groupId);
 
+    // Once per club, not once per fan — every member of a group streaks
+    // against the same fixture list.
+    const clubFixtureOrder = clubFixturesInOrder(fixtures, clubId);
+
     // Union of all three role collections. isGroupMemberServer only checks
     // `members` and misses staff, which would silently drop admins and owners
     // off their own club's leaderboard.
@@ -145,6 +207,7 @@ async function runGamificationReconcile({
       let matchesParticipated = 0;
       let predictionPoints = 0;
       let predictionsResolved = 0;
+      const participatedIds = new Set();
 
       for (const matchDoc of matchesSnap.docs) {
         const data = matchDoc.data();
@@ -153,6 +216,7 @@ async function runGamificationReconcile({
         if (matchXp > 0) {
           xp += matchXp;
           matchesParticipated++;
+          participatedIds.add(matchDoc.id);
         }
 
         // The second, separate ladder.
@@ -179,6 +243,11 @@ async function runGamificationReconcile({
       const displayName = publishableName(userSnap?.data());
       names.set(uid, displayName);
 
+      const { currentStreak, bestStreak } = computeStreaks(
+        clubFixtureOrder,
+        participatedIds,
+      );
+
       // A user with a membership but no participation still gets a row at 0,
       // so joining a club shows you on the board rather than nowhere.
       writeSeasonRow({
@@ -191,6 +260,8 @@ async function runGamificationReconcile({
         matchesParticipated,
         predictionPoints,
         predictionsResolved,
+        currentStreak,
+        bestStreak,
         displayName,
       });
       summary.rows++;

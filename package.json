@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:rules": "firebase emulators:exec --only firestore \"node test/rules.test.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore \"node test/rules.test.mjs\"",
+    "test:mirrors": "node scripts/check-gamification-mirrors.mjs"
   },
   "keywords": [],
   "author": "",

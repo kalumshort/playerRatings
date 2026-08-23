@@ -1,4 +1,4 @@
-Aug 23, 2026 8:31:21 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+Aug 23, 2026 11:35:59 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
 INFO: Started WebSocket server on ws://127.0.0.1:9150
 
 API endpoint: http://127.0.0.1:8080
@@ -16,11 +16,11 @@ If you are running a Firestore in Datastore Mode project, run:
 Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
 Dev App Server is now running.
 
-Aug 23, 2026 8:31:23 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Aug 23, 2026 11:36:00 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
-Aug 23, 2026 8:31:23 AM io.grpc.netty.TcpMetrics loadEpollInfo
+Aug 23, 2026 11:36:00 AM io.grpc.netty.TcpMetrics loadEpollInfo
 INFO: Epoll available during static init of TcpMetrics:false
-Aug 23, 2026 8:31:30 AM io.netty.channel.DefaultChannelPipeline onUnhandledInboundException
+Aug 23, 2026 11:36:10 AM io.netty.channel.DefaultChannelPipeline onUnhandledInboundException
 WARNING: An exceptionCaught() event was fired, and it reached at the tail of the pipeline. It usually means the last handler in the pipeline did not handle the exception.
 java.net.SocketException: Connection reset
 	at java.base/sun.nio.ch.SocketChannelImpl.throwConnectionReset(SocketChannelImpl.java:401)

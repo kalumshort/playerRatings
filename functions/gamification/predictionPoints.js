@@ -83,11 +83,13 @@ function scoredOrAssisted(fixture, playerId) {
  * Pure and deterministic, like the XP engine, so the nightly job can recompute
  * a whole season from source and land on the same numbers every time.
  *
- * Components degrade independently rather than failing as a unit. Only a
- * fraction of fixtures carry `lineups` or `events` — those are written by the
- * live-match job, not the nightly fixture sync, so a match nobody watched live
- * has a final score but no team sheet. A fan is never penalised for data we
- * never collected: the XI and player-to-watch components simply pay nothing.
+ * Components degrade independently rather than failing as a unit. Not every
+ * fixture carries `lineups` or `events`: the feed genuinely has no sheet for
+ * some competitions, and historically the live-match job stopped requesting
+ * them at all (fixed in fetchAllMatchData — 8 of 106 finished fixtures from
+ * that period have one, and no backfill was run). A fan is never penalised for
+ * data we never collected: the XI and player-to-watch components simply pay
+ * nothing while the result and scoreline still score.
  *
  * A shootout counts as the draw it was after 120 minutes. `goals` excludes
  * penalties, which is the convention every prediction game uses, and it is the

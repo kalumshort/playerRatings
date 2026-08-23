@@ -401,6 +401,88 @@ async function row() {
 
   await db.collection(`fixtures/${SEASON}/fixtures`).doc("m0").delete();
 
+  // --- Streaks ----------------------------------------------------------
+  console.log("\nStreaks\n");
+
+  /**
+   * Seeds N club fixtures in kickoff order and participation in a subset.
+   * @param {Array<boolean>} pattern - Took part in each fixture, oldest first.
+   * @return {Promise<void>}
+   */
+  async function seedStreak(pattern) {
+    await resetDb();
+    await db.collection("groups").doc(GROUP).set({ name: "Arsenal", groupClubId: GROUP });
+    await db.collection("groupUsers").doc(GROUP).collection("members").doc(UID).set({ uid: UID });
+
+    for (const [i, tookPart] of pattern.entries()) {
+      const id = `s${i}`;
+      await db.collection(`fixtures/${SEASON}/fixtures`).doc(id).set({
+        status: "FT",
+        goals: { home: 1, away: 0 },
+        homeTeamId: Number(GROUP),
+        awayTeamId: 99,
+        timestamp: 1000 + i, // ordering is by kickoff, not doc id
+      });
+      if (tookPart) {
+        await db.collection("users").doc(UID)
+          .collection("groups").doc(GROUP)
+          .collection("seasons").doc(SEASON)
+          .collection("matches").doc(id)
+          .set({ moodTaps: 1 });
+      }
+    }
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+  }
+
+  /** Removes the fixtures a streak case seeded. @return {Promise<void>} */
+  async function clearStreakFixtures() {
+    const snap = await db.collection(`fixtures/${SEASON}/fixtures`).get();
+    await Promise.all(snap.docs.map((d) => d.ref.delete()));
+  }
+
+  await it("counts an unbroken run", async () => {
+    await seedStreak([true, true, true]);
+    const d = await row();
+    assert.equal(d.currentStreak, 3);
+    assert.equal(d.bestStreak, 3);
+    await clearStreakFixtures();
+  });
+
+  await it("a gap resets the current streak but not the best", async () => {
+    // Took part, took part, MISSED, took part.
+    await seedStreak([true, true, false, true]);
+    const d = await row();
+    assert.equal(d.currentStreak, 1);
+    assert.equal(d.bestStreak, 2);
+    await clearStreakFixtures();
+  });
+
+  await it("missing the latest match ends the current streak", async () => {
+    await seedStreak([true, true, false]);
+    const d = await row();
+    assert.equal(d.currentStreak, 0);
+    assert.equal(d.bestStreak, 2);
+    await clearStreakFixtures();
+  });
+
+  await it("counts club matches, not just the fan's own documents", async () => {
+    // The fan has no doc for the skipped match at all. Counting their own docs
+    // would report an unbroken run through a game they never opened.
+    await seedStreak([true, false, true]);
+    const d = await row();
+    assert.equal(d.currentStreak, 1);
+    assert.equal(d.bestStreak, 1);
+    await clearStreakFixtures();
+  });
+
+  await it("no participation means no streak", async () => {
+    await seedStreak([false, false]);
+    const d = await row();
+    assert.equal(d.currentStreak, 0);
+    assert.equal(d.bestStreak, 0);
+    await clearStreakFixtures();
+  });
+
   // --- The live trigger's write path -----------------------------------
   console.log("\nXP delta (live trigger path)\n");
 

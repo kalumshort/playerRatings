@@ -196,6 +196,8 @@ async function applyXpDelta({
  * @param {number} args.matchesParticipated - Absolute match count.
  * @param {number} [args.predictionPoints] - Absolute prediction points.
  * @param {number} [args.predictionsResolved] - Matches that scored any points.
+ * @param {number} [args.currentStreak] - Consecutive club matches taken part in.
+ * @param {number} [args.bestStreak] - Longest such run this season.
  * @param {string|null} args.displayName - Already redacted for anonymity.
  * @return {void}
  */
@@ -209,6 +211,8 @@ function writeSeasonRow({
   matchesParticipated,
   predictionPoints = 0,
   predictionsResolved = 0,
+  currentStreak = 0,
+  bestStreak = 0,
   displayName,
 }) {
   const rowRef = db
@@ -229,6 +233,8 @@ function writeSeasonRow({
       // right are ranked separately.
       predictionPoints,
       predictionsResolved,
+      currentStreak,
+      bestStreak,
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },
