@@ -12,7 +12,7 @@ import Events from "./Components/Events";
 import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
-import MatchXpCard from "@/components/client/Gamification/MatchXpCard";
+import MatchXpSummary from "@/components/client/Gamification/MatchXpSummary";
 import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
@@ -67,7 +67,6 @@ export default function MobileFixtureContainer({
         { label: "Ratings", value: "Ratings" },
         { label: "Consensus", value: "PostPredicts" },
       );
-      if (!isGuestView) arr.push({ label: "Your XP", value: "MatchXp" });
     } else if (isFinished) {
       arr.push(
         { label: "Ratings", value: "Ratings" },
@@ -77,11 +76,10 @@ export default function MobileFixtureContainer({
         { label: "Stats", value: "Stats" },
         { label: "Events", value: "Events" },
       );
-      if (!isGuestView) arr.push({ label: "Your XP", value: "MatchXp" });
     }
 
     return arr;
-  }, [isPreMatch, isLive, isFinished, showPredictions, hasLineups, isGuestView]);
+  }, [isPreMatch, isLive, isFinished, showPredictions, hasLineups]);
 
   // 3. State Management
   const [selectedTab, setSelectedTab] = useState(tabs[0]?.value || "");
@@ -99,6 +97,15 @@ export default function MobileFixtureContainer({
 
   return (
     <>
+      {/* Collapsed by default — the checklist is eleven lines, useful on
+          demand and clutter otherwise. Above the tabs so it is reachable from
+          every panel rather than hiding behind one. */}
+      {!isGuestView && !isPreMatch && (
+        <Box sx={{ px: 1, pb: 1 }}>
+          <MatchXpSummary fixture={fixture} groupData={groupData} />
+        </Box>
+      )}
+
       {/* --- STICKY TAB NAVIGATOR --- */}
       <Box sx={{ position: "sticky", top: 70, zIndex: 20, px: 1, pb: 1 }}>
         <Box
@@ -222,10 +229,6 @@ export default function MobileFixtureContainer({
                 groupId={groupId}
                 currentYear={currentYear}
               />
-            )}
-
-            {selectedTab === "MatchXp" && (
-              <MatchXpCard fixture={fixture} groupData={groupData} />
             )}
 
             {selectedTab === "PostPredicts" && (
