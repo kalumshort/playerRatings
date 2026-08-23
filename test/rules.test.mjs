@@ -508,6 +508,53 @@ async function main() {
   await it("user CANNOT reset their own invite attempt counter", () =>
     assertFails(setDoc(doc(outsider, `inviteAttempts/${OUTSIDER}`), { count: 0 })));
 
+  // Fan XP is authoritative and server-computed. The whole reason it lives in
+  // top-level collections rather than under users/** is that users/** is
+  // fully self-writable — so the one thing these rules must guarantee is that
+  // a signed-in user cannot write their own score.
+  console.log("\nGamification");
+  await it("anyone CAN read a leaderboard row", () =>
+    assertSucceeds(
+      getDoc(doc(outsider, `userSeasonProgress/2026_${PUB}_${MEMBER}`)),
+    ));
+  await it("anyone CAN read a user's progress", () =>
+    assertSucceeds(getDoc(doc(outsider, `userProgress/${MEMBER}`))));
+
+  await it("user CANNOT write their OWN progress doc", () =>
+    assertFails(
+      setDoc(doc(member, `userProgress/${MEMBER}`), { totalXp: 999999 }),
+    ));
+  await it("user CANNOT write their OWN leaderboard row", () =>
+    assertFails(
+      setDoc(doc(member, `userSeasonProgress/2026_${PUB}_${MEMBER}`), {
+        uid: MEMBER,
+        xp: 999999,
+      }),
+    ));
+  await it("user CANNOT write someone else's leaderboard row", () =>
+    assertFails(
+      setDoc(doc(member, `userSeasonProgress/2026_${PUB}_${OUTSIDER}`), {
+        uid: OUTSIDER,
+        xp: 0,
+      }),
+    ));
+  await it("user CANNOT delete their leaderboard row to reset it", () =>
+    assertFails(
+      deleteDoc(doc(member, `userSeasonProgress/2026_${PUB}_${MEMBER}`)),
+    ));
+
+  // The participation record the XP engine reads stays self-writable — that is
+  // by design (it is also the dedupe ledger the rating rules get()), and the
+  // per-match XP caps are what bound the damage.
+  await it("user CAN still write their own match participation doc", () =>
+    assertSucceeds(
+      setDoc(
+        doc(member, `users/${MEMBER}/groups/${PUB}/seasons/2026/matches/m1`),
+        { moodTaps: 3 },
+        { merge: true },
+      ),
+    ));
+
   console.log("\nCatch-all");
   await it("member CANNOT read contact_messages", () =>
     assertFails(getDoc(doc(member, "contact_messages/anything"))));

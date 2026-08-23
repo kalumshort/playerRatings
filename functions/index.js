@@ -27,6 +27,10 @@ const {
   syncLeagueTeams,
 } = require("./leagueCatalogue");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { computeMatchXp } = require("./gamification/computeMatchXp");
+const { applyXpDelta } = require("./gamification/progressStore");
+const { runGamificationReconcile } = require("./gamification/reconcileJob");
 
 const nodemailer = require("nodemailer");
 
@@ -161,6 +165,85 @@ exports.updateFixtures = onSchedule(
     } catch (error) {
       // Rethrow: swallowing here makes a total failure look like a successful run.
       logger.error("Critical error in daily update:", error.message, error);
+      throw error;
+    }
+  },
+);
+
+// --- GAMIFICATION ---------------------------------------------------------
+// The first Firestore trigger in this codebase. Deploy it on its own the first
+// time (`firebase deploy --only functions:onUserMatchWrite`) — Eventarc IAM is
+// provisioned on first deploy of a trigger and a bundled deploy can fail
+// confusingly while that propagates.
+exports.onUserMatchWrite = onDocumentWritten(
+  {
+    document:
+      "users/{uid}/groups/{groupId}/seasons/{season}/matches/{matchId}",
+    // A rating card is ~14 rapid writes per user; this is a small function but
+    // kickoff is spiky, so keep a ceiling on it like every other function here.
+    maxInstances: MAX_INSTANCES,
+    memory: "256MiB",
+    timeoutSeconds: 60,
+  },
+  async (event) => {
+    const { uid, groupId, season } = event.params;
+
+    try {
+      const before = event.data?.before?.data() ?? null;
+      const after = event.data?.after?.data() ?? null;
+
+      // The delta between two runs of a pure function. Deleting the doc
+      // (after === null) correctly withdraws the XP it had earned.
+      const xpBefore = computeMatchXp(before).xp;
+      const xpAfter = computeMatchXp(after).xp;
+      const xpDelta = xpAfter - xpBefore;
+
+      // Crossing 0 -> positive is the moment this match starts counting as
+      // "participated", so the counter moves exactly once however many writes
+      // the user makes afterwards.
+      const nowParticipating = xpBefore === 0 && xpAfter > 0;
+
+      if (xpDelta === 0 && !nowParticipating) return;
+
+      await applyXpDelta({
+        db,
+        uid,
+        groupId,
+        season,
+        xpDelta,
+        nowParticipating,
+      });
+    } catch (error) {
+      // Never rethrow. A retry would re-apply the increment and inflate the
+      // total; the nightly reconcile recomputes absolute values from source and
+      // will repair whatever this run missed.
+      logger.error("[gamification] XP award failed", {
+        uid,
+        groupId,
+        season,
+        error: error.message,
+      });
+    }
+  },
+);
+
+exports.reconcileGamification = onSchedule(
+  {
+    // After updateFixtures (00:00) so the day's results are already stored.
+    schedule: "every day 03:00",
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async (event) => {
+    try {
+      const summary = await runGamificationReconcile({
+        db,
+        season: SEASON,
+        logger,
+      });
+      logger.info("[gamification] reconcile complete", summary);
+    } catch (error) {
+      logger.error("[gamification] reconcile failed:", error.message, error);
       throw error;
     }
   },

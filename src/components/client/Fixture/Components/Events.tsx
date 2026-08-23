@@ -30,6 +30,8 @@ import { handleEventReaction } from "@/lib/firebase/client-actions";
 import { toast } from "sonner";
 import { clientDB } from "@/lib/firebase/client";
 import { isLive } from "@/lib/utils/football-logic";
+import { useAuth } from "@/context/AuthContext";
+import { useParticipationCap } from "@/lib/gamification/useParticipationCap";
 
 /** Exported so the homepage reactions demo shows the real set, not a copy. */
 export const EMOJI_OPTIONS = [
@@ -80,6 +82,12 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
   const [selectedType, setSelectedType] = useState("All");
   const [dbReactions, setDbReactions] = useState<any>({});
   const isMatchLive = isLive(fixture);
+  const { user } = useAuth();
+  // Reacting stays unlimited; only the XP marker write stops once capped.
+  const reactionXpCapped = useParticipationCap(
+    fixture?.id ? String(fixture.id) : undefined,
+    "reactions",
+  );
 
   // 1. LIVE LISTENER for event-specific reactions
   useEffect(() => {
@@ -205,6 +213,8 @@ export default function Events({ events, groupId, currentYear, fixture }: any) {
               eventKey={eventKey}
               isMatchLive={isMatchLive}
               themes={eventThemes}
+              userId={user?.uid}
+              xpCapReached={reactionXpCapped}
             />
           );
         })}
@@ -223,6 +233,8 @@ const EventRowBase = ({
   eventKey,
   isMatchLive,
   themes,
+  userId,
+  xpCapReached,
 }: any) => {
   const theme = useTheme() as any;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -238,6 +250,8 @@ const EventRowBase = ({
         event: event,
         moodKey: emoji,
         eventKey,
+        userId,
+        xpCapReached,
       });
     } catch (err) {
       console.error("Failed to react:", err);

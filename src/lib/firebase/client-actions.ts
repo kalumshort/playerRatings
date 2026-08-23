@@ -49,7 +49,48 @@ interface LiveStatParams {
   timeElapsed: string | number;
   playerId: string;
   statKeys: string[]; // 'hot' | 'cold' | 'sub' | 'sub_req_{playerId}'
+  /** Optional: omitted for guests. Only used to record participation. */
+  userId?: string;
+  /** Set once this match's XP cap is reached, to stop paying for dead writes. */
+  xpCapReached?: boolean;
 }
+
+/**
+ * Records that this user took part, on their own per-match doc.
+ *
+ * Moods, live votes and event reactions write only to anonymous group
+ * counters, so before this there was no per-user trace of them at all and
+ * nothing for the XP engine to read.
+ *
+ * Fire-and-forget on purpose: these fire on a tap during a live match, and a
+ * failed XP marker must never surface an error over an interaction that
+ * actually succeeded. Missing markers are picked up by the nightly reconcile.
+ *
+ * The caller passes `skip` once the client-side count is past the XP cap —
+ * mood taps are deliberately unlimited, and writes that can no longer earn
+ * anything are pure cost.
+ */
+const recordParticipation = (
+  params: {
+    groupId: string;
+    currentYear: string;
+    matchId: string;
+    userId?: string;
+  },
+  field: "moodTaps" | "liveVotes" | "reactions",
+  skip = false,
+) => {
+  const { groupId, currentYear, matchId, userId } = params;
+  if (!userId || skip) return;
+
+  void updateOrSet(
+    `users/${userId}/groups/${groupId}/seasons/${currentYear}/matches`,
+    matchId,
+    { [field]: increment(1) },
+  ).catch(() => {
+    /* see above — never surface over a successful interaction */
+  });
+};
 interface RatingData {
   groupId: string;
   currentYear: string;
@@ -328,6 +369,7 @@ export const handleLivePlayerStats = async (params: LiveStatParams) => {
     };
 
     await setDoc(docRef, updatePayload, { merge: true });
+    recordParticipation(params, "liveVotes", params.xpCapReached);
     return { success: true };
   } catch (error: any) {
     console.error("❌ Live Player Stat Error:", error);
@@ -341,6 +383,10 @@ export const handleFixtureMood = async (params: {
   matchId: string;
   timeElapsed: number;
   moodKey: string;
+  /** Optional: omitted for guests. Only used to record participation. */
+  userId?: string;
+  /** Set once this match's XP cap is reached, to stop paying for dead writes. */
+  xpCapReached?: boolean;
 }) => {
   const { groupId, currentYear, matchId, timeElapsed, moodKey } = params;
   validateParams({ groupId, currentYear, matchId, moodKey });
@@ -351,11 +397,14 @@ export const handleFixtureMood = async (params: {
     matchId,
   );
 
-  return await setDoc(
+  const result = await setDoc(
     docRef,
     { [String(timeElapsed || 0)]: { [moodKey]: increment(1) } },
     { merge: true },
   );
+
+  recordParticipation(params, "moodTaps", params.xpCapReached);
+  return result;
 };
 
 export const handleEventReaction = async (params: {
@@ -365,6 +414,10 @@ export const handleEventReaction = async (params: {
   event: any; // The full event object
   moodKey: string;
   eventKey: string;
+  /** Optional: omitted for guests. Only used to record participation. */
+  userId?: string;
+  /** Set once this match's XP cap is reached, to stop paying for dead writes. */
+  xpCapReached?: boolean;
 }) => {
   const { groupId, currentYear, matchId, event, moodKey, eventKey } = params;
 
@@ -377,7 +430,7 @@ export const handleEventReaction = async (params: {
     matchId,
   );
 
-  return await setDoc(
+  const result = await setDoc(
     docRef,
     {
       [eventKey]: {
@@ -386,6 +439,9 @@ export const handleEventReaction = async (params: {
     },
     { merge: true },
   );
+
+  recordParticipation(params, "reactions", params.xpCapReached);
+  return result;
 };
 
 /**
