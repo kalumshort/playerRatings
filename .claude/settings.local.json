@@ -38,7 +38,19 @@
       "Bash(grep -nE '\"#[0-9A-Fa-f]{3,8}\"|rgba\\\\\\(' src/components/client/HomePage.tsx)",
       "Bash(grep -nE '\"#[0-9A-Fa-f]{3,8}\"|rgba\\\\\\(' src/components/client/Home/DemoFrame.tsx)",
       "Bash(awk '/return \\\\\\(/{f=1} f&&/<Box/{print NR\": \"$0; c++} c>2{exit}' src/components/client/Fixture/Components/FanMoodSelector/MoodAreaChart.tsx)",
-      "Bash(curl -s http://localhost:3000/ -o __TRACKED_VAR__/home.html -w 'HTTP %{http_code}  bytes=%{size_download}\\\\n')"
+      "Bash(curl -s http://localhost:3000/ -o __TRACKED_VAR__/home.html -w 'HTTP %{http_code}  bytes=%{size_download}\\\\n')",
+      "Read(//c/Users/kshor/AppData/Local/Temp/claude/c--Users-kshor-Documents-Websites-player-ratings-11votes-app/99cadd5e-b845-4397-9df6-5efe6bda4a3e/scratchpad/**)",
+      "Bash(node shot.mjs /c/Users/kshor/AppData/Local/Temp/claude/c--Users-kshor-Documents-Websites-player-ratings-11votes-app/99cadd5e-b845-4397-9df6-5efe6bda4a3e/scratchpad)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 1; foreach \\($p in 3000,3100\\) { if \\(Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue\\) { \"port $p BUSY\" } else { \"port $p free\" } })",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git --no-pager log -1 --format='%s')",
+      "Bash(git checkout *)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,2\\)\\)\")",
+      "Bash(node test/gamification.test.js)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(python -)",
+      "Bash(npm --prefix functions run test:reconcile:xp)"
     ]
   }
 }

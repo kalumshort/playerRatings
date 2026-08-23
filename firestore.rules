@@ -298,6 +298,26 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // --- E. GAMIFICATION ---
+    // Authoritative Fan XP. Deliberately NOT under users/** : that subtree is
+    // fully self-writable by its owner with no field validation (section B
+    // above), so XP stored there would be forgeable from a browser console.
+    // Here the Admin SDK is the only writer, matching config/clubDirectory.
+    //
+    // World-readable because leaderboards are public. Anonymity is handled at
+    // WRITE time — progressStore.publishableName() writes displayName: null for
+    // an opted-out user, so their real name never lands in a readable doc and
+    // no read rule has to defend it.
+    match /userProgress/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /userSeasonProgress/{rowId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

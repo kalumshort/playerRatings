@@ -90,9 +90,15 @@ const fetchFootballApi = async (endpoint, params = {}, options = {}) => {
 // --- SPECIFIC FETCH FUNCTIONS ---
 
 /**
- * Fetches a single fixture. The `fixtures?id=` response already embeds
- * lineups, statistics and events, so no separate calls are needed.
+ * Fetches a single fixture.
+ *
+ * NOTE: this response does NOT reliably embed lineups. It was assumed to when
+ * the dedicated calls were removed, and the result was that team sheets
+ * stopped being stored at all — 8 of 106 finished fixtures had one. Events do
+ * usually come through here; lineups need fetchLineupData below.
+ *
  * @param {number|string} fixtureId - The API fixture id.
+ * @return {Promise<object>} The fixture object plus a matchDate shortcut.
  */
 const fetchFixtureData = async (fixtureId) => {
   const data = await fetchFootballApi("fixtures", { id: fixtureId });
@@ -102,6 +108,31 @@ const fetchFixtureData = async (fixtureId) => {
     ...fixtureObj,
     matchDate: fixtureObj.fixture.timestamp,
   };
+};
+
+/**
+ * The published team sheets for a fixture.
+ *
+ * A separate endpoint because `fixtures?id=` does not carry them. Empty is a
+ * legitimate answer — the feed has no sheet for some competitions, and none at
+ * all before a match is announced — so this never throws on an empty response.
+ *
+ * @param {number|string} fixtureId - The API fixture id.
+ * @return {Promise<Array<object>>} One entry per team, or [].
+ */
+const fetchLineupData = async (fixtureId) => {
+  try {
+    return await fetchFootballApi(
+      "fixtures/lineups",
+      { fixture: fixtureId },
+      { allowEmpty: true },
+    );
+  } catch (error) {
+    // Never let a missing team sheet cost us the score and status update that
+    // the rest of this fetch is really for.
+    console.warn(`Lineup fetch failed for ${fixtureId}:`, error.message);
+    return [];
+  }
 };
 
 // --- AGGREGATION & FIRESTORE LOGIC ---
@@ -130,12 +161,46 @@ const fetchAllMatchData = async ({ fixtureId }) => {
     throw new Error("League season not found in the fixture data.");
   }
 
-  await getFirestore()
+  const docRef = getFirestore()
     .collection("fixtures")
     .doc(year.toString())
     .collection("fixtures")
-    .doc(fixtureId.toString())
-    .set(fixtureData, { merge: true });
+    .doc(fixtureId.toString());
+
+  /*
+   * Team sheets, fetched at most once per fixture.
+   *
+   * Deliberately conditional. This job polls every 60s across a five-hour
+   * window, so an unconditional second call would roughly double a matchday's
+   * API usage — and there is no rate limiting, retry or concurrency cap
+   * anywhere in fetchFootballApi to absorb that.
+   *
+   * Two gates:
+   *  - we don't already have a sheet (one Firestore read is far cheaper than
+   *    an API call, and lineups never change once published)
+   *  - the match has kicked off, so the sheet definitely exists. Chasing it
+   *    through the pre-match hour would burn ~60 empty calls per fixture.
+   *
+   * The cost is that the pre-match Lineup tab stays empty until kickoff.
+   * Including "NS" here is the one-line change if that matters more.
+   */
+  const status = fixtureData?.fixture?.status?.short;
+  const kickedOff = status && !["NS", "TBD"].includes(status);
+
+  if (kickedOff) {
+    const existing = await docRef.get();
+    const hasLineups = (existing.data()?.lineups || []).length > 0;
+
+    if (!hasLineups) {
+      const lineups = await fetchLineupData(fixtureId);
+      if (lineups.length > 0) {
+        fixtureData.lineups = lineups;
+        console.log(`Fetched ${lineups.length} team sheet(s) for ${fixtureId}`);
+      }
+    }
+  }
+
+  await docRef.set(fixtureData, { merge: true });
 
   console.log(`Successfully saved available data for fixture ${fixtureId}`);
 };

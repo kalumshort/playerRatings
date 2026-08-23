@@ -25,6 +25,7 @@ import ParticleOverlay from "./ParticleOverlay";
 import { useClubView } from "@/context/ClubViewProvider";
 import { useAuth } from "@/context/AuthContext";
 import { isLive } from "@/lib/utils/football-logic";
+import { useParticipationCap } from "@/lib/gamification/useParticipationCap";
 
 // Config
 
@@ -45,6 +46,8 @@ export const MoodSelector = ({
   const isMatchLive = isLive(fixture);
 
   const matchId = String(fixture.fixture.id);
+  // Taps stay unlimited; only the XP marker write stops once capped.
+  const moodXpCapped = useParticipationCap(matchId, "moodTaps");
 
   const timeElapsed = fixture.fixture.status.elapsed || 0;
 
@@ -96,6 +99,8 @@ export const MoodSelector = ({
       matchId,
       timeElapsed,
       moodKey: mood.label,
+      userId: user?.uid,
+      xpCapReached: moodXpCapped,
     }).catch((err) => {
       console.error("Mood vote failed:", err);
       toast.error("Couldn't register that reaction.", { id: "mood-vote" });

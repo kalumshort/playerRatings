@@ -29,6 +29,8 @@ import { useParams } from "next/navigation";
 import { handleLivePlayerStats } from "@/lib/firebase/client-actions";
 import { RootState } from "@/lib/redux/store";
 import useAsyncAction from "@/Hooks/useAsyncAction";
+import { useAuth } from "@/context/AuthContext";
+import { useParticipationCap } from "@/lib/gamification/useParticipationCap";
 
 interface PlayerActionModalProps {
   open: boolean;
@@ -56,6 +58,9 @@ export default function PlayerActionModal({
   const theme = useTheme() as any;
   const { clubSlug } = useParams();
   const [view, setView] = useState<"main" | "subs">("main");
+  const { user } = useAuth();
+  // Voting stays unlimited; only the XP marker write stops once capped.
+  const liveXpCapped = useParticipationCap(String(fixtureId), "liveVotes");
 
   // 1. SELECTORS
   const squadData = useSelector(
@@ -98,7 +103,12 @@ export default function PlayerActionModal({
       const statKeys =
         type === "sub" && subInId ? ["sub", `sub_req_${subInId}`] : [type];
 
-      await handleLivePlayerStats({ ...commonPayload, statKeys });
+      await handleLivePlayerStats({
+        ...commonPayload,
+        statKeys,
+        userId: user?.uid,
+        xpCapReached: liveXpCapped,
+      });
     },
     {
       errorMessage: "Vote didn't go through. Try again.",

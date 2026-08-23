@@ -1,0 +1,69 @@
+name: CI
+
+# Replaces the two firebase-hosting workflows, which could never succeed:
+# firebase.json has no `hosting` key (this project deploys through App
+# Hosting, backend-11votes, connected directly to the repo), so
+# `hosting:channel:deploy` had nothing to deploy, returned an empty result,
+# and FirebaseExtended/action-hosting-deploy crashed reading `expireTime`
+# off it. The merge workflow additionally triggered on `main` while the
+# default branch is `master`, so it had never run at all.
+#
+# Deploys are App Hosting's job. This is the check that has to pass.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Must match the names src/lib/firebase/admin.ts reads. Every route is
+      # dynamic and the Admin SDK is initialised lazily, so a build does not
+      # strictly need these — but /sitemap.xml is prerendered and will fall
+      # back to a four-URL stub without them, which is worth avoiding here so
+      # CI exercises the real path.
+      ADMIN_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      ADMIN_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+      ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      # The gamification scoring rules exist in both src/ (TypeScript) and
+      # functions/ (CommonJS) because the two packages cannot import each
+      # other. A divergence means the match card promises XP the leaderboard
+      # never grants, and neither tsc nor the emulator suite can catch it.
+      # These need no dependencies beyond the root install — the scorers are
+      # pure and import nothing but their own config.
+      - name: Scoring mirrors agree
+        run: npm run test:mirrors
+
+      - name: Fan XP engine
+        run: node functions/test/gamification.test.js
+
+      - name: Prediction points
+        run: node functions/test/predictionPoints.test.js
+
+      # Functions lint is deliberately not here: it needs functions/ installed
+      # for eslint-config-google, and `firebase deploy` already blocks on it
+      # via the predeploy hook. A step that cannot fail the build is noise.
+
+      - name: Build
+        run: npm run build

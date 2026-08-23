@@ -12,6 +12,7 @@ import Events from "./Components/Events";
 import { MoodSelector } from "./Components/FanMoodSelector/MoodSelector";
 import PlayerRatings from "./Components/PlayerRatings/PlayerRatings";
 import FixturePredictionsTab from "./Components/FixturePredictionsTab";
+import MatchXpSummary from "@/components/client/Gamification/MatchXpSummary";
 import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
@@ -96,6 +97,15 @@ export default function MobileFixtureContainer({
 
   return (
     <>
+      {/* Collapsed by default — the checklist is eleven lines, useful on
+          demand and clutter otherwise. Above the tabs so it is reachable from
+          every panel rather than hiding behind one. */}
+      {!isGuestView && !isPreMatch && (
+        <Box sx={{ px: 1, pb: 1 }}>
+          <MatchXpSummary fixture={fixture} groupData={groupData} />
+        </Box>
+      )}
+
       {/* --- STICKY TAB NAVIGATOR --- */}
       <Box sx={{ position: "sticky", top: 70, zIndex: 20, px: 1, pb: 1 }}>
         <Box
