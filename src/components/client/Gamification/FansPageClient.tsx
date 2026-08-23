@@ -5,6 +5,7 @@ import { Box, Paper, Stack, Tab, Tabs, Typography, alpha, useTheme } from "@mui/
 import Leaderboard from "./Leaderboard";
 import UserProgressPanel from "./UserProgressPanel";
 import type { LeaderboardEntry } from "@/lib/gamification/progressQueries";
+import { PREDICTION } from "@/lib/gamification/xpConfig";
 
 /**
  * The fan progress page: your standing, then the boards.
@@ -19,14 +20,20 @@ export default function FansPageClient({
   clubName,
   clubEntries,
   globalEntries,
+  predictorEntries,
   currentUid,
   rank,
+  predictionPoints,
+  predictionsResolved,
 }: {
   clubName: string;
   clubEntries: LeaderboardEntry[];
   globalEntries: LeaderboardEntry[];
+  predictorEntries: LeaderboardEntry[];
   currentUid: string | null;
   rank: { rank: number; total: number } | null;
+  predictionPoints: number;
+  predictionsResolved: number;
 }) {
   const theme = useTheme() as any;
   const [tab, setTab] = useState(0);
@@ -44,6 +51,40 @@ export default function FansPageClient({
             YOUR SEASON
           </Typography>
           <UserProgressPanel />
+
+          {/* The second ladder, shown next to the first but never added to
+              it. A fan who never predicts sees a zero here and still tops the
+              board above, which is the point. */}
+          <Paper
+            sx={{
+              ...theme.clay?.card,
+              mt: 1.5,
+              px: 2,
+              py: 1.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+            }}
+          >
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", fontWeight: 900, letterSpacing: 1.5, opacity: 0.6 }}
+              >
+                PREDICTION POINTS
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {predictionsResolved > 0
+                  ? `From ${predictionsResolved} scored match${predictionsResolved === 1 ? "" : "es"}`
+                  : "Scored after full time"}
+              </Typography>
+            </Box>
+            <Typography sx={{ fontWeight: 900, fontSize: "1.4rem", flexShrink: 0 }}>
+              {predictionPoints.toLocaleString()}
+            </Typography>
+          </Paper>
+
           {rank && (
             <Typography
               variant="body2"
@@ -90,50 +131,61 @@ export default function FansPageClient({
         )}
 
         {tab === 2 && (
-          // Honest placeholder rather than an empty board: prediction points
-          // are not scored yet, and a board of zeroes would imply they were.
-          <Paper sx={{ ...theme.clay?.card, p: { xs: 3, md: 5 }, textAlign: "center" }}>
-            <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", mb: 1 }}>
-              Prediction points aren&apos;t scored yet
-            </Typography>
-            <Typography color="text.secondary" sx={{ maxWidth: 420, mx: "auto" }}>
-              This is the one place being right will count — correct results,
-              exact scorelines, and how many of the real XI you called. It
-              won&apos;t affect the boards above: those stay about turning up.
-            </Typography>
-            <Box
-              sx={{
-                mt: 3,
-                display: "inline-flex",
-                gap: 1,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              {[
-                "Correct result",
-                "Exact scoreline",
-                "XI hits",
-                "Player to watch",
-              ].map((label) => (
-                <Box
-                  key={label}
-                  sx={{
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: 999,
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "text.secondary",
-                    border: `1px solid ${theme.palette.divider}`,
-                    bgcolor: alpha(theme.palette.primary.main, 0.05),
-                  }}
-                >
-                  {label}
-                </Box>
-              ))}
-            </Box>
-          </Paper>
+          <Stack spacing={2}>
+            {/* What earns points, stated up front. Accuracy is the one place
+                being right counts, so the rules should be visible rather than
+                discovered. */}
+            <Paper sx={{ ...theme.clay?.card, p: { xs: 2, md: 2.5 } }}>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", fontWeight: 900, letterSpacing: 1.5, opacity: 0.6, mb: 1.5 }}
+              >
+                HOW POINTS ARE SCORED
+              </Typography>
+              <Stack
+                direction="row"
+                sx={{ flexWrap: "wrap", gap: 1 }}
+              >
+                {[
+                  ["Correct result", PREDICTION.correctResult],
+                  ["Exact scoreline", PREDICTION.exactScore],
+                  ["Each XI hit", PREDICTION.xiHit],
+                  ["Perfect XI", PREDICTION.perfectXi],
+                  ["Player to watch scores or assists", PREDICTION.playerToWatchInvolved],
+                ].map(([label, value]) => (
+                  <Box
+                    key={String(label)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 999,
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: "text.secondary",
+                      border: `1px solid ${theme.palette.divider}`,
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    }}
+                  >
+                    {label}
+                    <Box component="span" sx={{ fontWeight: 900, color: "text.primary" }}>
+                      +{value}
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+
+            <Leaderboard
+              entries={predictorEntries}
+              currentUid={currentUid}
+              metric="predictionPoints"
+              title="Sharpest predictors"
+              emptyMessage={`No ${clubName} prediction has been scored yet. Points land after full time.`}
+            />
+          </Stack>
         )}
       </Box>
     </Stack>

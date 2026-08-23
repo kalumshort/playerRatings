@@ -22,7 +22,7 @@ const db = getFirestore();
 
 const { runGamificationReconcile } = require("../gamification/reconcileJob");
 const { applyXpDelta } = require("../gamification/progressStore");
-const { XP } = require("../gamification/xpConfig");
+const { XP, PREDICTION } = require("../gamification/xpConfig");
 
 const SEASON = "2026";
 const GROUP = "42";
@@ -272,6 +272,134 @@ async function row() {
     assert.ok(summary.rows > 0);
     assert.equal(await row(), undefined);
   });
+
+  // --- Prediction points ------------------------------------------------
+  console.log("\nPrediction points via reconcile\n");
+
+  /**
+   * Writes a finished fixture the reconcile will score against.
+   * @param {string} matchId - Fixture doc id.
+   * @param {object} data - Fixture fields.
+   * @return {Promise<void>}
+   */
+  const seedFixture = (matchId, data) =>
+    db
+      .collection(`fixtures/${SEASON}/fixtures`)
+      .doc(matchId)
+      .set({ status: "FT", goals: { home: 2, away: 1 }, ...data });
+
+  await it("scores predictions and keeps them off the XP total", async () => {
+    await resetDb();
+    await db.collection(`fixtures/${SEASON}/fixtures`).doc("m0").delete();
+    await seed([{ result: "home", ScorePrediction: "2-1" }]);
+    await seedFixture("m0", {});
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    const data = await row();
+    assert.equal(
+      data.predictionPoints,
+      PREDICTION.correctResult + PREDICTION.exactScore,
+    );
+    // The two ladders must not bleed into each other.
+    assert.equal(data.xp, XP.predictWinner + XP.predictScore);
+  });
+
+  await it("pays nothing for predictions on an unfinished match", async () => {
+    await resetDb();
+    await seed([{ result: "home", ScorePrediction: "2-1" }]);
+    await seedFixture("m0", { status: "1H" });
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    assert.equal((await row()).predictionPoints, 0);
+  });
+
+  await it("still pays XP when no fixture exists to score against", async () => {
+    await resetDb();
+    await db.collection(`fixtures/${SEASON}/fixtures`).doc("m0").delete();
+    await seed([{ result: "home" }]);
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    const data = await row();
+    assert.equal(data.predictionPoints, 0);
+    assert.equal(data.xp, XP.predictWinner);
+  });
+
+  await it("is idempotent — points do not accumulate across runs", async () => {
+    await resetDb();
+    await seed([{ result: "home" }]);
+    await seedFixture("m0", {});
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+    const first = (await row()).predictionPoints;
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+    const second = (await row()).predictionPoints;
+
+    assert.equal(first, PREDICTION.correctResult);
+    assert.equal(second, first);
+  });
+
+  await it("scores the XI against groupClubId, not the group id", async () => {
+    // Regression: community groups sit at groups/{ownId} while following a
+    // different club — "The United Stand" is groups/007 following club 33.
+    // Scoring against the group id matched nothing in the feed and silently
+    // paid zero, and community groups hold some of the most active fans.
+    await resetDb();
+
+    const COMMUNITY = "007";
+    const CLUB_ID = 33;
+    await db
+      .collection("groups")
+      .doc(COMMUNITY)
+      .set({ name: "The United Stand", groupClubId: String(CLUB_ID) });
+    await db
+      .collection("groupUsers")
+      .doc(COMMUNITY)
+      .collection("members")
+      .doc(UID)
+      .set({ uid: UID });
+
+    const eleven = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    await db
+      .collection("users").doc(UID)
+      .collection("groups").doc(COMMUNITY)
+      .collection("seasons").doc(SEASON)
+      .collection("matches").doc("mc")
+      .set({
+        chosenTeam: Object.fromEntries(eleven.map((id, i) => [String(i + 1), String(id)])),
+        teamSubmitted: true,
+      });
+
+    await seedFixture("mc", {
+      lineups: [
+        { team: { id: CLUB_ID }, startXI: eleven.map((id) => ({ player: { id } })) },
+      ],
+    });
+
+    await runGamificationReconcile({ db, season: SEASON, logger: { info: () => {} } });
+
+    const snap = await db
+      .collection("userSeasonProgress")
+      .doc(`${SEASON}_${COMMUNITY}_${UID}`)
+      .get();
+
+    assert.equal(
+      snap.data().predictionPoints,
+      11 * PREDICTION.xiHit + PREDICTION.perfectXi,
+    );
+
+    // Clean up the extra group this case introduced.
+    await db.collection("groups").doc(COMMUNITY).delete();
+    await db.collection("groupUsers").doc(COMMUNITY).collection("members").doc(UID).delete();
+    await db.collection(`fixtures/${SEASON}/fixtures`).doc("mc").delete();
+    await db.collection("userSeasonProgress").doc(`${SEASON}_${COMMUNITY}_${UID}`).delete();
+    await db.collection("users").doc(UID).collection("groups").doc(COMMUNITY)
+      .collection("seasons").doc(SEASON).collection("matches").doc("mc").delete();
+  });
+
+  await db.collection(`fixtures/${SEASON}/fixtures`).doc("m0").delete();
 
   // --- The live trigger's write path -----------------------------------
   console.log("\nXP delta (live trigger path)\n");

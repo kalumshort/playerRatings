@@ -21,6 +21,9 @@ export interface LeaderboardEntry {
   displayName: string | null;
   xp: number;
   matchesParticipated: number;
+  /** The separate accuracy ladder. Never summed into `xp`. */
+  predictionPoints: number;
+  predictionsResolved: number;
   /** 1-based, assigned after ordering. */
   rank: number;
 }
@@ -30,6 +33,8 @@ export interface UserProgress {
   totalXp: number;
   seasonXp: number;
   matchesParticipated: number;
+  predictionPoints: number;
+  predictionsResolved: number;
 }
 
 const EMPTY_PROGRESS: UserProgress = {
@@ -37,6 +42,8 @@ const EMPTY_PROGRESS: UserProgress = {
   totalXp: 0,
   seasonXp: 0,
   matchesParticipated: 0,
+  predictionPoints: 0,
+  predictionsResolved: 0,
 };
 
 const toEntry = (doc: FirebaseFirestore.QueryDocumentSnapshot, i: number) => {
@@ -46,6 +53,8 @@ const toEntry = (doc: FirebaseFirestore.QueryDocumentSnapshot, i: number) => {
     displayName: data.displayName ?? null,
     xp: Number(data.xp) || 0,
     matchesParticipated: Number(data.matchesParticipated) || 0,
+    predictionPoints: Number(data.predictionPoints) || 0,
+    predictionsResolved: Number(data.predictionsResolved) || 0,
     rank: i + 1,
   };
 };
@@ -106,6 +115,41 @@ export const getGlobalLeaderboard = cache(
         .map((entry, i) => ({ ...entry, rank: i + 1 }));
     } catch (error) {
       console.error("❌ Global leaderboard read failed:", error);
+      return [];
+    }
+  },
+);
+
+/**
+ * The accuracy board: same club, ranked by prediction points instead of XP.
+ *
+ * A separate query rather than re-sorting the XP board in memory, because the
+ * top predictors are frequently not the top participants — that separation is
+ * the entire reason the two ladders exist.
+ *
+ * Needs the (season, groupId, predictionPoints desc) composite index.
+ */
+export const getPredictorLeaderboard = cache(
+  async (
+    groupId: string,
+    limit = 50,
+    season: string = CURRENT_SEASON,
+  ): Promise<LeaderboardEntry[]> => {
+    try {
+      const snapshot = await adminDb
+        .collection("userSeasonProgress")
+        .where("season", "==", season)
+        .where("groupId", "==", String(groupId))
+        .orderBy("predictionPoints", "desc")
+        .limit(limit)
+        .get();
+
+      return snapshot.docs
+        .map(toEntry)
+        .filter((entry) => entry.predictionPoints > 0)
+        .map((entry, i) => ({ ...entry, rank: i + 1 }));
+    } catch (error) {
+      console.error("❌ Predictor leaderboard read failed:", error);
       return [];
     }
   },
@@ -186,6 +230,8 @@ export const getUserProgress = cache(
         totalXp: Number(progressSnap.data()?.totalXp) || 0,
         seasonXp: Number(row?.xp) || 0,
         matchesParticipated: Number(row?.matchesParticipated) || 0,
+        predictionPoints: Number(row?.predictionPoints) || 0,
+        predictionsResolved: Number(row?.predictionsResolved) || 0,
       };
     } catch (error) {
       console.error("❌ User progress read failed:", error);

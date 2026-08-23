@@ -75,6 +75,23 @@ export const FEATURE_AREAS = [
 export type FeatureArea = (typeof FEATURE_AREAS)[number];
 
 /**
+ * Prediction Points — the ONLY place being right is rewarded.
+ *
+ * A separate ladder from Fan XP on purpose. XP is for turning up, and feeding
+ * accuracy into it would put the luckiest forecaster at the top of a board
+ * meant to rank the most involved fan. These never touch the XP total.
+ *
+ * Result and scoreline stack: calling 2-1 is also calling a home win.
+ */
+export const PREDICTION = {
+  correctResult: 15,
+  exactScore: 40,
+  xiHit: 3,
+  perfectXi: 50,
+  playerToWatchInvolved: 20,
+} as const;
+
+/**
  * Levels, lowest first. Derived from total XP on read and never stored, so
  * retuning these can never leave a stored level stale.
  */

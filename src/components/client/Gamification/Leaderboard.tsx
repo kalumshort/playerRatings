@@ -23,14 +23,18 @@ export default function Leaderboard({
   currentUid,
   title = "Most involved fans",
   emptyMessage = "No one has taken part yet this season. Be the first.",
+  metric = "xp",
 }: {
   entries: LeaderboardEntry[];
   /** Highlights the signed-in fan's own row. */
   currentUid?: string | null;
   title?: string;
   emptyMessage?: string;
+  /** Which ladder this board is ranking. */
+  metric?: "xp" | "predictionPoints";
 }) {
   const theme = useTheme() as any;
+  const isPoints = metric === "predictionPoints";
 
   return (
     <Paper sx={{ ...theme.clay?.card, p: { xs: 2, md: 3 } }}>
@@ -121,14 +125,20 @@ export default function Leaderboard({
 
                 <Stack alignItems="flex-end" sx={{ flexShrink: 0 }}>
                   <Typography sx={{ fontWeight: 900, fontSize: "0.9rem" }}>
-                    {entry.xp.toLocaleString()}
+                    {(isPoints
+                      ? entry.predictionPoints
+                      : entry.xp
+                    ).toLocaleString()}
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{ opacity: 0.55, fontSize: "0.6rem", lineHeight: 1 }}
                   >
-                    {entry.matchesParticipated} match
-                    {entry.matchesParticipated === 1 ? "" : "es"}
+                    {isPoints
+                      ? `${entry.predictionsResolved} scored`
+                      : `${entry.matchesParticipated} match${
+                          entry.matchesParticipated === 1 ? "" : "es"
+                        }`}
                   </Typography>
                 </Stack>
               </Stack>

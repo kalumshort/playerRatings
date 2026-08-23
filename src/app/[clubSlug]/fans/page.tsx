@@ -10,6 +10,7 @@ import { getUserIdFromSession } from "@/lib/auth-server";
 import {
   getClubLeaderboard,
   getGlobalLeaderboard,
+  getPredictorLeaderboard,
   getUserProgress,
   getUserRank,
 } from "@/lib/gamification/progressQueries";
@@ -80,9 +81,10 @@ export default async function FansPage({ params, searchParams }: PageProps) {
     archivedClubSeason(group),
   );
 
-  const [clubEntries, globalEntries] = await Promise.all([
+  const [clubEntries, globalEntries, predictorEntries] = await Promise.all([
     getClubLeaderboard(group.id, 50, season),
     getGlobalLeaderboard(50, season),
+    getPredictorLeaderboard(group.id, 50, season),
   ]);
 
   // Only meaningful for a signed-in fan, and only once they have any XP.
@@ -121,8 +123,11 @@ export default async function FansPage({ params, searchParams }: PageProps) {
           clubName={group.name}
           clubEntries={clubEntries}
           globalEntries={globalEntries}
+          predictorEntries={predictorEntries}
           currentUid={userId}
           rank={rank}
+          predictionPoints={progress?.predictionPoints ?? 0}
+          predictionsResolved={progress?.predictionsResolved ?? 0}
         />
       </Container>
     </>

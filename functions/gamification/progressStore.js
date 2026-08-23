@@ -194,6 +194,8 @@ async function applyXpDelta({
  * @param {string} args.season - Season key.
  * @param {number} args.xp - Absolute season XP.
  * @param {number} args.matchesParticipated - Absolute match count.
+ * @param {number} [args.predictionPoints] - Absolute prediction points.
+ * @param {number} [args.predictionsResolved] - Matches that scored any points.
  * @param {string|null} args.displayName - Already redacted for anonymity.
  * @return {void}
  */
@@ -205,6 +207,8 @@ function writeSeasonRow({
   season,
   xp,
   matchesParticipated,
+  predictionPoints = 0,
+  predictionsResolved = 0,
   displayName,
 }) {
   const rowRef = db
@@ -220,6 +224,11 @@ function writeSeasonRow({
       displayName,
       xp,
       matchesParticipated,
+      // The second ladder, kept as its own field so it can never be summed
+      // into XP by accident — the whole point is that turning up and being
+      // right are ranked separately.
+      predictionPoints,
+      predictionsResolved,
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },

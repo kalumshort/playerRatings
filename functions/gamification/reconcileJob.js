@@ -1,7 +1,34 @@
 const { FieldValue } = require("firebase-admin/firestore");
 
 const { computeMatchXp } = require("./computeMatchXp");
+const { computePredictionPoints } = require("./predictionPoints");
 const { publishableName, writeSeasonRow } = require("./progressStore");
+
+/** API-Football short codes that mean the result is final. */
+const FINISHED_STATUSES = ["FT", "AET", "PEN"];
+
+/**
+ * Every finished fixture of the season, keyed by match id.
+ *
+ * Loaded once and shared across every user, because prediction scoring needs
+ * the result and the team sheet for each match — reading them per user would
+ * multiply one collection read by the size of the membership.
+ *
+ * Finished only: an unplayed match cannot score anything, and the unfinished
+ * majority is the bulk of the collection.
+ *
+ * @param {FirebaseFirestore.Firestore} db - Admin Firestore.
+ * @param {string} season - Season key.
+ * @return {Promise<Map<string, object>>} matchId -> fixture data.
+ */
+async function loadFinishedFixtures(db, season) {
+  const snapshot = await db
+    .collection(`fixtures/${season}/fixtures`)
+    .where("status", "in", FINISHED_STATUSES)
+    .get();
+
+  return new Map(snapshot.docs.map((doc) => [doc.id, doc.data()]));
+}
 
 /**
  * Recomputes every user's season XP from source and corrects the leaderboard.
@@ -40,7 +67,16 @@ async function runGamificationReconcile({
     ? { set: () => {}, close: async () => {} }
     : db.bulkWriter();
 
-  const summary = { users: 0, rows: 0, groups: 0, totalsFixed: 0 };
+  const summary = {
+    users: 0,
+    rows: 0,
+    groups: 0,
+    totalsFixed: 0,
+    fixturesScored: 0,
+  };
+
+  const fixtures = await loadFinishedFixtures(db, seasonKey);
+  summary.fixturesScored = fixtures.size;
 
   // Every uid touched this run, so the all-time totals pass below knows who to
   // rebuild without rescanning `users`.
@@ -54,6 +90,19 @@ async function runGamificationReconcile({
 
   for (const groupDoc of groupsSnap.docs) {
     const groupId = groupDoc.id;
+
+    /*
+     * The club whose XI this group's fans predict.
+     *
+     * NOT the group id. Auto-generated club groups live at groups/{teamId} so
+     * the two match, but a community group does not: "The United Stand" is
+     * groups/007 following club 33. Scoring its members' XI against team id 7
+     * matches nothing in the feed and silently pays zero — and community
+     * groups hold some of the most active fans.
+     *
+     * Every group carries groupClubId; the fallback is belt and braces.
+     */
+    const clubId = String(groupDoc.data()?.groupClubId ?? groupId);
 
     // Union of all three role collections. isGroupMemberServer only checks
     // `members` and misses staff, which would silently drop admins and owners
@@ -94,12 +143,27 @@ async function runGamificationReconcile({
 
       let xp = 0;
       let matchesParticipated = 0;
+      let predictionPoints = 0;
+      let predictionsResolved = 0;
 
       for (const matchDoc of matchesSnap.docs) {
-        const { xp: matchXp } = computeMatchXp(matchDoc.data());
+        const data = matchDoc.data();
+
+        const { xp: matchXp } = computeMatchXp(data);
         if (matchXp > 0) {
           xp += matchXp;
           matchesParticipated++;
+        }
+
+        // The second, separate ladder.
+        const { points, resolved } = computePredictionPoints(
+          data,
+          fixtures.get(matchDoc.id),
+          clubId,
+        );
+        if (resolved && points > 0) {
+          predictionPoints += points;
+          predictionsResolved++;
         }
       }
 
@@ -125,6 +189,8 @@ async function runGamificationReconcile({
         season: seasonKey,
         xp,
         matchesParticipated,
+        predictionPoints,
+        predictionsResolved,
         displayName,
       });
       summary.rows++;

@@ -65,4 +65,35 @@ const FEATURE_AREAS = [
   "reactions",
 ];
 
-module.exports = { XP, XP_CAPS, MAX_MATCH_XP, FEATURE_AREAS };
+/**
+ * Prediction Points — the ONLY place being right is rewarded.
+ *
+ * A separate ladder from Fan XP on purpose. XP is for turning up, and feeding
+ * accuracy into it would put the luckiest forecaster at the top of a board
+ * meant to rank the most involved fan. These never touch the XP total.
+ *
+ * Result and scoreline stack: calling 2-1 is also calling a home win, and
+ * paying both is the convention every prediction game uses.
+ */
+const PREDICTION = {
+  correctResult: 15,
+  exactScore: 40,
+  /** Per player correctly named in the starting XI. */
+  xiHit: 3,
+  /** All eleven, on top of the per-hit points. */
+  perfectXi: 50,
+  /** Your player to watch scored or assisted. */
+  playerToWatchInvolved: 20,
+};
+
+/** Eleven hits is the most the per-hit award can pay. */
+const PREDICTION_CAPS = { xiHits: 11 };
+
+module.exports = {
+  XP,
+  XP_CAPS,
+  MAX_MATCH_XP,
+  FEATURE_AREAS,
+  PREDICTION,
+  PREDICTION_CAPS,
+};
