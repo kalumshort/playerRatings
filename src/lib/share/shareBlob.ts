@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Getting a PNG out of the browser and into whatever the user wants.
  *
