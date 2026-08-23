@@ -672,13 +672,15 @@ export const getTheme = (
             // directly on the page, where several screens put it. The hairline
             // gives it an edge on any surface.
             border: `1px solid ${colors.hairline}`,
-            borderRadius: 10,
+            // Fully rounded track. The pills below match it, so the segmented
+            // control reads as one shape instead of square tabs in a rounded box.
+            borderRadius: 999,
             boxShadow: "none",
             overflow: "hidden",
           },
           scroller: {
             overflow: "auto !important",
-            borderRadius: 10,
+            borderRadius: 999,
             "&::-webkit-scrollbar": { display: "none" },
             msOverflowStyle: "none",
             scrollbarWidth: "none",
@@ -691,7 +693,7 @@ export const getTheme = (
       MuiTab: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
+            borderRadius: 999, // matches the MuiTabs track above
             minHeight: 34,
             margin: "0 2px",
             transition: "background-color 0.2s ease, color 0.2s ease",

@@ -108,47 +108,27 @@ export default function MobileFixtureContainer({
 
       {/* --- STICKY TAB NAVIGATOR --- */}
       <Box sx={{ position: "sticky", top: 70, zIndex: 20, px: 1, pb: 1 }}>
-        <Box
-          sx={(theme: any) => ({
-            ...theme.clay?.box, // Safeguard for custom theme properties
-            display: "flex",
-            alignItems: "center",
-            p: 0.5,
-            backgroundColor: "background.paper", // Fallback if clay is missing
-            borderRadius: "10px",
-            overflow: "hidden",
-          })}
+        {/* MuiTabs draws its own track (sunken fill, hairline, pill radius), so
+            there is no wrapper box here. The 10px-rounded clay box that used to
+            wrap it re-painted the track in `paper` and clipped its corners,
+            which is what squared the bar off. The track is opaque, so it still
+            covers content scrolling under the sticky bar on its own. */}
+        <Tabs
+          value={selectedTab}
+          onChange={(_, newValue) => setSelectedTab(newValue)}
+          variant="fullWidth"
+          scrollButtons={false}
+          TabIndicatorProps={{ style: { display: "none" } }}
         >
-          <Tabs
-            value={selectedTab}
-            onChange={(_, newValue) => setSelectedTab(newValue)}
-            variant="fullWidth"
-            scrollButtons={false}
-            TabIndicatorProps={{ style: { display: "none" } }}
-            // sx={{
-            //   width: "100%",
-            //   "& .MuiTab-root": {
-            //     borderRadius: "20px",
-            //     minHeight: "40px",
-            //     margin: "0 4px",
-            //     transition: "0.3s",
-            //     "&.Mui-selected": {
-            //       backgroundColor: "primary.main",
-            //       color: "white",
-            //     },
-            //   },
-            // }}
-          >
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.value}
-                label={tab.label}
-                value={tab.value}
-                disableRipple
-              />
-            ))}
-          </Tabs>
-        </Box>
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.value}
+              label={tab.label}
+              value={tab.value}
+              disableRipple
+            />
+          ))}
+        </Tabs>
       </Box>
 
       {/* --- CONTENT AREA --- */}

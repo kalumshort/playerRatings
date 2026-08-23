@@ -2,15 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import {
-  Box,
-  Tabs,
-  Tab,
-  Paper,
-  Fade,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Tabs, Tab, Fade, Typography } from "@mui/material";
 import { PersonRounded, GroupsRounded } from "@mui/icons-material";
 
 // TYPES
@@ -35,8 +27,6 @@ export default function LineupPredictorResults({
   groupData,
   isGuestView,
 }: LineupTabsProps) {
-  const theme = useTheme() as any;
-
   const [activeTab, setActiveTab] = useState(isGuestView ? 1 : 0);
   const matchId = String(fixture.id);
 
@@ -60,39 +50,32 @@ export default function LineupPredictorResults({
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mb: 4 }}>
       {/* --- CONDITIONAL TABS --- */}
+      {/* No wrapper Paper here: MuiTabs already draws its own track (sunken
+          fill, hairline, pill radius). The 24px-rounded Paper that used to sit
+          around it clipped that track into square-looking corners. */}
       {!isGuestView && (
-        <Paper
-
-          sx={{
-            ...theme.clay?.box,
-            display: "flex",
-            borderRadius: "24px",
-            overflow: "hidden",
-            mb: 3,
-          }}
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          sx={{ mb: 3 }}
         >
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="fullWidth"
-          >
-            <Tab
-              icon={<PersonRounded fontSize="small" />}
-              iconPosition="start"
-              label="My XI"
-            />
-            <Tab
-              icon={<GroupsRounded fontSize="small" />}
-              iconPosition="start"
-              label="Group XI"
-            />
-            <Tab
-              icon={<GroupsRounded fontSize="small" />}
-              iconPosition="start"
-              label="Stats"
-            />
-          </Tabs>
-        </Paper>
+          <Tab
+            icon={<PersonRounded fontSize="small" />}
+            iconPosition="start"
+            label="My XI"
+          />
+          <Tab
+            icon={<GroupsRounded fontSize="small" />}
+            iconPosition="start"
+            label="Group XI"
+          />
+          <Tab
+            icon={<GroupsRounded fontSize="small" />}
+            iconPosition="start"
+            label="Stats"
+          />
+        </Tabs>
       )}
 
       {/* --- CONTENT AREA --- */}

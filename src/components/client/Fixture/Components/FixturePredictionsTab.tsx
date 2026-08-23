@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Stack, Box } from "@mui/material";
+import { Stack } from "@mui/material";
 import WinnerPredict from "./WinnerPredict";
 import ScorePrediction from "./ScorePrediction";
 import PreMatchMOTM from "./PreMatchMOTM";
@@ -24,19 +24,18 @@ const FixturePredictionsTab = ({
   isGuestView,
 }: FixturePredictionsTabProps) => {
   return (
-    <Stack direction={{ xs: "column", md: "column" }}>
+    <Stack direction="column" spacing={2}>
       {[WinnerPredict, ScorePrediction, PreMatchMOTM].map(
         (Component, index) => (
-          <span key={index}>
-            <Component
-              fixture={fixture}
-              groupId={groupId}
-              currentYear={currentYear}
-              groupData={groupData}
-              isPreMatch={isPreMatch}
-              isGuestView={isGuestView}
-            />
-          </span>
+          <Component
+            key={index}
+            fixture={fixture}
+            groupId={groupId}
+            currentYear={currentYear}
+            groupData={groupData}
+            isPreMatch={isPreMatch}
+            isGuestView={isGuestView}
+          />
         ),
       )}
     </Stack>

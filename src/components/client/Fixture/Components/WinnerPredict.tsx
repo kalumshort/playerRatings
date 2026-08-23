@@ -97,13 +97,12 @@ export default function WinnerPredict({
 
   return (
     <Paper
-
       sx={{
+        p: 2.5,
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-
         justifyContent: "space-between",
       }}
     >

@@ -92,8 +92,8 @@ export default function ScorePrediction({
 
   return (
     <Paper
-
       sx={{
+        p: 2.5,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
