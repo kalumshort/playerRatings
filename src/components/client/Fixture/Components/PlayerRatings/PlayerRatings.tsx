@@ -180,6 +180,7 @@ export default function PlayerRatings({
         fixture={fixture}
         usersMatchPlayerRatings={usersMatchData?.players}
         groupClubId={Number(groupData.groupClubId)}
+        groupName={groupData?.name}
       />
     );
   }

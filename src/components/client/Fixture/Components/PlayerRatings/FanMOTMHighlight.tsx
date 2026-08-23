@@ -112,7 +112,7 @@ export default function FanMOTMHighlight({ fixtureId }: FanMOTMHighlightProps) {
   if (!winner) return null;
 
   return (
-    <HeroCard>
+    <HeroCard data-share-flatten>
       <Paper variant="pill" sx={votePillSx}>
         <Users size={13} color={theme.palette.text.secondary} />
         <Typography variant="caption" sx={{ color: "text.secondary" }}>

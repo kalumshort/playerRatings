@@ -102,6 +102,84 @@ export const selectMotmPercentages = createSelector(
   },
 );
 
+// 5b. Match-level aggregates, for the share card.
+//
+// Nothing precomputes a team number anywhere — the ratings bucket only stores
+// per-player {totalRating, totalSubmits}. Both of these compose on
+// selectMatchRatingsById, so they keep the same (state, matchId) signature and
+// inherit the weakMapMemoize cache-per-argument described above.
+
+export interface MatchTeamAverage {
+  average: number;
+  /** How many players carry at least one rating. */
+  rated: number;
+}
+
+/**
+ * The unweighted mean of the per-player AVERAGES.
+ *
+ * Deliberately NOT sum(totalRating)/sum(totalSubmits): under that form a keeper
+ * with 40 votes outweighs a sub with 4, which is the wrong answer to "how did
+ * the team play". Players with no submits are excluded rather than counted as
+ * zero — the same totalSubmits guard RatingLineup.getRating uses.
+ */
+export const selectMatchTeamAverage = createSelector(
+  [selectMatchRatingsById],
+  (players): MatchTeamAverage | null => {
+    if (!players) return null;
+
+    let sum = 0;
+    let rated = 0;
+
+    Object.values(players as Record<string, any>).forEach((p) => {
+      const submits = Number(p?.totalSubmits) || 0;
+      if (submits <= 0) return;
+      sum += Number(p.totalRating) / submits;
+      rated += 1;
+    });
+
+    return rated === 0 ? null : { average: sum / rated, rated };
+  },
+);
+
+export interface MatchTopRated {
+  playerId: string;
+  average: number;
+  name: string;
+  img: string;
+}
+
+/** The best-rated player of the match. Joins the squad the same way MOTM does. */
+export const selectMatchTopRated = createSelector(
+  [selectMatchRatingsById, selectSeasonSquadDataObject],
+  (players, squadData): MatchTopRated | null => {
+    if (!players) return null;
+
+    let bestId = "";
+    let bestAverage = -Infinity;
+
+    Object.entries(players as Record<string, any>).forEach(([id, p]) => {
+      const submits = Number(p?.totalSubmits) || 0;
+      if (submits <= 0) return;
+      const average = Number(p.totalRating) / submits;
+      if (average > bestAverage) {
+        bestAverage = average;
+        bestId = id;
+      }
+    });
+
+    if (!bestId) return null;
+
+    const player = squadData?.[bestId];
+    return {
+      playerId: bestId,
+      average: bestAverage,
+      name: player?.name || "Unknown",
+      img: player?.photo || "",
+    };
+  },
+);
+
 // 6. Loading States
 export const selectRatingsLoadingStates = createSelector(
   [selectRatingsSlice],

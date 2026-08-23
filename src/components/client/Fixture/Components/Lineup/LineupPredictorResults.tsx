@@ -104,6 +104,7 @@ export default function LineupPredictorResults({
                   matchPredictions={matchPredictions}
                   squadData={squadData}
                   groupData={groupData}
+                  fixture={fixture}
                 />
               ) : (
                 <Box sx={{ p: 4, textAlign: "center", opacity: 0.5 }}>

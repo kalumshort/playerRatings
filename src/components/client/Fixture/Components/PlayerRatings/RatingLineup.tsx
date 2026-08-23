@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Box,
@@ -15,9 +15,16 @@ import {
 import { styled } from "@mui/material/styles";
 
 import { RootState } from "@/lib/redux/store";
-import { selectMatchRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
+import {
+  selectMatchRatingsById,
+  selectMatchTeamAverage,
+  selectMotmPercentages,
+} from "@/lib/redux/selectors/ratingsSelectors";
 import RatingLineupPlayer from "@/components/client/PlayerRatings/RatingLineupPlayer";
+import ShareStage from "@/components/ui/ShareStage";
+import ShareActions from "@/components/ui/ShareActions";
 import FanMOTMHighlight from "./FanMOTMHighlight";
+import RatingsShareCard from "./RatingsShareCard";
 
 type RatingSource = "Group" | "Personal";
 
@@ -25,6 +32,7 @@ interface RatingLineupProps {
   fixture: any;
   usersMatchPlayerRatings?: Record<string, number>;
   groupClubId: number;
+  groupName?: string;
 }
 
 const ShellCard = styled(Paper)(({ theme }: any) => ({
@@ -72,13 +80,41 @@ export default function RatingLineup({
   fixture,
   usersMatchPlayerRatings,
   groupClubId,
+  groupName,
 }: RatingLineupProps) {
   const theme = useTheme() as any;
   const [ratingSrc, setRatingSrc] = useState<RatingSource>("Group");
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const matchRatings = useSelector((state: RootState) =>
     selectMatchRatingsById(state, fixture.id),
   );
+  const motm = useSelector((state: RootState) =>
+    selectMotmPercentages(state, fixture.id),
+  );
+  const teamAverage = useSelector((state: RootState) =>
+    selectMatchTeamAverage(state, fixture.id),
+  );
+
+  // The user's own numbers are a plain object on the prop, so this needs no
+  // selector — but it does need the same "skip what isn't rated" treatment the
+  // group average gets, or an unrated slot would drag the mean down.
+  const personalAverage = useMemo(() => {
+    const values = Object.values(usersMatchPlayerRatings ?? {})
+      .map(Number)
+      .filter(Number.isFinite);
+    return values.length
+      ? {
+          average: values.reduce((a, b) => a + b, 0) / values.length,
+          rated: values.length,
+        }
+      : null;
+  }, [usersMatchPlayerRatings]);
+
+  // Nothing worth sharing yet: no MOTM winner and no aggregate ratings. The
+  // button is absent rather than disabled — a disabled control invites a tap
+  // and explains nothing.
+  const canShare = Boolean(motm?.[0]) || Boolean(teamAverage);
 
   const { formationRows, subs } = useMemo(() => {
     const team = fixture?.lineups?.find((t: any) => t.team.id === groupClubId);
@@ -108,7 +144,7 @@ export default function RatingLineup({
   if (formationRows.length === 0) return null;
 
   return (
-    <ShellCard>
+    <ShellCard data-share-flatten>
       <FanMOTMHighlight fixtureId={fixture.id} />
 
       <Box sx={{ position: "relative", p: 2 }}>
@@ -182,7 +218,38 @@ export default function RatingLineup({
             </Box>
           </SubsDivider>
         )}
+
+        {canShare && (
+          <>
+            {/* Offscreen. The card takes `ratingSrc` so the PNG always matches
+                the toggle the user is looking at. */}
+            <ShareStage width={540}>
+              <RatingsShareCard
+                fixture={fixture}
+                frameRef={shareRef}
+                source={ratingSrc}
+                personalAverage={personalAverage}
+                groupName={groupName}
+              />
+            </ShareStage>
+
+            <ShareActions
+              targetRef={shareRef}
+              align="center"
+              filename={`11Votes-${slug(fixture?.teams?.home?.name)}-${slug(
+                fixture?.teams?.away?.name,
+              )}-Ratings.png`}
+              shareText={
+                motm?.[0]
+                  ? `${motm[0].name} is our Man of the Match — ${motm[0].percentage}% of the vote.`
+                  : "Our player ratings are in."
+              }
+            />
+          </>
+        )}
       </Box>
     </ShellCard>
   );
 }
+
+const slug = (name?: string) => (name || "Team").replace(/\s+/g, "-");

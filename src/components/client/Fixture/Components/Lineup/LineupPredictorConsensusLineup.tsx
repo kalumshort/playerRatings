@@ -22,12 +22,15 @@ interface ConsensusLineupProps {
   matchPredictions: any;
   squadData: any;
   groupData: any;
+  /** Only used to caption the share image with the matchup. */
+  fixture?: any;
 }
 
 export default function ConsensusLineup({
   matchPredictions,
   squadData,
   groupData,
+  fixture,
 }: ConsensusLineupProps) {
   const theme = useTheme() as any;
   const [showLogic, setShowLogic] = useState(false);
@@ -152,7 +155,10 @@ export default function ConsensusLineup({
       <LineupShell
         team={mappedTeam}
         formation={consensus.formation}
-        title={`${groupData.name}  Preferred XI`}
+        title={`${groupData.name} Preferred XI`}
+        eyebrow="CONSENSUS XI"
+        fixture={fixture}
+        shareText={`${groupData.name}'s Preferred XI — ${consensus.formation}, picked by the fans.`}
         enableSave={true}
       />
     </Box>
