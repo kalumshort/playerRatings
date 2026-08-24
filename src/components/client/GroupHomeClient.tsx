@@ -28,13 +28,17 @@ export default function GroupHomeClient() {
   // z-9999, so switching season blanked the entire app including the header.
   if (!activeSeasonLoaded || loading) {
     return (
-      <Box sx={{ mt: { xs: 2, md: 4 } }}>
+      // Same top offset and insets as the loaded page, so nothing shifts when
+      // the fixtures arrive.
+      <Box sx={{ mt: { xs: 0, md: 4 } }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
             <PageSkeleton rows={3} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <PageSkeleton rows={1} />
+            <Box sx={{ px: { xs: 2, md: 0 } }}>
+              <PageSkeleton rows={1} />
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -42,13 +46,20 @@ export default function GroupHomeClient() {
   }
 
   return (
-    <Box sx={{ mt: { xs: 2, md: 4 }, px: { xs: 0, md: 0 } }}>
+    // No top margin on mobile: the latest fixture is the hero and sits flush
+    // under the app bar, the same way the fixture page's header does.
+    <Box sx={{ mt: { xs: 0, md: 4 } }}>
       <Grid container spacing={3}>
         {/* --- LEFT COLUMN --- */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Full-bleed, so its squared top corners meet the app bar. */}
             <LatestFixtureItem />
-            <UpcomingFixturesCard count={3} />
+            {/* Everything below the hero is inset on mobile — edge to edge, the
+                cards had no breathing room against the screen edges. */}
+            <Box sx={{ px: { xs: 2, md: 0 } }}>
+              <UpcomingFixturesCard count={3} />
+            </Box>
           </Box>
         </Grid>
 
@@ -59,6 +70,7 @@ export default function GroupHomeClient() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
+              px: { xs: 2, md: 0 },
               position: { md: "sticky" },
               top: 100,
             }}

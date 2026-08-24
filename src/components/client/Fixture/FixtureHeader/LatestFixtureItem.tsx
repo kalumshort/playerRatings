@@ -26,6 +26,10 @@ export default function LatestFixtureItem() {
         sx={{
           bgcolor: "grey.900",
           borderRadius: "12px",
+          // Occupies the same hero slot as the real header, so it squares off
+          // against the app bar on mobile too.
+          borderTopLeftRadius: { xs: 0, sm: "12px" },
+          borderTopRightRadius: { xs: 0, sm: "12px" },
           textAlign: "center",
           border: `1px solid ${theme.palette.divider}`,
         }}

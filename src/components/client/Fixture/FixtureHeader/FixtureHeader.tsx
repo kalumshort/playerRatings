@@ -79,13 +79,15 @@ export const FixtureHeaderSkeleton = ({
   className?: string;
 }) => (
   <Paper
-
     className={className}
     sx={{
       p: 0,
       overflow: "hidden",
       minHeight: 200,
       bgcolor: "background.paper",
+      // Matches the loaded header, so the top edge doesn't shift on arrival.
+      borderTopLeftRadius: { xs: 0, sm: "12px" },
+      borderTopRightRadius: { xs: 0, sm: "12px" },
     }}
   >
     <Box sx={{ px: 2, pt: 2.5, pb: 2 }}>
@@ -226,10 +228,16 @@ export default function FixtureHeader({
     <Paper
       onClick={() => onClick?.(fixData.id)}
       className={addClass}
-
       sx={{
         p: 0,
         overflow: "hidden",
+        // On mobile this card IS the top of the page — both places it is used
+        // put it directly under the app bar, running edge to edge. Rounded top
+        // corners left two slivers of page background showing above it, which
+        // reads as the header not being seated properly. The bottom corners
+        // stay rounded: that edge is against content, not the bar.
+        borderTopLeftRadius: { xs: 0, sm: "12px" },
+        borderTopRightRadius: { xs: 0, sm: "12px" },
         cursor: onClick ? "pointer" : "default",
         transition: "transform 0.18s ease, box-shadow 0.18s ease",
         "&:hover": onClick
