@@ -12,6 +12,7 @@ import AppToaster from "@/components/client/AppToaster";
 import NavigationLoader from "@/components/client/Widgets/NavigationLoader";
 import { Suspense } from "react";
 import { X_HANDLE } from "@/lib/config/brand";
+import { getUserHomeSlugServer } from "@/lib/firebase/firebase-admin-queries";
 
 // Configure the fonts
 const outfit = Outfit({
@@ -73,7 +74,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoggedIn } = await getAuthSession();
+  const { userId } = await getAuthSession();
+  // The header logo points straight at the fan's own club. Resolved here so
+  // it is correct in the first HTML and so the header never has to subscribe
+  // to Redux — see getUserHomeSlugServer.
+  const homeSlug = userId ? await getUserHomeSlugServer(userId) : null;
+
   // Read the cookie on the server
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("themeMode")?.value as
@@ -94,7 +100,7 @@ export default async function RootLayout({
           <StoreProvider>
             <ThemeRegistry initialTheme={initialTheme}>
               <DrawerProvider>
-                <Header />
+                <Header homeSlug={homeSlug} />
                 <Suspense fallback={null}>
                   <NavigationLoader />
                 </Suspense>

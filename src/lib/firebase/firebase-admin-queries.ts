@@ -666,6 +666,32 @@ export async function getInvitePreview(code: string): Promise<InvitePreview> {
   }
 }
 
+/**
+ * The slug of the club the fan calls home — the header logo's destination.
+ *
+ * Resolved on the server rather than read from Redux, because the header
+ * renders above the club layout that populates the store: subscribing it to
+ * Redux made it a listener for a dispatch that happens during another
+ * component's render (see GroupClientInitializer). This also means the logo
+ * points at the right club in the very first HTML, before hydration.
+ *
+ * cache()d, and built on the already-cache()d getUserData, so the root layout
+ * and the page it wraps share one read.
+ */
+export const getUserHomeSlugServer = cache(async (userId: string) => {
+  try {
+    const userData = await getUserData(userId);
+    const groupId = userData?.activeGroup;
+    if (!groupId) return null;
+
+    const groupDoc = await adminDb.collection("groups").doc(groupId).get();
+    return groupDoc.exists ? (groupDoc.data()?.slug ?? null) : null;
+  } catch (error) {
+    console.error("❌ Error resolving home slug:", error);
+    return null;
+  }
+});
+
 export const getUserData = cache(async (userId: string) => {
   const userDoc = await adminDb.collection("users").doc(userId).get();
   if (!userDoc.exists) return null;

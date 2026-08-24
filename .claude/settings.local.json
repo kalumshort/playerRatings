@@ -50,7 +50,9 @@
       "Bash(node test/gamification.test.js)",
       "Bash(echo \"exit=$?\")",
       "Bash(python -)",
-      "Bash(npm --prefix functions run test:reconcile:xp)"
+      "Bash(npm --prefix functions run test:reconcile:xp)",
+      "Bash(git --no-pager diff --stat -- src)",
+      "Bash(git --no-pager diff -- src/components/client/Header/NavItems.tsx)"
     ]
   }
 }

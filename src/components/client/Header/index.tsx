@@ -6,7 +6,7 @@ import Navbar from "./Navbar";
 import NavDrawer from "./NavDrawer";
 import { useDrawer } from "./DrawerContext";
 
-export default function Header() {
+export default function Header({ homeSlug }: { homeSlug?: string | null }) {
   const { isOpen, toggleDrawer } = useDrawer();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -14,7 +14,11 @@ export default function Header() {
   return (
     <>
       {/* Pass the toggle function to your navbar */}
-      <Navbar setDrawerOpen={toggleDrawer} isMobile={isMobile} />
+      <Navbar
+        setDrawerOpen={toggleDrawer}
+        isMobile={isMobile}
+        homeSlug={homeSlug}
+      />
       {/*
         Pure CSS breakpoints, not useMediaQuery: without ssrMatchMedia the hook
         returns false during SSR, so this spacer rendered at 80px on the server

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   collection,
   query,
@@ -9,7 +9,7 @@ import {
   where,
   documentId,
 } from "firebase/firestore";
-import useUserData from "@/Hooks/useUserData";
+import { selectUserAccountData } from "@/lib/redux/selectors/userSelectors";
 import { clientDB } from "@/lib/firebase/client";
 import {
   groupDataFailure,
@@ -20,7 +20,12 @@ import { setUserGroups } from "@/lib/redux/slices/userDataSlice";
 // Import your user data action here
 
 export const GroupsListener = () => {
-  const { userData } = useUserData();
+  // The account slice directly, not useUserData: that hook also selects from
+  // the groupData slice, which the club layout writes during its render phase
+  // (see GroupClientInitializer). This listener is mounted for the whole
+  // session, so subscribing to that slice means being updated mid-render of
+  // another component. All it needs is the uid.
+  const userData: any = useSelector(selectUserAccountData);
   const dispatch = useDispatch();
 
   const [membership, setMembership] = useState<Record<string, string>>({});

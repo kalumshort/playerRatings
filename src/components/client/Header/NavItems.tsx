@@ -3,11 +3,12 @@ import { Home, Calendar, Trophy, User, Medal, Globe } from "lucide-react";
 /**
  * Drawer navigation for the current context.
  *
- * `isAuthed` gates only the entries that genuinely need a session — a
- * signed-out visitor on a public club still gets the club's pages and, more
- * importantly, a way back out to the site. Without that last entry the drawer
- * rendered nothing but a login form, so a guest who landed on a club had no
- * navigation at all.
+ * `isAuthed` splits the two audiences rather than just hiding account entries.
+ * A guest on a public club needs a way back out to the marketing site, and
+ * without it the drawer rendered nothing but a login form. A signed-in fan
+ * needs the opposite: "/" only redirects them to their own club, so a
+ * "11Votes Home" entry would be a link that appears to go somewhere else and
+ * doesn't.
  */
 export const getNavItems = (clubSlug, { isAuthed = true } = {}) => {
   if (!clubSlug) {
@@ -40,8 +41,9 @@ export const getNavItems = (clubSlug, { isAuthed = true } = {}) => {
     },
     ...(isAuthed
       ? [{ text: "Settings", icon: <User size={20} />, path: `/profile` }]
-      : []),
-    // The way out of the club, mirroring the header logo.
-    { text: "11Votes Home", icon: <Globe size={20} />, path: `/` },
+      : // Guests only: their way out of the club, mirroring the header logo.
+        // For a signed-in fan "/" just bounces back to their own club, so the
+        // entry would promise a destination it never reaches.
+        [{ text: "11Votes Home", icon: <Globe size={20} />, path: `/` }]),
   ];
 };

@@ -24,6 +24,18 @@ export default function StoreProvider({
 
   return (
     <Provider store={storeRef.current}>
+      {children}
+
+      {/*
+        All three render null, so their position here is about render ORDER,
+        not the DOM. They subscribe to the store, and the club layout inside
+        `children` dispatches into that store during its render phase (see
+        GroupClientInitializer). Mounted above `children` they had already
+        rendered when that dispatch landed, which is React's "Cannot update a
+        component while rendering a different component". Rendering after
+        `children` means they simply read the fresh state on the way past.
+      */}
+
       {/* 1. Global State Hydration */}
       {user && <UserDataListener userId={user?.uid || null} />}
 
@@ -32,8 +44,6 @@ export default function StoreProvider({
 
       {/* 3. Logic-based Routing (Depends on Data above) */}
       {user && <GroupNavigationSync />}
-
-      {children}
     </Provider>
   );
 }

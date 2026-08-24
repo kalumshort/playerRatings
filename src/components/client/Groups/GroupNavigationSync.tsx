@@ -1,56 +1,66 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import useGroupData from "@/Hooks/useGroupData";
-import useUserData from "@/Hooks/useUserData";
+import { useRouter } from "next/navigation";
+import { useSelector, useStore } from "react-redux";
+import { selectUserAccountData } from "@/lib/redux/selectors/userSelectors";
+import type { RootState } from "@/lib/redux/store";
 
+/**
+ * Follows a deliberate group switch into the new club's workspace.
+ *
+ * Deliberately does NOT redirect a signed-in fan who lands on "/". Two other
+ * things already do that — the server `redirect()` in app/page.tsx and
+ * RootPage's own effect — and a third racing them is what hung the app: going
+ * /club -> / -> /club fired a client `replace()` at the same destination the
+ * server redirect was already navigating to, and the page never committed.
+ * The server handles the normal case; RootPage's effect covers the one the
+ * server can't see (a live session whose cookie has expired).
+ *
+ * Subscribes to the userData slice ONLY, and reads the group dictionary
+ * imperatively. The club layout writes the groupData slice during its render
+ * phase (see GroupClientInitializer), so subscribing to that slice from up
+ * here — this component is mounted for the whole session — means being
+ * re-rendered mid-render of another component. The switch it watches for lives
+ * in userData anyway; groupData is just the id -> slug lookup, and by the time
+ * a fan can pick a club it is necessarily already populated.
+ */
 export const GroupNavigationSync = () => {
   const router = useRouter();
-  const pathname = usePathname();
-  const { userData } = useUserData();
-  const { groupData }: any = useGroupData();
+  const store = useStore<RootState>();
+  const userData: any = useSelector(selectUserAccountData);
 
   // Keep track of the LAST known active group ID to detect a manual change
   const lastActiveGroupId = useRef<string | null>(null);
 
   useEffect(() => {
     // 1. DATA GUARD: Ensure we have the necessary data
-    if (!userData?.activeGroup || !groupData) return;
+    const currentActiveId = userData?.activeGroup;
+    if (!currentActiveId) return;
 
-    const currentActiveId = userData.activeGroup;
-    const activeGroupMetadata = groupData[currentActiveId];
-
-    // Determine if the user actually clicked a "Switch Group" button
-    const hasGroupChanged =
-      lastActiveGroupId.current !== null &&
-      lastActiveGroupId.current !== currentActiveId;
-
-    // 2. LOGIC FOR INITIAL LANDING (at "/")
-    if (pathname === "/" && activeGroupMetadata?.slug) {
-      console.log("[NavSync] Landing on root, redirecting to active group.");
-      lastActiveGroupId.current = currentActiveId;
-      router.replace(`/${activeGroupMetadata.slug}`);
-      return;
-    }
-
-    // 3. LOGIC FOR MANUAL SWITCH (even if on "/profile")
-    // If the ID changed, we navigate regardless of the current path
-    if (hasGroupChanged && activeGroupMetadata?.slug) {
-      console.log(
-        `[NavSync] Active group changed to ${currentActiveId}. Switching workspace...`,
-      );
-      lastActiveGroupId.current = currentActiveId;
-      router.push(`/${activeGroupMetadata.slug}`);
-      return;
-    }
-
-    // 4. SYNC THE REF: If we are just browsing (e.g. at /profile) and no change happened,
-    // just make sure our Ref stays up to date with the current ID.
+    // 2. SEED: the first pass only records where we started. Without this every
+    // mount would look like a switch.
     if (lastActiveGroupId.current === null) {
       lastActiveGroupId.current = currentActiveId;
+      return;
     }
-  }, [userData?.activeGroup, groupData, pathname, router]);
+
+    if (lastActiveGroupId.current === currentActiveId) return;
+
+    // 3. MANUAL SWITCH: the fan picked a different club, from wherever they
+    // happened to be (including /profile). Follow them into it.
+    const slug = (store.getState().groupData as any)?.byGroupId?.[
+      currentActiveId
+    ]?.slug;
+    if (!slug) return;
+
+    lastActiveGroupId.current = currentActiveId;
+    router.push(`/${slug}`);
+    // The root layout resolves the header logo's target server-side, and Next
+    // reuses that shared segment across a client navigation — without a
+    // refresh the logo would keep pointing at the club they just left.
+    router.refresh();
+  }, [userData?.activeGroup, router, store]);
 
   return null;
 };

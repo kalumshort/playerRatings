@@ -7,16 +7,32 @@ import { Toolbar, IconButton, Box, Typography, useTheme } from "@mui/material";
 import { Menu as MenuIcon } from "lucide-react";
 import { GlassAppBar, NavContainer } from "./Header.styles";
 import BackButton from "./BackButton";
-// import useGroupData from "@/hooks/useGroupsData";
 
 interface NavbarProps {
   setDrawerOpen: (open: boolean) => void;
   isMobile: boolean;
+  /** The signed-in fan's own club, resolved on the server. Null when signed
+   *  out, or when they have not joined a club yet. */
+  homeSlug?: string | null;
 }
 
-export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
+export default function Navbar({
+  setDrawerOpen,
+  isMobile,
+  homeSlug,
+}: NavbarProps) {
   const theme = useTheme();
-  //   const { activeGroup } = useGroupData();
+
+  // Their own club, not the one in the URL and not "/".
+  //
+  // "/" is wrong for a signed-in fan: the root page redirects them straight
+  // back to their club, and going /club -> / -> /club raced the server
+  // redirect against the client one and left the page never rendering.
+  // Linking at the real destination removes the round trip entirely.
+  //
+  // Still "/" while signed out, which is the whole point — a guest on a public
+  // club needs a route back to the marketing site.
+  const homeHref = homeSlug ? `/${homeSlug}` : "/";
 
   return (
     <GlassAppBar>
@@ -26,18 +42,11 @@ export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
               it: it used to be a child of the logo's click handler, so every
               tap on "back" also fired the logo's navigation. */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            {/*
-              Always "/", never the current club. The logo is the way out of a
-              club, and pointing it at /{clubSlug} trapped a signed-out visitor
-              on a public club page with no route back to the site. A signed-in
-              member loses nothing: "/" redirects them to their own club anyway.
-
-              A real <Link> rather than router.push so it opens in a new tab,
-              gets a status-bar preview, and works before hydration.
-            */}
+            {/* A real <Link> rather than router.push so it opens in a new tab,
+                gets a status-bar preview, and works before hydration. */}
             <Box
               component={Link}
-              href="/"
+              href={homeHref}
               aria-label="11Votes home"
               sx={{
                 display: "flex",
