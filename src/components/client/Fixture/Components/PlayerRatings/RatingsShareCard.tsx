@@ -2,18 +2,17 @@
 
 import React from "react";
 import { useSelector } from "react-redux";
-import { Avatar, Box, Paper, Stack, Typography, alpha, useTheme } from "@mui/material";
+import { Avatar, Box, Stack, Typography, alpha, useTheme } from "@mui/material";
 import { Trophy } from "lucide-react";
 
 import { RootState } from "@/lib/redux/store";
 import {
   selectMatchMotmById,
-  selectMatchTeamAverage,
-  selectMatchTopRated,
   selectMotmPercentages,
-  type MatchTeamAverage,
 } from "@/lib/redux/selectors/ratingsSelectors";
-import { getRatingTextSx } from "@/lib/utils/football-logic";
+import { selectSeasonSquadDataObject } from "@/lib/redux/selectors/squadSelectors";
+import { getRatingChipSx } from "@/lib/utils/football-logic";
+import RatingLineupPlayer from "@/components/client/PlayerRatings/RatingLineupPlayer";
 import ShareFrame from "@/components/ui/ShareFrame";
 import ShareFixtureLine, {
   fixtureSubtitle,
@@ -22,33 +21,55 @@ import ShareFixtureLine, {
 interface RatingsShareCardProps {
   fixture: any;
   frameRef: React.Ref<HTMLDivElement>;
-  /** Mirrors RatingLineup's `ratingSrc`, so the PNG matches the visible toggle. */
+  /**
+   * Which set of numbers the card is built from. The parent has already
+   * resolved this — a "Personal" toggle with no personal ratings behind it
+   * arrives here as "Group".
+   */
   source: "Group" | "Personal";
-  /** Only meaningful when `source === "Personal"`. */
-  personalAverage?: MatchTeamAverage | null;
+  /** Formation rows as the pitch draws them: back line first. */
+  formationRows: any[][];
+  /** Substitutes who actually came on. */
+  subs: any[];
+  /** Resolves one player's score in whichever source is active. */
+  getRating: (playerId: string | number) => number | null;
+  /** The user's own MOTM pick. Used instead of the crowd winner when personal. */
+  personalMotmId?: string | null;
   groupName?: string;
 }
 
 /**
- * The post-match ratings image.
+ * The post-match ratings image: the Man of the Match over the XI that produced
+ * the result, every player carrying their score, with the impact subs beneath.
  *
  * A dedicated card rather than a capture of the live RatingLineup, because that
  * view is built around a <Select> and two CSS keyframe animations — html2canvas
  * would rasterise the dropdown as a dead form control and freeze the MOTM medal
- * mid-bounce. This renders the same numbers in a shape meant to be a still.
+ * mid-bounce. The pitch itself is the real RatingLineupPlayer, so the exported
+ * image and the screen cannot drift apart.
  *
- * Every value comes from selectors that are already populated for the visible
- * view, so mounting this offscreen costs no extra Firestore reads.
+ * Two readings of the same shape, picked by the toggle the user is looking at:
+ *
+ *   MY RATINGS  -> their own pick for Man of the Match, and the score they
+ *                  personally gave every player.
+ *   STADIUM AVG -> the voted MOTM with their share of the vote, over the
+ *                  group's averages.
+ *
+ * Every value comes from selectors already populated for the visible view, or
+ * from props the pitch has computed, so mounting this offscreen costs no extra
+ * Firestore reads.
  */
 export default function RatingsShareCard({
   fixture,
   frameRef,
   source,
-  personalAverage,
+  formationRows,
+  subs,
+  getRating,
+  personalMotmId,
   groupName,
 }: RatingsShareCardProps) {
-  const theme = useTheme() as any;
-  const mode = theme.palette.mode as "light" | "dark";
+  const squadDict = useSelector(selectSeasonSquadDataObject);
 
   const motm = useSelector((s: RootState) =>
     selectMotmPercentages(s, fixture.id),
@@ -56,199 +77,233 @@ export default function RatingsShareCard({
   const motmMeta = useSelector((s: RootState) =>
     selectMatchMotmById(s, fixture.id),
   );
-  const teamAverage = useSelector((s: RootState) =>
-    selectMatchTeamAverage(s, fixture.id),
-  );
-  const topRated = useSelector((s: RootState) =>
-    selectMatchTopRated(s, fixture.id),
-  );
 
-  const winner = motm?.[0];
-  const runnersUp = motm?.slice(1, 4) ?? [];
   const isPersonal = source === "Personal";
-  const headline = isPersonal ? personalAverage : teamAverage;
+  const winner = isPersonal
+    ? personalMotm(personalMotmId, squadDict, getRating)
+    : crowdMotm(motm?.[0], motmMeta?.motmTotalVotes ?? 0);
 
   return (
     <ShareFrame
       frameRef={frameRef}
-      eyebrow="Fan Ratings"
+      eyebrow={isPersonal ? "My Ratings" : "Fan Ratings"}
       subtitle={fixtureSubtitle(fixture)}
       footerNote={groupName}
       width={540}
     >
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: 2 }}>
         <ShareFixtureLine fixture={fixture} />
       </Box>
 
       {winner && (
-        <Stack alignItems="center" sx={{ mb: 2.5 }}>
-          <Box sx={{ position: "relative", mb: 1.25 }}>
-            <Avatar
-              src={winner.img}
-              alt={winner.name}
-              sx={{
-                width: 96,
-                height: 96,
-                backgroundColor: "background.default",
-                color: "text.secondary",
-              }}
-            />
-            {/* Static, unlike FanMOTMHighlight's floatPulse medal — an
-                animation frozen mid-bounce reads as a rendering bug in a still. */}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: -4,
-                right: -4,
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                display: "grid",
-                placeItems: "center",
-                background: `linear-gradient(145deg, ${theme.palette.motm.goldStart} 0%, ${theme.palette.motm.goldEnd} 100%)`,
-              }}
-            >
-              <Trophy size={17} color={theme.palette.motm.bronze} strokeWidth={2.5} />
-            </Box>
-          </Box>
-
-          <Typography
-            variant="overline"
-            sx={{ color: "primary.main", letterSpacing: 2.5, lineHeight: 1.4 }}
-          >
-            Man of the Match
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 900,
-              textTransform: "uppercase",
-              letterSpacing: -0.4,
-              textAlign: "center",
-              lineHeight: 1.15,
-            }}
-          >
-            {winner.name}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>
-            {winner.percentage}% of {motmMeta?.motmTotalVotes ?? 0} votes
-          </Typography>
-        </Stack>
+        <MotmBlock
+          label={isPersonal ? "My Man of the Match" : "Man of the Match"}
+          {...winner}
+        />
       )}
 
-      <Stack direction="row" spacing={1}>
-        <StatTile
-          label={isPersonal ? "Your avg" : "Team avg"}
-          value={headline ? headline.average.toFixed(1) : "—"}
-          valueSx={headline ? getRatingTextSx(headline.average, mode) : undefined}
-        />
-        <StatTile
-          label="Players rated"
-          value={headline ? String(headline.rated) : "—"}
-        />
-        <StatTile
-          label="Top rated"
-          value={topRated ? topRated.average.toFixed(1) : "—"}
-          caption={topRated ? surname(topRated.name) : undefined}
-          valueSx={topRated ? getRatingTextSx(topRated.average, mode) : undefined}
-        />
-      </Stack>
-
-      {runnersUp.length > 0 && (
-        <Box sx={{ mt: 2 }}>
-          <Typography
-            variant="overline"
-            sx={{ fontWeight: 900, letterSpacing: 1.5, opacity: 0.55 }}
+      <Stack spacing={0.5}>
+        {formationRows.map((rowPlayers, idx) => (
+          <Stack
+            key={`row-${idx}`}
+            direction="row"
+            justifyContent="space-around"
+            alignItems="center"
           >
-            Also in the running
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap", gap: 1 }}>
-            {runnersUp.map((p) => (
-              <Paper
-                key={p.playerId}
-                variant="flat"
-                sx={(t: any) => ({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.75,
-                  px: 1,
-                  py: 0.4,
-                  borderRadius: 999,
-                  border: `1px solid ${alpha(t.palette.divider, 0.9)}`,
-                })}
-              >
-                <Avatar src={p.img} alt={p.name} sx={{ width: 22, height: 22 }} />
-                <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                  {surname(p.name)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 900, color: "text.secondary" }}
-                >
-                  {p.percentage}%
-                </Typography>
-              </Paper>
+            {rowPlayers.map((p: any) => (
+              <RatingLineupPlayer
+                key={p.id}
+                player={p}
+                playerRating={getRating(p.id)}
+              />
             ))}
           </Stack>
+        ))}
+      </Stack>
+
+      {subs.length > 0 && (
+        <Box
+          sx={(t: any) => ({
+            mt: 1.5,
+            pt: 2,
+            borderTop: `1px dashed ${alpha(t.palette.divider, 0.8)}`,
+          })}
+        >
+          <Typography
+            variant="overline"
+            align="center"
+            display="block"
+            sx={{ fontWeight: 900, opacity: 0.55, letterSpacing: 2, mb: 1.5 }}
+          >
+            Impact Substitutes
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 1.5,
+            }}
+          >
+            {subs.map((p: any) => (
+              <RatingLineupPlayer
+                key={p.id}
+                player={p}
+                playerRating={getRating(p.id)}
+              />
+            ))}
+          </Box>
         </Box>
       )}
     </ShareFrame>
   );
 }
 
-const surname = (name: string) => name?.split(" ").pop() || name;
+// --- Man of the Match -------------------------------------------------------
 
-const StatTile = ({
+interface MotmWinner {
+  name: string;
+  img?: string;
+  /** The user's own score for their pick. Personal card only. */
+  rating?: number | null;
+  /** "63% of 41 votes". Crowd card only. */
+  footnote?: string;
+}
+
+const crowdMotm = (
+  top: { name: string; img: string; percentage: string } | undefined,
+  totalVotes: number,
+): MotmWinner | null =>
+  top
+    ? {
+        name: top.name,
+        img: top.img,
+        footnote: `${top.percentage}% of ${votes(totalVotes)}`,
+      }
+    : null;
+
+const personalMotm = (
+  motmId: string | null | undefined,
+  squadDict: Record<string, any>,
+  getRating: (playerId: string | number) => number | null,
+): MotmWinner | null => {
+  if (!motmId) return null;
+  const id = String(motmId);
+  return {
+    name: squadDict?.[id]?.name || "Unknown",
+    // Same fallback RatingLineupPlayer uses: the squad dictionary is the good
+    // source, the id-derived URL is what exists for anyone missing from it.
+    img:
+      squadDict?.[id]?.photo ||
+      `https://media.api-sports.io/football/players/${id}.png`,
+    rating: getRating(id),
+  };
+};
+
+const MotmBlock = ({
   label,
-  value,
-  caption,
-  valueSx,
-}: {
-  label: string;
-  value: string;
-  caption?: string;
-  valueSx?: object;
-}) => (
-  <Box
-    sx={(t: any) => ({
-      ...(t.clay?.box ?? {}),
-      flex: 1,
-      px: 1,
-      py: 1.25,
-      textAlign: "center",
-      minWidth: 0,
-    })}
-  >
-    <Typography
-      variant="caption"
-      sx={{
-        display: "block",
-        fontWeight: 900,
-        letterSpacing: 1,
-        textTransform: "uppercase",
-        color: "text.secondary",
-        fontSize: 9.5,
-      }}
-    >
-      {label}
-    </Typography>
-    <Typography sx={{ fontWeight: 900, fontSize: 26, lineHeight: 1.2, ...valueSx }}>
-      {value}
-    </Typography>
-    {caption && (
+  name,
+  img,
+  rating,
+  footnote,
+}: MotmWinner & { label: string }) => {
+  const theme = useTheme() as any;
+
+  return (
+    <Stack alignItems="center" sx={{ mb: 2 }}>
+      <Box sx={{ position: "relative", mb: 1 }}>
+        {/*
+          The border is load-bearing, not decoration. html2canvas only inherits
+          an ancestor's `overflow: hidden` clip when that ancestor's border box
+          differs from its padding box (ElementPaint.getEffects, html2canvas
+          1.4.1), so a BORDERLESS round avatar has its <img> child drawn
+          unclipped — which is why this portrait came out of the exporter as a
+          bare square. The pitch avatars below always looked right because
+          RatingLineupPlayer already had one.
+        */}
+        <Avatar
+          src={img}
+          alt={name}
+          sx={(t: any) => ({
+            width: 84,
+            height: 84,
+            border: `4px solid ${t.palette.background.paper}`,
+            backgroundColor: t.palette.background.default,
+            color: t.palette.text.secondary,
+            boxShadow: t.shadows[3],
+            "& img": { objectFit: "cover" },
+          })}
+        />
+        {/* Static, unlike FanMOTMHighlight's floatPulse medal — an
+            animation frozen mid-bounce reads as a rendering bug in a still. */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -4,
+            right: -4,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            display: "grid",
+            placeItems: "center",
+            background: `linear-gradient(145deg, ${theme.palette.motm.goldStart} 0%, ${theme.palette.motm.goldEnd} 100%)`,
+          }}
+        >
+          <Trophy size={15} color={theme.palette.motm.bronze} strokeWidth={2.5} />
+        </Box>
+      </Box>
+
       <Typography
-        variant="caption"
-        sx={{
-          display: "block",
-          fontWeight: 700,
-          color: "text.secondary",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
+        variant="overline"
+        sx={{ color: "primary.main", letterSpacing: 2.5, lineHeight: 1.4 }}
       >
-        {caption}
+        {label}
       </Typography>
-    )}
-  </Box>
-);
+
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 900,
+            textTransform: "uppercase",
+            letterSpacing: -0.3,
+            textAlign: "center",
+            lineHeight: 1.2,
+          }}
+        >
+          {name}
+        </Typography>
+        {rating != null && Number.isFinite(rating) && (
+          <Box
+            sx={{
+              px: 1,
+              py: 0.1,
+              borderRadius: "8px",
+              fontWeight: 900,
+              fontSize: 16,
+              lineHeight: 1.4,
+              // A filled pill, not coloured text: the ramp's pale bands need an
+              // outline to read in light mode, and html2canvas strokes text with
+              // the raw CSS px lineWidth, which exports as a hollow letterform.
+              ...getRatingChipSx(rating),
+            }}
+          >
+            {rating.toFixed(1)}
+          </Box>
+        )}
+      </Stack>
+
+      {footnote && (
+        <Typography
+          variant="caption"
+          sx={{ color: "text.secondary", fontWeight: 700 }}
+        >
+          {footnote}
+        </Typography>
+      )}
+    </Stack>
+  );
+};
+
+/** "1 vote", not "1 votes". */
+const votes = (n: number) => `${n} ${n === 1 ? "vote" : "votes"}`;

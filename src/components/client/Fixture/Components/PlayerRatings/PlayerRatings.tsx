@@ -179,6 +179,9 @@ export default function PlayerRatings({
       <RatingLineup
         fixture={fixture}
         usersMatchPlayerRatings={usersMatchData?.players}
+        // `motmVote` is the submitted pick; `pendingMotm` covers the guest /
+        // never-submitted case where the parked pick is all there is.
+        usersMotmId={usersMatchData?.motmVote ?? pendingMotm}
         groupClubId={Number(groupData.groupClubId)}
         groupName={groupData?.name}
       />

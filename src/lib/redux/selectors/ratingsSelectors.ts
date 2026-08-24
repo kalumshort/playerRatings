@@ -102,12 +102,12 @@ export const selectMotmPercentages = createSelector(
   },
 );
 
-// 5b. Match-level aggregates, for the share card.
+// 5b. Match-level aggregate.
 //
 // Nothing precomputes a team number anywhere — the ratings bucket only stores
-// per-player {totalRating, totalSubmits}. Both of these compose on
-// selectMatchRatingsById, so they keep the same (state, matchId) signature and
-// inherit the weakMapMemoize cache-per-argument described above.
+// per-player {totalRating, totalSubmits}. This composes on
+// selectMatchRatingsById, so it keeps the same (state, matchId) signature and
+// inherits the weakMapMemoize cache-per-argument described above.
 
 export interface MatchTeamAverage {
   average: number;
@@ -139,44 +139,6 @@ export const selectMatchTeamAverage = createSelector(
     });
 
     return rated === 0 ? null : { average: sum / rated, rated };
-  },
-);
-
-export interface MatchTopRated {
-  playerId: string;
-  average: number;
-  name: string;
-  img: string;
-}
-
-/** The best-rated player of the match. Joins the squad the same way MOTM does. */
-export const selectMatchTopRated = createSelector(
-  [selectMatchRatingsById, selectSeasonSquadDataObject],
-  (players, squadData): MatchTopRated | null => {
-    if (!players) return null;
-
-    let bestId = "";
-    let bestAverage = -Infinity;
-
-    Object.entries(players as Record<string, any>).forEach(([id, p]) => {
-      const submits = Number(p?.totalSubmits) || 0;
-      if (submits <= 0) return;
-      const average = Number(p.totalRating) / submits;
-      if (average > bestAverage) {
-        bestAverage = average;
-        bestId = id;
-      }
-    });
-
-    if (!bestId) return null;
-
-    const player = squadData?.[bestId];
-    return {
-      playerId: bestId,
-      average: bestAverage,
-      name: player?.name || "Unknown",
-      img: player?.photo || "",
-    };
   },
 );
 

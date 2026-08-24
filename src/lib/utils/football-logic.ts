@@ -140,6 +140,24 @@ export const getRatingTextSx = (
     : {}),
 });
 
+/**
+ * sx for a rating rendered as a filled CHIP rather than as coloured text.
+ *
+ * The pastel-on-surface form above needs an outline to be legible in light
+ * mode, and an outlined glyph is the wrong tool inside a share PNG: html2canvas
+ * strokes text with a lineWidth taken straight from the CSS px value, so the
+ * ramp's palest bands come out as hollow letterforms in the exported image.
+ *
+ * Inverting it — pastel as the fill, near-black as the ink — is one appearance
+ * in both modes and rasterises as a solid rect plus solid text, which every
+ * renderer agrees on. Contrast is 12:1 or better across the whole ramp, since
+ * every band was tuned to read against #1F1F25 to begin with.
+ */
+export const getRatingChipSx = (r: number) => ({
+  backgroundColor: getRatingColor(r),
+  color: RATING_STROKE,
+});
+
 export type MatchStatus = "prematch" | "inplay" | "postmatch" | "cancelled";
 
 /**

@@ -31,6 +31,8 @@ type RatingSource = "Group" | "Personal";
 interface RatingLineupProps {
   fixture: any;
   usersMatchPlayerRatings?: Record<string, number>;
+  /** The user's own MOTM pick, for the "MY RATINGS" share card. */
+  usersMotmId?: string | null;
   groupClubId: number;
   groupName?: string;
 }
@@ -79,6 +81,7 @@ const groupByFormation = (starters: any[]) => {
 export default function RatingLineup({
   fixture,
   usersMatchPlayerRatings,
+  usersMotmId,
   groupClubId,
   groupName,
 }: RatingLineupProps) {
@@ -111,10 +114,11 @@ export default function RatingLineup({
       : null;
   }, [usersMatchPlayerRatings]);
 
-  // Nothing worth sharing yet: no MOTM winner and no aggregate ratings. The
-  // button is absent rather than disabled — a disabled control invites a tap
-  // and explains nothing.
-  const canShare = Boolean(motm?.[0]) || Boolean(teamAverage);
+  // Nothing worth sharing yet: no MOTM winner, no aggregate ratings and
+  // nothing of the user's own. The button is absent rather than disabled — a
+  // disabled control invites a tap and explains nothing.
+  const canShare =
+    Boolean(motm?.[0]) || Boolean(teamAverage) || Boolean(personalAverage);
 
   const { formationRows, subs } = useMemo(() => {
     const team = fixture?.lineups?.find((t: any) => t.team.id === groupClubId);
@@ -131,15 +135,46 @@ export default function RatingLineup({
     // Narrowed from [fixture] so a live clock tick doesn't rebuild the pitch.
   }, [fixture?.lineups, fixture?.events, groupClubId]);
 
-  const getRating = (playerId: string | number): number | null => {
+  // "MY RATINGS" with nothing behind it exports the crowd card instead of a
+  // pitch full of dashes, so the SHARE source is resolved once, here, and both
+  // the image and its caption are built from it rather than from the toggle.
+  const shareSrc: RatingSource =
+    ratingSrc === "Personal" && personalAverage ? "Personal" : "Group";
+
+  const shareText = useMemo(() => {
+    if (shareSrc === "Personal") {
+      const average = personalAverage?.average.toFixed(1) ?? "—";
+      const pick = usersMotmId
+        ? [...formationRows.flat(), ...subs].find(
+            (p: any) => String(p.id) === String(usersMotmId),
+          )
+        : null;
+      return pick
+        ? `My Man of the Match: ${pick.name}. I rated the team ${average}.`
+        : `Here's how I rated the team — ${average} average.`;
+    }
+    return motm?.[0]
+      ? `${motm[0].name} is our Man of the Match — ${motm[0].percentage}% of the vote.`
+      : "Our player ratings are in.";
+  }, [shareSrc, personalAverage, usersMotmId, formationRows, subs, motm]);
+
+  // Takes the source explicitly, because the pitch and the share card can be
+  // reading different ones at the same moment — see `shareSrc` above.
+  const getRatingFrom = (
+    playerId: string | number,
+    src: RatingSource,
+  ): number | null => {
     const pId = String(playerId);
-    if (ratingSrc === "Personal") return usersMatchPlayerRatings?.[pId] ?? null;
+    if (src === "Personal") return usersMatchPlayerRatings?.[pId] ?? null;
 
     // Keyed lookup, not .find() — this threw outright when the slot held the
     // object shape. The totalSubmits guard avoids NaN/Infinity on a zero-submit row.
     const stats = matchRatings?.[pId];
     return stats?.totalSubmits ? stats.totalRating / stats.totalSubmits : null;
   };
+
+  const getRating = (playerId: string | number) =>
+    getRatingFrom(playerId, ratingSrc);
 
   if (formationRows.length === 0) return null;
 
@@ -227,8 +262,11 @@ export default function RatingLineup({
               <RatingsShareCard
                 fixture={fixture}
                 frameRef={shareRef}
-                source={ratingSrc}
-                personalAverage={personalAverage}
+                source={shareSrc}
+                formationRows={formationRows}
+                subs={subs}
+                getRating={(id) => getRatingFrom(id, shareSrc)}
+                personalMotmId={usersMotmId}
                 groupName={groupName}
               />
             </ShareStage>
@@ -238,12 +276,8 @@ export default function RatingLineup({
               align="center"
               filename={`11Votes-${slug(fixture?.teams?.home?.name)}-${slug(
                 fixture?.teams?.away?.name,
-              )}-Ratings.png`}
-              shareText={
-                motm?.[0]
-                  ? `${motm[0].name} is our Man of the Match — ${motm[0].percentage}% of the vote.`
-                  : "Our player ratings are in."
-              }
+              )}-${shareSrc === "Personal" ? "My-Ratings" : "Ratings"}.png`}
+              shareText={shareText}
             />
           </>
         )}

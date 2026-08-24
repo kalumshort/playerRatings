@@ -55,11 +55,16 @@ const TeamSide = ({
   logo?: string;
   align: "left" | "right";
 }) => (
+  // Both sides pack towards the scoreline in the middle. `flex-end` on BOTH is
+  // not a typo: the away side is `row-reverse`, so its main axis runs right to
+  // left and flex-END is the visual LEFT edge. Under the `flex-start` this used
+  // to have, the away crest and name were thrown against the right edge of the
+  // card while the home side stayed glued to the score.
   <Stack
     direction={align === "right" ? "row" : "row-reverse"}
     alignItems="center"
     spacing={1}
-    sx={{ flex: 1, justifyContent: align === "right" ? "flex-end" : "flex-start", minWidth: 0 }}
+    sx={{ flex: 1, justifyContent: "flex-end", minWidth: 0 }}
   >
     <Typography
       variant="body2"
