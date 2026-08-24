@@ -3,7 +3,10 @@ import { Metadata } from "next";
 
 import PlayerPageClient from "@/components/client/PlayerPage/PlayerPageClient";
 import { adminDb } from "@/lib/firebase/admin";
-import { getGroupBySlugServer } from "@/lib/firebase/firebase-admin-queries";
+import {
+  getGroupBySlugServer,
+  getSquadPlayerServer,
+} from "@/lib/firebase/firebase-admin-queries";
 import {
   archivedClubSeason,
   isArchivedSeason,
@@ -17,27 +20,67 @@ interface Props {
   searchParams: Promise<{ season?: string }>;
 }
 
+/**
+ * The player behind this URL, as `{ name, photo, ... }` or null.
+ *
+ * Squad first, since that is where the nightly job actually writes players.
+ * The legacy `players/{id}` collection stays as a fallback: it is sparse, but
+ * it is not empty, and a hand-created doc there is still a real name.
+ *
+ * Never throws — a page that renders entirely from the client should not 500
+ * over a title.
+ */
+async function resolvePlayer(
+  clubId: string | number | null | undefined,
+  season: string,
+  playerId: string,
+) {
+  const squadPlayer = await getSquadPlayerServer(clubId, season, playerId);
+  if (squadPlayer?.name) return squadPlayer;
+
+  const legacyDoc = await adminDb
+    .collection("players")
+    .doc(playerId)
+    .get()
+    .catch(() => null);
+
+  return legacyDoc?.exists ? legacyDoc.data() : null;
+}
+
 export async function generateMetadata({
   params,
   searchParams,
 }: Props): Promise<Metadata> {
   const { clubSlug, playerId } = await params;
 
-  // Fetch player data for SEO
-  const playerDoc = await adminDb.collection("players").doc(playerId).get();
-  if (!playerDoc.exists) return { title: "Player Not Found" };
-
-  const player = playerDoc.data();
+  // Group first: the squad is stored per club id, so nothing can be resolved
+  // without it.
   const group = await getGroupBySlugServer(clubSlug);
   const season = resolveSeason(
     (await searchParams).season,
     archivedClubSeason(group),
   );
 
+  const player = await resolvePlayer(group?.groupClubId, season, playerId);
+
   return {
-    title: `${player?.name} - Stats & Ratings`,
-    description: `Season performance, match history and fan ratings for ${player?.name}.`,
-    openGraph: { images: player?.photo ? [player.photo] : [] },
+    // A named player gets a real title; anything else falls back to the plain
+    // brand name via `absolute`, which opts out of the root layout's
+    // "%s | 11Votes" template. It must never read "Player Not Found" again —
+    // the page itself loads the player fine, so that title was only ever a
+    // statement about this lookup.
+    ...(player?.name
+      ? {
+          title: `${player.name} - Stats & Ratings`,
+          description: `Season performance, match history and fan ratings for ${player.name}${
+            group?.name ? ` at ${group.name}` : ""
+          }.`,
+          openGraph: { images: player.photo ? [player.photo] : [] },
+        }
+      : { title: { absolute: "11Votes" } }),
+    // Outside the branch on purpose: the old early return dropped the
+    // canonical and the archived-season noindex for exactly the pages that hit
+    // it, which was nearly all of them.
     alternates: {
       canonical: `https://11votes.com/${clubSlug}/players/${playerId}`,
     },
@@ -60,15 +103,12 @@ export default async function Page({ params, searchParams }: Props) {
     archivedClubSeason(group),
   );
 
-  // Read for the AggregateRating only. Both reads are allowed to fail: the
-  // page renders from the client either way, and structured data is never
-  // worth breaking a page for.
-  const [playerDoc, seasonDoc] = await Promise.all([
-    adminDb
-      .collection("players")
-      .doc(playerId)
-      .get()
-      .catch(() => null),
+  // The player is resolved the same way the title resolves it — cache()d, so
+  // this costs nothing on top of generateMetadata. Both reads are allowed to
+  // fail: the page renders from the client either way, and structured data is
+  // never worth breaking a page for.
+  const [player, seasonDoc] = await Promise.all([
+    resolvePlayer(group?.groupClubId, season, playerId),
     group
       ? adminDb
           .doc(`groups/${group.id}/seasons/${season}/players/${playerId}`)
@@ -77,7 +117,6 @@ export default async function Page({ params, searchParams }: Props) {
       : Promise.resolve(null),
   ]);
 
-  const player = playerDoc?.data();
   // `totalRating` is the running sum the rating writes increment alongside
   // `totalSubmits`, so the mean is the one over the other. Guarded because a
   // player nobody has rated has no doc at all.

@@ -667,6 +667,53 @@ export async function getInvitePreview(code: string): Promise<InvitePreview> {
 }
 
 /**
+ * One player out of a club's squad for a season.
+ *
+ * The `players` collection this used to be read from does not cover the
+ * squads — the nightly job writes them to `teamSquads/{clubId}/season/{season}`
+ * as `activeSquad` / `seasonSquad` arrays — which is why every player page
+ * titled itself "Player Not Found".
+ *
+ * `seasonSquad` is the fallback rather than the primary because it accumulates:
+ * it keeps players who have since left the club, and their pages still carry a
+ * season of ratings, so they must stay resolvable by name.
+ *
+ * cache()d — generateMetadata and the page body both resolve the same player
+ * within one render.
+ */
+export const getSquadPlayerServer = cache(
+  async (
+    clubId: string | number | null | undefined,
+    season: string,
+    playerId: string,
+  ) => {
+    if (!clubId) return null;
+
+    try {
+      const squadDoc = await adminDb
+        .collection("teamSquads")
+        .doc(String(clubId))
+        .collection("season")
+        .doc(String(season))
+        .get();
+
+      if (!squadDoc.exists) return null;
+
+      const data = squadDoc.data();
+      const find = (list: unknown) =>
+        Array.isArray(list)
+          ? list.find((p: any) => String(p?.id) === String(playerId))
+          : undefined;
+
+      return find(data?.activeSquad) ?? find(data?.seasonSquad) ?? null;
+    } catch (error) {
+      console.error("❌ Error resolving squad player:", error);
+      return null;
+    }
+  },
+);
+
+/**
  * The slug of the club the fan calls home — the header logo's destination.
  *
  * Resolved on the server rather than read from Redux, because the header

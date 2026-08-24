@@ -152,20 +152,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // --- Player pages: deliberately NOT listed yet ------------------------
-  // These should be the strongest long-tail pages on the site, but they are
-  // not currently fit to submit. Two independent problems, both verified by
-  // sampling 20 squad player URLs across different clubs — 20/20 failed:
+  // These should be the strongest long-tail pages on the site. Two problems
+  // originally blocked them; one is now fixed:
   //
-  //   1. `generateMetadata` reads `players/{playerId}`, but squads live under
-  //      `teamSquads/{clubId}/season/{season}`.activeSquad. The global
-  //      collection does not cover them, so every page titles itself
-  //      "Player Not Found".
-  //   2. The body is entirely client-rendered — server HTML is a skeleton, so
-  //      there is no content for a crawler even once the title is fixed.
+  //   1. FIXED. `generateMetadata` read `players/{playerId}`, but squads live
+  //      under `teamSquads/{clubId}/season/{season}` as activeSquad /
+  //      seasonSquad, so every page titled itself "Player Not Found". The
+  //      route now resolves the player from the squad (getSquadPlayerServer)
+  //      and carries a real title, description and OG image.
+  //   2. STILL OPEN. The body is entirely client-rendered — server HTML is a
+  //      skeleton, so there is no content for a crawler to index beyond the
+  //      head.
   //
-  // Submitting ~674 URLs in that state is worse than omitting them. Re-enable
-  // by building from the same teamSquads read the homepage showcase uses, once
-  // the page server-renders its player.
+  // Submitting ~674 content-less URLs is still worse than omitting them, so
+  // this stays off until the page server-renders its player.
 
   // Indexable, but the lowest priority on the site. `priority` is a hint Google
   // documents as ignored; it is kept here to state intent, not to expect an

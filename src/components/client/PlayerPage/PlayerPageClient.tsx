@@ -274,13 +274,14 @@ export default function PlayerPageClient({
                 )}
               </Box>
             </Paper>
+            {/* gap, not spacing: these wrap on a narrow phone, and `spacing`
+                only gaps the row, leaving the wrapped pills touching. */}
             <Stack
               direction="row"
-              spacing={1}
               justifyContent="center"
               flexWrap="wrap"
               useFlexGap
-              sx={{ mb: 2.5 }}
+              sx={{ gap: 1.25, mt: 2, mb: 2.5 }}
             >
               <PlayerNavigationControl
                 squadData={squadData}

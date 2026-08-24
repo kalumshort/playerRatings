@@ -4,30 +4,19 @@ import React, { useMemo, useState } from "react";
 import {
   Avatar,
   Box,
-  Chip,
   IconButton,
-  InputAdornment,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
-  Menu,
   Stack,
-  TextField,
+  Tooltip,
   Typography,
+  alpha,
   useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import SearchIcon from "@mui/icons-material/Search";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 
-interface SquadPlayer {
-  id: string | number;
-  name: string;
-  photo?: string;
-  position?: string;
-  number?: number | string;
-}
+import PickerTrigger from "./PickerTrigger";
+import SquadPickerMenu, { type SquadPlayer } from "./SquadPickerMenu";
 
 interface PlayerCompareControlProps {
   squadData: Record<string, SquadPlayer> | null | undefined;
@@ -46,11 +35,10 @@ export default function PlayerCompareControl({
   onClear,
   compareColor,
 }: PlayerCompareControlProps) {
-  const theme = useTheme() as any;
+  const theme = useTheme();
   const accent = compareColor ?? theme.palette.secondary?.main ?? "#ff9800";
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [query, setQuery] = useState("");
 
   const players = useMemo(() => {
     if (!squadData) return [];
@@ -59,154 +47,96 @@ export default function PlayerCompareControl({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [squadData, excludePlayerId]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return players;
-    return players.filter((p) => p.name.toLowerCase().includes(q));
-  }, [players, query]);
-
-  const open = Boolean(anchorEl);
-
-  const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(e.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    setQuery("");
-  };
-
-  const handlePick = (player: SquadPlayer) => {
-    onSelect(player);
-    handleClose();
-  };
-
+  // ── Active state ────────────────────────────────────────────────────────
+  // Once a comparison is running this stops being a picker and becomes a
+  // status pill: it carries the colour the compared player is drawn in on the
+  // graph, so the legend and the control are the same object.
   if (comparePlayer) {
     return (
-      <Chip
-        avatar={<Avatar src={comparePlayer.photo} alt={comparePlayer.name} />}
-        label={
-          <Stack direction="row" spacing={0.75} alignItems="center">
-            <CompareArrowsIcon
-              sx={{ fontSize: 14, color: accent, opacity: 0.9 }}
-            />
-            <Typography
-              component="span"
-              sx={{ fontWeight: 700, fontSize: "0.8rem" }}
-            >
-              vs {comparePlayer.name}
-            </Typography>
-          </Stack>
-        }
-        onDelete={onClear}
-        deleteIcon={<CloseIcon />}
+      <Box
         sx={{
-          bgcolor: `${accent}1a`,
-          color: "text.primary",
-          border: `1px solid ${accent}55`,
-          fontWeight: 700,
-          "& .MuiChip-deleteIcon": {
-            color: "text.secondary",
-            "&:hover": { color: accent },
-          },
+          height: 38,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.75,
+          pl: 0.5,
+          pr: 0.5,
+          borderRadius: "999px",
+          bgcolor: alpha(accent, 0.12),
+          border: `1px solid ${alpha(accent, 0.45)}`,
         }}
-      />
+      >
+        <Avatar
+          src={comparePlayer.photo}
+          alt={comparePlayer.name}
+          sx={{
+            width: 30,
+            height: 30,
+            bgcolor: "background.default",
+            // A ring in the compare colour, so the pill reads as the graph's
+            // key without needing a separate legend.
+            border: `2px solid ${accent}`,
+          }}
+        />
+
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ pr: 0.25 }}>
+          <CompareArrowsIcon sx={{ fontSize: 15, color: accent }} />
+          <Typography
+            component="span"
+            sx={{
+              fontWeight: 800,
+              fontSize: "0.78rem",
+              letterSpacing: 0.2,
+              whiteSpace: "nowrap",
+              maxWidth: 150,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {comparePlayer.name}
+          </Typography>
+        </Stack>
+
+        <Tooltip title="Stop comparing">
+          <IconButton
+            onClick={onClear}
+            size="small"
+            aria-label={`Stop comparing with ${comparePlayer.name}`}
+            sx={{
+              width: 26,
+              height: 26,
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: alpha(accent, 0.2),
+                color: "text.primary",
+              },
+            }}
+          >
+            <CloseIcon sx={{ fontSize: 15 }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
     );
   }
 
   return (
     <>
-      <Chip
-        icon={<AddIcon sx={{ fontSize: 16 }} />}
+      <PickerTrigger
+        icon={<AddIcon sx={{ fontSize: 17 }} />}
         label="Compare player"
-        onClick={handleOpen}
-        sx={{
-          cursor: "pointer",
-          fontWeight: 700,
-          fontSize: "0.75rem",
-          borderRadius: "10px",
-          border: `1px dashed ${theme.palette.divider}`,
-          bgcolor: "transparent",
-          color: "text.secondary",
-          "&:hover": {
-            bgcolor: `${accent}10`,
-            borderColor: accent,
-            color: "text.primary",
-          },
-        }}
+        accent={accent}
+        active={Boolean(anchorEl)}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
       />
 
-      <Menu
+      <SquadPickerMenu
         anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            sx: {
-              mt: 1,
-              width: 280,
-              maxHeight: 420,
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`,
-            },
-          },
-        }}
-        MenuListProps={{ sx: { py: 0 } }}
-      >
-        <Box sx={{ p: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
-          <TextField
-            autoFocus
-            fullWidth
-            size="small"
-            placeholder="Search squad…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
-        <Box sx={{ overflow: "auto", maxHeight: 340 }}>
-          {filtered.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="caption" color="text.secondary">
-                No players match
-              </Typography>
-            </Box>
-          ) : (
-            filtered.map((p) => (
-              <ListItemButton
-                key={String(p.id)}
-                onClick={() => handlePick(p)}
-                sx={{ px: 1.5, py: 1 }}
-              >
-                <ListItemAvatar sx={{ minWidth: 44 }}>
-                  <Avatar src={p.photo} alt={p.name} sx={{ width: 32, height: 32 }} />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={p.name}
-                  secondary={
-                    p.position
-                      ? `${p.position}${p.number ? ` · #${p.number}` : ""}`
-                      : undefined
-                  }
-                  primaryTypographyProps={{
-                    fontSize: "0.85rem",
-                    fontWeight: 700,
-                  }}
-                  secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                />
-              </ListItemButton>
-            ))
-          )}
-        </Box>
-      </Menu>
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        players={players}
+        onPick={onSelect}
+        accent={accent}
+      />
     </>
   );
 }
