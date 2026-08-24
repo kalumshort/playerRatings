@@ -11,6 +11,7 @@ import { DrawerProvider } from "@/components/client/Header/DrawerContext";
 import AppToaster from "@/components/client/AppToaster";
 import NavigationLoader from "@/components/client/Widgets/NavigationLoader";
 import { Suspense } from "react";
+import { X_HANDLE } from "@/lib/config/brand";
 
 // Configure the fonts
 const outfit = Outfit({
@@ -61,6 +62,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    // Attributes shared links to the brand account on X.
+    site: X_HANDLE,
+    creator: X_HANDLE,
   },
 };
 

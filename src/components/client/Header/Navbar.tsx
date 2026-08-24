@@ -2,11 +2,10 @@
 
 import React from "react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Toolbar, IconButton, Box, Typography, useTheme } from "@mui/material";
 import { Menu as MenuIcon } from "lucide-react";
 import { GlassAppBar, NavContainer } from "./Header.styles";
-import { useAuth } from "@/context/AuthContext";
 import BackButton from "./BackButton";
 // import useGroupData from "@/hooks/useGroupsData";
 
@@ -16,34 +15,45 @@ interface NavbarProps {
 }
 
 export default function Navbar({ setDrawerOpen, isMobile }: NavbarProps) {
-  const router = useRouter();
   const theme = useTheme();
-  const { user } = useAuth();
-  const { clubSlug } = useParams();
   //   const { activeGroup } = useGroupData();
 
   return (
     <GlassAppBar>
       <Toolbar sx={{ height: isMobile ? 64 : 80, px: 2 }}>
         <NavContainer>
-          {/* Logo */}
-          <Box
-            onClick={() => router.push(clubSlug ? `/${clubSlug}` : `/`)}
-            sx={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              transition: "0.2s",
-              "&:hover": { opacity: 0.8 },
-            }}
-          >
-            <Image
-              src="/assets/logo/11Votes_Icon_Blue.png" // Next.js knows this is in 'public'
-              alt="11Votes Logo"
-              width={50}
-              height={50}
-              priority
-            />
+          {/* Logo + back. The back button sits alongside the logo, not inside
+              it: it used to be a child of the logo's click handler, so every
+              tap on "back" also fired the logo's navigation. */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {/*
+              Always "/", never the current club. The logo is the way out of a
+              club, and pointing it at /{clubSlug} trapped a signed-out visitor
+              on a public club page with no route back to the site. A signed-in
+              member loses nothing: "/" redirects them to their own club anyway.
+
+              A real <Link> rather than router.push so it opens in a new tab,
+              gets a status-bar preview, and works before hydration.
+            */}
+            <Box
+              component={Link}
+              href="/"
+              aria-label="11Votes home"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                transition: "0.2s",
+                "&:hover": { opacity: 0.8 },
+              }}
+            >
+              <Image
+                src="/assets/logo/11Votes_Icon_Blue.png" // Next.js knows this is in 'public'
+                alt="11Votes Logo"
+                width={50}
+                height={50}
+                priority
+              />
+            </Box>
             <BackButton />
           </Box>
 

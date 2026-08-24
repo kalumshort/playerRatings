@@ -16,7 +16,6 @@ import {
   Switch,
 } from "@mui/material";
 import { User, LogOut, ShieldCheck, Mail, Key } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import useUserData from "@/Hooks/useUserData";
 import { updateUserField } from "@/lib/firebase/client-user-actions";
@@ -38,7 +37,6 @@ export default function AccountTab({
   const { userData } = useUserData();
   const { groupData } = useGroupData();
   const { user, isSocialOnly, signOut } = useAuth();
-  const router = useRouter();
 
   // Linking a password needs an email to link it to; social accounts are not
   // guaranteed to expose one.
@@ -62,8 +60,10 @@ export default function AccountTab({
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
+    if (!(await signOut())) return;
+    // Hard navigation so the RSC cache, the Redux store and the Firestore
+    // listeners all go with the session. See NavDrawer.handleLogout.
+    window.location.assign("/");
   };
 
   if (!userData) return null;

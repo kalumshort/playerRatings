@@ -14,9 +14,19 @@ import {
   alpha,
 } from "@mui/material";
 import Link from "next/link"; // Next.js Link
-import TwitterIcon from "@mui/icons-material/Twitter";
+import XIcon from "@mui/icons-material/X";
 import InstagramIcon from "@mui/icons-material/Instagram";
-import YouTubeIcon from "@mui/icons-material/YouTube";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import SvgIcon, { type SvgIconProps } from "@mui/material/SvgIcon";
+import { CONTACT_EMAIL, SOCIALS } from "@/lib/config/brand";
+
+/** MUI ships no TikTok glyph, so the mark is inlined rather than pulling in
+ *  another icon package for a single button. */
+const TikTokIcon = (props: SvgIconProps) => (
+  <SvgIcon {...props} viewBox="0 0 24 24">
+    <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.59 2.59 0 1 1 .77-5.06v-3.2a5.71 5.71 0 0 0-.77-.05A5.72 5.72 0 1 0 15.54 15V8.99a7.34 7.34 0 0 0 4.3 1.38V7.3a4.29 4.29 0 0 1-3.24-1.48z" />
+  </SvgIcon>
+);
 
 const Footer = () => {
   const theme = useTheme();
@@ -80,21 +90,40 @@ const Footer = () => {
               The voice of the terraces. Rate players, predict matches, and
               define the consensus for your club.
             </Typography>
+
+            {/* In the wide branding column rather than the narrow link
+                columns: the address is long enough to wrap awkwardly at
+                xs=6. A plain mailto — not next/link, which is for routes. */}
+            <MuiLink
+              href={`mailto:${CONTACT_EMAIL}`}
+              sx={{
+                ...linkStyle,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 3,
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              <MailOutlineIcon sx={{ fontSize: "1rem" }} />
+              {CONTACT_EMAIL}
+            </MuiLink>
+
             <Stack direction="row" spacing={1.5}>
               <SocialButton
-                icon={<TwitterIcon fontSize="small" />}
-                label="Twitter"
-                href="https://twitter.com"
+                icon={<XIcon fontSize="small" />}
+                label="11Votes on X"
+                href={SOCIALS.x}
               />
               <SocialButton
                 icon={<InstagramIcon fontSize="small" />}
-                label="Instagram"
-                href="https://instagram.com"
+                label="11Votes on Instagram"
+                href={SOCIALS.instagram}
               />
               <SocialButton
-                icon={<YouTubeIcon fontSize="small" />}
-                label="YouTube"
-                href="https://youtube.com"
+                icon={<TikTokIcon fontSize="small" />}
+                label="11Votes on TikTok"
+                href={SOCIALS.tiktok}
               />
             </Stack>
           </Grid>

@@ -42,6 +42,10 @@ export default function UserProgressPanel({
   const groupId = userData?.activeGroup;
 
   const [totalXp, setTotalXp] = useState(0);
+  // Whether `totalXp` reflects a real snapshot yet. The 0 above is a
+  // placeholder, and treating it as a level would make every mount look like a
+  // jump from level 1 to whatever the fan has actually earned.
+  const [progressLoaded, setProgressLoaded] = useState(false);
   const [seasonXp, setSeasonXp] = useState(0);
   const [matches, setMatches] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -54,6 +58,8 @@ export default function UserProgressPanel({
   // records a baseline — without that, every page load would congratulate the
   // fan on a level they reached weeks ago.
   const lastLevel = useRef<number | null>(null);
+  // Guard against a stale baseline when the account changes under us.
+  const baselineUid = useRef<string | null>(null);
   // ParticleOverlay keys on this; Date.now() collides when several spawn in
   // the same tick, which silently drops all but one of them.
   const particleId = useRef(0);
@@ -61,9 +67,23 @@ export default function UserProgressPanel({
   useEffect(() => {
     if (!user?.uid) return;
 
+    // A new account means a new baseline: never carry the previous fan's level
+    // across, or the first snapshot reads as a level-up.
+    if (baselineUid.current !== user.uid) {
+      baselineUid.current = user.uid;
+      lastLevel.current = null;
+      setProgressLoaded(false);
+    }
+
     const unsubscribe = onSnapshot(
       doc(clientDB, "userProgress", user.uid),
-      (snap) => setTotalXp(Number(snap.data()?.totalXp) || 0),
+      (snap) => {
+        setTotalXp(Number(snap.data()?.totalXp) || 0);
+        // Set inside the callback rather than derived from `totalXp`: a fan
+        // with no progress doc snapshots as 0, which is no state change at
+        // all, and the celebration effect would never get its baseline.
+        setProgressLoaded(true);
+      },
       (err) => console.error("Progress listener failed:", err),
     );
 
@@ -89,6 +109,12 @@ export default function UserProgressPanel({
 
   // --- Level-up celebration ---------------------------------------------
   useEffect(() => {
+    // Until the first snapshot lands, `totalXp` is the 0 placeholder. Reading a
+    // level off it seeds the baseline at level 1, so the real XP arriving a
+    // moment later fires the celebration — on every mount, and this panel
+    // remounts every time the nav drawer opens.
+    if (!progressLoaded) return;
+
     const level = levelFromXp(totalXp);
 
     if (lastLevel.current === null) {
@@ -125,7 +151,7 @@ export default function UserProgressPanel({
       () => setParticles((prev) => prev.filter((p) => !ids.has(p.id))),
       1400,
     );
-  }, [totalXp]);
+  }, [totalXp, progressLoaded]);
 
   if (!user) return null;
 

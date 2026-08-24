@@ -8,6 +8,8 @@
 // spam signal, so every builder returns `null` when its inputs are missing and
 // the caller skips the tag entirely.
 
+import { CONTACT_EMAIL, SOCIAL_PROFILE_URLS } from "@/lib/config/brand";
+
 const BASE_URL = "https://11votes.com";
 
 export type JsonLd = Record<string, unknown>;
@@ -42,9 +44,16 @@ export const websiteJsonLd = (): JsonLd[] => [
       "@type": "ImageObject",
       url: `${BASE_URL}/icon.png`,
     },
-    // `sameAs` is deliberately omitted: the footer's social links are still
-    // placeholders (twitter.com, instagram.com), and pointing Google at
-    // profiles that aren't ours would be worse than saying nothing.
+    // The real profiles, and the same ones the footer links to. `sameAs` is
+    // what lets Google tie those accounts to this entity rather than treating
+    // them as unrelated pages.
+    sameAs: SOCIAL_PROFILE_URLS,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: CONTACT_EMAIL,
+      url: `${BASE_URL}/contact`,
+    },
   },
 ];
 

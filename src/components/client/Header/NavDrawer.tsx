@@ -17,8 +17,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { X, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase/client";
 
 import { useAuth } from "@/context/AuthContext";
 // import useGroupData from "@/hooks/useGroupsData";
@@ -43,21 +41,29 @@ interface NavDrawerProps {
 export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
   const theme = useTheme();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { clubSlug } = useParams();
   const { userData } = useUserData();
   const { activeGroup, groupData } = useGroupData();
 
   //   const { activeGroup } = useGroupData();
   //   const { isGroupAdmin } = useUserData();
-  const navItems = getNavItems(clubSlug);
+  const navItems = getNavItems(clubSlug, { isAuthed: Boolean(user) });
 
   const accentColor = theme.palette.primary.main;
 
   const handleLogout = async () => {
-    await signOut(auth);
     onClose();
-    router.push("/");
+    // The context's signOut, not firebase's: it also awaits the deletion of the
+    // httpOnly session cookie. Signing out of Firebase alone left the cookie in
+    // place, so the server still saw a session at "/" and redirected the fan
+    // straight back to the club they had just signed out of.
+    if (!(await signOut())) return;
+    // A full document load, not router.push. Signing out has to drop the RSC
+    // cache, the Redux store and every Firestore listener at once — a soft
+    // navigation keeps all three, and on a private club the now-unauthorised
+    // listeners simply never resolve, which is the hang.
+    window.location.assign("/");
   };
 
   const navigateTo = (path: string) => {
@@ -81,7 +87,16 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
       }}
     >
       <Box
-        sx={{ p: 3, display: "flex", flexDirection: "column", height: "100%" }}
+        sx={{
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          // Signed out, the drawer holds a login form *and* the nav list, which
+          // is taller than a phone. Without this the sign-out/theme footer and
+          // the lower nav entries are simply unreachable.
+          overflowY: "auto",
+        }}
       >
         {/* Drawer Header */}
         {/* <Box
@@ -100,19 +115,23 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
           </IconButton>
         </Box> */}
 
-        {!user ? (
-          <Login />
-        ) : (
-          <Box sx={{ flexGrow: 1 }}>
-            {/* Level and XP. Above the nav rather than in the footer: it is
-                the first thing a returning fan looks for, and the drawer
-                unmounts its children when closed, so the two progress
-                listeners only run while it is actually open.
-                Taps through to the full progress page, and closes the drawer
-                on the way so the fan isn't left staring at the nav. */}
+        <Box sx={{ flexGrow: 1 }}>
+          {!user ? (
+            <>
+              <Login />
+              <Divider sx={{ my: 2, opacity: 0.5 }} />
+            </>
+          ) : (
+            /* Level and XP. Above the nav rather than in the footer: it is
+               the first thing a returning fan looks for, and the drawer
+               unmounts its children when closed, so the two progress
+               listeners only run while it is actually open.
+               Taps through to the full progress page, and closes the drawer
+               on the way so the fan isn't left staring at the nav. */
             <Box sx={{ mb: 2 }}>
               <UserProgressPanel variant="bar" onNavigate={onClose} />
             </Box>
+          )}
 
             {/* Admin Section */}
             {/* {isGroupAdmin && (
@@ -141,33 +160,39 @@ export default function NavDrawer({ open, onClose, isMobile }: NavDrawerProps) {
                 </ListItemButton>
               </Paper>
             )} */}
-            {/* Main Nav */}
-            <List>
-              {navItems.map((item) => (
-                <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    onClick={() => navigateTo(item.path)}
-                    sx={{
-                      borderRadius: "12px",
-                      "&:hover": { backgroundColor: `${accentColor}15` },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, color: accentColor }}>
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.text}
-                      primaryTypographyProps={{ variant: "body2" }}
-                    />
-                    <ChevronRight size={16} style={{ opacity: 0.3 }} />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-            <Divider sx={{ my: 2, opacity: 0.5 }} />
-            {userData.userGroups && <SwitcherTrigger />}
-          </Box>
-        )}
+          {/* Main Nav. Rendered signed out too — a guest who lands on a public
+              club otherwise gets a drawer containing nothing but a login form,
+              and no way to reach the rest of the site. */}
+          <List>
+            {navItems.map((item) => (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={() => navigateTo(item.path)}
+                  sx={{
+                    borderRadius: "12px",
+                    "&:hover": { backgroundColor: `${accentColor}15` },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40, color: accentColor }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{ variant: "body2" }}
+                  />
+                  <ChevronRight size={16} style={{ opacity: 0.3 }} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+
+          {user && (
+            <>
+              <Divider sx={{ my: 2, opacity: 0.5 }} />
+              {userData.userGroups && <SwitcherTrigger />}
+            </>
+          )}
+        </Box>
 
         {/* Footer Area */}
         <Box sx={{ mt: "auto", pt: 2 }}>

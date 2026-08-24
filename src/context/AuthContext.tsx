@@ -34,7 +34,13 @@ interface AuthContextType {
    * email — since those do not fire `onAuthStateChanged`.
    */
   refreshUser: () => Promise<void>;
-  signOut: () => Promise<void>;
+  /**
+   * Signs out of Firebase *and* deletes the httpOnly session cookie, in that
+   * order, before resolving. Resolves `true` only when both succeeded — a
+   * caller that redirects on a failed sign-out would land on a page the server
+   * still considers authenticated and be bounced straight back.
+   */
+  signOut: () => Promise<boolean>;
 }
 
 const defaultContext: AuthContextType = {
@@ -48,6 +54,7 @@ const defaultContext: AuthContextType = {
   },
   signOut: async () => {
     console.warn("signOut called outside AuthProvider");
+    return false;
   },
 };
 
@@ -91,11 +98,17 @@ async function mintSessionCookie(user: User): Promise<void> {
   }
 }
 
-async function clearSessionCookie(): Promise<void> {
+async function clearSessionCookie(): Promise<boolean> {
   try {
-    await fetch("/api/auth/session", { method: "DELETE" });
+    const res = await fetch("/api/auth/session", { method: "DELETE" });
+    if (!res.ok) {
+      console.error("Failed to clear session cookie:", await res.text());
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error("Session cookie deletion error:", error);
+    return false;
   }
 }
 
@@ -130,14 +143,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const isSocialOnly = !hasPasswordProvider;
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<boolean> => {
     try {
       await firebaseSignOut(auth);
-      await clearSessionCookie();
     } catch (error) {
       console.error("Sign out failed:", error);
       toast.error("Sign out failed. Please try again.");
+      return false;
     }
+
+    // The cookie is what the server reads, so it has to be gone before the
+    // caller navigates. onAuthStateChanged clears it too, but that fires on its
+    // own schedule and the redirect would win the race.
+    const cleared = await clearSessionCookie();
+    if (!cleared) {
+      toast.error("Sign out failed. Please try again.");
+    }
+    return cleared;
   };
 
   useEffect(() => {
