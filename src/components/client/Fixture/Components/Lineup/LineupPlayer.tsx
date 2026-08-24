@@ -166,7 +166,9 @@ export default function LineupPlayer({
           e.type === "subst" && (e.player?.id === pId || e.assist?.id === pId),
       ),
     };
-  }, [fixture, player.id]);
+    // player?.id, not player.id: dep arrays are evaluated on every render,
+    // including the ones the guard below is there to handle.
+  }, [fixture, player?.id]);
 
   if (!player) return null;
 

@@ -83,13 +83,20 @@ export default function PlayerActionModal({
 
   const topSuggestions = sortedSubs.filter((s) => s.voteCount > 0).slice(0, 2);
 
-  if (!player) return null;
-
   // 3. HANDLERS
   // The modal used to close before the write, so a failed vote looked exactly
   // like a successful one. Closing is now an onSuccess concern.
+  //
+  // Must stay above the `!player` bail-out below. This modal is mounted for the
+  // life of the lineup with `player={selectedPlayer}`, so it first renders with
+  // no player and only gets one on a tap — an early return here meant the hook
+  // count grew on that tap, which React refuses ("Rendered more hooks than
+  // during the previous render") and the club error boundary then swallowed
+  // into "Couldn't load this club".
   const { run: castVote, pending: isVoting } = useAsyncAction(
     async (type: string, subInId: string | number | null = null) => {
+      if (!player) return;
+
       const commonPayload = {
         groupId,
         currentYear,
@@ -124,6 +131,9 @@ export default function PlayerActionModal({
     type: string,
     subInId: string | number | null = null,
   ) => castVote(type, subInId);
+
+  // Every hook above this line, unconditionally.
+  if (!player) return null;
 
   return (
     <Dialog open={open} onClose={onClose} TransitionComponent={Zoom}>

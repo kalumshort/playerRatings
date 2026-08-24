@@ -54,6 +54,14 @@ export default function Lineup({
   const [showLiveStatus, setShowLiveStatus] = useState(true);
   const [showLegend, setShowLegend] = useState(false);
 
+  // Live actions are exactly that: hot/cold/sub votes are writes against the
+  // in-play match, so they belong to a match in play and to a member.
+  // The modal's render test read `!isMatchLive`, which is backwards — it
+  // offered "LIVE MATCH ACTIONS" on a finished fixture and hid them during
+  // the actual match. Gating the tap on the same flag too, so a tap that can
+  // open nothing no longer leaves a player selected behind the scenes.
+  const canVoteLive = !isGuestView && isMatchLive && showLiveStatus;
+
   // 2. LIVE LINEUP CALCULATION
   const { activeXI, finalSubsList } = useMemo(() => {
     const teamData = fixture?.lineups?.find(
@@ -168,7 +176,7 @@ export default function Lineup({
                 key={player.id}
                 sx={{ position: "relative" }}
                 onClick={() => {
-                  showLiveStatus && setSelectedPlayer(player);
+                  canVoteLive && setSelectedPlayer(player);
                 }}
               >
                 <StatusBadge
@@ -214,20 +222,19 @@ export default function Lineup({
         ))}
       </Box>
 
-      {!!isGuestView ||
-        (!isMatchLive && showLiveStatus && (
-          <PlayerActionModal
-            open={!!selectedPlayer}
-            onClose={() => setSelectedPlayer(null)}
-            player={selectedPlayer}
-            fixtureId={fixtureId}
-            substitutes={finalSubsList}
-            elapsedTime={elapsed}
-            liveData={liveStats}
-            groupId={groupId}
-            currentYear={currentYear}
-          />
-        ))}
+      {canVoteLive && (
+        <PlayerActionModal
+          open={!!selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+          player={selectedPlayer}
+          fixtureId={fixtureId}
+          substitutes={finalSubsList}
+          elapsedTime={elapsed}
+          liveData={liveStats}
+          groupId={groupId}
+          currentYear={currentYear}
+        />
+      )}
     </Paper>
   );
 }
