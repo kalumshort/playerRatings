@@ -14,6 +14,7 @@ import Hero from "@/components/client/Home/Hero";
 import FeatureRow from "@/components/client/Home/FeatureRow";
 import CompetitionsBand from "@/components/client/Home/CompetitionsBand";
 import ClubFinder from "@/components/client/Home/ClubFinder";
+import CreatorBand from "@/components/client/Home/CreatorBand";
 import FinalCta from "@/components/client/Home/FinalCta";
 import PredictionsDemo from "@/components/client/Home/demos/PredictionsDemo";
 import LineupDemo from "@/components/client/Home/demos/LineupDemo";
@@ -109,6 +110,9 @@ export default function HomePage({
       <CompetitionsBand />
 
       <ClubFinder clubs={clubs} />
+
+      {/* The other way in, for someone who brings their own audience. */}
+      <CreatorBand />
 
       <FinalCta onSignUp={openAuth} onBrowse={scrollToClubs} />
 
