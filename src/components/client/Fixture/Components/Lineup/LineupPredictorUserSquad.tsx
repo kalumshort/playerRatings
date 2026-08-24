@@ -148,21 +148,27 @@ export default function ChosenLineup({
   const header = (
     <Box sx={{ mb: 2 }}>
       {hasCrowd && (
-        <ToggleButtonGroup
-          value={mode}
-          exclusive
-          fullWidth
-          size="small"
-          onChange={(_, v: ViewMode | null) => v && setMode(v)}
-          sx={{ mb: 2 }}
-        >
-          <ToggleButton value="mine" sx={{ fontWeight: 900 }}>
-            MY XI
-          </ToggleButton>
-          <ToggleButton value="crowd" sx={{ fontWeight: 900 }}>
-            VS CROWD
-          </ToggleButton>
-        </ToggleButtonGroup>
+        // LineupShell captures its `header`, so this control would otherwise be
+        // rasterised into the shared PNG as a pair of dead buttons. The
+        // ScoreBanner below it is deliberately NOT excluded — that's the story
+        // of the image.
+        <Box data-nosnap="true">
+          <ToggleButtonGroup
+            value={mode}
+            exclusive
+            fullWidth
+            size="small"
+            onChange={(_, v: ViewMode | null) => v && setMode(v)}
+            sx={{ mb: 2 }}
+          >
+            <ToggleButton value="mine" sx={{ fontWeight: 900 }}>
+              MY XI
+            </ToggleButton>
+            <ToggleButton value="crowd" sx={{ fontWeight: 900 }}>
+              VS CROWD
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       )}
 
       {showingCrowd ? (
@@ -200,8 +206,15 @@ export default function ChosenLineup({
       <LineupShell
         team={mappedTeam}
         formation={activeFormation}
-        title="11Votes.com"
+        title="My XI"
+        eyebrow="MY XI"
+        fixture={fixture}
         header={header}
+        shareText={
+          hasActual
+            ? `I called ${result.score} of the ${result.total} starters.`
+            : "My predicted XI on 11Votes."
+        }
       />
 
       {/* Post-match: the starters you left out. */}
@@ -252,6 +265,7 @@ const ScoreBanner = ({
   tone: "good" | "info";
 }) => (
   <Paper
+    data-share-flatten
     sx={(t: any) => ({
       p: 2,
       borderRadius: "12px",

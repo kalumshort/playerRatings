@@ -162,7 +162,16 @@ export default function Pitch({
     formations[formation] || formations[DEFAULT_FORMATION] || [];
 
   return (
-    <PitchSurface ratio={aspectRatio} ref={surfaceRef} data-pitch-surface sx={sx}>
+    <PitchSurface
+      ratio={aspectRatio}
+      ref={surfaceRef}
+      data-pitch-surface
+      // Opts this surface into the share renderer's gradient flattening.
+      // See src/lib/share/renderNode.ts — html2canvas cannot rasterise the
+      // radial-gradient above faithfully, and renders no box-shadow at all.
+      data-share-flatten
+      sx={sx}
+    >
       <PitchMarkings />
 
       {overlay ? (

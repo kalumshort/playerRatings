@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Box,
@@ -15,16 +15,26 @@ import {
 import { styled } from "@mui/material/styles";
 
 import { RootState } from "@/lib/redux/store";
-import { selectMatchRatingsById } from "@/lib/redux/selectors/ratingsSelectors";
+import {
+  selectMatchRatingsById,
+  selectMatchTeamAverage,
+  selectMotmPercentages,
+} from "@/lib/redux/selectors/ratingsSelectors";
 import RatingLineupPlayer from "@/components/client/PlayerRatings/RatingLineupPlayer";
+import ShareStage from "@/components/ui/ShareStage";
+import ShareActions from "@/components/ui/ShareActions";
 import FanMOTMHighlight from "./FanMOTMHighlight";
+import RatingsShareCard from "./RatingsShareCard";
 
 type RatingSource = "Group" | "Personal";
 
 interface RatingLineupProps {
   fixture: any;
   usersMatchPlayerRatings?: Record<string, number>;
+  /** The user's own MOTM pick, for the "MY RATINGS" share card. */
+  usersMotmId?: string | null;
   groupClubId: number;
+  groupName?: string;
 }
 
 const ShellCard = styled(Paper)(({ theme }: any) => ({
@@ -71,14 +81,44 @@ const groupByFormation = (starters: any[]) => {
 export default function RatingLineup({
   fixture,
   usersMatchPlayerRatings,
+  usersMotmId,
   groupClubId,
+  groupName,
 }: RatingLineupProps) {
   const theme = useTheme() as any;
   const [ratingSrc, setRatingSrc] = useState<RatingSource>("Group");
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const matchRatings = useSelector((state: RootState) =>
     selectMatchRatingsById(state, fixture.id),
   );
+  const motm = useSelector((state: RootState) =>
+    selectMotmPercentages(state, fixture.id),
+  );
+  const teamAverage = useSelector((state: RootState) =>
+    selectMatchTeamAverage(state, fixture.id),
+  );
+
+  // The user's own numbers are a plain object on the prop, so this needs no
+  // selector — but it does need the same "skip what isn't rated" treatment the
+  // group average gets, or an unrated slot would drag the mean down.
+  const personalAverage = useMemo(() => {
+    const values = Object.values(usersMatchPlayerRatings ?? {})
+      .map(Number)
+      .filter(Number.isFinite);
+    return values.length
+      ? {
+          average: values.reduce((a, b) => a + b, 0) / values.length,
+          rated: values.length,
+        }
+      : null;
+  }, [usersMatchPlayerRatings]);
+
+  // Nothing worth sharing yet: no MOTM winner, no aggregate ratings and
+  // nothing of the user's own. The button is absent rather than disabled — a
+  // disabled control invites a tap and explains nothing.
+  const canShare =
+    Boolean(motm?.[0]) || Boolean(teamAverage) || Boolean(personalAverage);
 
   const { formationRows, subs } = useMemo(() => {
     const team = fixture?.lineups?.find((t: any) => t.team.id === groupClubId);
@@ -95,9 +135,37 @@ export default function RatingLineup({
     // Narrowed from [fixture] so a live clock tick doesn't rebuild the pitch.
   }, [fixture?.lineups, fixture?.events, groupClubId]);
 
-  const getRating = (playerId: string | number): number | null => {
+  // "MY RATINGS" with nothing behind it exports the crowd card instead of a
+  // pitch full of dashes, so the SHARE source is resolved once, here, and both
+  // the image and its caption are built from it rather than from the toggle.
+  const shareSrc: RatingSource =
+    ratingSrc === "Personal" && personalAverage ? "Personal" : "Group";
+
+  const shareText = useMemo(() => {
+    if (shareSrc === "Personal") {
+      const average = personalAverage?.average.toFixed(1) ?? "—";
+      const pick = usersMotmId
+        ? [...formationRows.flat(), ...subs].find(
+            (p: any) => String(p.id) === String(usersMotmId),
+          )
+        : null;
+      return pick
+        ? `My Man of the Match: ${pick.name}. I rated the team ${average}.`
+        : `Here's how I rated the team — ${average} average.`;
+    }
+    return motm?.[0]
+      ? `${motm[0].name} is our Man of the Match — ${motm[0].percentage}% of the vote.`
+      : "Our player ratings are in.";
+  }, [shareSrc, personalAverage, usersMotmId, formationRows, subs, motm]);
+
+  // Takes the source explicitly, because the pitch and the share card can be
+  // reading different ones at the same moment — see `shareSrc` above.
+  const getRatingFrom = (
+    playerId: string | number,
+    src: RatingSource,
+  ): number | null => {
     const pId = String(playerId);
-    if (ratingSrc === "Personal") return usersMatchPlayerRatings?.[pId] ?? null;
+    if (src === "Personal") return usersMatchPlayerRatings?.[pId] ?? null;
 
     // Keyed lookup, not .find() — this threw outright when the slot held the
     // object shape. The totalSubmits guard avoids NaN/Infinity on a zero-submit row.
@@ -105,10 +173,13 @@ export default function RatingLineup({
     return stats?.totalSubmits ? stats.totalRating / stats.totalSubmits : null;
   };
 
+  const getRating = (playerId: string | number) =>
+    getRatingFrom(playerId, ratingSrc);
+
   if (formationRows.length === 0) return null;
 
   return (
-    <ShellCard>
+    <ShellCard data-share-flatten>
       <FanMOTMHighlight fixtureId={fixture.id} />
 
       <Box sx={{ position: "relative", p: 2 }}>
@@ -182,7 +253,37 @@ export default function RatingLineup({
             </Box>
           </SubsDivider>
         )}
+
+        {canShare && (
+          <>
+            {/* Offscreen. The card takes `ratingSrc` so the PNG always matches
+                the toggle the user is looking at. */}
+            <ShareStage width={540}>
+              <RatingsShareCard
+                fixture={fixture}
+                frameRef={shareRef}
+                source={shareSrc}
+                formationRows={formationRows}
+                subs={subs}
+                getRating={(id) => getRatingFrom(id, shareSrc)}
+                personalMotmId={usersMotmId}
+                groupName={groupName}
+              />
+            </ShareStage>
+
+            <ShareActions
+              targetRef={shareRef}
+              align="center"
+              filename={`11Votes-${slug(fixture?.teams?.home?.name)}-${slug(
+                fixture?.teams?.away?.name,
+              )}-${shareSrc === "Personal" ? "My-Ratings" : "Ratings"}.png`}
+              shareText={shareText}
+            />
+          </>
+        )}
       </Box>
     </ShellCard>
   );
 }
+
+const slug = (name?: string) => (name || "Team").replace(/\s+/g, "-");
