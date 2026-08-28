@@ -98,6 +98,12 @@ export const sportsEventJsonLd = (args: {
   status?: string;
   venue?: string | null;
   url: string;
+  /**
+   * API-Football fixture id. Emits a hub-independent `@id`, which is how the
+   * two club URLs for one match say "same real-world event, different page"
+   * rather than looking like two competing events.
+   */
+  matchId?: string | number;
 }): JsonLd | null => {
   if (!args.startDate) return null;
 
@@ -107,6 +113,12 @@ export const sportsEventJsonLd = (args: {
 
   return {
     "@context": "https://schema.org",
+    // Deliberately NOT the page URL — the same fixture is published under every
+    // club hub that contests it, and each of those pages is a different page
+    // about one shared event. A per-page @id would assert the opposite.
+    ...(args.matchId
+      ? { "@id": `${BASE_URL}/fixture/${args.matchId}#event` }
+      : {}),
     "@type": "SportsEvent",
     name: `${args.homeName} vs ${args.awayName}`,
     startDate: args.startDate,

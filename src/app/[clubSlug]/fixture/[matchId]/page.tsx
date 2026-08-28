@@ -17,6 +17,7 @@ import {
 } from "@/lib/config/season";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, sportsEventJsonLd } from "@/lib/seo/jsonLd";
+import { fixtureDescription, fixtureTitle } from "@/lib/seo/fixtureMeta";
 
 interface PageProps {
   params: Promise<{ clubSlug: string; matchId: string }>;
@@ -40,16 +41,33 @@ export async function generateMetadata({
     if (!fixture) return { title: "Match Not Found" };
 
     const { home, away } = fixture.teams;
+    // `groupName` mirrors the fallback in [clubSlug]/page.tsx — a few older
+    // club docs predate the `name` field. The last resort is the home side
+    // rather than the slug: a slug is lowercase and hyphenated, and would read
+    // as "manchester-united Fan Ratings".
+    const clubName = group?.name || group?.groupName || home.name;
+    const canonical = `https://11votes.com/${clubSlug}/fixture/${matchId}`;
+
     return {
-      title: `${home.name} vs ${away.name} - Player Ratings`,
-      description: `Fan player ratings, predictions and the Man of the Match vote for ${home.name} vs ${away.name}.`,
-      openGraph: { images: [home.logo, away.logo] },
+      // `absolute` opts out of the layout's "%s | 11Votes" template. The title
+      // already names the club and runs close to the truncation limit, and
+      // Google appends the site name itself from the homepage's WebSite
+      // JSON-LD — so the suffix costs ten characters and buys nothing here.
+      title: { absolute: fixtureTitle({ fixture, clubName }) },
+      description: fixtureDescription({ fixture, clubName }),
+      openGraph: {
+        // Per-club, so a link shared out of the Chelsea hub resolves back to
+        // the Chelsea hub rather than collapsing into one shared card.
+        url: canonical,
+        images: [home.logo, away.logo],
+      },
       // Self-referential, and deliberately so. The same fixture under two club
       // slugs is NOT duplicate content: predictions and ratings are fetched per
       // group (getMatchPredictionsServer(group.id, ...)), so each club's page
-      // shows its own fans' consensus.
+      // shows its own fans' consensus. What makes that claim credible to a
+      // crawler is the per-club title and description above — see fixtureMeta.
       alternates: {
-        canonical: `https://11votes.com/${clubSlug}/fixture/${matchId}`,
+        canonical,
       },
       // Archived seasons aren't in the sitemap and must not compete
       // with the canonical current-season URLs.
@@ -140,6 +158,7 @@ export default async function FixturePage({
             status: fixture.fixture?.status?.short,
             venue: fixture.fixture?.venue?.name,
             url: `/${clubSlug}/fixture/${matchId}`,
+            matchId,
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "" },
