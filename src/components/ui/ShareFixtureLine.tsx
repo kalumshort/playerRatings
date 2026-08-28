@@ -79,9 +79,11 @@ const TeamSide = ({
     >
       {name}
     </Typography>
-    {/* A plain <img>, not next/image: the renderer rewrites api-sports URLs onto
-        /_next/image inside the html2canvas clone, and next/image's own srcset
-        would fight that. */}
+    {/* A plain <img>, not next/image. html2canvas re-requests this URL itself
+        with crossOrigin set, and next/image's srcset/_next/image indirection
+        gives it a different URL to resolve than the one src/lib/share warms.
+        Nothing rewrites these URLs — an earlier version of this comment claimed
+        the renderer did, and it never has. */}
     <Box
       component="img"
       src={logo}

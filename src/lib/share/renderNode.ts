@@ -2,6 +2,8 @@
 
 import html2canvas from "html2canvas";
 
+import { warmShareImages } from "./warmImages";
+
 /**
  * DOM node -> PNG blob.
  *
@@ -33,6 +35,13 @@ export interface RenderNodeOptions {
   flattenColor: string;
 }
 
+/**
+ * Per-image ceiling, shared by the warm pass and html2canvas so a slow photo
+ * can only cost this once. The default 15000 would blow the transient
+ * activation window on its own.
+ */
+const IMAGE_TIMEOUT_MS = 4000;
+
 export class ShareRenderError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
@@ -57,6 +66,15 @@ export async function renderNodeToBlob(
   // spent 300ms of navigator.share's ~5s transient-activation budget.
   await document.fonts?.ready;
 
+  // `useCORS: true` below makes html2canvas re-request every image with
+  // crossOrigin="anonymous", which cannot reuse the page's no-CORS cache
+  // entries. Warming here rather than only in the caller keeps that cost off
+  // the critical path even for a caller that never calls warmShareImages
+  // itself: pre-warmed images make this a no-op, and a cold node pays the same
+  // network it was going to pay inside html2canvas anyway — but under one
+  // shared timeout instead of `imageTimeout` per image. See warmImages.ts.
+  await warmShareImages(node, IMAGE_TIMEOUT_MS);
+
   let canvas: HTMLCanvasElement;
   try {
     canvas = await html2canvas(node, {
@@ -73,8 +91,9 @@ export async function renderNodeToBlob(
       allowTaint: false,
       scale,
       // The default 15000 would blow the transient-activation window on a slow
-      // image, turning a share into a silent clipboard fallback.
-      imageTimeout: 4000,
+      // image, turning a share into a silent clipboard fallback. By this point
+      // the warm pass above has already put these in cache.
+      imageTimeout: IMAGE_TIMEOUT_MS,
       logging: false,
       // windowWidth/windowHeight deliberately left at their defaults.
       // Overriding them re-evaluates MUI's breakpoint media queries inside the

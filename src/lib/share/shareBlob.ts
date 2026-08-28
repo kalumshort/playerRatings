@@ -14,7 +14,19 @@
  * in `detectShareMode`, and the promise-not-blob rule in `copyOrDownload`.
  */
 
-export type ShareOutcome = "shared" | "copied" | "downloaded" | "cancelled";
+export type ShareOutcome =
+  | "shared"
+  | "copied"
+  | "downloaded"
+  | "cancelled"
+  /**
+   * The image rendered fine, but the browser refused to open the sheet because
+   * transient user activation had already expired. Nothing is wrong with the
+   * blob and nothing has been saved — the caller should offer a one-tap retry,
+   * which arrives with fresh activation and no render left to do. See
+   * shareReadyFile.
+   */
+  | "needs-gesture";
 export type ShareMode = "share" | "copy" | "download";
 
 export interface SharePayload {
@@ -102,7 +114,34 @@ export async function shareBlobPromise(
     return copyOrDownload(blobPromise, payload);
   }
 
-  const blob = await blobPromise;
+  return shareReadyFile(await blobPromise, payload);
+}
+
+/**
+ * The synchronous half of the share, and the only part iOS actually cares
+ * about.
+ *
+ * Call this DIRECTLY from a click handler with a blob that is already in hand
+ * and it reaches `navigator.share()` without yielding the event loop once —
+ * `detectShareMode` is cached, `new File` and `canShare` are synchronous — so
+ * the sheet opens on the user's activation. Every other line in this module
+ * exists to get a caller to this point with a rendered blob and a live gesture
+ * at the same time.
+ *
+ * `allowGestureRetry` distinguishes the first attempt from the retry a caller
+ * offers after "needs-gesture". On the retry there is no activation left to
+ * blame, so a second refusal falls through to the copy/save chain rather than
+ * asking the user to tap a third time.
+ */
+export async function shareReadyFile(
+  blob: Blob,
+  payload: SharePayload,
+  allowGestureRetry = true,
+): Promise<ShareOutcome> {
+  if (detectShareMode() !== "share") {
+    return copyOrDownload(Promise.resolve(blob), payload);
+  }
+
   const file = new File([blob], payload.filename, { type: "image/png" });
 
   // Re-probe with the real payload: some Android targets accept `{ files }` but
@@ -117,7 +156,21 @@ export async function shareBlobPromise(
     // The user dismissed the sheet. Not a failure: no toast, no fallback.
     // Same discrimination GroupInviteGenerator already makes for link shares.
     if ((err as Error)?.name === "AbortError") return "cancelled";
-    // NotAllowedError (activation expired on a slow render), or anything else.
+
+    // NotAllowedError on a browser that just told us it CAN share files means
+    // one thing: transient user activation expired while the image rendered.
+    //
+    // The old code fell into copyOrDownload here, which on iOS is a chain of
+    // three silent no-ops: detectShareMode() returns the cached "share" so it
+    // tries clipboard.write (gesture-gated, already expired), then a
+    // programmatic <a download> click (which iOS ignores without activation),
+    // and then reported "downloaded" — a toast promising a file that was never
+    // written. Handing the caller "needs-gesture" instead lets it ask for one
+    // more tap, which is the only thing that can actually work.
+    if (allowGestureRetry && (err as Error)?.name === "NotAllowedError") {
+      return "needs-gesture";
+    }
+
     return copyOrDownload(Promise.resolve(blob), payload);
   }
 }
