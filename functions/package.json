@@ -3,11 +3,18 @@
   "description": "Cloud Functions for Firebase",
   "scripts": {
     "lint": "eslint .",
+    "sync:leagues": "node scripts/syncLeagues.js",
+    "test": "node test/gamification.test.js && node test/predictionPoints.test.js && firebase emulators:exec --only firestore --project reconcile-test \"node test/reconcile.test.js && node test/leagueCatalogue.test.js\"",
+    "test:xp": "node test/gamification.test.js",
+    "test:reconcile:xp": "firebase emulators:exec --only firestore --project gamification-test \"node test/gamificationReconcile.test.js\"",
+    "test:reconcile": "firebase emulators:exec --only firestore --project reconcile-test \"node test/reconcile.test.js\"",
+    "test:catalogue": "firebase emulators:exec --only firestore --project catalogue-test \"node test/leagueCatalogue.test.js\"",
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test:predictions": "node test/predictionPoints.test.js"
   },
   "engines": {
     "node": "22"

@@ -1,0 +1,113 @@
+"use client";
+
+import React from "react";
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  useTheme,
+  alpha,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { HelpOutlineRounded, WarningRounded } from "@mui/icons-material";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+
+interface MotmConfirmProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading?: boolean;
+}
+
+export default function MotmConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  loading = false,
+}: MotmConfirmProps) {
+  const theme = useTheme();
+
+  return (
+    <Dialog
+      open={open}
+      // The Cancel button disables itself while the submit is in flight, but
+      // the backdrop and Esc didn't — dismissing mid-write dropped the user
+      // back with no indication of whether the vote landed.
+      onClose={loading ? undefined : onClose}
+      disableEscapeKeyDown={loading}
+      PaperProps={{
+        sx: {
+          backgroundColor: alpha(theme.palette.background.paper, 0.95),
+          backdropFilter: "blur(12px)",
+          borderRadius: "28px",
+          border: `1px solid ${theme.palette.divider}`,
+          maxWidth: "380px",
+          p: 2,
+        },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <HelpOutlineRounded color="warning" />
+          <Typography variant="h6" fontWeight={900}>
+            No Star Man?
+          </Typography>
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent>
+        <DialogContentText
+          sx={{
+            color: "text.secondary",
+            fontWeight: 600,
+            lineHeight: 1.5,
+          }}
+        >
+          {/* Markdown doesn't render inside JSX — this used to ship the
+              literal asterisks to the user. */}
+          You haven't selected a{" "}
+          <Box component="span" fontWeight={900} color="text.primary">
+            Man of the Match
+          </Box>
+          . Are you sure you want to lock in your ratings without picking a
+          standout performer?
+        </DialogContentText>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          sx={{
+            fontWeight: 800,
+            color: "text.secondary",
+            borderRadius: "12px",
+          }}
+        >
+          Wait, go back
+        </Button>
+        {/* autoFocus + Enter meant a quick double-press fired two submits. */}
+        <AsyncButton
+          onClick={onConfirm}
+          variant="contained"
+          color="primary"
+          autoFocus
+          loading={loading}
+          sx={{
+            fontWeight: 900,
+            borderRadius: "12px",
+            px: 3,
+            boxShadow: theme.shadows[4],
+          }}
+        >
+          Submit Anyway
+        </AsyncButton>
+      </DialogActions>
+    </Dialog>
+  );
+}

@@ -1,152 +1,349 @@
 rules_version = '2';
 
+// =============================================================================
+// 11Votes Firestore Security Rules
+//
+// THIS FILE IS THE SOURCE OF TRUTH. firebase.json deploys it via
+// `firebase deploy --only firestore:rules`. Do not keep a second copy in the
+// 11votes-next repo — that is how the previous rules went stale.
+//
+// Design notes:
+//  - Reads on public groups are open (anonymous visitors browse public clubs).
+//    Writes always require a role doc under groupUsers/{groupId}/...
+//  - Roles are mutually exclusive subcollections (members | admins | owners),
+//    written by addMemberToGroup() in functions/helperFunctions.js. An admin has
+//    NO members doc, so every permission check ORs the three.
+//  - Client writes to vote aggregates are bounded per write AND deduped against
+//    the user's own match document. See the get()/exists() budget note at the
+//    bottom before adding another lookup.
+// =============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-   // Match for groupInviteLinks collection
-    match /groupInviteLinks/{inviteId} {
-      
-      // Rule for creating a group invite (write)
-      allow create: if request.auth != null && isUserAdmin(request.auth.uid, request.resource.data.groupId);
 
-      // Rule for reading an invite (viewing the group invite)
-      allow read: if true ;
+    // =========================================================
+    // 1. HELPER FUNCTIONS
+    // =========================================================
 
-      // You can also define update and delete rules if needed
-      allow update: if false;  // No one can update the invite once it's created
-      allow delete: if request.auth != null && isUserAdmin(request.auth.uid, resource.data.groupId);
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Function to check if the user is an admin of the group
-    function isUserAdmin(userId, groupId) {
-      return exists(/databases/$(database)/documents/groupUsers/$(groupId)/admins/$(userId));
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Fixtures - no access allowed
-    match /fixtures/{fixtureId} {
-      allow read, write: if false;
-
-      match /{subCollection}/{subDocId} {
-        allow read: if request.auth != null;
-        allow write: if false;
-      }
+    function isGroupMember(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/members/$(request.auth.uid));
     }
 
-    // Team Squads - read allowed for authenticated users, write denied
-     match /teamSquads/{squadId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
-    match /teamSquads/{squadId}/season/{seasonId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+    function isGroupAdmin(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/admins/$(request.auth.uid));
     }
 
-    // Player Images - read allowed for authenticated users, write denied
-    match /playerImages/data/teams/{teamId}/players/{playerId} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
-    
-    
-    match /groupUsers/{groupId}/members/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow write: if false;  // Deny all write operations
+    function isGroupOwner(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groupUsers/$(groupId)/owners/$(request.auth.uid));
     }
 
-    // Groups - read allowed for authenticated users, write allowed only for group admins
+    // get() returns null for a missing doc, and reading an absent field raises
+    // an error, so both are guarded — otherwise a half-migrated group document
+    // turns every rule that touches it into a hard deny.
+    function isGroupPublic(groupId) {
+      let g = get(/databases/$(database)/documents/groups/$(groupId));
+      return g != null && g.data.get('visibility', 'private') == 'public';
+    }
+
+    // --- PERMISSION CHECKS ---
+
+    function hasGroupRole(groupId) {
+      return isGroupMember(groupId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+    }
+
+    function canReadGroup(groupId) {
+      return isGroupPublic(groupId) || hasGroupRole(groupId);
+    }
+
+    // Writing requires actually belonging to the group. A public group is
+    // readable by anyone but NOT writable by any passing signed-in account —
+    // otherwise one throwaway login can vote in every club without joining.
+    function canWriteGroup(groupId) {
+      return hasGroupRole(groupId);
+    }
+
+    // --- SECURITY VALIDATIONS (REUSABLE) ---
+
+    // The user's own record of what they did in this match. It is written in the
+    // same writeBatch as the aggregates, and rules get() sees pre-batch state,
+    // so the first submission passes and repeats are denied.
+    function userMatchData(groupId, seasonId, matchId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)/groups/$(groupId)/seasons/$(seasonId)/matches/$(matchId));
+    }
+
+    function notYetRated(groupId, seasonId, matchId, playerId) {
+      let d = userMatchData(groupId, seasonId, matchId);
+      return d == null
+          || !('players' in d.data)
+          || !(playerId in d.data.players);
+    }
+
+    function notYetVotedMotm(groupId, seasonId, matchId) {
+      let d = userMatchData(groupId, seasonId, matchId);
+      return d == null || !('motmVote' in d.data);
+    }
+
+    // Rating aggregates hold exactly { totalSubmits, totalRating }.
+    // - Create: first vote, rating within 0..10.
+    // - Update: submits +1 exactly, rating up by at most 10, never down.
+    // request.resource is null on delete, so this denies deletes explicitly
+    // rather than relying on an evaluation error.
+    function isValidRatingUpdate() {
+      return request.resource != null
+        && request.resource.data.totalSubmits is number
+        && request.resource.data.totalRating is number
+        && (
+          (resource == null
+            && request.resource.data.totalSubmits == 1
+            && request.resource.data.totalRating >= 0
+            && request.resource.data.totalRating <= 10
+            && request.resource.data.keys().hasOnly(['totalSubmits', 'totalRating']))
+          ||
+          (resource != null
+            && request.resource.data.totalSubmits == resource.data.totalSubmits + 1
+            && request.resource.data.totalRating >= resource.data.totalRating
+            && (request.resource.data.totalRating - resource.data.totalRating) <= 10
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalSubmits', 'totalRating']))
+        );
+    }
+
+    // Every top-level field the client is allowed to touch on a predictions doc.
+    // Values are increments inside nested maps, which rules cannot validate in
+    // depth — this bounds WHICH keys change, not by how much.
+    function predictionKeys() {
+      return [
+        'formations', 'positionConsensus', 'totalTeamSubmits', 'totalPlayersSubmits',
+        'result', 'preMatchMotm', 'preMatchMotmVotes',
+        'scorePredictions', 'homeGoals', 'awayGoals', 'totalScoreVotes'
+      ];
+    }
+
+    // Restrict a write to an allow-list of keys on both create and update.
+    function touchesOnly(allowed) {
+      return request.resource != null && (
+        resource == null
+          ? request.resource.data.keys().hasOnly(allowed)
+          : request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed)
+      );
+    }
+
+    // =========================================================
+    // 2. COLLECTION RULES
+    // =========================================================
+
+    // --- A. GROUPS & SUBCOLLECTIONS ---
+
     match /groups/{groupId} {
-      allow read: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-      allow write: if request.auth != null && isUserAdmin(request.auth.uid, groupId);
+      allow read: if canReadGroup(groupId);
+      allow write: if isGroupOwner(groupId);
 
       match /seasons/{seasonId} {
-        allow read: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+        allow read: if canReadGroup(groupId);
 
-        match /playerRatings/{playerRatingId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-
-          match /players/{playerId} {
-            allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-        }
-        match /fixtureMoods/{matchId}{
-				allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-        
-        }
-        // Per-question aggregate predictions (bar chart style)
-        match /seasonPredictions/{questionKey} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-        }
-        // Predictions - read and write for authenticated users in the group
-        match /predictions/{matchId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-
-          match /teamSubmissions {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-
-          match /totalTeamSubmits {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-
-          match /totalPlayersSubmits {
-            allow write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
-          }
-        }
-
-        // Players in season - read and write for authenticated users in the group
+        // 1. PLAYER SEASON TOTALS
+        // No matchId in scope here, so per-match dedup is impossible. In the
+        // normal flow this doc is written in the same batch as the match-scoped
+        // docs below, and a batch fails as a unit — so their dedup covers it.
+        // A direct write to this doc alone is still bounded to +1 / +10.
         match /players/{playerId} {
-          allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId) && isValidRatingUpdate();
 
-          // Matches under player - read and write for authenticated users in the group
+          // 2. PLAYER MATCH HISTORY
           match /matches/{matchId} {
-            allow read, write: if request.auth != null && isUserInGroup(request.auth.uid, groupId);
+            allow read: if canReadGroup(groupId);
+            allow create, update: if canWriteGroup(groupId)
+              && isValidRatingUpdate()
+              && notYetRated(groupId, seasonId, matchId, playerId);
           }
+        }
+
+        match /playerRatings/{matchId} {
+          allow read: if canReadGroup(groupId);
+
+          // The match-level doc holds the MOTM tally. These two key names are
+          // what handleMatchMotmVote() actually writes — keep them in sync with
+          // src/lib/firebase/client-actions.ts or voting breaks silently.
+          // A Cloud Function may also write a computed winner here via the Admin
+          // SDK, which bypasses rules.
+          allow create, update: if canWriteGroup(groupId)
+            && touchesOnly(['motmTotalVotes', 'playerVotes'])
+            && notYetVotedMotm(groupId, seasonId, matchId);
+
+          // 3. MATCH RATINGS AGGREGATE (For Community Average)
+          match /players/{playerId} {
+            allow read: if canReadGroup(groupId);
+            allow create, update: if canWriteGroup(groupId)
+              && isValidRatingUpdate()
+              && notYetRated(groupId, seasonId, matchId, playerId);
+          }
+        }
+
+        // 4. PREDICTIONS
+        // The key allow-list applies to create as well as update, so being
+        // first to write a match's doc grants no extra freedom.
+        match /predictions/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId) && touchesOnly(predictionKeys());
+        }
+
+        // Live stats and moods: low-value counters, but still no deletes.
+        match /livePlayerStats/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
+        }
+
+        match /fixtureMoods/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
+        }
+
+        match /eventsReactions/{matchId} {
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
+        }
+
+        match /seasonPredictions/{questionKey} {
+          allow read: if canReadGroup(groupId);
+          allow create, update: if canWriteGroup(groupId);
         }
       }
     }
 
-    // Users - only the user themselves can read/write their data
+    // --- B. USER DATA ---
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      match /groups/{groupId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-
-        match /seasons/{seasonId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
-
-          match /matches/{matchId} {
-            allow read, write: if request.auth != null && request.auth.uid == userId;
-
-            // Allow writing to the players map inside the playerRatings document
-            match /players/{playerId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-
-            // Allow writing to the 'motm' field (Man of the Match)
-            match /motm {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-          }
-        }
+      allow read, write: if isOwner(userId);
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // Catch-all rule: deny access to all other documents
+    // --- C. PUBLIC READ-ONLY DATA ---
+    match /fixtures/{season}/fixtures/{fixtureId} {
+      allow read: if true;
+    }
+
+    match /teamSquads/{squadId} {
+      allow read: if true;
+      match /season/{seasonId} {
+        allow read: if true;
+      }
+    }
+
+    match /playerImages/{allImages=**} {
+      allow read: if true;
+    }
+
+    // The club picker and transfer market read this one doc instead of listing
+    // `groups`. A wildcard list query over `groups` can't satisfy the get()-based
+    // isGroupPublic() check below, and this keeps the club list to a single read.
+    // Rebuilt nightly by updateFixtures via the Admin SDK.
+    match /config/clubDirectory {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // --- D. INVITES & MEMBERSHIP ---
+    // Owner-only, matching createInviteCode()'s own ownerId check. Note the
+    // create branch reads request.resource: on create `resource` is null, so
+    // the previous rule could never succeed.
+    match /groupInvites/{inviteId} {
+      allow read, update, delete: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
+      allow create: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
+    }
+
+    // Who redeemed which code. joinGroupByCode() denormalises groupId onto each
+    // doc so this needs one get() instead of chaining through the parent invite.
+    // Written by the Admin SDK only — a client-writable audit trail is no trail.
+    match /groupInvites/{inviteId}/redemptions/{userId} {
+      allow read: if isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(resource.data.groupId))
+             .data.get('ownerId', '') == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Failed-redemption counters behind joinGroupByCode's rate limit. Fully
+    // server-side: a client that could read or reset these could sidestep it.
+    match /inviteAttempts/{userId} {
+      allow read, write: if false;
+    }
+
+    // Role docs are written only by Cloud Functions (Admin SDK). Reads are
+    // scoped to the user themselves plus group staff — isGroupAdmin()/
+    // isGroupOwner() use exists(), which ignores these read rules.
+    match /groupUsers/{groupId}/members/{userId} {
+      allow read: if isOwner(userId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+      allow write: if false;
+    }
+
+    match /groupUsers/{groupId}/admins/{userId} {
+      allow read: if isOwner(userId) || isGroupAdmin(groupId) || isGroupOwner(groupId);
+      allow write: if false;
+    }
+
+    match /groupUsers/{groupId}/owners/{userId} {
+      allow read: if isOwner(userId) || isGroupOwner(groupId);
+      allow write: if false;
+    }
+
+    // --- E. GAMIFICATION ---
+    // Authoritative Fan XP. Deliberately NOT under users/** : that subtree is
+    // fully self-writable by its owner with no field validation (section B
+    // above), so XP stored there would be forgeable from a browser console.
+    // Here the Admin SDK is the only writer, matching config/clubDirectory.
+    //
+    // World-readable because leaderboards are public. Anonymity is handled at
+    // WRITE time — progressStore.publishableName() writes displayName: null for
+    // an opted-out user, so their real name never lands in a readable doc and
+    // no read rule has to defend it.
+    match /userProgress/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /userSeasonProgress/{rowId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
-  }
 
-  // Custom function to check if the user is part of the group (either a member or admin)
-  function isUserInGroup(userId, groupId) {
-    return exists(/databases/(default)/documents/groupUsers/$(groupId)/members/$(userId)) ||
-           exists(/databases/(default)/documents/groupUsers/$(groupId)/admins/$(userId));
-  }
-
-  // Custom function to check if the user is an admin of the group
-  function isUserAdmin(userId, groupId) {
-    return exists(/databases/(default)/documents/groupUsers/$(groupId)/admins/$(userId));
+    // =========================================================
+    // 3. DOCUMENT ACCESS BUDGET
+    // Limits: 10 get()/exists() per read or query, 20 per batched write.
+    //
+    //  canReadGroup      = 1 get + up to 3 exists       = 4 of 10
+    //  groupInvites read  = 1 get                        = 1 of 10
+    //  redemptions read   = 1 get (groupId denormalised) = 1 of 10
+    //  rating batch (4 writes, worst case)
+    //    playerRatings/{m}/players/{p}  3 exists + 1 get = 4
+    //    players/{p}/matches/{m}        3 exists + 1 get = 4
+    //    players/{p}                    3 exists         = 3
+    //    users/... (isOwner)                             = 0
+    //                                             total   11 of 20
+    //
+    //  MOTM batch (2 writes, worst case)
+    //    playerRatings/{m}              3 exists + 1 get = 4
+    //    users/... (isOwner)                             = 0
+    //                                             total    4 of 20
+    //
+    // A plain member short-circuits on the first exists(), so the typical cost
+    // is ~5. Adding another per-write lookup, or a fifth write to the rating
+    // batch, needs this recomputed first.
+    // =========================================================
   }
 }

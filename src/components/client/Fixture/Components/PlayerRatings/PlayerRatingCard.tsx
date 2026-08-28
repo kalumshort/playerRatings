@@ -1,0 +1,404 @@
+"use client";
+import React, { useState, useMemo, useEffect } from "react";
+import {
+  Box,
+  Paper,
+  Typography,
+  Avatar,
+  IconButton,
+  Stack,
+  Button,
+  useTheme,
+  alpha,
+  CircularProgress,
+  Skeleton,
+  Zoom,
+} from "@mui/material";
+import {
+  StarRounded,
+  StarOutlineRounded,
+  AddRounded,
+  RemoveRounded,
+  EmojiEventsRounded,
+} from "@mui/icons-material";
+import { handlePlayerRatingSubmit } from "@/lib/firebase/client-actions";
+import EventBadge from "./EventBadge";
+import {
+  getInitialSurname,
+  getRatingColor,
+  getRatingTextSx,
+} from "@/lib/utils/football-logic";
+import { AsyncButton } from "@/components/ui/AsyncButton";
+import useAsyncAction from "@/Hooks/useAsyncAction";
+
+/**
+ * Deliberately takes narrow props (matchId, events, avgRating) rather than the
+ * whole `fixture` and `matchRatings`. Those two get a new identity on every
+ * live Firestore tick, which would make the React.memo below a no-op across all
+ * 14-18 Swiper slides.
+ */
+function PlayerRatingCardBase({
+  player,
+  matchId,
+  events,
+  avgRating,
+  isMobile,
+  userId,
+  groupId,
+  currentYear,
+  usersMatchPlayerRating,
+  setStoredMotmId,
+  storedMotmId,
+}: any) {
+  const theme = useTheme();
+  // Ids are normalised to strings at this single point of entry. API-Football
+  // player ids are numbers while the coach's is already `coach_{id}`, and both
+  // PlayerImageCarousel and PlayerThumbnail compare against String(player.id) —
+  // storing the raw number meant those two comparisons were never true, so the
+  // ★ overlay and the MOTM status dot never rendered in the thumbnail rail.
+  const playerKey = String(player.id);
+  const isMOTM = storedMotmId === playerKey;
+
+  // The card only leaves the input state once the write round-trips through
+  // Firestore and back via UsersMatchDataListener. On a stadium connection
+  // that's a visibly dead beat, so hold the value locally in the meantime.
+  // Only "YOUR VOTE" is optimistic — TEAM AVG stays on real data.
+  const [optimisticRating, setOptimisticRating] = useState<number | null>(null);
+
+  // firestore.rules dedupes repeat ratings with permission-denied; before this
+  // the rejection was swallowed and the tap simply did nothing.
+  const {
+    run: submitRating,
+    pending: isSubmitting,
+    error: submitError,
+  } = useAsyncAction(handlePlayerRatingSubmit, {
+    errorMessage: "You've already rated this player.",
+  });
+
+  // Roll back on rejection so the user lands back on the input rather than
+  // seeing a score that never persisted.
+  useEffect(() => {
+    if (submitError) setOptimisticRating(null);
+  }, [submitError]);
+
+  const displayedRating = usersMatchPlayerRating ?? optimisticRating;
+
+  // undefined means "not fetched yet"; null means "fetched, nobody rated".
+  const isDataLoading = avgRating === undefined;
+
+  const playerEvents = useMemo(() => {
+    if (!events?.length) return [];
+    return events
+      .filter(
+        (ev: any) => ev.player?.id === player.id || ev.assist?.id === player.id,
+      )
+      .map((ev: any) => {
+        const time = `${ev.time.elapsed}${ev.time.extra ? `+${ev.time.extra}` : ""}'`;
+        if (ev.type === "Goal" && ev.player.id === player.id)
+          return { type: "goal", label: ev.detail, time };
+        if (ev.type === "Goal" && ev.assist.id === player.id)
+          return { type: "assist", label: "Assist", time };
+        if (ev.type === "Card")
+          return {
+            type: ev.detail.includes("Yellow") ? "yellow" : "red",
+            label: ev.detail,
+            time,
+          };
+        return null;
+      })
+      .filter(Boolean);
+  }, [events, player.id]);
+
+  return (
+    <Paper
+
+      sx={{
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        minHeight: 480,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        position: "relative",
+      }}
+    >
+      {/* 1. MOTM SELECTION (NEW POSITION) */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 20,
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          zIndex: 2,
+        }}
+      >
+        <Zoom in={true}>
+          <Button
+            variant={isMOTM ? "contained" : "outlined"}
+            color="secondary"
+            size="small"
+            onClick={() => setStoredMotmId(isMOTM ? null : playerKey)}
+            startIcon={isMOTM ? <StarRounded /> : <StarOutlineRounded />}
+            sx={{
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 800,
+              fontSize: "0.7rem",
+              backdropFilter: "blur(4px)",
+              boxShadow: isMOTM
+                ? `0 4px 12px ${alpha(theme.palette.secondary.main, 0.4)}`
+                : "none",
+              borderWidth: "2px",
+              "&:hover": { borderWidth: "2px" },
+            }}
+          >
+            {isMOTM ? "MAN OF THE MATCH" : "VOTE MOTM"}
+          </Button>
+        </Zoom>
+      </Box>
+
+      {/* Profile Header */}
+      <Stack p={4} pt={8} spacing={2} alignItems="center">
+        <Box sx={{ position: "relative" }}>
+          <Avatar
+            alt={player.name}
+            src={
+              player.photo ||
+              `https://media.api-sports.io/football/players/${player.id}.png`
+            }
+            sx={{
+              width: 100,
+              height: 100,
+              border: `2px solid ${isMOTM ? theme.palette.secondary.main : theme.palette.background.paper}`,
+              boxShadow: theme.shadows[2],
+              transition: "border 0.3s ease",
+            }}
+          />
+          {isMOTM && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: -8,
+                right: -8,
+                bgcolor: "secondary.main",
+                borderRadius: "50%",
+                p: 0.5,
+                display: "flex",
+                border: `2px solid ${theme.palette.background.paper}`,
+              }}
+            >
+              <EmojiEventsRounded sx={{ color: "white", fontSize: 20 }} />
+            </Box>
+          )}
+        </Box>
+
+        <Box textAlign="center">
+          <Typography
+            variant="h5"
+            fontWeight={900}
+            sx={{ letterSpacing: "-1px" }}
+          >
+            {getInitialSurname(player.name).toUpperCase()}
+          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="center" mt={1}>
+            {playerEvents.map((ev: any, i: number) => (
+              <EventBadge key={i} {...ev} />
+            ))}
+          </Stack>
+        </Box>
+      </Stack>
+
+      {/* Action/Display Area */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          px: 3,
+          pb: 4,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {isDataLoading ? (
+          <Skeleton
+            variant="rounded"
+            width="100%"
+            height={100}
+            sx={{ borderRadius: "12px" }}
+          />
+        ) : displayedRating != null ? (
+          /* 2. ONLY SHOW AVG AFTER SUBMISSION */
+          <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
+            <Box
+              sx={{
+                flex: 1,
+                textAlign: "center",
+                p: 2.5,
+                borderRadius: "12px",
+                bgcolor: alpha(theme.palette.divider, 0.05),
+              }}
+            >
+              <Typography
+                variant="caption"
+                fontWeight={800}
+                color="text.secondary"
+                display="block"
+              >
+                YOUR VOTE
+              </Typography>
+              <Typography
+                variant="h3"
+                fontWeight={900}
+                sx={getRatingTextSx(displayedRating, theme.palette.mode)}
+              >
+                {displayedRating.toFixed(1)}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                flex: 1,
+                textAlign: "center",
+                p: 2.5,
+                borderRadius: "12px",
+                bgcolor: alpha(getRatingColor(Number(avgRating)), 0.1),
+                border: `1px solid ${alpha(getRatingColor(Number(avgRating)), 0.2)}`,
+              }}
+            >
+              <Typography
+                variant="caption"
+                fontWeight={800}
+                color="text.secondary"
+                display="block"
+              >
+                TEAM AVG
+              </Typography>
+              <Typography
+                variant="h3"
+                fontWeight={900}
+                sx={getRatingTextSx(Number(avgRating), theme.palette.mode)}
+              >
+                {avgRating || "—"}
+              </Typography>
+            </Box>
+          </Stack>
+        ) : (
+          /* Rating Input State */
+          <ClayRatingInput
+            userId={userId}
+            submitting={isSubmitting}
+            onSubmit={(val: number) => {
+              setOptimisticRating(val);
+              submitRating({
+                matchId,
+                playerId: player.id,
+                rating: val,
+                userId,
+                groupId,
+                currentYear,
+              });
+            }}
+          />
+        )}
+      </Box>
+    </Paper>
+  );
+}
+
+// All remaining props are primitives, a stable array, or a stable callback
+// (`setStoredMotmId` is useCallback'd by its owner), so the default shallow
+// compare is enough — no custom comparator needed.
+export const PlayerRatingCard = React.memo(PlayerRatingCardBase);
+
+const ClayRatingInput = ({ onSubmit, userId, submitting = false }: any) => {
+  const theme = useTheme();
+  const [val, setVal] = useState(6.0);
+  const step = userId === "4hPrbr7QlZSVqm8VB4F8kRXUtDf2" ? 0.1 : 0.5;
+  const activeColor = getRatingColor(val);
+
+  return (
+    <Stack spacing={3} alignItems="center" sx={{ width: "100%" }}>
+      <Stack direction="row" alignItems="center" spacing={3}>
+        <IconButton
+          aria-label="Decrease rating"
+          disabled={submitting}
+          onClick={() => setVal((p) => Math.max(1, p - step))}
+          sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
+        >
+          <RemoveRounded />
+        </IconButton>
+
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {/* Track. The pastel arc alone is ~1.1:1 on a white card, so the
+              gauge had no readable extent in light mode; the track gives the
+              arc an edge to be seen against without changing its colour. */}
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={110}
+            thickness={5}
+            sx={{
+              color: alpha(theme.palette.text.primary, 0.12),
+              position: "absolute",
+            }}
+          />
+          <CircularProgress
+            variant="determinate"
+            value={val * 10}
+            size={110}
+            thickness={5}
+            sx={{ color: activeColor, transition: "color 0.3s ease" }}
+          />
+          <Typography
+            variant="h4"
+            fontWeight={950}
+            sx={{
+              position: "absolute",
+              ...getRatingTextSx(val, theme.palette.mode),
+            }}
+          >
+            {val.toFixed(1)}
+          </Typography>
+        </Box>
+
+        <IconButton
+          aria-label="Increase rating"
+          disabled={submitting}
+          onClick={() => setVal((p) => Math.min(10, p + step))}
+          sx={{ bgcolor: alpha(theme.palette.divider, 0.05) }}
+        >
+          <AddRounded />
+        </IconButton>
+      </Stack>
+
+      <AsyncButton
+        fullWidth
+        variant="contained"
+        size="large"
+        loading={submitting}
+        keepBackground
+        // The gradient is pastel, so the spinner needs the dark tone to be seen.
+        loadingIndicatorColor={theme.palette.text.primary}
+        onClick={() => onSubmit(val)}
+        sx={{
+          borderRadius: "10px",
+          py: 2,
+          fontWeight: 800,
+          background: `linear-gradient(45deg, ${activeColor}, ${alpha(activeColor, 0.8)})`,
+          boxShadow: `0 4px 12px ${alpha(activeColor, 0.25)}`,
+          "&:hover": { background: activeColor },
+        }}
+      >
+        SUBMIT RATING
+      </AsyncButton>
+    </Stack>
+  );
+};
