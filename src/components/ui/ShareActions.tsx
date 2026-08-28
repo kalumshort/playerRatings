@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, Stack, type SxProps, type Theme } from "@mui/material";
 import {
   Download as DownloadIcon,
@@ -51,17 +51,49 @@ export default function ShareActions({
   targetWidth,
   sx,
 }: ShareActionsProps) {
-  const { share, pending } = useShareImage();
+  const { share, prepare, prewarm, pending } = useShareImage();
 
-  const run = (forceDownload = false) =>
-    share({
-      node: targetRef.current,
-      filename,
-      text: shareText,
-      url: shareUrl,
-      targetWidth,
-      forceDownload,
-    });
+  const req = (forceDownload = false) => ({
+    node: targetRef.current,
+    filename,
+    text: shareText,
+    url: shareUrl,
+    targetWidth,
+    forceDownload,
+  });
+
+  const run = (forceDownload = false) => share(req(forceDownload));
+
+  // Fetch the card's photos in CORS mode now, while nobody is waiting on them.
+  // html2canvas re-requests every image with crossOrigin set and cannot reuse
+  // the page's own no-CORS cache entries, so without this the first tap pays
+  // for a full second download of every player portrait — which is what pushed
+  // the render past navigator.share's activation window on iOS.
+  //
+  // THE POLL IS NOT PADDING. Two of the three callers put their card inside
+  // ShareStage, which is gated on useMounted and so renders null on the first
+  // commit — `targetRef.current` is still null when this effect first runs. A
+  // one-shot warm would quietly warm nothing and leave the whole mechanism
+  // inert, which is the failure it was written to prevent. Retrying until the
+  // portal lands costs a handful of null checks.
+  useEffect(() => {
+    let timer: number | undefined;
+    let tries = 0;
+
+    const tick = () => {
+      const node = targetRef.current;
+      if (node) {
+        prewarm(node);
+        return;
+      }
+      // ~2s of grace, then give up: a card that has not mounted by now is not
+      // going to, and the render path warms as a fallback anyway.
+      if (tries++ < 20) timer = window.setTimeout(tick, 100);
+    };
+
+    tick();
+    return () => window.clearTimeout(timer);
+  }, [prewarm, targetRef]);
 
   return (
     <Box data-nosnap="true" sx={[{ mt: 1.5 }, ...(Array.isArray(sx) ? sx : [sx])]}>
@@ -82,6 +114,12 @@ export default function ShareActions({
 
         <AsyncButton
           loading={pending}
+          // Start rasterising on the press, not on the release. Every
+          // millisecond of the render that happens before the click is a
+          // millisecond it does not spend out of navigator.share's transient
+          // activation window. pointerdown rather than mousedown/touchstart so
+          // this fires once on both, and the click still drives the share.
+          onPointerDown={() => prepare(req(false))}
           onClick={() => run(false)}
           variant="contained"
           color="secondary"
