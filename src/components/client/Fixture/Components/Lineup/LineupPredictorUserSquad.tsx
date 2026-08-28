@@ -138,7 +138,7 @@ export default function ChosenLineup({
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {hasCrowd
-            ? "Check the Group XI tab to see who the fans went with."
+            ? "Check the Fans XI tab to see who everyone went with."
             : "Predictions open again before the next kick-off."}
         </Typography>
       </Box>

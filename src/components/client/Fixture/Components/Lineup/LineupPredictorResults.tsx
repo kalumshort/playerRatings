@@ -68,7 +68,7 @@ export default function LineupPredictorResults({
           <Tab
             icon={<GroupsRounded fontSize="small" />}
             iconPosition="start"
-            label="Group XI"
+            label="Fans XI"
           />
           <Tab
             icon={<GroupsRounded fontSize="small" />}
