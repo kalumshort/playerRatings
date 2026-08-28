@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { clientDB, functions } from "./client";
 import { httpsCallable } from "firebase/functions";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * Update a specific field in the User document.
@@ -96,6 +97,13 @@ export const updateLeagueTeam = async ({
       },
     });
 
+    // The callable resolves for a refused transfer too (closed window, same
+    // club), so the reported event is gated on the payload rather than on the
+    // absence of a throw.
+    if (result.data?.success !== false) {
+      trackEvent("select_club", { group_id: groupId, league: leagueKey });
+    }
+
     // 4. Return the data payload from the function
     return result.data;
   } catch (err: any) {
@@ -119,6 +127,15 @@ export const joinGroupByCodeClient = async (
     );
 
     const result = await joinFunction(data);
+
+    if (result.data?.success) {
+      // The invite code itself is deliberately not sent: it is a credential.
+      trackEvent("join_group", {
+        group_id: result.data.groupId,
+        method: "invite_code",
+      });
+    }
+
     return result.data;
   } catch (error: any) {
     console.error("Error in joinGroupByCodeClient:", error);

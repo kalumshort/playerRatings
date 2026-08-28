@@ -164,6 +164,7 @@ export default function PredictionResultShare({
           fixture?.teams?.away?.name,
         )}-Predictions.png`}
         shareText={`${verdict} ${result.points}/${MAX_MATCH_PREDICTION_POINTS} prediction points.`}
+        contentType="prediction_result"
         sx={{ mt: 0 }}
       />
 

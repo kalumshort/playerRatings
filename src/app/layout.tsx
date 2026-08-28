@@ -10,6 +10,7 @@ import { cookies } from "next/headers";
 import { DrawerProvider } from "@/components/client/Header/DrawerContext";
 import AppToaster from "@/components/client/AppToaster";
 import NavigationLoader from "@/components/client/Widgets/NavigationLoader";
+import Analytics from "@/components/client/Analytics";
 import { Suspense } from "react";
 import { X_HANDLE } from "@/lib/config/brand";
 import { getUserHomeSlugServer } from "@/lib/firebase/firebase-admin-queries";
@@ -115,6 +116,12 @@ export default async function RootLayout({
                   <AppToaster />
                 </main>
                 <Footer />
+                {/* Inside ThemeRegistry because the consent banner is MUI, and
+                    inside Suspense because it reads useSearchParams — without a
+                    boundary that would opt every route out of static rendering. */}
+                <Suspense fallback={null}>
+                  <Analytics />
+                </Suspense>
               </DrawerProvider>
             </ThemeRegistry>
           </StoreProvider>

@@ -19,6 +19,7 @@ import InstagramIcon from "@mui/icons-material/Instagram";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SvgIcon, { type SvgIconProps } from "@mui/material/SvgIcon";
 import { CONTACT_EMAIL, SOCIALS } from "@/lib/config/brand";
+import { openCookieSettings } from "@/lib/analytics";
 
 /** MUI ships no TikTok glyph, so the mark is inlined rather than pulling in
  *  another icon package for a single button. */
@@ -156,6 +157,24 @@ const Footer = () => {
               </MuiLink>
               <MuiLink component={Link} href="/contact" sx={linkStyle}>
                 Contact Us
+              </MuiLink>
+              {/* Consent has to be as easy to withdraw as it was to give.
+                  A button, not a link — it goes nowhere, it reopens the
+                  banner — styled to sit with its neighbours. */}
+              <MuiLink
+                component="button"
+                type="button"
+                onClick={openCookieSettings}
+                sx={{
+                  ...linkStyle,
+                  background: "none",
+                  border: "none",
+                  p: 0,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                Cookie Settings
               </MuiLink>
             </Stack>
           </Grid>

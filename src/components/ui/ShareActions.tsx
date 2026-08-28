@@ -21,6 +21,11 @@ export interface ShareActionsProps {
   align?: "left" | "center" | "right";
   targetWidth?: number;
   sx?: SxProps<Theme>;
+  /**
+   * Low-cardinality label for the analytics `share` event — which card this
+   * is, not which match. See ShareImageRequest.contentType.
+   */
+  contentType?: string;
 }
 
 const JUSTIFY = {
@@ -50,6 +55,7 @@ export default function ShareActions({
   align = "right",
   targetWidth,
   sx,
+  contentType,
 }: ShareActionsProps) {
   const { share, prepare, prewarm, pending } = useShareImage();
 
@@ -60,6 +66,7 @@ export default function ShareActions({
     url: shareUrl,
     targetWidth,
     forceDownload,
+    contentType,
   });
 
   const run = (forceDownload = false) => share(req(forceDownload));

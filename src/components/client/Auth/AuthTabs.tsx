@@ -19,6 +19,7 @@ import {
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { handleCreateAccount } from "@/lib/firebase/auth-actions";
+import { trackEvent } from "@/lib/analytics";
 import {
   isPasswordStrong,
   getPasswordHelperText,
@@ -100,6 +101,9 @@ export default function AuthTabs({
       } else {
         // Standard Login Flow - No groupId passed here per your requirement
         await signInWithEmailAndPassword(auth, email, password);
+        // Reported here rather than in auth-actions: this path calls the
+        // Firebase SDK directly, so there is no shared action to hang it on.
+        trackEvent("login", { method: "password" });
       }
     } catch (err: any) {
       setMessage({ text: getFriendlyError(err.code), isError: true });

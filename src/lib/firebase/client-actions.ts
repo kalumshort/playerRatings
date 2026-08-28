@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { updateOrSet, txUpdateOrSet } from "./utils";
 import { httpsCallable } from "firebase/functions";
+import { trackEvent } from "@/lib/analytics";
 
 // --- Validation Helper ---
 const validateParams = (params: Record<string, any>) => {
@@ -132,7 +133,7 @@ export const handlePredictWinningTeam = async ({
     matchId,
   );
 
-  return await runTransaction(clientDB, async (tx) => {
+  const outcome = await runTransaction(clientDB, async (tx) => {
     const userSnap = await tx.get(userRef);
     const previous: "home" | "draw" | "away" | null =
       userSnap.exists() ? (userSnap.data()?.result ?? null) : null;
@@ -153,6 +154,20 @@ export const handlePredictWinningTeam = async ({
 
     return { changed: true, previous };
   });
+
+  // Only real votes are reported. `changed: false` is a retry of a vote we
+  // already hold, and counting those would inflate every engagement number
+  // against whoever has the flakiest connection.
+  if (outcome.changed) {
+    trackEvent("predict_winner", {
+      match_id: matchId,
+      group_id: groupId,
+      choice,
+      changed_vote: Boolean(outcome.previous),
+    });
+  }
+
+  return outcome;
 };
 
 export const handlePredictTeamScore = async (params: ScorePredictParams) => {
@@ -186,7 +201,7 @@ export const handlePredictTeamScore = async (params: ScorePredictParams) => {
       matchId,
     );
 
-    return await runTransaction(clientDB, async (tx) => {
+    const outcome = await runTransaction(clientDB, async (tx) => {
       const userSnap = await tx.get(userRef);
       const previous: string | null = userSnap.exists()
         ? (userSnap.data()?.ScorePrediction ?? null)
@@ -236,6 +251,17 @@ export const handlePredictTeamScore = async (params: ScorePredictParams) => {
 
       return { success: true, changed: true, previous };
     });
+
+    if (outcome.changed) {
+      trackEvent("predict_score", {
+        match_id: matchId,
+        group_id: groupId,
+        score,
+        changed_vote: Boolean(outcome.previous),
+      });
+    }
+
+    return outcome;
   } catch (error: any) {
     console.error("❌ Error submitting score prediction:", error);
     throw error;
@@ -263,7 +289,7 @@ export const handlePredictPreMatchMotm = async (params: {
     matchId,
   );
 
-  return await runTransaction(clientDB, async (tx) => {
+  const outcome = await runTransaction(clientDB, async (tx) => {
     const userSnap = await tx.get(userRef);
     const previous: string | null = userSnap.exists()
       ? (userSnap.data()?.preMatchMotm ?? null)
@@ -286,6 +312,17 @@ export const handlePredictPreMatchMotm = async (params: {
 
     return { changed: true, previous };
   });
+
+  if (outcome.changed) {
+    trackEvent("predict_motm", {
+      match_id: matchId,
+      group_id: groupId,
+      player_id: playerId,
+      changed_vote: Boolean(outcome.previous),
+    });
+  }
+
+  return outcome;
 };
 
 export const handlePredictTeamSubmit = async (params: TeamSubmitParams) => {
@@ -326,6 +363,13 @@ export const handlePredictTeamSubmit = async (params: TeamSubmitParams) => {
         submittedAt: Date.now(),
       }),
     ]);
+
+    trackEvent("submit_lineup", {
+      match_id: matchId,
+      group_id: groupId,
+      formation,
+      players_picked: Object.values(chosenTeam).filter(Boolean).length,
+    });
 
     return { success: true };
   } catch (error: any) {
@@ -501,6 +545,13 @@ export const handleMatchMotmVote = async (params: {
 
   try {
     await batch.commit();
+
+    trackEvent("vote_motm", {
+      match_id: matchId,
+      group_id: groupId,
+      player_id: playerId,
+    });
+
     return { success: true };
   } catch (error: any) {
     console.error("❌ MOTM Vote Batch Failed:", error);
@@ -563,6 +614,17 @@ export const handlePlayerRatingSubmit = async (data: any) => {
 
   try {
     await batch.commit();
+
+    // One event per player, not per matchday card: a fan who rates four
+    // players and abandons the rest is the thing worth being able to see, and
+    // a single "ratings submitted" event would hide exactly that.
+    trackEvent("rate_player", {
+      match_id: mId,
+      group_id: gId,
+      player_id: pId,
+      rating: Number(rating),
+    });
+
     return { success: true };
   } catch (error: any) {
     console.error("❌ Firestore Batch Failed:", error);
@@ -626,6 +688,8 @@ export const handleAddUserToGroup = async ({
     await addUserToGroup({
       groupId: groupId,
     });
+
+    trackEvent("join_group", { group_id: groupId, method: "direct" });
 
     return {
       success: true,

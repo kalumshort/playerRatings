@@ -121,6 +121,7 @@ export default function LineupShell({
           shareText={
             shareText ?? (matchup ? `My XI for ${matchup}.` : `My XI on 11Votes.`)
           }
+          contentType="lineup"
           showDownload
         />
       )}

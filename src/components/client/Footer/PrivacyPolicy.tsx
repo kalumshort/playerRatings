@@ -161,8 +161,31 @@ export default function PrivacyPolicyPage() {
           and preventing vote manipulation.
         </Paragraph>
 
-        {/* 4. Advertising */}
-        <SectionHeader>4. Third Parties</SectionHeader>
+        {/* 4. Cookies & Analytics */}
+        <SectionHeader>4. Cookies &amp; Analytics</SectionHeader>
+        <Paragraph>
+          <strong>Essential cookies</strong> keep you signed in and remember
+          your theme. These are required for the site to work and are always
+          on.
+        </Paragraph>
+        <Paragraph>
+          <strong>Analytics cookies</strong> are optional and off by default. We
+          use <strong>Google Analytics 4</strong> to understand which pages and
+          features fans actually use — page views, and the actions that define
+          the site (rating a player, submitting a prediction or an XI, signing
+          up, joining a group, sharing a card). We never send Google your email
+          address, your display name or your account ID; events carry match,
+          player and club identifiers only.
+        </Paragraph>
+        <Paragraph>
+          Google Analytics does not load at all until you accept. If you decline
+          nothing is requested from Google and no analytics cookies are set. You
+          can change your mind at any time using{" "}
+          <strong>Cookie Settings</strong> in the footer.
+        </Paragraph>
+
+        {/* 5. Advertising */}
+        <SectionHeader>5. Third Parties</SectionHeader>
         <Paragraph>
           Advertisers (e.g., Google AdSense) may use cookies to provide
           interest-based advertisements. We also use{" "}
@@ -170,8 +193,8 @@ export default function PrivacyPolicyPage() {
           shared with them.
         </Paragraph>
 
-        {/* 5. User Rights */}
-        <SectionHeader>5. Data Deletion</SectionHeader>
+        {/* 6. User Rights */}
+        <SectionHeader>6. Data Deletion</SectionHeader>
         <Paragraph>
           <strong>Account Deletion:</strong> You may request full deletion in
           Profile settings. Identity data is removed immediately. Aggregated
@@ -180,7 +203,7 @@ export default function PrivacyPolicyPage() {
         </Paragraph>
 
         {/* 7. Contact Info */}
-        <SectionHeader>6. Contact Us</SectionHeader>
+        <SectionHeader>7. Contact Us</SectionHeader>
         <Box
           sx={{
             p: 4,

@@ -278,6 +278,9 @@ export default function RatingLineup({
                 fixture?.teams?.away?.name,
               )}-${shareSrc === "Personal" ? "My-Ratings" : "Ratings"}.png`}
               shareText={shareText}
+              contentType={
+                shareSrc === "Personal" ? "my_ratings" : "group_ratings"
+              }
             />
           </>
         )}

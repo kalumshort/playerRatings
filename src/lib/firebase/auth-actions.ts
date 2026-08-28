@@ -6,6 +6,7 @@ import {
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { auth, clientDB } from "./client";
+import { trackEvent } from "@/lib/analytics";
 
 // --- Cloud Function Helpers ---
 const getAuthFunctions = () => {
@@ -37,6 +38,15 @@ export const handleCreateAccount = async ({
   if (groupId) {
     await addUserToGroup({ groupId });
   }
+
+  // `method` is GA4's own convention for these two events, which is what makes
+  // them break down by provider in the standard reports without any config.
+  // No uid, email or display name goes with it — see the PII note in gtag.ts.
+  trackEvent("sign_up", {
+    method: "password",
+    with_invite: Boolean(groupId),
+  });
+
   return userCredential.user;
 };
 
@@ -58,6 +68,8 @@ export const handleGoogleSignIn = async (groupId?: string) => {
     }
     // Update login timestamp
     await updateDoc(userRef, { lastLogin: Timestamp.now() });
+
+    trackEvent("login", { method: "google" });
   } else {
     // New User via Google
     await createUserDoc({
@@ -70,6 +82,13 @@ export const handleGoogleSignIn = async (groupId?: string) => {
     if (groupId) {
       await addUserToGroup({ groupId });
     }
+
+    // The absence of a user doc is what distinguishes a first Google sign-in
+    // from a returning one — Firebase Auth itself reports both identically.
+    trackEvent("sign_up", {
+      method: "google",
+      with_invite: Boolean(groupId),
+    });
   }
   return result.user;
 };

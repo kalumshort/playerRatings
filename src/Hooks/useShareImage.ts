@@ -14,6 +14,7 @@ import {
   type ShareOutcome,
   type SharePayload,
 } from "@/lib/share";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ShareImageRequest {
   /** The node to rasterise. Null is tolerated (returns "failed"). */
@@ -31,6 +32,13 @@ export interface ShareImageRequest {
    * button, which must produce a file even where a share sheet is available.
    */
   forceDownload?: boolean;
+  /**
+   * What kind of card this is, for the analytics `share` event — "lineup",
+   * "ratings", "prediction_result". A stable, low-cardinality label on
+   * purpose: `filename` carries club names and match IDs and would make a
+   * useless GA4 dimension.
+   */
+  contentType?: string;
 }
 
 export interface UseShareImage {
@@ -204,14 +212,38 @@ export default function useShareImage(): UseShareImage {
         } else if (outcome === "downloaded") {
           toast.success("Image saved to your downloads.", { id: toastId });
         } else if (outcome === "needs-gesture") {
-          offerGestureRetry(await blobPromise, payload, toastId);
+          offerGestureRetry(
+            await blobPromise,
+            payload,
+            toastId,
+            req.contentType,
+          );
         }
         // "shared" and "cancelled" get nothing: the OS sheet was the feedback.
+
+        // Reported here rather than on the button so all three share surfaces
+        // are covered by one call, and so `method` records what actually
+        // happened rather than what was asked for. Every terminal outcome is
+        // sent, failures included — the iOS activation bug this hook exists to
+        // work around was invisible precisely because nothing recorded it.
+        // "needs-gesture" is not terminal and is reported by the retry.
+        if (outcome !== "needs-gesture") {
+          trackEvent("share", {
+            method: outcome,
+            content_type: req.contentType,
+            forced_download: Boolean(req.forceDownload),
+          });
+        }
 
         return outcome;
       } catch (err) {
         console.error("[useShareImage] capture failed:", err);
         toast.error("Couldn't create the image. Try again.", { id: toastId });
+        trackEvent("share", {
+          method: "failed",
+          content_type: req.contentType,
+          forced_download: Boolean(req.forceDownload),
+        });
         return "failed";
       } finally {
         inFlight.current = false;
@@ -239,6 +271,7 @@ function offerGestureRetry(
   blob: Blob,
   payload: SharePayload,
   toastId: string,
+  contentType?: string,
 ) {
   toast("Your image is ready.", {
     id: toastId,
@@ -253,6 +286,15 @@ function offerGestureRetry(
           } else if (outcome === "downloaded") {
             toast.success("Image saved to your downloads.");
           }
+
+          // `retried: true` separates these out in GA4. A share that only
+          // completed on the second tap is a share, but it is also the signal
+          // that the activation budget ran out again on some device.
+          trackEvent("share", {
+            method: outcome,
+            content_type: contentType,
+            retried: true,
+          });
         });
       },
     },
