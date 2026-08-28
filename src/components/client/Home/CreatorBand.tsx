@@ -14,10 +14,10 @@ import { motion } from "framer-motion";
 import { Lock, ArrowRight } from "lucide-react";
 
 /**
- * The one thing on the homepage aimed at someone with an audience rather than
- * someone looking for a club to join.
+ * The one thing on the homepage aimed at someone who already has a community
+ * around them, rather than someone looking for a club hub to join.
  *
- * Deliberately a teaser, not the pitch: the detail lives on /private-groups.
+ * Deliberately a teaser, not the pitch: the detail lives on /private-clubs.
  * Placed after ClubFinder so it reads as "…or, if you already have a
  * following, here is the other way in" rather than interrupting the join flow.
  */
@@ -56,7 +56,7 @@ export default function CreatorBand() {
               })}
             >
               <Lock size={13} />
-              FOR CREATORS
+              FOR COMMUNITIES
             </Box>
 
             <Typography
@@ -67,22 +67,22 @@ export default function CreatorBand() {
                 fontSize: { xs: "1.75rem", md: "2.25rem" },
               }}
             >
-              Turn your audience into your panel
+              Give your community a club of its own
             </Typography>
 
             <Typography
               color="text.secondary"
               sx={{ fontSize: "1.1rem", maxWidth: 580, lineHeight: 1.6 }}
             >
-              Cover one Premier League club? A private group gives your
-              community its own members-only hub — and gives you a consensus XI,
-              a live mood curve and a full ratings card after every match. Your
-              fans&apos; numbers, nobody else&apos;s, ready to put on screen.
+              Follow one Premier League side? A private club gives your
+              community its own members-only home — its own player ratings, a
+              consensus XI, a live mood curve and a full ratings card after
+              every match. Your members&apos; numbers, nobody else&apos;s.
             </Typography>
 
             <Button
               component={Link}
-              href="/private-groups"
+              href="/private-clubs"
               size="large"
               endIcon={<ArrowRight size={18} />}
               sx={{
@@ -94,7 +94,7 @@ export default function CreatorBand() {
                 fontSize: "1rem",
               }}
             >
-              See how private groups work
+              See how private clubs work
             </Button>
           </Stack>
         </motion.div>

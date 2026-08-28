@@ -139,8 +139,8 @@ const Footer = () => {
               <MuiLink component={Link} href="/profile" sx={linkStyle}>
                 Profile
               </MuiLink>
-              <MuiLink component={Link} href="/private-groups" sx={linkStyle}>
-                Private Groups
+              <MuiLink component={Link} href="/private-clubs" sx={linkStyle}>
+                Private Clubs
               </MuiLink>
             </Stack>
           </Grid>

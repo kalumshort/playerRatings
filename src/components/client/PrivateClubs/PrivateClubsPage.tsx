@@ -32,7 +32,15 @@ import {
 import { CONTACT_EMAIL } from "@/lib/config/brand";
 
 /**
- * The private-group pitch, aimed at creators who cover one Premier League club.
+ * The private-club pitch, aimed at any community that follows one Premier
+ * League side — a channel, a podcast, a forum, a Discord, a supporters' club.
+ *
+ * ON THE WORD "CLUB". This page never uses "club" to mean a Premier League
+ * team; it says "side" or "team" instead. That is not fussiness — the whole
+ * proposition is "your community gets a club of its own", and a page that also
+ * calls Arsenal a club makes the reader do disambiguation work on every
+ * sentence. The rest of the app still says "club hub" for the public pages,
+ * where there is no competing meaning in play.
  *
  * Same rule as the homepage: every claim points at something the app actually
  * does. The privacy claims map to the server gates in [clubSlug]/page.tsx,
@@ -40,9 +48,9 @@ import { CONTACT_EMAIL } from "@/lib/config/brand";
  * GroupInviteGenerator's real options; the "not indexed" claim maps to
  * sitemap.ts, which only ever submits `isPublic == true`.
  *
- * The CTA is "request", not "create". There is no self-serve group creation in
- * the app — groups are provisioned by hand — so a "Create your group" button
- * would be a promise the product cannot keep.
+ * The CTA is "request", not "create". There is no self-serve creation in the
+ * app — these are provisioned by hand — so a "Create your club" button would be
+ * a promise the product cannot keep.
  */
 
 const Eyebrow = ({ children }: { children: React.ReactNode }) => (
@@ -101,32 +109,52 @@ const InfoCard = ({
 );
 
 /**
+ * Who this is for, named explicitly.
+ *
+ * The page used to open "FOR CREATORS" and talk about "your audience" and
+ * "your channel" throughout, which quietly excluded most of the communities it
+ * suits — a supporters' club committee does not have an audience, and a
+ * forum's moderators do not think of themselves as creators. Naming the shapes
+ * costs one row and lets each of them recognise itself.
+ */
+const COMMUNITY_TYPES = [
+  "YouTube channels",
+  "Podcasts",
+  "Fan forums",
+  "Discord servers",
+  "Supporters' clubs",
+  "WhatsApp & group chats",
+  "Fantasy leagues",
+  "Matchday meetups",
+];
+
+/**
  * The matchday content loop.
  *
- * This is the section that has to do the persuading: a creator does not want a
- * feature list, they want to know what Monday's video is. Every `segments`
- * line is a real output of a real feature — the consensus XI and its hit/miss
- * score, the minute-by-minute mood curve, sub shouts with timestamps, ratings
- * that open at 80', the Fan MOTM, season averages, and the two leaderboards
- * (XP and "Sharpest predictors"). Nothing here is aspirational.
+ * This is the section that has to do the persuading: nobody wants a feature
+ * list, they want to know what their community does together on Saturday.
+ * Every `segments` line is a real output of a real feature — the consensus XI
+ * and its hit/miss score, the minute-by-minute mood curve, sub shouts with
+ * timestamps, ratings that open at 80', the Fan MOTM, season averages, and the
+ * two leaderboards (XP and "Sharpest predictors"). Nothing here is aspirational.
  */
 const CONTENT_ARC = [
   {
     icon: <Clock size={24} />,
     phase: "BEFORE KICKOFF",
-    title: "A team-news video that isn't just your opinion",
-    body: "Your community picks a formation and fills eleven shirts. You get one consensus XI to put on screen — and when the real teamsheet drops, a hit/miss score against it.",
+    title: "The XI your members would pick",
+    body: "Your community picks a formation and fills eleven shirts. One consensus XI comes out the other side — and when the real teamsheet drops, a hit/miss score against it.",
     segments: [
-      "“Here's the XI you picked” — with the shape they voted for",
-      "Your XI vs the manager's, scored out of eleven",
-      "The scoreline your audience actually expects",
+      "The XI your members chose, in the shape they voted for",
+      "Your club's XI vs the manager's, scored out of eleven",
+      "The scoreline your members actually expect",
       "Their player to watch, named before a ball is kicked",
     ],
   },
   {
     icon: <Activity size={24} />,
     phase: "LIVE",
-    title: "A record of what the crowd felt, minute by minute",
+    title: "A record of what your members felt, minute by minute",
     body: "Moods, hot and cold calls and substitution shouts are all timestamped against the match clock. After full time that's a curve you can scrub back through.",
     segments: [
       "The mood graph across all 90 — where it turned",
@@ -138,30 +166,30 @@ const CONTENT_ARC = [
   {
     icon: <Star size={24} />,
     phase: "FULL TIME",
-    title: "Player ratings with your community's name on them",
-    body: "Ratings open at the 80th minute, never before, so nobody scores a player they haven't watched. Every player who featured gets a number from 1.0 to 10.0.",
+    title: "Player ratings with only your members' names on them",
+    body: "Your club runs its own ratings, scored by your members and nobody else. They open at the 80th minute, never before, so nobody scores a player they haven't watched.",
     segments: [
-      "The full ratings card, read out or shown on screen",
-      "Your rating against theirs, player by player",
-      "The Fan Man of the Match they crowned",
+      "Every player who featured, rated 1.0 to 10.0",
+      "A full ratings card that belongs to your community",
+      "The Fan Man of the Match your members crowned",
       "A shareable graphic for the post or the thumbnail",
     ],
   },
   {
     icon: <CalendarRange size={24} />,
     phase: "ALL SEASON",
-    title: "A season-long dataset only you have",
-    body: "Every match compounds. By spring you're holding your audience's player-of-the-season race, their sharpest predictors, and a leaderboard with their names on it.",
+    title: "A season-long record only your club holds",
+    body: "Every match compounds. By spring your club is holding its own player-of-the-season race, its sharpest predictors, and a leaderboard with your members' names on it.",
     segments: [
-      "Season rating averages — your fans' player of the season",
-      "Form swings: who your audience has turned on",
+      "Season rating averages — your club's player of the season",
+      "Form swings: who your members have turned on",
       "“Sharpest predictors” — the ones calling it right",
       "XP, levels and streaks for turning up every week",
     ],
   },
 ];
 
-/** Everything a member of a private group gets. Each maps to a live feature. */
+/** Everything a member of a private club gets. Each maps to a live feature. */
 const MEMBER_FEATURES = [
   "Winner & scoreline predictions",
   "Player to watch",
@@ -180,7 +208,7 @@ const MEMBER_FEATURES = [
   "Shareable graphics",
 ];
 
-export default function PrivateGroupsPage() {
+export default function PrivateClubsPage() {
   const theme = useTheme() as any;
 
   return (
@@ -195,7 +223,7 @@ export default function PrivateGroupsPage() {
               transition={{ duration: 0.6 }}
             >
               <Stack spacing={3}>
-                <Eyebrow>FOR CREATORS</Eyebrow>
+                <Eyebrow>FOR FOOTBALL COMMUNITIES</Eyebrow>
 
                 <Typography
                   variant="h1"
@@ -206,28 +234,30 @@ export default function PrivateGroupsPage() {
                     lineHeight: 1.03,
                   }}
                 >
-                  Your audience. Your consensus.
+                  Give your community a club of its own
                 </Typography>
 
                 <Typography
                   color="text.secondary"
                   sx={{ fontSize: "1.15rem", lineHeight: 1.65, maxWidth: 560 }}
                 >
-                  If you cover one Premier League side, a private group turns
-                  your audience into a panel. They predict, pick the XI, call
-                  players hot or cold and rate every performance — and you walk
-                  away from each match with a set of numbers nobody else has,
-                  about the only fanbase you actually speak for.
+                  We&apos;ll set your community up with a private club on
+                  11Votes, following whichever Premier League side you follow.
+                  Your members predict, pick the XI, call players hot or cold
+                  and rate every performance — behind a door only they have the
+                  key to.
                 </Typography>
 
                 <Typography
                   color="text.secondary"
                   sx={{ fontSize: "1.05rem", lineHeight: 1.65, maxWidth: 560 }}
                 >
-                  A poll gives you one number and it&apos;s gone by Tuesday.
-                  This gives you a consensus XI, a mood curve, a ratings card
-                  and a season-long table — every week, from the same people,
-                  under your name.
+                  Player ratings are the heart of it, and yours are your
+                  own — scored by your members, counted for your club alone, and
+                  never mixed in with the wider fanbase. A poll gives you one
+                  number and it&apos;s gone by Tuesday. This gives your
+                  community a ratings card, a consensus XI, a mood curve and a
+                  season-long table, every week, from the same people.
                 </Typography>
 
                 <Stack
@@ -250,7 +280,7 @@ export default function PrivateGroupsPage() {
                       fontWeight: 900,
                     }}
                   >
-                    Request a private group
+                    Request a private club
                   </Button>
 
                   <Button
@@ -287,9 +317,9 @@ export default function PrivateGroupsPage() {
                     </Typography>
                   </Stack>
                   <Typography color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                    Every page of a private group — the match, the schedule, the
+                    Every page of a private club — the match, the schedule, the
                     ratings, the leaderboard — is closed to anyone without an
-                    invite. Visitors see the group&apos;s name and nothing else.
+                    invite. Visitors see the club&apos;s name and nothing else.
                   </Typography>
 
                   <Box
@@ -333,26 +363,69 @@ export default function PrivateGroupsPage() {
         </Grid>
       </Container>
 
-      {/* ── THE CONTENT LOOP ─────────────────────────────────────────── */}
+      {/* ── WHO IT'S FOR ─────────────────────────────────────────────── */}
       <Box
         sx={(t) => ({
-          py: { xs: 8, md: 12 },
+          py: { xs: 5, md: 6 },
           borderTop: `1px solid ${t.palette.divider}`,
+          borderBottom: `1px solid ${t.palette.divider}`,
+          bgcolor: alpha(t.palette.primary.main, 0.03),
         })}
       >
         <Container maxWidth="lg">
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={{ xs: 2, md: 5 }}
+            alignItems={{ xs: "flex-start", md: "center" }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 900,
+                letterSpacing: -0.2,
+                fontSize: "1.05rem",
+                flexShrink: 0,
+              }}
+            >
+              Built for any group that
+              <br />
+              follows one team together
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {COMMUNITY_TYPES.map((type) => (
+                <Chip
+                  key={type}
+                  label={type}
+                  size="small"
+                  sx={(t) => ({
+                    fontWeight: 700,
+                    fontSize: "0.78rem",
+                    border: `1px solid ${t.palette.divider}`,
+                    bgcolor: "background.paper",
+                  })}
+                />
+              ))}
+            </Box>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* ── THE CONTENT LOOP ─────────────────────────────────────────── */}
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="lg">
           <Stack spacing={2} sx={{ mb: { xs: 5, md: 7 }, maxWidth: 680 }}>
-            <Eyebrow>WHAT YOU GET TO MAKE</Eyebrow>
-            <SectionTitle>Every match writes your next four videos</SectionTitle>
+            <Eyebrow>WHAT YOUR CLUB DOES ALL SEASON</Eyebrow>
+            <SectionTitle>
+              Every match gives your community something to argue about
+            </SectionTitle>
             <Typography
               color="text.secondary"
               sx={{ fontSize: "1.1rem", lineHeight: 1.6 }}
             >
               The point isn&apos;t the votes — it&apos;s what they leave behind.
-              One fixture produces a team-news segment, a live talking point, a
-              ratings breakdown and another week of your season table. You
-              aren&apos;t hunting for an angle; your audience hands you one
-              every time they play.
+              One fixture produces a team-news debate, a live talking point, a
+              ratings breakdown and another week of your season table. If you
+              make content, that&apos;s four segments handed to you. If you
+              don&apos;t, it&apos;s four reasons your members come back.
             </Typography>
           </Stack>
 
@@ -463,42 +536,42 @@ export default function PrivateGroupsPage() {
       >
         <Container maxWidth="lg">
           <Stack spacing={2} sx={{ mb: { xs: 4, md: 6 }, maxWidth: 640 }}>
-            <Eyebrow>WHY IT MATTERS</Eyebrow>
+            <Eyebrow>WHY A CLUB OF YOUR OWN</Eyebrow>
             <SectionTitle>
-              &quot;Our fans said&quot; — and you can prove it
+              &quot;Our lot said&quot; — and you can prove it
             </SectionTitle>
             <Typography
               color="text.secondary"
               sx={{ fontSize: "1.1rem", lineHeight: 1.6 }}
             >
-              On a public club hub your community&apos;s votes are diluted into
-              the whole fanbase, and any number you quote is one a rival channel
-              can quote back. In a private group the sample is your people and
-              only your people. That&apos;s the difference between reading out a
-              statistic and reporting one.
+              On a public hub your community&apos;s votes are diluted into the
+              whole fanbase, and any number you quote is one anybody else can
+              quote back. In a private club the sample is your people and only
+              your people. That&apos;s the difference between repeating a
+              statistic and owning one.
             </Typography>
           </Stack>
 
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <InfoCard
-                icon={<Users size={26} />}
-                title="A sample nobody else has"
-                body="Predictions, ratings and lineups are counted per group. Your members' verdict is never mixed with anyone else's, and never available to anyone else."
+                icon={<Star size={26} />}
+                title="Player ratings that are yours"
+                body="Your club scores its own ratings. Every rating, average and Man of the Match is counted for your members alone — never merged into the wider fanbase, and never visible to it."
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <InfoCard
                 icon={<Trophy size={26} />}
                 title="A reason to come back on Saturday"
-                body="Levels, streaks and two leaderboards mean your audience loses something by missing a match. Turning up stops being passive."
+                body="Levels, streaks and two leaderboards mean your members lose something by missing a match. Turning up stops being passive."
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <InfoCard
                 icon={<BarChart3 size={26} />}
                 title="Never short of a fixture"
-                body="A group follows one Premier League side across the league, the cups and Europe — every match it plays, so the content loop runs all season."
+                body="Your club follows one Premier League side across the league, the cups and Europe — every match it plays, so there is always something on."
               />
             </Grid>
           </Grid>
@@ -525,10 +598,10 @@ export default function PrivateGroupsPage() {
                 color="text.secondary"
                 sx={{ fontSize: "1.1rem", lineHeight: 1.6, maxWidth: 480 }}
               >
-                Which means you decide what the group is worth. Post one link
+                Which means you decide what membership is worth. Post one link
                 publicly and let anyone in, or keep it behind your membership
-                tier — a capped, labelled code per drop, so access is something
-                your community earns rather than stumbles into.
+                tier — a capped, labelled code per drop, so a place in the club
+                is something your community earns rather than stumbles into.
               </Typography>
 
               <Stack spacing={1.5} sx={{ pt: 1 }}>
@@ -547,7 +620,7 @@ export default function PrivateGroupsPage() {
                   },
                   {
                     icon: <EyeOff size={18} />,
-                    text: "Flip the group public later if you ever want to open it up",
+                    text: "Open the club to the public later if you ever want to",
                   },
                 ].map((row) => (
                   <Stack
@@ -580,7 +653,7 @@ export default function PrivateGroupsPage() {
                   WHAT YOUR MEMBERS GET
                 </Typography>
                 <Typography color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                  Everything on a public club hub, unchanged — the group is
+                  Everything on a public club hub, unchanged — your club is
                   private, not stripped back.
                 </Typography>
                 <Box
@@ -627,17 +700,17 @@ export default function PrivateGroupsPage() {
                 lineHeight: 1.08,
               }}
             >
-              Point it at your audience and see what they say
+              Open the doors and see what your lot say
             </Typography>
 
             <Typography
               color="text.secondary"
               sx={{ fontSize: "1.05rem", lineHeight: 1.6 }}
             >
-              Private groups are set up by hand, so tell us which club you cover
+              Private clubs are set up by hand, so tell us which side you follow
               and roughly how many people you expect. We&apos;ll come back with
-              a group and an invite link — and by the next fixture you&apos;ll
-              have your first consensus XI to put on screen.
+              your club and an invite link — and by the next fixture you&apos;ll
+              have your first consensus XI and your first ratings card.
             </Typography>
 
             <Button
@@ -655,7 +728,7 @@ export default function PrivateGroupsPage() {
                 fontWeight: 900,
               }}
             >
-              Request a private group
+              Request a private club
             </Button>
 
             <Typography variant="body2" color="text.secondary">

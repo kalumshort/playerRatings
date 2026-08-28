@@ -59,7 +59,7 @@ const staticOnlySitemap = (): MetadataRoute.Sitemap => [
   // A real marketing page, not a legal footnote — it gets its own priority
   // rather than being lumped in with the 0.2 pages below.
   {
-    url: `${BASE_URL}/private-groups`,
+    url: `${BASE_URL}/private-clubs`,
     lastModified: STATIC_PAGE_UPDATED,
     priority: 0.7,
   },
@@ -183,7 +183,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: BASE_URL, priority: 1 },
     {
-      url: `${BASE_URL}/private-groups`,
+      url: `${BASE_URL}/private-clubs`,
       lastModified: STATIC_PAGE_UPDATED,
       priority: 0.7,
     },

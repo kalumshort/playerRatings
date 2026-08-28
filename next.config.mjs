@@ -17,6 +17,18 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        // /private-groups was indexed and linked before the page was renamed.
+        // Permanent, so the ranking signals it accumulated follow it across
+        // rather than being stranded on a 404.
+        source: "/private-groups",
+        destination: "/private-clubs",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

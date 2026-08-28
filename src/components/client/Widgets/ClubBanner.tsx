@@ -96,7 +96,10 @@ export default function GuestClubBanner({
                 disableElevation
                 sx={{ borderRadius: 2 }}
               >
-                {groupData.groupType === "club" ? "Join Club" : "Join Group"}
+                {/* Was branched on groupType to say "Join Group" for community
+                    groups. Both are clubs now, so the branch said the same
+                    thing twice. */}
+                Join Club
               </Button>
             )
           )}

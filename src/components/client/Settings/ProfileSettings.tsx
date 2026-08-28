@@ -116,7 +116,7 @@ export default function ProfileSettings() {
         <Tab
           icon={<Users size={18} />}
           iconPosition="start"
-          label="Groups"
+          label="Clubs"
           sx={{ fontWeight: 700, minHeight: 48 }}
         />
       </Tabs>

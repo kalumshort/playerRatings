@@ -34,7 +34,7 @@ const FAILURE_COPY: Record<string, { title: string; body: string }> = {
   },
   expired: {
     title: "This invite has expired",
-    body: "Invite links can be set to run out after a while. Ask the group owner to send you a new one.",
+    body: "Invite links can be set to run out after a while. Ask the club owner to send you a new one.",
   },
   exhausted: {
     title: "This invite is used up",
@@ -86,7 +86,7 @@ export default function JoinInviteClient({
       }
 
       hasAttempted.current = false;
-      setFailure(message || "We couldn't add you to this group.");
+      setFailure(message || "We couldn't add you to this club.");
       setIsJoining(false);
     }
   }, [preview, groupHref, router]);
@@ -182,8 +182,8 @@ export default function JoinInviteClient({
 
       <Typography color="text.secondary" sx={{ px: 2 }}>
         {preview.role === "admin"
-          ? "You've been invited to help run this group. Rate players, predict line-ups and vote every match day."
-          : "Join the group to rate players, predict line-ups and vote every match day."}
+          ? "You've been invited to help run this club. Rate players, predict line-ups and vote every match day."
+          : "Join the club to rate players, predict line-ups and vote every match day."}
       </Typography>
 
       {failure && (

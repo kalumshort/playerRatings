@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage() {
           <ListItem disableGutters>
             <ListItemText
               primary="Interaction Data"
-              secondary="Votes, player ratings, match predictions, and group memberships."
+              secondary="Votes, player ratings, match predictions, and club memberships."
               {...listTextProps}
             />
           </ListItem>
@@ -173,7 +173,7 @@ export default function PrivacyPolicyPage() {
           use <strong>Google Analytics 4</strong> to understand which pages and
           features fans actually use — page views, and the actions that define
           the site (rating a player, submitting a prediction or an XI, signing
-          up, joining a group, sharing a card). We never send Google your email
+          up, joining a club, sharing a card). We never send Google your email
           address, your display name or your account ID; events carry match,
           player and club identifiers only.
         </Paragraph>

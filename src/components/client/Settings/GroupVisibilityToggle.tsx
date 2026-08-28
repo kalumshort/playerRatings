@@ -72,12 +72,12 @@ export default function GroupVisibilityToggle({
             )}
             <Box>
               <Typography variant="body2" fontWeight={700}>
-                {isPublic ? "Public Group" : "Private Group"}
+                {isPublic ? "Public Club" : "Private Club"}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {isPublic
                   ? "Anyone can view matches and consensus. Only members chat."
-                  : "Only members can see any group content."}
+                  : "Only members can see any of this club's content."}
               </Typography>
             </Box>
           </Stack>
@@ -97,7 +97,7 @@ export default function GroupVisibilityToggle({
       {isPublic && (
         <Alert severity="info" sx={{ mt: 1, py: 0 }}>
           <Typography variant="caption">
-            Public groups tend to grow 3x faster by allowing casual visitors.
+            Public clubs tend to grow 3x faster by allowing casual visitors.
           </Typography>
         </Alert>
       )}

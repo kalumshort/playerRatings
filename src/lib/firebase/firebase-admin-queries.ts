@@ -646,7 +646,7 @@ export async function getInvitePreview(code: string): Promise<InvitePreview> {
       if (!groupDoc.exists) return { valid: false, reason: "invalid" };
 
       const group = groupDoc.data() as any;
-      groupName = groupName || group.name || "a private group";
+      groupName = groupName || group.name || "a private club";
       groupLogo = groupLogo || group.logoUrl || null;
       groupSlug = groupSlug || group.slug || null;
     }

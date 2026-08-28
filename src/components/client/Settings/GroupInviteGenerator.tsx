@@ -56,7 +56,7 @@ interface GroupInviteGeneratorProps {
 // design — an owner code would be a transferable bearer token for the group.
 const ROLE_OPTIONS = [
   { value: "member", label: "Member", hint: "Can vote and rate players" },
-  { value: "admin", label: "Admin", hint: "Can also manage the group" },
+  { value: "admin", label: "Admin", hint: "Can also manage the club" },
 ];
 
 const EXPIRY_OPTIONS = [

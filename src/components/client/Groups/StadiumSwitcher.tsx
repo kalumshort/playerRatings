@@ -225,7 +225,7 @@ export default function StadiumSwitcher({
             />
             <Tab
               icon={<Lock size={18} />}
-              label="Private Groups"
+              label="Private Clubs"
               iconPosition="start"
               disabled={isPending}
             />
@@ -565,7 +565,7 @@ export default function StadiumSwitcher({
             {privateCommunities.length === 0 && (
               <Box sx={{ py: 3, textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
-                  You haven't joined any private groups yet.
+                  You haven't joined any private clubs yet.
                 </Typography>
                 <Typography variant="caption" color="text.disabled">
                   Got an invite? Enter the code below.
@@ -633,7 +633,7 @@ export default function StadiumSwitcher({
         )}
 
         {/* Outside the tab panels on purpose. This used to sit at the bottom of
-            the Private Groups tab, which only ever rendered for groups carrying
+            the Private Clubs tab, which only ever rendered for groups carrying
             a field the app never set — so nobody could reach it. */}
         {!pendingSelection && !transferLeagueKey && (
           <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
