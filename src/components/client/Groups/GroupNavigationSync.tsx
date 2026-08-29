@@ -49,17 +49,54 @@ export const GroupNavigationSync = () => {
 
     // 3. MANUAL SWITCH: the fan picked a different club, from wherever they
     // happened to be (including /profile). Follow them into it.
-    const slug = (store.getState().groupData as any)?.byGroupId?.[
-      currentActiveId
-    ]?.slug;
-    if (!slug) return;
+    let settled = false;
+    let deferred: ReturnType<typeof setTimeout> | undefined;
 
-    lastActiveGroupId.current = currentActiveId;
-    router.push(`/${slug}`);
-    // The root layout resolves the header logo's target server-side, and Next
-    // reuses that shared segment across a client navigation — without a
-    // refresh the logo would keep pointing at the club they just left.
-    router.refresh();
+    const slugForActiveGroup = () =>
+      (store.getState().groupData as any)?.byGroupId?.[currentActiveId]?.slug;
+
+    const follow = (slug: string) => {
+      settled = true;
+      lastActiveGroupId.current = currentActiveId;
+      router.push(`/${slug}`);
+      // The root layout resolves the header logo's target server-side, and Next
+      // reuses that shared segment across a client navigation — without a
+      // refresh the logo would keep pointing at the club they just left.
+      router.refresh();
+    };
+
+    const knownSlug = slugForActiveGroup();
+    if (knownSlug) {
+      follow(knownSlug);
+      return;
+    }
+
+    // The club isn't in the dictionary yet. A transfer flips activeGroup
+    // server-side, and that user snapshot beats the joinedGroups -> groups
+    // round trip that introduces the new club, so this is the normal ordering
+    // rather than an edge case. Bailing out here stranded the fan on the club
+    // they just left: the effect re-runs on an activeGroup change, and that
+    // change had already been consumed. Watch the store instead and follow the
+    // moment the slug lands.
+    const unsubscribe = store.subscribe(() => {
+      if (settled) return;
+
+      const slug = slugForActiveGroup();
+      if (!slug) return;
+
+      unsubscribe();
+      // A dispatch can land mid-render of another component (the club layout
+      // seeds groupData during its render pass), and this listener runs inside
+      // that dispatch. Navigating from there would touch the router while React
+      // is rendering, so hand the switch to the next task instead.
+      deferred = setTimeout(() => follow(slug), 0);
+    });
+
+    return () => {
+      settled = true;
+      unsubscribe();
+      if (deferred) clearTimeout(deferred);
+    };
   }, [userData?.activeGroup, router, store]);
 
   return null;

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useTransition, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useTransition,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -59,6 +66,17 @@ export default function StadiumSwitcher({
   const [pendingSelection, setPendingSelection] = useState<any | null>(null);
   const [isPending, startTransition] = useTransition();
   const { groupData } = useGroupData();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // The club we're on our way to. A switch only takes effect once the user doc
+  // snapshot comes back and GroupNavigationSync follows it, so the dialog holds
+  // this state instead of closing onto the club the fan just left.
+  const [arrival, setArrival] = useState<{
+    name: string;
+    slug?: string;
+    logoUrl?: string;
+  } | null>(null);
 
   // The club list for the transfer market. Read only while the dialog is open,
   // and cached across opens. Replaces the old hardcoded teamList, so relegated
@@ -131,9 +149,15 @@ export default function StadiumSwitcher({
         leagueKey: transferLeagueKey,
       });
       if (result.success) {
+        // The transfer sets activeGroup server-side, so no separate write is
+        // needed — just hold the dialog until we land in the new stadium.
+        setArrival({
+          name: pendingSelection.name,
+          slug: pendingSelection.slug,
+          logoUrl: pendingSelection.logoUrl,
+        });
         setPendingSelection(null);
         setTransferLeagueKey(null);
-        onClose();
       } else {
         toast.error(result.message || "Couldn't switch clubs. Try again.");
       }
@@ -142,15 +166,49 @@ export default function StadiumSwitcher({
 
   const handleActiveGroupChange = async (newGroupId: string) => {
     if (!newGroupId || isPending) return;
+    const club: any = groupData?.[newGroupId];
     startTransition(async () => {
       await updateUserField(userData?.uid, "activeGroup", newGroupId);
-      onClose();
+      setArrival({
+        name: club?.name || "your club",
+        slug: club?.slug,
+        logoUrl: club?.logoUrl || club?.logo,
+      });
     });
   };
+
+  // Close once the fan is actually standing in the new club's hub. The push
+  // comes from GroupNavigationSync, which waits on the same snapshot; the timer
+  // is the escape hatch for when that snapshot never arrives, so a stalled
+  // listener leaves a fan with a route rather than a spinner.
+  // Read through a ref: callers pass an inline onClose, so depending on it
+  // directly would restart the timer on every parent render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!arrival) return;
+
+    if (!arrival.slug || pathname === `/${arrival.slug}`) {
+      setArrival(null);
+      onCloseRef.current();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      router.push(`/${arrival.slug}`);
+      router.refresh();
+      setArrival(null);
+      onCloseRef.current();
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, [arrival, pathname, router]);
 
   const closeDialog = () => {
     setPendingSelection(null);
     setTransferLeagueKey(null);
+    setArrival(null);
     onClose();
   };
 
@@ -188,11 +246,13 @@ export default function StadiumSwitcher({
               textTransform: "uppercase",
             }}
           >
-            {pendingSelection
-              ? "Confirm Transfer"
-              : transferLeagueKey
-                ? `Market: ${transferLeagueKey.replace("-", " ")}`
-                : "Manage Memberships"}
+            {arrival
+              ? "Travelling"
+              : pendingSelection
+                ? "Confirm Transfer"
+                : transferLeagueKey
+                  ? `Market: ${transferLeagueKey.replace("-", " ")}`
+                  : "Manage Memberships"}
           </Typography>
         </Box>
         <IconButton onClick={closeDialog} disabled={isPending} aria-label="Close">
@@ -201,7 +261,7 @@ export default function StadiumSwitcher({
       </Box>
 
       <Box sx={{ p: 3, minHeight: 450, position: "relative" }}>
-        {!pendingSelection && (
+        {!pendingSelection && !arrival && (
           <Tabs
             value={activeTab}
             onChange={(_, v) => {
@@ -231,7 +291,7 @@ export default function StadiumSwitcher({
             />
           </Tabs>
         )}
-        {isPending && (
+        {isPending && !arrival && (
           <Box
             sx={{
               position: "absolute",
@@ -249,7 +309,47 @@ export default function StadiumSwitcher({
           </Box>
         )}
 
-        {pendingSelection ? (
+        {arrival ? (
+          <Fade in={true}>
+            <Box
+              sx={{
+                py: 8,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 3,
+              }}
+            >
+              <Box sx={{ position: "relative", display: "inline-flex" }}>
+                <CircularProgress size={110} thickness={2} />
+                <Avatar
+                  src={arrival.logoUrl}
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    m: "auto",
+                    width: 76,
+                    height: 76,
+                    borderRadius: "12px",
+                    bgcolor: "background.paper",
+                    p: 1,
+                  }}
+                >
+                  <Globe size={28} />
+                </Avatar>
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                  Heading to {arrival.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Opening your new club hub…
+                </Typography>
+              </Box>
+            </Box>
+          </Fade>
+        ) : pendingSelection ? (
           <Fade in={true}>
             <Box sx={{ textAlign: "center", py: 2 }}>
               <Avatar
@@ -635,7 +735,7 @@ export default function StadiumSwitcher({
         {/* Outside the tab panels on purpose. This used to sit at the bottom of
             the Private Clubs tab, which only ever rendered for groups carrying
             a field the app never set — so nobody could reach it. */}
-        {!pendingSelection && !transferLeagueKey && (
+        {!pendingSelection && !transferLeagueKey && !arrival && (
           <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
             <InviteCodeEntry onJoined={onClose} />
           </Box>
