@@ -20,6 +20,8 @@ import {
   CalendarMonthRounded,
 } from "@mui/icons-material";
 
+import { getFixtureState } from "@/lib/utils/football-logic";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const calculateTimeLeft = (targetTime: number) => {
@@ -173,9 +175,13 @@ export default function FixtureHeader({
   } = fixture;
 
   const status = fixData.status.short;
-  const isLive = ["1H", "2H", "HT", "ET", "P", "BT"].includes(status);
-  const isFinished = ["FT", "AET", "PEN"].includes(status);
-  const isScheduled = ["NS", "TBD"].includes(status);
+  // getFixtureState, not a local status list. This one carried BT while the
+  // three others across the fixture page did not, so a match at the extra-time
+  // break showed a live clock in the header and "unavailable" underneath it.
+  const state = getFixtureState(fixture);
+  const isLive = state === "inplay";
+  const isFinished = state === "postmatch";
+  const isScheduled = state === "prematch";
 
   const matchDate = new Date(fixData.timestamp * 1000);
   const dayMonth = matchDate.toLocaleDateString("en-GB", {

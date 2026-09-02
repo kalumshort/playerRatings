@@ -84,6 +84,39 @@ const DOMAIN = {
     sub: "#C9B8FF",
     subText: "#3D2A8C",
   },
+  // Live manager mode's own vocabulary. Previously the hot/cold badge borrowed
+  // `form.poor` for hot and `form.inForm` for cold — the rendered colours were
+  // right but the token NAMES said the opposite ("poor" on your best player,
+  // "in form" on your worst), and there was no way to express intensity.
+  //
+  // Three ascending steps per direction, so a badge can say how hot, not just
+  // that it is hot. `*Ink` is the foreground for a tinted (not gradient) fill
+  // and is >= 4.5:1 on its own `*Tint`.
+  heat: {
+    infernoStart: "#FF8A3D",
+    infernoEnd: "#C62828",
+    fireStart: "#FFA751",
+    fireEnd: "#E65100",
+    warmStart: "#FFC978",
+    warmEnd: "#EF8B2C",
+    hotSolid: "#E65100",
+    hotTint: "#FFF1E3",
+    hotInk: "#8A3200",
+
+    frozenStart: "#4FC3F7",
+    frozenEnd: "#01579B",
+    chillyStart: "#81D4FA",
+    chillyEnd: "#0277BD",
+    coldSolid: "#0277BD",
+    coldTint: "#E4F5FE",
+    coldInk: "#01466F",
+
+    /** Sub demand. Deliberately not `error.main` — the pastel #E89A9A cannot
+     *  carry a filling pressure ring against the pitch. */
+    subDemand: "#D32F2F",
+    subDemandTint: "#FDECEC",
+    subDemandInk: "#8E1B1B",
+  },
 } as const;
 
 // ─── TYPE AUGMENTATION ──────────────────────────────────────────────────────
@@ -119,6 +152,27 @@ type EventPalette = {
   sub: string;
   subText: string;
 };
+type HeatPalette = {
+  infernoStart: string;
+  infernoEnd: string;
+  fireStart: string;
+  fireEnd: string;
+  warmStart: string;
+  warmEnd: string;
+  hotSolid: string;
+  hotTint: string;
+  hotInk: string;
+  frozenStart: string;
+  frozenEnd: string;
+  chillyStart: string;
+  chillyEnd: string;
+  coldSolid: string;
+  coldTint: string;
+  coldInk: string;
+  subDemand: string;
+  subDemandTint: string;
+  subDemandInk: string;
+};
 
 declare module "@mui/material/styles" {
   interface Palette {
@@ -127,6 +181,7 @@ declare module "@mui/material/styles" {
     motm: MotmPalette;
     cards: CardsPalette;
     event: EventPalette;
+    heat: HeatPalette;
   }
   interface PaletteOptions {
     coral?: PaletteOptions["primary"];
@@ -134,6 +189,7 @@ declare module "@mui/material/styles" {
     motm?: MotmPalette;
     cards?: CardsPalette;
     event?: EventPalette;
+    heat?: HeatPalette;
   }
   interface Theme {
     clay: {
@@ -236,6 +292,7 @@ export const getTheme = (
       motm: DOMAIN.motm,
       cards: DOMAIN.cards,
       event: DOMAIN.event,
+      heat: DOMAIN.heat,
     },
 
     shape: { borderRadius: 10 },

@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useSelector } from "react-redux";
 import {
   Box,
   Typography,
   Avatar,
   Tooltip,
   IconButton,
+  ButtonBase,
   Zoom,
   styled,
   keyframes,
@@ -19,10 +19,12 @@ import {
   DeleteRounded,
   ArrowUpwardRounded,
   ArrowDownwardRounded,
+  WhatshotRounded,
+  AcUnitRounded,
+  SwapHorizRounded,
 } from "@mui/icons-material";
 
-// --- CLEAN IMPORTS ---
-import { RootState } from "@/lib/redux/store";
+import { HEAT_TIERS, tierColor, type PlayerHeat, type PlayerStance } from "@/lib/live/heat";
 
 // --- ANIMATIONS ---
 const popIn = keyframes`
@@ -128,6 +130,106 @@ const EventBadge = ({ type, data, playerId, count }: any) => {
   return null;
 };
 
+/**
+ * The pip that says what YOU said, so the token shows state rather than only
+ * accepting input. Without it the pitch looked identical before and after you
+ * voted, and the only way to remember your stance was to reopen the modal.
+ */
+const StancePip = ({ stance }: { stance: PlayerStance }) => {
+  const theme = useTheme();
+  const { heat } = theme.palette;
+
+  const mood = stance.mood ?? null;
+  const wantsSub = Boolean(stance.subFor);
+  if (!mood && !wantsSub) return null;
+
+  const [bg, ink, Icon, label] = mood
+    ? mood === "hot"
+      ? [heat.hotSolid, "#fff", WhatshotRounded, "You called them on fire"]
+      : [heat.coldSolid, "#fff", AcUnitRounded, "You called them frozen"]
+    : [heat.subDemand, "#fff", SwapHorizRounded, "You asked for a sub"];
+
+  return (
+    <Tooltip title={label} arrow TransitionComponent={Zoom}>
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: -3,
+          left: -3,
+          zIndex: 6,
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          display: "grid",
+          placeItems: "center",
+          bgcolor: bg,
+          color: ink,
+          border: `2px solid ${theme.palette.background.paper}`,
+          animation: `${popIn} 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
+        }}
+      >
+        <Icon sx={{ fontSize: 11 }} />
+      </Box>
+    </Tooltip>
+  );
+};
+
+/**
+ * The crowd's split on this player, as a bar rather than a number.
+ *
+ * Reuses the slot the old `percentage` prop drew in, because a fraction of a
+ * fixed-width bar is the one comparison that works at this size — two counts
+ * side by side are unreadable at 10px and invite arithmetic.
+ */
+const HeatBar = ({ heat }: { heat: PlayerHeat }) => {
+  const theme = useTheme();
+  const total = heat.support + heat.doubt;
+  if (total === 0) return null;
+
+  const hotPct = (heat.support / total) * 100;
+
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        width: "78%",
+        height: 4,
+        mt: 0.5,
+        display: "flex",
+        borderRadius: 2,
+        overflow: "hidden",
+        bgcolor: alpha(theme.palette.text.primary, 0.1),
+      }}
+    >
+      <Box
+        sx={{
+          width: `${hotPct}%`,
+          bgcolor: theme.palette.heat.hotSolid,
+          transition: "width .45s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      />
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: theme.palette.heat.coldSolid,
+        }}
+      />
+    </Box>
+  );
+};
+
+/** What a screen reader is told about the crowd, since the ring is visual only. */
+const verdictSentence = (heat?: PlayerHeat, stance?: PlayerStance) => {
+  const parts: string[] = [];
+  if (heat && heat.tier !== "neutral") {
+    parts.push(`${HEAT_TIERS[heat.tier].label} — ${heat.support} for, ${heat.doubt} against`);
+  }
+  if (heat?.subDemanded) parts.push("the crowd want them substituted");
+  if (stance?.mood) parts.push(`you said ${stance.mood}`);
+  if (stance?.subFor) parts.push("you asked for a substitution");
+  return parts.length ? `${parts.join(". ")}.` : "No crowd verdict yet.";
+};
+
 // --- MAIN COMPONENT ---
 export default function LineupPlayer({
   player,
@@ -135,15 +237,15 @@ export default function LineupPlayer({
   onDelete,
   percentage,
   showPlayerName = true,
-  groupId,
+  /** Turns the token into a real button. Live matches only. */
+  interactive = false,
+  onClick,
+  heat,
+  stance,
   ...props
 }: any) {
   const theme = useTheme();
-  // 1. SELECTORS
-  const squadData = useSelector(
-    (state: RootState) => state.teamSquads.byClubId,
-  ); // Assuming path
-  const groupColour = theme.palette.error.main; // Should ideally come from props or a group selector
+  const groupColour = theme.palette.error.main;
 
   // 2. EVENT LOGIC
   const events = useMemo(() => {
@@ -172,19 +274,11 @@ export default function LineupPlayer({
 
   if (!player) return null;
 
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        position: "relative",
-        width: 75,
-        transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-        "&:hover": { zIndex: 10, transform: "scale(1.15)" },
-        ...props.sx,
-      }}
-    >
+  const ring: string | null = heat ? tierColor(heat.tier, theme.palette.heat) : null;
+  const glow = heat ? HEAT_TIERS[heat.tier].glow : 0;
+
+  const content = (
+    <>
       {/* AVATAR CONTAINER */}
       <Box sx={{ position: "relative", width: 62, height: 62 }}>
         <Avatar
@@ -203,6 +297,11 @@ export default function LineupPlayer({
             // Keeps MUI's fallback glyph visible — it defaults to
             // background.default, which is now the background too.
             color: "text.secondary",
+            // The crowd's verdict reads on the player, not just on a badge
+            // floating above them.
+            border: ring ? `2.5px solid ${ring}` : "2px solid transparent",
+            boxShadow: ring ? `0 0 ${Math.round(12 * glow)}px ${alpha(ring, 0.55)}` : "none",
+            transition: "border-color .3s ease, box-shadow .3s ease",
           }}
         />
 
@@ -238,7 +337,11 @@ export default function LineupPlayer({
           </Box>
         )}
 
-        {onDelete && (
+        {stance && <StancePip stance={stance} />}
+
+        {/* A nested <button> is invalid markup, so the delete affordance is
+            never drawn on an interactive token. Only the predictor passes it. */}
+        {onDelete && !interactive && (
           <IconButton
             aria-label="Remove player from lineup"
             size="small"
@@ -288,6 +391,8 @@ export default function LineupPlayer({
         </Typography>
       )}
 
+      {heat && <HeatBar heat={heat} />}
+
       {/* PERCENTAGE BAR */}
       {percentage !== undefined && (
         <Box
@@ -316,6 +421,94 @@ export default function LineupPlayer({
           </Box>
         </Box>
       )}
-    </Box>
+    </>
+  );
+
+  // The read-only token, unchanged: the predictor, the share image and a
+  // finished match all render this branch.
+  if (!interactive) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          position: "relative",
+          width: 75,
+          transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          "&:hover": { zIndex: 10, transform: "scale(1.15)" },
+          ...props.sx,
+        }}
+      >
+        {content}
+      </Box>
+    );
+  }
+
+  /**
+   * The live token, which is a genuine button.
+   *
+   * Was a bare div with an onClick: no keyboard route in, no focus ring, no
+   * role, and nothing on screen suggesting it did anything. The interaction
+   * recipe below is the one PitchPlayer already uses on the predictor pitch —
+   * the hover guard in particular, because a hover tint applied on tap sticks
+   * on a touch device until you tap elsewhere.
+   */
+  // The surface only. clay.button ships its own `&:hover`, `&:active`,
+  // `borderRadius` and `transition`, and spreading it wholesale meant its 8px
+  // radius overrode the 14px set above it and its unguarded `:hover` fired on
+  // touch — which is the exact sticky-highlight the guard below exists to stop.
+  const {
+    "&:hover": _clayHover,
+    "&:active": _clayActive,
+    borderRadius: _clayRadius,
+    transition: _clayTransition,
+    ...claySurface
+  } = ((theme as any).clay?.button ?? {}) as Record<string, any>;
+
+  return (
+    <ButtonBase
+      onClick={onClick}
+      focusRipple={false}
+      aria-label={`${player.name}. ${verdictSentence(heat, stance)} Activate to rate this player.`}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+        width: 78,
+        px: 0.5,
+        pt: 0.75,
+        pb: 1,
+        // A raised surface with a real edge is what turns an avatar on grass
+        // into something that looks pressable.
+        ...claySurface,
+        borderRadius: "14px",
+        borderColor: ring ? alpha(ring, 0.55) : undefined,
+        cursor: "pointer",
+        transition:
+          "transform .16s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color .15s ease, border-color .3s ease, box-shadow .3s ease",
+        "@media (hover: hover)": {
+          "&:hover": {
+            zIndex: 10,
+            transform: "translateY(-3px) scale(1.06)",
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+          },
+        },
+        "&:active": { transform: "scale(0.94)", filter: "brightness(0.96)" },
+        "&:focus-visible": {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: 2,
+        },
+        "@media (prefers-reduced-motion: reduce)": {
+          transition: "background-color .15s ease",
+          "@media (hover: hover)": { "&:hover": { transform: "none" } },
+          "&:active": { transform: "none" },
+        },
+        ...props.sx,
+      }}
+    >
+      {content}
+    </ButtonBase>
   );
 }

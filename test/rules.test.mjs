@@ -61,6 +61,8 @@ const p = {
   matchRatings: (g) => `groups/${g}/seasons/${YEAR}/playerRatings/${MATCH}`,
   predictions: (g) => `groups/${g}/seasons/${YEAR}/predictions/${MATCH}`,
   liveStats: (g) => `groups/${g}/seasons/${YEAR}/livePlayerStats/${MATCH}`,
+  liveVoter: (g, u) =>
+    `groups/${g}/seasons/${YEAR}/livePlayerStats/${MATCH}/voters/${u}`,
   moods: (g) => `groups/${g}/seasons/${YEAR}/fixtureMoods/${MATCH}`,
   userMatch: (u, g) =>
     `users/${u}/groups/${g}/seasons/${YEAR}/matches/${MATCH}`,
@@ -426,6 +428,45 @@ async function main() {
         { merge: true },
       ),
     ));
+
+  // The dedup behind live manager mode. A fan holds one stance per player, and
+  // the only part rules can actually enforce is WHOSE doc you may write — so
+  // that is what these guard. See the note on the voters match in the rules.
+  console.log("\nLive vote stances are owner-scoped");
+  const stance = { stances: { [PLAYER]: { mood: "hot", moodMinute: 34 } } };
+
+  await it("member CAN write their own live stance doc", () =>
+    assertSucceeds(
+      setDoc(doc(member, p.liveVoter(PRIV, MEMBER)), stance, { merge: true }),
+    ));
+  await it("member CAN change their own stance", () =>
+    assertSucceeds(
+      setDoc(
+        doc(member, p.liveVoter(PRIV, MEMBER)),
+        { stances: { [PLAYER]: { mood: "cold", moodMinute: 61 } } },
+        { merge: true },
+      ),
+    ));
+  await it("member CANNOT write another member's stance doc", () =>
+    assertFails(
+      setDoc(doc(member, p.liveVoter(PRIV, ADMIN)), stance, { merge: true }),
+    ));
+  await it("outsider CANNOT write a stance in a private club", () =>
+    assertFails(
+      setDoc(doc(outsider, p.liveVoter(PRIV, OUTSIDER)), stance, {
+        merge: true,
+      }),
+    ));
+  // Public clubs are readable by anyone but writable only by members — a
+  // throwaway login must not be able to vote in every public club.
+  await it("outsider CANNOT write a stance in a public club", () =>
+    assertFails(
+      setDoc(doc(outsider, p.liveVoter(PUB, OUTSIDER)), stance, {
+        merge: true,
+      }),
+    ));
+  await it("member CANNOT delete their live stance doc", () =>
+    assertFails(deleteDoc(doc(member, p.liveVoter(PRIV, MEMBER)))));
 
   console.log("\nUser data isolation");
   await it("member CAN read their own match doc", () =>

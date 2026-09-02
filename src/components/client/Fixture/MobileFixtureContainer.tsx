@@ -16,7 +16,9 @@ import MatchXpSummary from "@/components/client/Gamification/MatchXpSummary";
 import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
+import FullTimeStory from "./Components/FullTime/FullTimeStory";
 import FixtureUnavailable from "./FixtureUnavailable";
+import { getFixtureState } from "@/lib/utils/football-logic";
 
 // Components (Ensure these paths match your new Next.js structure)
 
@@ -42,10 +44,14 @@ export default function MobileFixtureContainer({
   const isGuestView = isGuest || isArchivedSeason(currentYear);
 
   // 1. Match Status Helpers
-  const status = fixture?.fixture?.status?.short;
-  const isPreMatch = ["NS", "TBD"].includes(status);
-  const isLive = ["1H", "HT", "2H", "ET", "P"].includes(status);
-  const isFinished = ["FT", "AET", "PEN"].includes(status);
+  // getFixtureState, not a local status list. There were four such lists across
+  // the fixture page and they disagreed: this one treated a match in BT, SUSP,
+  // INT or LIVE as neither live nor finished, which dropped it through to
+  // FixtureUnavailable mid-match.
+  const state = getFixtureState(fixture);
+  const isPreMatch = state === "prematch";
+  const isLive = state === "inplay";
+  const isFinished = state === "postmatch";
   const hasLineups = !!(fixture?.lineups && fixture.lineups.length > 0);
 
   // 2. Memoized Tab Configuration
@@ -69,6 +75,9 @@ export default function MobileFixtureContainer({
       );
     } else if (isFinished) {
       arr.push(
+        // First, and first for a reason: the recap is the reason to come back
+        // to a match that has already been played.
+        { label: "Full Time", value: "FullTime" },
         { label: "Ratings", value: "Ratings" },
         { label: "Pulse", value: "Pulse" },
         { label: "Consensus", value: "PostPredicts" },
@@ -154,6 +163,16 @@ export default function MobileFixtureContainer({
 
             {selectedTab === "Predict-XI" && (
               <LineupPredictor
+                fixture={fixture}
+                groupId={groupId}
+                currentYear={currentYear}
+                groupData={groupData}
+                isGuestView={isGuestView}
+              />
+            )}
+
+            {selectedTab === "FullTime" && (
+              <FullTimeStory
                 fixture={fixture}
                 groupId={groupId}
                 currentYear={currentYear}

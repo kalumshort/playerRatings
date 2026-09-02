@@ -15,7 +15,9 @@ import { useClubView } from "@/context/ClubViewProvider";
 import { isArchivedSeason } from "@/lib/config/season";
 import MatchXpSummary from "@/components/client/Gamification/MatchXpSummary";
 import LineupPredictorResults from "./Components/Lineup/LineupPredictorResults";
+import FullTimeStory from "./Components/FullTime/FullTimeStory";
 import FixtureUnavailable from "./FixtureUnavailable";
+import { getFixtureState } from "@/lib/utils/football-logic";
 
 interface DesktopFixtureHubProps {
   fixture: any;
@@ -78,10 +80,14 @@ export default function DesktopFixtureHub({
   const { isGuestView: isGuest } = useClubView();
   const isGuestView = isGuest || isArchivedSeason(currentYear);
 
+  // getFixtureState, not a local status list — see the note in
+  // MobileFixtureContainer. A match in BT, SUSP, INT or LIVE used to satisfy
+  // none of these three and fell straight through to FixtureUnavailable below.
   const status = fixture?.fixture?.status?.short;
-  const isPreMatch = ["NS", "TBD"].includes(status);
-  const isLive = ["1H", "HT", "2H", "ET", "P"].includes(status);
-  const isFinished = ["FT", "AET", "PEN"].includes(status);
+  const state = getFixtureState(fixture);
+  const isPreMatch = state === "prematch";
+  const isLive = state === "inplay";
+  const isFinished = state === "postmatch";
   const hasLineups = !!(fixture?.lineups && fixture.lineups.length > 0);
 
   // Postponed / cancelled / abandoned / awarded / walkover have no interactive
@@ -184,6 +190,9 @@ export default function DesktopFixtureHub({
   return (
     <Stack spacing={4}>
       {!isGuestView && <MatchXpSummary fixture={fixture} groupData={groupData} />}
+      {/* Full width and above the masonry: the recap is the headline of a
+          finished match, and a masonry column would break it across a fold. */}
+      <FullTimeStory {...commonProps} />
       <MasonryGrid cols={2}>
         <MoodSelector {...commonProps} />
         <PlayerRatings {...commonProps} />
