@@ -201,6 +201,22 @@ service cloud.firestore {
           allow create, update: if canWriteGroup(groupId);
         }
 
+        // One fan's held stance on each player in a live match — the dedup that
+        // makes the aggregate above mean something. Owner-scoped: a member can
+        // only ever write their OWN stance doc, which is the part that IS
+        // enforceable here.
+        //
+        // The aggregate itself stays member-writable because rules cannot see
+        // inside an increment() sentinel, let alone one nested two maps deep —
+        // the same limitation already accepted for predictions/{matchId}. So
+        // this stops casual skew (fifty taps no longer count fifty times) and
+        // makes the percentages honest, but a determined console user can still
+        // forge the aggregate. That is unchanged from before, not a regression.
+        match /livePlayerStats/{matchId}/voters/{userId} {
+          allow read: if isOwner(userId) || canReadGroup(groupId);
+          allow create, update: if isOwner(userId) && canWriteGroup(groupId);
+        }
+
         match /fixtureMoods/{matchId} {
           allow read: if canReadGroup(groupId);
           allow create, update: if canWriteGroup(groupId);

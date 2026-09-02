@@ -9,6 +9,7 @@ import {
 import { updateOrSet, txUpdateOrSet } from "./utils";
 import { httpsCallable } from "firebase/functions";
 import { trackEvent } from "@/lib/analytics";
+import { stanceDelta, type PlayerStance } from "@/lib/live/heat";
 
 // --- Validation Helper ---
 const validateParams = (params: Record<string, any>) => {
@@ -43,15 +44,16 @@ interface TeamSubmitParams {
   userId: string;
   currentYear: string;
 }
-interface LiveStatParams {
+interface LiveVoteParams {
   groupId: string;
   currentYear: string;
   matchId: string;
   timeElapsed: string | number;
   playerId: string;
-  statKeys: string[]; // 'hot' | 'cold' | 'sub' | 'sub_req_{playerId}'
-  /** Optional: omitted for guests. Only used to record participation. */
-  userId?: string;
+  /** The stance this fan now holds on this player. Replaces their previous one. */
+  stance: PlayerStance;
+  /** Required: a stance belongs to somebody. Guests cannot hold one. */
+  userId: string;
   /** Set once this match's XP cap is reached, to stop paying for dead writes. */
   xpCapReached?: boolean;
 }
@@ -380,43 +382,118 @@ export const handlePredictTeamSubmit = async (params: TeamSubmitParams) => {
   }
 };
 
-export const handleLivePlayerStats = async (params: LiveStatParams) => {
+/**
+ * Casts (or changes, or clears) this fan's stance on one player in a live match.
+ *
+ * The old `handleLivePlayerStats` was an anonymous `increment(1)` per tap, with
+ * no record of who tapped. Fifty taps counted fifty times, so "hot" measured
+ * enthusiasm for tapping rather than the crowd's opinion. A stance is held, not
+ * accumulated: one per fan per player, changeable at any time.
+ *
+ * Shape follows the note above handlePredictWinningTeam. Read ONLY the user's
+ * own voter doc inside the transaction, then write the group aggregate with
+ * increment(±1) sentinels. Reading the aggregate is the obvious move and the
+ * wrong one — every doc read inside an optimistic transaction becomes a
+ * contention point, and this aggregate is the hottest doc on the page during a
+ * live match. The voter doc has exactly one writer, so contention stays at zero.
+ *
+ * Four things move, and they have to move together — a re-tap that decremented
+ * `subOut` but not `sub_req_{id}` would leave a suggestion list that outlives
+ * the request behind it:
+ *   1. voters/{userId}  — the new stance
+ *   2. aggregate `live` — ±1 for the stance replaced and the one taken up
+ *   3. aggregate `totals` + minute bucket — +1, append-only, for the Full Time
+ *      story. History records that the fan felt this at this minute; changing
+ *      your mind later does not un-feel it.
+ *   4. voterCount       — +1, once, on the fan's first stance of the match
+ */
+export const castLivePlayerVote = async (params: LiveVoteParams) => {
+  // Not validateParams(params): timeElapsed is legitimately 0 at kickoff and
+  // the falsy check would reject it as missing.
+  validateParams({
+    groupId: params.groupId,
+    currentYear: params.currentYear,
+    matchId: params.matchId,
+    playerId: params.playerId,
+    userId: params.userId,
+  });
+
+  const {
+    groupId,
+    currentYear,
+    matchId,
+    timeElapsed,
+    playerId,
+    stance,
+    userId,
+  } = params;
+
+  const base = `groups/${groupId}/seasons/${currentYear}/livePlayerStats`;
+  const aggregateRef = doc(clientDB, base, matchId);
+  const voterRef = doc(clientDB, base, matchId, "voters", userId);
+
   try {
-    // Not validateParams(params): timeElapsed is legitimately 0 at kickoff and
-    // the falsy check would reject it as missing.
-    validateParams({
-      groupId: params.groupId,
-      currentYear: params.currentYear,
-      matchId: params.matchId,
-      playerId: params.playerId,
+    const changed = await runTransaction(clientDB, async (tx) => {
+      const voterSnap = await tx.get(voterRef);
+      const previous: PlayerStance | undefined =
+        voterSnap.data()?.stances?.[playerId];
+
+      const delta = stanceDelta(previous, stance);
+
+      // A tap that lands on the stance already held is a no-op rather than a
+      // wasted write. The UI models "tap the active button to clear", so this
+      // only fires on a genuine double-submit.
+      if (Object.keys(delta).length === 0) return false;
+
+      const minute = String(timeElapsed ?? 0);
+      const liveDelta: Record<string, any> = {};
+      const historyDelta: Record<string, any> = {};
+
+      Object.entries(delta).forEach(([key, by]) => {
+        liveDelta[key] = increment(by);
+        // History only ever counts up. `subOut` is named `sub` in the
+        // append-only half — that key predates this feature and the Full Time
+        // timeline reads matches that were played before it.
+        if (by > 0) {
+          const historyKey = key === "subOut" ? "sub" : key;
+          historyDelta[historyKey] = increment(1);
+        }
+      });
+
+      const isFirstStance = !voterSnap.exists();
+
+      const aggregatePayload: Record<string, any> = {
+        live: { [playerId]: liveDelta },
+      };
+      if (Object.keys(historyDelta).length > 0) {
+        aggregatePayload.totals = { [playerId]: historyDelta };
+        aggregatePayload[minute] = { [playerId]: historyDelta };
+      }
+      if (isFirstStance) aggregatePayload.voterCount = increment(1);
+
+      tx.set(aggregateRef, aggregatePayload, { merge: true });
+
+      txUpdateOrSet(tx, voterRef, voterSnap, {
+        joinedAt: voterSnap.data()?.joinedAt ?? (Number(timeElapsed) || 0),
+        stances: {
+          [playerId]: {
+            mood: stance.mood ?? null,
+            moodMinute: stance.mood ? Number(timeElapsed) || 0 : null,
+            subFor: stance.subFor ?? null,
+            subMinute: stance.subFor ? Number(timeElapsed) || 0 : null,
+          },
+        },
+      });
+
+      return true;
     });
-    const { groupId, currentYear, matchId, timeElapsed, playerId, statKeys } =
-      params;
 
-    const docRef = doc(
-      clientDB,
-      `groups/${groupId}/seasons/${currentYear}/livePlayerStats`,
-      matchId,
-    );
-
-    // One merged payload for all keys. A sub vote writes both `sub` and
-    // `sub_req_{id}`; issuing them as two sequential writes meant a failure
-    // between them counted the sub without the target, corrupting sortedSubs.
-    const perPlayer = statKeys.reduce<Record<string, any>>((acc, key) => {
-      acc[key] = increment(1);
-      return acc;
-    }, {});
-
-    const updatePayload = {
-      [String(timeElapsed)]: { [playerId]: perPlayer },
-      totals: { [playerId]: perPlayer },
-    };
-
-    await setDoc(docRef, updatePayload, { merge: true });
-    recordParticipation(params, "liveVotes", params.xpCapReached);
-    return { success: true };
+    // Only a real stance change is participation. A double-submit that wrote
+    // nothing should not spend XP budget.
+    if (changed) recordParticipation(params, "liveVotes", params.xpCapReached);
+    return { success: true, changed };
   } catch (error: any) {
-    console.error("❌ Live Player Stat Error:", error);
+    console.error("❌ Live Player Vote Error:", error);
     throw error;
   }
 };
