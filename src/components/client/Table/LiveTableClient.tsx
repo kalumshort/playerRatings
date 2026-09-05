@@ -76,6 +76,13 @@ export default function LiveTableClient({
     const unsubscribe: Unsubscribe = onSnapshot(
       windowQuery,
       (snapshot) => {
+        // An empty result straight from the local cache is not information —
+        // it means the cache is cold, not that nothing is being played. Taking
+        // it would blank the table the server just rendered and then restore
+        // it a moment later when the network answered, which reads as a flash
+        // of the live indicator disappearing.
+        if (snapshot.metadata.fromCache && snapshot.empty) return;
+
         const next = snapshot.docs
           .map((doc) => toTableFixture(doc.data()))
           .filter((fixture): fixture is TableFixture => fixture !== null);
