@@ -35,15 +35,62 @@ export const IN_PLAY_STATUSES = [
   "INT",
 ];
 
+/** A zone stripe for a table row, matched loosely from the API's free text. */
+export type StandingZone =
+  | "champions-league"
+  | "europa-league"
+  | "conference-league"
+  | "promotion"
+  | "play-off"
+  | "relegation"
+  | null;
+
+/**
+ * Classifies a row's `description` into a zone.
+ *
+ * Matched loosely and never by position: the number of European places and the
+ * size of the relegation zone change per season and per competition, and an
+ * unrecognised description has to fall through to no stripe rather than throw.
+ */
+export const zoneOf = (description: string | null): StandingZone => {
+  if (!description) return null;
+  const text = description.toLowerCase();
+
+  if (/relegation/.test(text)) return "relegation";
+  if (/play-?off/.test(text)) return "play-off";
+  if (/champions league/.test(text)) return "champions-league";
+  if (/europa league/.test(text)) return "europa-league";
+  if (/conference league/.test(text)) return "conference-league";
+  if (/promotion/.test(text)) return "promotion";
+
+  return null;
+};
+
 /** The only parts of a fixture the overlay needs. */
 export interface TableFixture {
   fixtureId: string;
   timestamp: number;
   /** The NESTED status. The flat copy is only refreshed by the nightly job. */
   status: string;
+  /** Minutes played, from the nested status. Null before kick-off. */
+  elapsed: number | null;
   homeTeamId: string;
   awayTeamId: string;
+  homeName: string | null;
+  awayName: string | null;
   goals: { home: number | null; away: number | null };
+}
+
+/** The match a club is playing right now, from that club's point of view. */
+export interface LiveMatch {
+  fixtureId: string;
+  opponentId: string;
+  opponentName: string | null;
+  isHome: boolean;
+  scored: number;
+  conceded: number;
+  elapsed: number | null;
+  status: string;
 }
 
 export interface LiveStandingRow extends StandingRow {
@@ -53,6 +100,17 @@ export interface LiveStandingRow extends StandingRow {
   rankDelta: number;
   /** True when this row's numbers or position moved. */
   provisional: boolean;
+  /**
+   * The qualification zone for the position this row now occupies.
+   *
+   * Read from the position, never from the club. The API attaches its
+   * description to a club, so carrying it through a re-rank would drag the
+   * Champions League stripe down with a club that has just dropped out of the
+   * top four and leave it off the club that replaced them.
+   */
+  zone: StandingZone;
+  /** Set only while this club is playing. */
+  liveMatch: LiveMatch | null;
 }
 
 export interface LiveTable {
@@ -89,8 +147,11 @@ export const toTableFixture = (doc: any): TableFixture | null => {
     fixtureId: String(fixtureId),
     timestamp: doc?.fixture?.timestamp ?? doc?.timestamp ?? 0,
     status: doc?.fixture?.status?.short ?? doc?.status ?? "NS",
+    elapsed: doc?.fixture?.status?.elapsed ?? null,
     homeTeamId: String(homeTeamId),
     awayTeamId: String(awayTeamId),
+    homeName: doc?.teams?.home?.name ?? null,
+    awayName: doc?.teams?.away?.name ?? null,
     goals: {
       home: doc?.goals?.home ?? null,
       away: doc?.goals?.away ?? null,
@@ -106,7 +167,7 @@ const cloneSplit = (split: StandingSplit): StandingSplit => ({
   goals: { for: split.goals.for, against: split.goals.against },
 });
 
-const cloneRow = (row: StandingRow): LiveStandingRow => ({
+export const cloneRow = (row: StandingRow): LiveStandingRow => ({
   ...row,
   all: cloneSplit(row.all),
   home: cloneSplit(row.home),
@@ -114,6 +175,8 @@ const cloneRow = (row: StandingRow): LiveStandingRow => ({
   baseRank: row.rank,
   rankDelta: 0,
   provisional: false,
+  zone: zoneOf(row.description),
+  liveMatch: null,
 });
 
 /**
@@ -179,6 +242,18 @@ export const buildLiveTable = (
   const groups = standings.groups.map((group) => ({
     name: group.name,
     rows: group.rows.map(cloneRow),
+    // Which zone belongs to which position, captured from the official table
+    // before anything moves. Zones are a property of the position — 4th is a
+    // Champions League place whoever is standing in it — but the API hangs
+    // its description off the club, so this has to be pinned now or the
+    // stripe travels with the club through the re-rank.
+    //
+    // Per group, because a group stage's qualification places are per group.
+    zoneByRank: new Map<number, StandingZone>(
+      group.rows
+        .filter((row) => row.rank != null)
+        .map((row) => [row.rank as number, zoneOf(row.description)]),
+    ),
   }));
 
   // A club appears in exactly one group, so one lookup spans the competition.
@@ -256,6 +331,32 @@ export const buildLiveTable = (
     away.goalsDiff = away.all.goals.for - away.all.goals.against;
     away.provisional = true;
 
+    // Only a match still being played is worth putting on the row. A finished
+    // one the provider hasn't absorbed is already reflected in the numbers,
+    // and showing it would read as though it were still going.
+    if (isInPlay) {
+      home.liveMatch = {
+        fixtureId: fixture.fixtureId,
+        opponentId: away.teamId,
+        opponentName: fixture.awayName ?? away.teamName,
+        isHome: true,
+        scored: homeGoals,
+        conceded: awayGoals,
+        elapsed: fixture.elapsed,
+        status: fixture.status,
+      };
+      away.liveMatch = {
+        fixtureId: fixture.fixtureId,
+        opponentId: home.teamId,
+        opponentName: fixture.homeName ?? home.teamName,
+        isHome: false,
+        scored: awayGoals,
+        conceded: homeGoals,
+        elapsed: fixture.elapsed,
+        status: fixture.status,
+      };
+    }
+
     appliedFixtureIds.push(fixture.fixtureId);
     if (isInPlay) inPlayCount += 1;
   }
@@ -264,7 +365,7 @@ export const buildLiveTable = (
   // Re-sorting here could only ever invent a disagreement with the real table.
   if (appliedFixtureIds.length === 0) {
     return {
-      groups,
+      groups: groups.map(({ name, rows }) => ({ name, rows })),
       appliedFixtureIds,
       inPlayCount,
       reconciliation,
@@ -274,10 +375,16 @@ export const buildLiveTable = (
 
   for (const group of groups) {
     rerank(group.rows);
+
+    // Zones follow the position, so they are reassigned from the map pinned
+    // before the re-rank rather than carried along by the club.
+    for (const row of group.rows) {
+      row.zone = row.rank == null ? null : (group.zoneByRank.get(row.rank) ?? null);
+    }
   }
 
   return {
-    groups,
+    groups: groups.map(({ name, rows }) => ({ name, rows })),
     appliedFixtureIds,
     inPlayCount,
     reconciliation,

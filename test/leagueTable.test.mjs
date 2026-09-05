@@ -271,6 +271,123 @@ await it("a result counted for one club but not the other is left out", async ()
   assert.equal(result.isLive, false);
 });
 
+console.log("\nQualification zones");
+
+await it("a zone belongs to the position, not to the club that held it", async () => {
+  // Arsenal are officially 2nd with a Champions League description and
+  // Man City 3rd with none. A live Arsenal defeat drops them to 3rd — the
+  // Champions League stripe has to stay on 2nd, which is now City.
+  const standings = table([
+    row({ rank: 1, id: 40, name: "Liverpool", points: 10, win: 3, draw: 1, lose: 0, gf: 9, ga: 3 }),
+    row({ rank: 2, id: 42, name: "Arsenal", points: 7, win: 2, draw: 1, lose: 1, gf: 8, ga: 5 }),
+    row({ rank: 3, id: 50, name: "Man City", points: 6, win: 2, draw: 0, lose: 2, gf: 7, ga: 6 }),
+  ]);
+  standings.groups[0].rows[0].description = "Promotion - Champions League";
+  standings.groups[0].rows[1].description = "Promotion - Champions League";
+  standings.groups[0].rows[2].description = null;
+
+  const result = buildLiveTable(standings, [
+    // Arsenal losing 0-3 to a club outside the top three would need a fourth
+    // row, so instead City beat Arsenal and swap with them.
+    fx({ id: 30, home: 50, away: 42, hg: 3, ag: 0, status: "2H", ts: 500 }),
+  ]);
+
+  const rows = result.groups[0].rows;
+  assert.equal(rows[1].teamId, "50", "City should now be 2nd");
+  assert.equal(rows[2].teamId, "42", "Arsenal should now be 3rd");
+
+  assert.equal(rows[1].zone, "champions-league", "2nd keeps the CL place");
+  assert.equal(rows[2].zone, null, "3rd has no place, whoever is standing there");
+});
+
+await it("the relegation zone stays on the bottom positions", async () => {
+  const standings = table([
+    row({ rank: 1, id: 40, name: "Liverpool", points: 9, win: 3, draw: 0, lose: 0, gf: 9, ga: 3 }),
+    row({ rank: 2, id: 42, name: "Arsenal", points: 3, win: 1, draw: 0, lose: 2, gf: 4, ga: 6 }),
+    row({ rank: 3, id: 50, name: "Man City", points: 1, win: 0, draw: 1, lose: 2, gf: 3, ga: 7 }),
+  ]);
+  standings.groups[0].rows[2].description = "Relegation";
+
+  // City win and climb above Arsenal; the drop is now Arsenal's problem.
+  const result = buildLiveTable(standings, [
+    fx({ id: 31, home: 50, away: 42, hg: 4, ag: 0, status: "2H", ts: 500 }),
+  ]);
+
+  const rows = result.groups[0].rows;
+  assert.equal(rows[1].teamId, "50");
+  assert.equal(rows[2].teamId, "42");
+  assert.equal(rows[1].zone, null);
+  assert.equal(rows[2].zone, "relegation", "the drop belongs to last place");
+});
+
+await it("an untouched table keeps the official zones", async () => {
+  const standings = base();
+  standings.groups[0].rows[0].description = "Promotion - Champions League";
+
+  const result = buildLiveTable(standings, []);
+  assert.equal(find(result, 40).zone, "champions-league");
+  assert.equal(find(result, 42).zone, null);
+});
+
+console.log("\nLive match on the row");
+
+await it("the score is from each club's own point of view", async () => {
+  // The table reads down a column of clubs, so "2-0" beside a name has to
+  // mean that club is two up, whichever end of the fixture they are.
+  const result = buildLiveTable(
+    base(),
+    [fx({ id: 40, home: 50, away: 40, hg: 2, ag: 0, status: "2H", ts: 500 })],
+  );
+
+  const city = find(result, 50).liveMatch;
+  assert.equal(city.scored, 2);
+  assert.equal(city.conceded, 0);
+  assert.equal(city.isHome, true);
+
+  const pool = find(result, 40).liveMatch;
+  assert.equal(pool.scored, 0);
+  assert.equal(pool.conceded, 2);
+  assert.equal(pool.isHome, false);
+  assert.equal(pool.opponentId, "50");
+});
+
+await it("a club not playing has no live match", async () => {
+  const result = buildLiveTable(
+    base(),
+    [fx({ id: 41, home: 50, away: 40, hg: 1, ag: 0, status: "1H", ts: 500 })],
+  );
+  assert.equal(find(result, 42).liveMatch, null);
+});
+
+await it("a finished result does not masquerade as a live match", async () => {
+  // It is already in the numbers; showing it would read as still in progress.
+  const standings = table([
+    row({ rank: 1, id: 40, name: "Liverpool", points: 3, win: 1, draw: 0, lose: 0, gf: 3, ga: 0 }),
+    row({ rank: 2, id: 42, name: "Arsenal", points: 0, win: 0, draw: 0, lose: 1, gf: 0, ga: 3 }),
+  ]);
+
+  const result = buildLiveTable(standings, [
+    fx({ id: 1, home: 40, away: 42, hg: 3, ag: 0, status: "FT", ts: 100 }),
+    fx({ id: 2, home: 42, away: 40, hg: 1, ag: 0, status: "FT", ts: 200 }),
+  ]);
+
+  assert.equal(find(result, 40).liveMatch, null);
+  assert.equal(find(result, 42).liveMatch, null);
+});
+
+await it("the elapsed minute comes off the nested status", async () => {
+  const parsed = toTableFixture({
+    matchId: "9",
+    fixture: { id: 9, timestamp: 1, status: { short: "2H", elapsed: 67 } },
+    teams: { home: { id: 40, name: "Liverpool" }, away: { id: 42, name: "Arsenal" } },
+    goals: { home: 1, away: 0 },
+  });
+
+  assert.equal(parsed.elapsed, 67);
+  assert.equal(parsed.homeName, "Liverpool");
+  assert.equal(parsed.awayName, "Arsenal");
+});
+
 console.log("\nDeductions and scope");
 
 await it("a points deduction survives the overlay", async () => {

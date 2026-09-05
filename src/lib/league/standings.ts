@@ -65,41 +65,17 @@ export interface LeagueStandings {
 }
 
 /**
- * Match statuses live in ./liveTable, next to the only code that branches on
- * them. Re-exported here so this module stays the one import a caller needs.
+ * Match statuses and zone classification live in ./liveTable, next to the code
+ * that branches on them — the overlay has to assign zones by position as it
+ * re-ranks, and it cannot import this module at runtime. Re-exported here so
+ * this stays the one import a caller needs.
  */
-export { DECIDED_STATUSES, IN_PLAY_STATUSES } from "./liveTable";
-
-/** A zone stripe for a table row, matched loosely from the API's free text. */
-export type StandingZone =
-  | "champions-league"
-  | "europa-league"
-  | "conference-league"
-  | "promotion"
-  | "play-off"
-  | "relegation"
-  | null;
-
-/**
- * Classifies a row's `description` into a zone.
- *
- * Matched loosely and never by position: the number of European places and the
- * size of the relegation zone change per season and per competition, and an
- * unrecognised description has to fall through to no stripe rather than throw.
- */
-export const zoneOf = (description: string | null): StandingZone => {
-  if (!description) return null;
-  const text = description.toLowerCase();
-
-  if (/relegation/.test(text)) return "relegation";
-  if (/play-?off/.test(text)) return "play-off";
-  if (/champions league/.test(text)) return "champions-league";
-  if (/europa league/.test(text)) return "europa-league";
-  if (/conference league/.test(text)) return "conference-league";
-  if (/promotion/.test(text)) return "promotion";
-
-  return null;
-};
+export {
+  DECIDED_STATUSES,
+  IN_PLAY_STATUSES,
+  zoneOf,
+  type StandingZone,
+} from "./liveTable";
 
 /** Goal difference from a split, for when the stored value is absent. */
 export const diffOf = (split: StandingSplit): number =>

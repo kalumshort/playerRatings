@@ -9,11 +9,22 @@ import {
   Tooltip,
   Typography,
   alpha,
+  keyframes,
   useTheme,
 } from "@mui/material";
 
-import { type LeagueStandings, zoneOf } from "@/lib/league/standings";
-import type { LiveStandingRow, LiveTable } from "@/lib/league/liveTable";
+import type { LeagueStandings } from "@/lib/league/standings";
+import {
+  cloneRow,
+  type LiveMatch,
+  type LiveStandingRow,
+  type LiveTable,
+} from "@/lib/league/liveTable";
+
+const livePulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+`;
 
 interface LeagueTableProps {
   standings: LeagueStandings;
@@ -51,17 +62,14 @@ export default function LeagueTable({
   const theme = useTheme() as any;
 
   // The live table when there is one, otherwise the official rows widened to
-  // the same shape so the row renderer only has one case to handle.
+  // the same shape so the row renderer only has one case to handle. cloneRow
+  // is the same widening the overlay uses, so the two cannot disagree about
+  // what a row looks like.
   const groups =
     live?.groups ??
     standings.groups.map((group) => ({
       name: group.name,
-      rows: group.rows.map((row) => ({
-        ...row,
-        baseRank: row.rank,
-        rankDelta: 0,
-        provisional: false,
-      })) as LiveStandingRow[],
+      rows: group.rows.map(cloneRow) as LiveStandingRow[],
     }));
 
   const deducted = groups
@@ -152,9 +160,15 @@ const HeaderRow = () => (
   </Stack>
 );
 
-/** Zone stripe colours, keyed off the API's own free-text description. */
+/**
+ * Zone stripe colours.
+ *
+ * Keyed off `row.zone`, which the overlay assigns by position — not off the
+ * row's own description, which belongs to whichever club held that place in
+ * the official table and travels with them when the live table re-ranks.
+ */
 const zoneColour = (row: LiveStandingRow, theme: any): string | null => {
-  switch (zoneOf(row.description)) {
+  switch (row.zone) {
     case "champions-league":
       return theme.palette.info.main;
     case "europa-league":
@@ -250,36 +264,47 @@ const TableRow = ({
         imgProps={{ loading: "lazy", decoding: "async" }}
       />
 
-      <Typography
-        noWrap
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          fontSize: "0.8rem",
-          fontWeight: isClub ? 900 : 700,
-        }}
+      {/* The name shrinks and ellipsises; the live badge does not. Sharing one
+          noWrap element made a long club name eat the badge and spill it onto
+          a second line on a phone. */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={0.75}
+        sx={{ flex: 1, minWidth: 0 }}
       >
-        {row.teamName}
-        {row.pointsAdjustment !== 0 && (
-          <Tooltip
-            arrow
-            title={`${row.pointsAdjustment > 0 ? "+" : ""}${row.pointsAdjustment} points applied by the competition`}
-          >
-            <Box
-              component="span"
-              sx={{
-                ml: 0.5,
-                fontSize: "0.7rem",
-                fontWeight: 900,
-                color: "text.secondary",
-                cursor: "help",
-              }}
+        <Typography
+          noWrap
+          sx={{
+            minWidth: 0,
+            fontSize: "0.8rem",
+            fontWeight: isClub ? 900 : 700,
+          }}
+        >
+          {row.teamName}
+          {row.pointsAdjustment !== 0 && (
+            <Tooltip
+              arrow
+              title={`${row.pointsAdjustment > 0 ? "+" : ""}${row.pointsAdjustment} points applied by the competition`}
             >
-              *
-            </Box>
-          </Tooltip>
-        )}
-      </Typography>
+              <Box
+                component="span"
+                sx={{
+                  ml: 0.5,
+                  fontSize: "0.7rem",
+                  fontWeight: 900,
+                  color: "text.secondary",
+                  cursor: "help",
+                }}
+              >
+                *
+              </Box>
+            </Tooltip>
+          )}
+        </Typography>
+
+        {row.liveMatch && <LiveMatchTag match={row.liveMatch} />}
+      </Stack>
 
       <Cell width={COLS.played}>{row.all.played}</Cell>
       <Cell width={COLS.win} hideOnMobile>
@@ -310,6 +335,89 @@ const TableRow = ({
       </Box>
     </Stack>
   );
+};
+
+/** How far into the match, in the form a score bug uses. */
+const minuteLabel = (match: LiveMatch): string => {
+  if (match.status === "HT") return "HT";
+  if (match.status === "P") return "PENS";
+  if (match.status === "SUSP" || match.status === "INT") return "SUSP";
+  return match.elapsed != null ? `${match.elapsed}'` : "LIVE";
+};
+
+/**
+ * The match a club is playing, on its own row.
+ *
+ * The score is from this club's point of view — the table is read down a
+ * column of clubs, so "2-1" next to a name has to mean that club is winning,
+ * whichever end of the fixture they are.
+ */
+const LiveMatchTag = ({ match }: { match: LiveMatch }) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.5,
+        flexShrink: 0,
+        whiteSpace: "nowrap",
+        px: 0.6,
+        py: 0.1,
+        borderRadius: "5px",
+        fontSize: "0.6rem",
+        fontWeight: 800,
+        letterSpacing: 0.2,
+        color: theme.palette.error.main,
+        bgcolor: alpha(theme.palette.error.main, 0.12),
+        border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
+      }}
+      // The row already reads out the club and its figures; this gives a
+      // screen reader the match in one phrase rather than four fragments.
+      aria-label={`Playing ${match.opponentName ?? "opponent"} ${match.isHome ? "at home" : "away"}, ${match.scored}-${match.conceded}, ${minuteLabel(match)}`}
+    >
+      <Box
+        component="span"
+        aria-hidden
+        sx={{
+          width: 5,
+          height: 5,
+          borderRadius: "50%",
+          bgcolor: theme.palette.error.main,
+          animation: `${livePulse} 1.6s ease-in-out infinite`,
+          "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+        }}
+      />
+      <Box component="span" aria-hidden>
+        {match.scored}-{match.conceded}
+        {/* The opponent is the first thing to go on a narrow screen: the
+            score and the minute are what the row is for, and the fixture
+            list is one tap away. */}
+        <Box
+          component="span"
+          sx={{
+            display: { xs: "none", sm: "inline" },
+            opacity: 0.75,
+            fontWeight: 700,
+            ml: 0.5,
+          }}
+        >
+          {match.isHome ? "v" : "@"} {shortName(match.opponentName)}
+        </Box>
+        <Box component="span" sx={{ opacity: 0.6, ml: 0.5 }}>
+          {minuteLabel(match)}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+/** Enough of an opponent's name to recognise them without wrapping the row. */
+const shortName = (name: string | null): string => {
+  if (!name) return "";
+  return name.length > 14 ? `${name.slice(0, 13)}…` : name;
 };
 
 const Cell = ({
