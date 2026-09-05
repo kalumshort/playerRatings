@@ -560,13 +560,19 @@ export const getLeagueTableServer = cache(
 );
 
 /**
- * Which competitions a club has actually played in this season.
+ * Which competitions a club is in this season.
  *
  * Derived from the club's own fixtures rather than the league catalogue,
  * because the catalogue holds league membership only — a cup's team list is
  * every club that entered it, several hundred rows of noise. Fixtures are also
  * self-correcting: a club knocked out in round two still shows the round it
  * played, and European qualification appears the moment the fixtures land.
+ *
+ * Includes competitions with nothing played yet, which summariseSeason does
+ * not: it only counts finished matches, because it is computing a W/D/L
+ * record. A club drawn into Europe in August has a full bracket to look at
+ * months before it plays there, and answering "no cup matches" until then
+ * would be true and useless.
  *
  * `table` / `bracket` say what the app can render for each, which is what the
  * competition switcher needs to know.
@@ -581,14 +587,42 @@ export const getClubCompetitionsServer = cache(
       const fixtures = await getFixturesByClubServer(clubId, season);
       const summary = summariseSeason(fixtures, clubId);
 
-      return summary.competitions.map((competition) => {
-        const config = competitionById(competition.leagueId);
-        return {
-          ...competition,
-          table: config?.table === true,
-          bracket: config?.bracket === true,
-        };
-      });
+      const byId = new Map(
+        summary.competitions.map((competition) => [
+          competition.leagueId,
+          competition,
+        ]),
+      );
+
+      // Every competition the club has a fixture in, played or not, newest
+      // fixture first so a scheduled competition still sorts sensibly.
+      for (const fixture of fixtures) {
+        const leagueId = Number((fixture as any)?.league?.id);
+        if (!Number.isInteger(leagueId) || byId.has(leagueId)) continue;
+
+        byId.set(leagueId, {
+          leagueId,
+          name: (fixture as any)?.league?.name ?? "",
+          logo: (fixture as any)?.league?.logo,
+          w: 0,
+          d: 0,
+          l: 0,
+          gf: 0,
+          ga: 0,
+          played: 0,
+        });
+      }
+
+      return [...byId.values()]
+        .sort((a, b) => b.played - a.played || a.name.localeCompare(b.name))
+        .map((competition) => {
+          const config = competitionById(competition.leagueId);
+          return {
+            ...competition,
+            table: config?.table === true,
+            bracket: config?.bracket === true,
+          };
+        });
     } catch (error) {
       console.error("❌ Club competitions fetch failed:", error);
       return [];
