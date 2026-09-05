@@ -1,4 +1,12 @@
-import { Home, Calendar, Trophy, User, Medal, Globe } from "lucide-react";
+import {
+  Home,
+  Calendar,
+  Trophy,
+  User,
+  Medal,
+  Globe,
+  ListOrdered,
+} from "lucide-react";
 
 /**
  * Drawer navigation for the current context.
@@ -26,6 +34,11 @@ export const getNavItems = (clubSlug, { isAuthed = true } = {}) => {
       text: "Schedule",
       icon: <Calendar size={20} />,
       path: `/${clubSlug}/schedule`,
+    },
+    {
+      text: "League Table",
+      icon: <ListOrdered size={20} />,
+      path: `/${clubSlug}/table`,
     },
     {
       text: "Player Ratings",

@@ -152,6 +152,10 @@ async function main() {
       season: YEAR,
       clubs: [{ teamId: "33", name: "Public FC", slug: "pub" }],
     });
+    await setDoc(doc(db, `leagues/season/${YEAR}/39`), { name: "Premier League" });
+    await setDoc(doc(db, `leagues/season/${YEAR}/39/table/current`), {
+      groups: [{ name: "Premier League", rows: [] }],
+    });
   });
 
   const member = testEnv.authenticatedContext(MEMBER).firestore();
@@ -183,6 +187,20 @@ async function main() {
     assertFails(setDoc(doc(member, "config/clubDirectory"), { clubs: [] })));
   await it("a signed-in user CANNOT read other config docs", () =>
     assertFails(getDoc(doc(member, "config/somethingElse"))));
+
+  // The live league table reads standings from the client, so the subtree has
+  // to be world-readable — and Admin-SDK-only for writes, since it is the
+  // official record a fan's provisional table is computed against.
+  await it("anonymous can read a league table", () =>
+    assertSucceeds(getDoc(doc(anon, `leagues/season/${YEAR}/39/table/current`))));
+  await it("anonymous can read the league doc", () =>
+    assertSucceeds(getDoc(doc(anon, `leagues/season/${YEAR}/39`))));
+  await it("a signed-in user CANNOT write a league table", () =>
+    assertFails(
+      setDoc(doc(member, `leagues/season/${YEAR}/39/table/current`), {
+        groups: [],
+      }),
+    ));
 
   console.log("\nWrite access requires a group role (#1)");
   await it("outsider CANNOT write predictions on a PUBLIC group", () =>

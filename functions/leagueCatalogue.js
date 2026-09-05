@@ -13,46 +13,93 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { fetchFootballApi } = require("./helperFunctions");
 
 /**
- * The leagues the catalogue covers: the top four tiers in England, plus the
- * major leagues worldwide.
+ * Every competition the app tracks: the top four tiers in England, the major
+ * leagues worldwide, and the cups a Premier League club enters.
  *
  * `id` is the API-Football league id. These are recorded here by hand, so the
  * sync stores the league name and country the API reports back for each one —
  * if an id is wrong, the stored `name` will say so rather than the league
  * silently ending up empty. Check the summary after the first run.
  *
- * This is the canonical list of leagues the catalogue covers, not a queue.
- * Don't comment entries out to sync in batches — a sync with no explicit ids
- * targets everything listed here, so a commented-out league is one that quietly
- * stops being refreshed next season. Batch with the flag instead:
+ * This is the canonical list, not a queue. Don't comment entries out to sync in
+ * batches — a sync with no explicit ids targets everything listed here, so a
+ * commented-out league is one that quietly stops being refreshed next season.
+ * Batch with the flag instead:
  *
  *   node functions/scripts/syncLeagues.js --leagues=39,40,41,42
  *   node functions/scripts/syncLeagues.js --leagues=140,135,78,61
+ *
+ * It is also the allowlist: a caller-supplied id is filtered against this list
+ * before it can reach the API or a Firestore path. Keeping cups in the same
+ * array keeps that one security boundary in one place.
+ *
+ * Per-entry capabilities, written out explicitly rather than defaulted, so a
+ * new entry has to state what it is:
+ *
+ *   kind    "league" — a table competition with a fixed membership.
+ *           "cup"    — a knockout, where `teams?league=` is meaningless.
+ *   table   Gets a standings snapshot. True for every league, and for the
+ *           European cups, whose league/group phase is a real table.
+ *   bracket Gets a knockout bracket derived from fixture round names.
  */
 const TRACKED_LEAGUES = [
   // --- England, top four tiers ---
-  { id: 39, expected: "Premier League", country: "England", group: "england" },
-  { id: 40, expected: "Championship", country: "England", group: "england" },
-  { id: 41, expected: "League One", country: "England", group: "england" },
-  { id: 42, expected: "League Two", country: "England", group: "england" },
+  { id: 39, expected: "Premier League", country: "England", group: "england", kind: "league", table: true, bracket: false },
+  { id: 40, expected: "Championship", country: "England", group: "england", kind: "league", table: true, bracket: false },
+  { id: 41, expected: "League One", country: "England", group: "england", kind: "league", table: true, bracket: false },
+  { id: 42, expected: "League Two", country: "England", group: "england", kind: "league", table: true, bracket: false },
 
   // --- Major leagues worldwide (the Premier League above is one of these) ---
-  { id: 140, expected: "La Liga", country: "Spain", group: "world" },
-  { id: 135, expected: "Serie A", country: "Italy", group: "world" },
-  { id: 78, expected: "Bundesliga", country: "Germany", group: "world" },
-  { id: 61, expected: "Ligue 1", country: "France", group: "world" },
-  { id: 88, expected: "Eredivisie", country: "Netherlands", group: "world" },
-  { id: 94, expected: "Primeira Liga", country: "Portugal", group: "world" },
-  { id: 71, expected: "Serie A", country: "Brazil", group: "world" },
-  {
-    id: 128,
-    expected: "Liga Profesional Argentina",
-    country: "Argentina",
-    group: "world",
-  },
-  { id: 253, expected: "Major League Soccer", country: "USA", group: "world" },
-  { id: 307, expected: "Pro League", country: "Saudi Arabia", group: "world" },
+  { id: 140, expected: "La Liga", country: "Spain", group: "world", kind: "league", table: true, bracket: false },
+  { id: 135, expected: "Serie A", country: "Italy", group: "world", kind: "league", table: true, bracket: false },
+  { id: 78, expected: "Bundesliga", country: "Germany", group: "world", kind: "league", table: true, bracket: false },
+  { id: 61, expected: "Ligue 1", country: "France", group: "world", kind: "league", table: true, bracket: false },
+  { id: 88, expected: "Eredivisie", country: "Netherlands", group: "world", kind: "league", table: true, bracket: false },
+  { id: 94, expected: "Primeira Liga", country: "Portugal", group: "world", kind: "league", table: true, bracket: false },
+  { id: 71, expected: "Serie A", country: "Brazil", group: "world", kind: "league", table: true, bracket: false },
+  { id: 128, expected: "Liga Profesional Argentina", country: "Argentina", group: "world", kind: "league", table: true, bracket: false },
+  { id: 253, expected: "Major League Soccer", country: "USA", group: "world", kind: "league", table: true, bracket: false },
+  { id: 307, expected: "Pro League", country: "Saudi Arabia", group: "world", kind: "league", table: true, bracket: false },
+
+  // --- Domestic cups ---
+  // `expected` is the API's own name, not the sponsor's: API-Football calls
+  // the Carabao Cup "League Cup". If a dry run flags a NAME MISMATCH here,
+  // trust the API and correct this column.
+  { id: 45, expected: "FA Cup", country: "England", group: "england", kind: "cup", table: false, bracket: true },
+  { id: 48, expected: "League Cup", country: "England", group: "england", kind: "cup", table: false, bracket: true },
+
+  // --- Europe ---
+  // table AND bracket: the league phase is a genuine standings table, and the
+  // knockout that follows is a bracket. Both docs get written for these.
+  { id: 2, expected: "UEFA Champions League", country: "World", group: "europe", kind: "cup", table: true, bracket: true },
+  { id: 3, expected: "UEFA Europa League", country: "World", group: "europe", kind: "cup", table: true, bracket: true },
+  { id: 848, expected: "UEFA Europa Conference League", country: "World", group: "europe", kind: "cup", table: true, bracket: true },
 ];
+
+/**
+ * Resolves the competitions a run should target.
+ *
+ * The single place the allowlist is applied, so a caller-supplied id can never
+ * reach the API or a Firestore path. Callers that only handle one kind of
+ * competition pass `kind` — `teams?league=` on a cup returns every club that
+ * entered it, qualifying rounds included, which is several hundred rows of
+ * noise and a `teamIds[]` array near the document size limit.
+ *
+ * The scripts call this too, so their summary header can't disagree with what
+ * the sync actually ran.
+ *
+ * @param {Array<number>} [leagueIds] - Requested ids; all tracked when absent.
+ * @param {object} [options] - { kind } to restrict to "league" or "cup".
+ * @return {Array<object>} Matching TRACKED_LEAGUES entries.
+ */
+const resolveLeagueTargets = (leagueIds, { kind } = {}) => {
+  const byId =
+    leagueIds && leagueIds.length
+      ? TRACKED_LEAGUES.filter((league) => leagueIds.includes(league.id))
+      : TRACKED_LEAGUES;
+
+  return kind ? byId.filter((league) => league.kind === kind) : byId;
+};
 
 /**
  * Where one league-season lives: leagues/season/{season}/{leagueId}.
@@ -188,10 +235,10 @@ const syncOneLeague = async ({ db, writer, leagueId, season }) => {
  * @return {Promise<object>} Summary with per-league results and failures.
  */
 const syncLeagueTeams = async ({ db, season, leagueIds, dryRun = false }) => {
-  const targets =
-    leagueIds && leagueIds.length
-      ? TRACKED_LEAGUES.filter((league) => leagueIds.includes(league.id))
-      : TRACKED_LEAGUES;
+  // Leagues only. A cup has no meaningful `teams?league=` membership — see
+  // resolveLeagueTargets. This is a data-integrity guard on the allowlist
+  // path, not tidiness, so there is no opt-in escape hatch.
+  const targets = resolveLeagueTargets(leagueIds, { kind: "league" });
 
   // On a dry run the writer is swallowed, so the API still gets called (which
   // is the point — it's how league names get verified) but nothing lands.
@@ -234,5 +281,6 @@ const syncLeagueTeams = async ({ db, season, leagueIds, dryRun = false }) => {
 module.exports = {
   TRACKED_LEAGUES,
   leagueDocRef,
+  resolveLeagueTargets,
   syncLeagueTeams,
 };

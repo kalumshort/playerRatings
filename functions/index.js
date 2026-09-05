@@ -24,8 +24,11 @@ const {
 const { runUpdateJob } = require("./updateJob");
 const {
   TRACKED_LEAGUES,
+  resolveLeagueTargets,
   syncLeagueTeams,
 } = require("./leagueCatalogue");
+const { standingsDocRef, syncStandings } = require("./standings");
+const { DECIDED, IN_PLAY } = require("./bracket");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { computeMatchXp } = require("./gamification/computeMatchXp");
@@ -352,6 +355,132 @@ exports.scheduledLiveMatchUpdate = onSchedule(
       logger.info("Live update cycle completed.");
     } catch (error) {
       logger.error("Error in scheduledLiveMatchUpdate:", error);
+      throw error;
+    }
+  },
+);
+
+/** A table refetched more than this long ago is refreshed regardless. */
+const STANDINGS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** How far back a finished match keeps its competition on the refresh list. */
+const STANDINGS_DIRTY_WINDOW_SECONDS = 12 * 60 * 60;
+
+/**
+ * Works out which competitions need their table refetched.
+ *
+ * Deliberately not a Firestore trigger on the fixtures collection. The live
+ * poller rewrites every in-window fixture every minute, so a trigger would fire
+ * thousands of times a matchday to catch a handful of full-time transitions,
+ * and five matches ending at once would race to write the same table. It would
+ * also usually be wasted: the API's standings lag the whistle, so asking the
+ * instant a fixture goes FT tends to return a table that has not absorbed it.
+ *
+ * So instead: one indexed read of the recent fixture window — the same query
+ * shape scheduledLiveMatchUpdate already uses — and a league stays on the list
+ * for 12 hours after a match, which is the window the API needs to catch up.
+ *
+ * @param {number|string} season - Season year.
+ * @return {Promise<Array<object>>} TRACKED_LEAGUES entries needing a refresh.
+ */
+const standingsRefreshTargets = async (season) => {
+  const candidates = resolveLeagueTargets().filter((c) => c.table);
+  const now = Math.floor(Date.now() / 1000);
+
+  const snapshot = await db
+    .collection(`fixtures/${season}/fixtures`)
+    .where("timestamp", ">=", now - STANDINGS_DIRTY_WINDOW_SECONDS)
+    .where("timestamp", "<=", now)
+    .get();
+
+  const dirty = new Set();
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    // The nested status, not the flat one: the flat copy is only refreshed by
+    // the nightly job, so mid-afternoon it still says "NS".
+    const status = data.fixture?.status?.short;
+    if (DECIDED.includes(status) || IN_PLAY.includes(status)) {
+      dirty.add(Number(data.league?.id ?? data.leagueId));
+    }
+  });
+
+  // Anything stale gets picked up too, which folds the daily baseline into the
+  // same function rather than needing a second schedule for it.
+  const staleChecks = await Promise.all(
+    candidates.map(async (competition) => {
+      if (dirty.has(competition.id)) return competition;
+      try {
+        const doc = await standingsDocRef(db, season, competition.id).get();
+        if (!doc.exists) return competition;
+        const fetchedAt = doc.data()?.fetchedAt?.toMillis?.() ?? 0;
+        return Date.now() - fetchedAt > STANDINGS_MAX_AGE_MS ? competition : null;
+      } catch (error) {
+        logger.warn(`Standings freshness check failed for ${competition.id}`, error);
+        return competition;
+      }
+    }),
+  );
+
+  return staleChecks.filter(Boolean);
+};
+
+/**
+ * Keeps the official league tables current.
+ *
+ * Every 30 minutes, but only actually calls the API for competitions that
+ * either had a match in the last 12 hours or have a table older than a day —
+ * so a quiet Tuesday costs nothing and a four-tier Saturday costs a few dozen
+ * calls. See standingsRefreshTargets for why this is a schedule and not a
+ * Firestore trigger.
+ *
+ * The table it stores is the official one, which only reflects finished
+ * matches. The live-looking table users see is computed at read time by
+ * applying in-play fixtures over this base.
+ */
+exports.refreshStandings = onSchedule(
+  {
+    schedule: "every 30 minutes",
+    timeoutSeconds: 120,
+    memory: "256MiB",
+    secrets: [FOOTBALL_API_KEY],
+  },
+  async () => {
+    try {
+      const targets = await standingsRefreshTargets(SEASON);
+
+      if (targets.length === 0) {
+        logger.info("Standings: nothing dirty or stale, no API calls made.");
+        return;
+      }
+
+      const summary = await syncStandings({
+        db,
+        season: SEASON,
+        leagueIds: targets.map((competition) => competition.id),
+      });
+
+      logger.info(
+        `Standings: ${summary.leaguesWritten}/${summary.leaguesRequested} tables ` +
+          `refreshed for season ${SEASON}.`,
+        { targets: targets.map((c) => c.id), failures: summary.failures },
+      );
+
+      // A competition with no table is fine in July and wrong in November, so
+      // it is recorded rather than thrown — but at a level that shows up.
+      if (summary.empty.length) {
+        logger.warn(
+          `Standings: ${summary.empty.length} competition(s) returned no table.`,
+          summary.empty.map((e) => e.leagueId),
+        );
+      }
+
+      if (summary.failures.length === summary.leaguesRequested) {
+        throw new Error(
+          `All ${summary.failures.length} standings refreshes failed this cycle.`,
+        );
+      }
+    } catch (error) {
+      logger.error("Error in refreshStandings:", error);
       throw error;
     }
   },

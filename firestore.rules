@@ -267,6 +267,27 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // League reference data: team lists, official standings and cup brackets.
+    // Public sporting facts from a public feed, and the Admin SDK is the only
+    // writer — the same shape as config/clubDirectory above.
+    //
+    // Without this the whole subtree falls through to the deny-all wildcard at
+    // the bottom of this file, which is where it sat while nothing read it.
+    // The live league table needs a client-side read, so it needs a rule.
+    //
+    // The nested wildcard covers table/current, bracket/current and the teams/
+    // subcollection. Costs nothing against the get()/exists() budget noted at
+    // the end of this file — there are no lookups here at all.
+    match /leagues/season/{season}/{leagueId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /{document=**} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
     // --- D. INVITES & MEMBERSHIP ---
     // Owner-only, matching createInviteCode()'s own ownerId check. Note the
     // create branch reads request.resource: on create `resource` is null, so

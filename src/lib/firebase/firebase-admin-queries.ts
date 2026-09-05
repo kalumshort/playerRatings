@@ -17,6 +17,9 @@ import {
   ShowcaseEvent,
   ShowcasePlayer,
 } from "@/lib/homepageShowcase";
+import type { LeagueStandings } from "@/lib/league/standings";
+import { summariseSeason, type CompetitionRecord } from "@/lib/utils/football-logic";
+import { competitionById } from "@/lib/config/competitions";
 
 /**
  * Builds the directory straight from `groups`, for the window between deploying
@@ -404,6 +407,84 @@ export async function getFixturesByClubServer(
     return [];
   }
 }
+/**
+ * The official table for one competition-season.
+ *
+ * One document read. What comes back is the *official* table — it only
+ * reflects finished matches, and the API lags them. Turning it into the live
+ * table a fan sees happens at render time, over this base.
+ *
+ * cache()d because the page and its generateMetadata both want it.
+ */
+export const getLeagueStandingsServer = cache(
+  async (
+    leagueId: string | number,
+    season: string,
+  ): Promise<LeagueStandings | null> => {
+    try {
+      const snapshot = await adminDb
+        .collection("leagues")
+        .doc("season")
+        .collection(season)
+        .doc(String(leagueId))
+        .collection("table")
+        .doc("current")
+        .get();
+
+      if (!snapshot.exists) return null;
+
+      const data = snapshot.data() as any;
+
+      // Timestamps can't cross the server/client boundary.
+      return {
+        ...data,
+        fetchedAt: data?.fetchedAt?.toDate?.().toISOString() ?? null,
+        updatedAt: undefined,
+      } as LeagueStandings;
+    } catch (error) {
+      console.error("❌ League standings fetch failed:", error);
+      return null;
+    }
+  },
+);
+
+/**
+ * Which competitions a club has actually played in this season.
+ *
+ * Derived from the club's own fixtures rather than the league catalogue,
+ * because the catalogue holds league membership only — a cup's team list is
+ * every club that entered it, several hundred rows of noise. Fixtures are also
+ * self-correcting: a club knocked out in round two still shows the round it
+ * played, and European qualification appears the moment the fixtures land.
+ *
+ * `table` / `bracket` say what the app can render for each, which is what the
+ * competition switcher needs to know.
+ */
+export const getClubCompetitionsServer = cache(
+  async (
+    clubId: string,
+    season: string,
+  ): Promise<Array<CompetitionRecord & { table: boolean; bracket: boolean }>> => {
+    try {
+      // Shares the cached fixture read the schedule page already does.
+      const fixtures = await getFixturesByClubServer(clubId, season);
+      const summary = summariseSeason(fixtures, clubId);
+
+      return summary.competitions.map((competition) => {
+        const config = competitionById(competition.leagueId);
+        return {
+          ...competition,
+          table: config?.table === true,
+          bracket: config?.bracket === true,
+        };
+      });
+    } catch (error) {
+      console.error("❌ Club competitions fetch failed:", error);
+      return [];
+    }
+  },
+);
+
 // cache()d because layout, page and generateMetadata all resolve the same slug
 // within one render — and every season-aware route now needs the group's
 // archived status before it can pick a season.

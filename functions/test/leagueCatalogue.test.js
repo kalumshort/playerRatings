@@ -100,6 +100,39 @@ const teamEntry = (id, name) => ({
     );
   });
 
+  await it("every tracked competition declares its capabilities", () => {
+    // Defaulting these would let a new entry inherit behaviour it never
+    // stated — a cup silently syncing 700 teams, say.
+    for (const league of TRACKED_LEAGUES) {
+      assert.ok(
+        league.kind === "league" || league.kind === "cup",
+        `league ${league.id} has no kind`,
+      );
+      assert.equal(
+        typeof league.table,
+        "boolean",
+        `league ${league.id} has no table flag`,
+      );
+      assert.equal(
+        typeof league.bracket,
+        "boolean",
+        `league ${league.id} has no bracket flag`,
+      );
+    }
+  });
+
+  await it("the English cups and European competitions are tracked", () => {
+    const ids = TRACKED_LEAGUES.map((l) => l.id);
+    for (const id of [45, 48, 2, 3, 848]) {
+      assert.ok(ids.includes(id), `missing cup ${id}`);
+    }
+    // Europe's league phase is a real table; the domestic cups have none.
+    const byId = (id) => TRACKED_LEAGUES.find((l) => l.id === id);
+    assert.equal(byId(2).table, true, "UCL league phase should have a table");
+    assert.equal(byId(45).table, false, "the FA Cup has no table");
+    assert.equal(byId(45).bracket, true, "the FA Cup should have a bracket");
+  });
+
   console.log("\nWrites");
   await it("a league lands at leagues/season/{season}/{leagueId}", async () => {
     await resetDb();
@@ -235,7 +268,21 @@ const teamEntry = (id, name) => ({
     await resetDb();
     const summary = await syncLeagueTeams({ db, season: SEASON });
 
-    assert.equal(summary.leaguesRequested, TRACKED_LEAGUES.length);
+    // Leagues only — the cups in TRACKED_LEAGUES are deliberately excluded.
+    const leagueCount = TRACKED_LEAGUES.filter(
+      (l) => l.kind === "league",
+    ).length;
+    assert.equal(summary.leaguesRequested, leagueCount);
+  });
+
+  await it("a cup id is never fetched, even when asked for explicitly", async () => {
+    await resetDb();
+    // `teams?league=45` returns every club that entered the FA Cup, qualifying
+    // rounds included — hundreds of rows and a teamIds[] near the doc limit.
+    const summary = await syncLeagueTeams({ db, season: SEASON, leagueIds: [45] });
+
+    assert.equal(calls.length, 0, "a cup must not reach the API");
+    assert.equal(summary.leaguesRequested, 0);
   });
 
   await it("re-running merges rather than duplicating", async () => {

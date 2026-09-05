@@ -8,9 +8,17 @@ export interface SeasonRecord {
   played: number;
 }
 
+/** One competition's record, with enough identity to link to its table. */
+export interface CompetitionRecord extends SeasonRecord {
+  /** API-Football league id. The key competitions are grouped by. */
+  leagueId: number | null;
+  name: string;
+  logo?: string;
+}
+
 export interface SeasonSummary extends SeasonRecord {
   /** Same records split by competition, busiest first. */
-  competitions: Array<SeasonRecord & { name: string; logo?: string }>;
+  competitions: CompetitionRecord[];
 }
 
 const emptyRecord = (): SeasonRecord => ({
@@ -56,10 +64,9 @@ export const summariseSeason = (
 ): SeasonSummary => {
   const teamId = Number(clubId);
   const overall = emptyRecord();
-  const byCompetition = new Map<
-    string,
-    SeasonRecord & { name: string; logo?: string }
-  >();
+  // Keyed by league id, not name: two competitions can share a name (Serie A
+  // is both Italy's and Brazil's), and the id is what links a row to its table.
+  const byCompetition = new Map<string, CompetitionRecord>();
 
   fixtures
     .filter((f) => ["FT", "AET", "PEN"].includes(f.fixture.status.short))
@@ -78,10 +85,21 @@ export const summariseSeason = (
 
       const name = game.league?.name;
       if (!name) return;
-      let bucket = byCompetition.get(name);
+
+      const leagueId = Number(game.league?.id);
+      // A competition with no id still gets a row, keyed by name — it just
+      // can't link anywhere.
+      const key = Number.isInteger(leagueId) ? String(leagueId) : `name:${name}`;
+
+      let bucket = byCompetition.get(key);
       if (!bucket) {
-        bucket = { ...emptyRecord(), name, logo: game.league?.logo };
-        byCompetition.set(name, bucket);
+        bucket = {
+          ...emptyRecord(),
+          leagueId: Number.isInteger(leagueId) ? leagueId : null,
+          name,
+          logo: game.league?.logo,
+        };
+        byCompetition.set(key, bucket);
       }
       addGame(bucket, game, isHome, result);
     });

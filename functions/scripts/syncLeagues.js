@@ -112,7 +112,7 @@ initializeApp({
 });
 
 const db = getFirestore();
-const { syncLeagueTeams, TRACKED_LEAGUES, SEASON } = (() => {
+const { syncLeagueTeams, resolveLeagueTargets, SEASON } = (() => {
   const catalogue = require("../leagueCatalogue");
   const helpers = require("../helperFunctions");
   return { ...catalogue, SEASON: helpers.SEASON };
@@ -121,9 +121,11 @@ const { syncLeagueTeams, TRACKED_LEAGUES, SEASON } = (() => {
 const targetSeason = season || String(SEASON);
 
 (async () => {
-  const targets = leagueIds
-    ? TRACKED_LEAGUES.filter((l) => leagueIds.includes(l.id))
-    : TRACKED_LEAGUES;
+  // The same resolver the sync uses, so this header can't claim a different
+  // number from the one that actually runs — cups are filtered out of both.
+  const targets = resolveLeagueTargets(leagueIds || undefined, {
+    kind: "league",
+  });
 
   console.log("");
   console.log(`  Project : ${env.ADMIN_PROJECT_ID}`);
