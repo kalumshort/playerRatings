@@ -1,21 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  type Unsubscribe,
-} from "firebase/firestore";
+import React from "react";
 
-import { clientDB } from "@/lib/firebase/client";
-import {
-  buildLiveTable,
-  toTableFixture,
-  type LiveTable,
-  type TableFixture,
-} from "@/lib/league/liveTable";
+import useLiveLeagueTable from "@/Hooks/useLiveLeagueTable";
+import type { LiveTable } from "@/lib/league/liveTable";
 import type { LeagueStandings } from "@/lib/league/standings";
 
 import LeagueTable from "./LeagueTable";
@@ -30,21 +18,11 @@ interface LiveTableClientProps {
   clubId?: string;
 }
 
-/** Matches within this window of now can still move the table. */
-const LOOKBACK_SECONDS = 36 * 60 * 60;
-const LOOKAHEAD_SECONDS = 60 * 60;
-
 /**
- * The league table, kept current while matches are being played.
+ * The full league table, kept current while matches are being played.
  *
- * The server ships a table that already has finished-but-uncounted results
- * folded in. This subscribes to the competition's live window and recomputes
- * over the same official base whenever a score moves, so a goal reaches the
- * table without a refresh.
- *
- * Recomputing from `standings` every time rather than mutating the previous
- * result is deliberate: the overlay is only correct when applied once to a
- * clean base, and re-applying to its own output would double-count.
+ * The subscription and the overlay live in useLiveLeagueTable, shared with the
+ * club home summary so the two views cannot disagree about the table.
  */
 export default function LiveTableClient({
   standings,
@@ -53,69 +31,16 @@ export default function LiveTableClient({
   season,
   clubId,
 }: LiveTableClientProps) {
-  const [fixtures, setFixtures] = useState<TableFixture[] | null>(null);
-
-  // Per-fixture fingerprints, so a snapshot that only moved the clock does not
-  // re-render the table. Same trick FixtureListener uses per key.
-  const lastJsonRef = useRef<string>("");
-
-  useEffect(() => {
-    if (!leagueId || !season) return;
-
-    const now = Math.floor(Date.now() / 1000);
-    const fixturesRef = collection(clientDB, "fixtures", season, "fixtures");
-
-    // A number, matching how updateJob writes league.id.
-    const windowQuery = query(
-      fixturesRef,
-      where("leagueId", "==", Number(leagueId)),
-      where("timestamp", ">=", now - LOOKBACK_SECONDS),
-      where("timestamp", "<=", now + LOOKAHEAD_SECONDS),
-    );
-
-    const unsubscribe: Unsubscribe = onSnapshot(
-      windowQuery,
-      (snapshot) => {
-        // An empty result straight from the local cache is not information —
-        // it means the cache is cold, not that nothing is being played. Taking
-        // it would blank the table the server just rendered and then restore
-        // it a moment later when the network answered, which reads as a flash
-        // of the live indicator disappearing.
-        if (snapshot.metadata.fromCache && snapshot.empty) return;
-
-        const next = snapshot.docs
-          .map((doc) => toTableFixture(doc.data()))
-          .filter((fixture): fixture is TableFixture => fixture !== null);
-
-        // Only the fields the table reads — a fingerprint over the whole
-        // document would change on every elapsed-minute tick.
-        const json = JSON.stringify(
-          next.map((f) => [f.fixtureId, f.status, f.goals.home, f.goals.away]),
-        );
-        if (json === lastJsonRef.current) return;
-
-        lastJsonRef.current = json;
-        setFixtures(next);
-      },
-      (error) => {
-        // The server-rendered table stays on screen. A live table that cannot
-        // subscribe is worse as a blank page than as a slightly stale one.
-        console.error("[LiveTable] snapshot failed:", error);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [leagueId, season]);
-
-  const live = useMemo(
-    () => (fixtures === null ? initialLive : buildLiveTable(standings, fixtures)),
-    [fixtures, initialLive, standings],
-  );
+  const live = useLiveLeagueTable(standings, initialLive, leagueId, season);
 
   return (
     <>
-      <TableLegend live={live} fetchedAt={standings.fetchedAt} />
-      <LeagueTable standings={standings} live={live} clubId={clubId} />
+      <TableLegend live={live ?? initialLive} fetchedAt={standings.fetchedAt} />
+      <LeagueTable
+        standings={standings}
+        live={live ?? initialLive}
+        clubId={clubId}
+      />
     </>
   );
 }

@@ -15,7 +15,20 @@ import LatestFixtureItem from "./Fixture/FixtureHeader/LatestFixtureItem";
 import UpcomingFixturesCard from "./Schedule/UpcomingFixturesCard";
 import LatestTeamSeasonRating from "./PlayerRatings/LatestTeamSeasonRating";
 
-export default function GroupHomeClient() {
+interface GroupHomeClientProps {
+  /**
+   * The club's corner of the league table, rendered on the server.
+   *
+   * Passed in rather than fetched here: this component reads everything else
+   * from Redux, and standings are a server read that has no business being
+   * repeated on the client. Null when the club's competition has no table.
+   */
+  leagueSummary?: React.ReactNode;
+}
+
+export default function GroupHomeClient({
+  leagueSummary,
+}: GroupHomeClientProps) {
   const loading = useSelector(selectFixturesLoading);
   // Bucket presence for THIS club+season, not the global `loaded` flag. That
   // flag stays true from the previous season across a switch, so the old
@@ -36,7 +49,20 @@ export default function GroupHomeClient() {
             <PageSkeleton rows={3} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <Box sx={{ px: { xs: 2, md: 0 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                px: { xs: 2, md: 0 },
+              }}
+            >
+              {/* The table summary was rendered on the server and is ready
+                  now — it has nothing to do with the fixtures this skeleton
+                  is waiting for. Holding it back would throw away a read we
+                  have already paid for, and keep it out of the server HTML
+                  entirely. */}
+              {leagueSummary}
               <PageSkeleton rows={1} />
             </Box>
           </Grid>
@@ -75,6 +101,7 @@ export default function GroupHomeClient() {
               top: 100,
             }}
           >
+            {leagueSummary}
             <LatestTeamSeasonRating />
           </Box>
         </Grid>

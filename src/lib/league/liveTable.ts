@@ -393,6 +393,41 @@ export const buildLiveTable = (
 };
 
 /**
+ * A short slice of the table centred on one club.
+ *
+ * For a summary that only has room for a few rows, the useful ones are the
+ * club and its immediate neighbours — who it is chasing and who is chasing
+ * it. Centred, then clamped to the ends, so a club at the top or the bottom
+ * still gets a full window rather than a half-empty one: 1st gives 1-2-3, 7th
+ * gives 6-7-8, last gives the bottom three.
+ *
+ * Falls back to the top of the table when the club is not in this group at
+ * all, which is what a group stage does for every group the club is not in.
+ *
+ * @param rows Rows in table order.
+ * @param teamId The club to centre on.
+ * @param size How many rows to return.
+ */
+export const windowAround = <T extends { teamId: string }>(
+  rows: T[],
+  teamId: string | null | undefined,
+  size = 3,
+): T[] => {
+  if (rows.length <= size) return rows;
+
+  const index = teamId
+    ? rows.findIndex((row) => row.teamId === String(teamId))
+    : -1;
+  if (index === -1) return rows.slice(0, size);
+
+  // Centre the club, then pull the window back inside the table.
+  const ideal = index - Math.floor((size - 1) / 2);
+  const start = Math.max(0, Math.min(ideal, rows.length - size));
+
+  return rows.slice(start, start + size);
+};
+
+/**
  * Re-orders a group and records what moved.
  *
  * Points, then goal difference, then goals scored — and a stable sort, so

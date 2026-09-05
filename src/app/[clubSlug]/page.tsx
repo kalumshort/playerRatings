@@ -6,13 +6,17 @@ import { notFound } from "next/navigation";
 // Sub-components (We will migrate these next)
 import GroupHomeClient from "@/components/client/GroupHomeClient";
 import {
+  getClubCompetitionsServer,
   getGroupBySlugServer,
+  getLeagueTableServer,
   isGroupMemberServer,
 } from "@/lib/firebase/firebase-admin-queries";
 import { getUserIdFromSession } from "@/lib/auth-server";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
+import MiniLeagueTable from "@/components/client/Table/MiniLeagueTable";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, sportsTeamJsonLd } from "@/lib/seo/jsonLd";
+import { archivedClubSeason, resolveSeason } from "@/lib/config/season";
 
 interface Props {
   params: Promise<{ clubSlug: string }>;
@@ -68,9 +72,17 @@ export default async function ClubPage({ params }: Props) {
   if (!isAuthorized) {
     return <PrivateGroupPlaceholder name={group.name} />;
   }
-  // We don't need to fetch data here because the Layout already did it
-  // and put it in Redux via the Initializer.
-  // We just render the Client Component that holds your layout logic.
+
+  // The club's corner of its league table. Fetched here rather than in the
+  // client component because standings are a server read; everything else on
+  // this page comes from Redux via the layout's initializer.
+  const season = resolveSeason(undefined, archivedClubSeason(group));
+  const leagueSummary = await buildLeagueSummary(
+    group.groupClubId,
+    clubSlug,
+    season,
+  );
+
   return (
     <>
       <JsonLd
@@ -88,7 +100,46 @@ export default async function ClubPage({ params }: Props) {
           ]),
         ]}
       />
-      <GroupHomeClient />
+      <GroupHomeClient leagueSummary={leagueSummary} />
     </>
   );
+}
+
+/**
+ * The mini table for a club's own league, or nothing.
+ *
+ * Picks the first competition the club plays in that has a table — for a
+ * Premier League club that is the league itself, and a club whose only
+ * competitions are cups simply gets no card rather than an empty one.
+ *
+ * Never throws: a missing table is a card that does not render, not a home
+ * page that fails.
+ */
+async function buildLeagueSummary(
+  clubId: string,
+  clubSlug: string,
+  season: string,
+) {
+  try {
+    const competitions = await getClubCompetitionsServer(clubId, season);
+    const league = competitions.find((competition) => competition.table);
+    if (!league?.leagueId) return null;
+
+    const table = await getLeagueTableServer(league.leagueId, season);
+    if (!table) return null;
+
+    return (
+      <MiniLeagueTable
+        standings={table.standings}
+        initialLive={table.live}
+        leagueId={league.leagueId}
+        season={season}
+        clubId={String(clubId)}
+        clubSlug={clubSlug}
+      />
+    );
+  } catch (error) {
+    console.error("❌ League summary failed:", error);
+    return null;
+  }
 }

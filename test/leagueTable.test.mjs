@@ -13,7 +13,11 @@
  */
 import assert from "node:assert/strict";
 
-import { buildLiveTable, toTableFixture } from "../src/lib/league/liveTable.ts";
+import {
+  buildLiveTable,
+  toTableFixture,
+  windowAround,
+} from "../src/lib/league/liveTable.ts";
 
 let passed = 0;
 let failed = 0;
@@ -415,6 +419,50 @@ await it("a fixture against a club outside the table is ignored", async () => {
 
   assert.equal(result.isLive, false);
   assert.equal(find(result, 40).points, 10);
+});
+
+console.log("\nWindow around a club");
+
+// A twenty-club table, teamId "1".."20", in position order.
+const twenty = Array.from({ length: 20 }, (_, i) => ({ teamId: String(i + 1) }));
+const ids = (rows) => rows.map((r) => r.teamId);
+
+await it("a club at the top gets the top three", () => {
+  assert.deepEqual(ids(windowAround(twenty, "1")), ["1", "2", "3"]);
+});
+
+await it("a club in mid-table sits in the middle", () => {
+  // 7th gives 6-7-8.
+  assert.deepEqual(ids(windowAround(twenty, "7")), ["6", "7", "8"]);
+});
+
+await it("a club at the bottom gets the bottom three", () => {
+  assert.deepEqual(ids(windowAround(twenty, "20")), ["18", "19", "20"]);
+});
+
+await it("second place still gets a full window", () => {
+  // The window pulls back inside the table rather than running off the top.
+  assert.deepEqual(ids(windowAround(twenty, "2")), ["1", "2", "3"]);
+});
+
+await it("second from bottom still gets a full window", () => {
+  assert.deepEqual(ids(windowAround(twenty, "19")), ["18", "19", "20"]);
+});
+
+await it("a table shorter than the window is returned whole", () => {
+  const two = [{ teamId: "1" }, { teamId: "2" }];
+  assert.deepEqual(ids(windowAround(two, "2")), ["1", "2"]);
+});
+
+await it("a club outside this table falls back to the top", () => {
+  // What a group stage does for every group the club is not in.
+  assert.deepEqual(ids(windowAround(twenty, "999")), ["1", "2", "3"]);
+  assert.deepEqual(ids(windowAround(twenty, null)), ["1", "2", "3"]);
+});
+
+await it("the window size is adjustable and stays centred", () => {
+  assert.deepEqual(ids(windowAround(twenty, "10", 5)), ["8", "9", "10", "11", "12"]);
+  assert.deepEqual(ids(windowAround(twenty, "1", 5)), ["1", "2", "3", "4", "5"]);
 });
 
 console.log("\nDocument reading");
