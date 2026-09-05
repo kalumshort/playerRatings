@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
+  ButtonBase,
   Chip,
+  Collapse,
   Divider,
   Paper,
   Stack,
@@ -11,6 +13,7 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
+import { ExpandMoreRounded } from "@mui/icons-material";
 import { format } from "date-fns";
 
 import { HtmlTooltip } from "@/components/ui/HtmlTooltip";
@@ -50,6 +53,9 @@ const RESULT_WORD: Record<"W" | "D" | "L", string> = {
 
 const DOT = 10;
 
+/** Ties the toggle to the region it opens for assistive tech. */
+const SPLIT_ID = "season-competition-split";
+
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 /** The season in one card: the goals, the competitions, and the run. */
@@ -59,6 +65,10 @@ export default function SeasonOverview({
   season,
 }: SeasonOverviewProps) {
   const theme = useTheme();
+
+  // Collapsed on both the server and the first client render, so the split
+  // costs no height until it is asked for and there is nothing to mismatch.
+  const [open, setOpen] = useState(false);
 
   const archived = isArchivedSeason(season);
   const latestId = played.length ? played[played.length - 1].fixture.id : null;
@@ -168,15 +178,39 @@ export default function SeasonOverview({
               the right: given a full desktop card they end up half a screen
               apart and you lose the row tracking across. */}
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: { md: 560 } }}>
-            <RecordRow
-              label={showSplit ? "All competitions" : "This season"}
-              record={summary}
-              emphasis
-            />
+            {showSplit ? (
+              <ButtonBase
+                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                aria-expanded={open}
+                aria-controls={SPLIT_ID}
+                sx={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  borderRadius: "8px",
+                  px: 0.75,
+                  py: 0.5,
+                  "&:hover": { bgcolor: "action.hover" },
+                }}
+              >
+                <RecordRow
+                  label="All competitions"
+                  record={summary}
+                  emphasis
+                  expandable
+                  expanded={open}
+                />
+              </ButtonBase>
+            ) : (
+              <Box sx={{ px: 0.75, py: 0.5 }}>
+                <RecordRow label="This season" record={summary} emphasis />
+              </Box>
+            )}
+
             {showSplit && (
-              <>
+              <Collapse in={open} id={SPLIT_ID}>
                 <Divider sx={{ my: 1 }} />
-                <Stack spacing={0.85}>
+                <Stack spacing={0.85} sx={{ px: 0.75, pb: 0.5 }}>
                   {summary.competitions.map((comp) => (
                     <RecordRow
                       key={comp.name}
@@ -186,7 +220,7 @@ export default function SeasonOverview({
                     />
                   ))}
                 </Stack>
-              </>
+              </Collapse>
             )}
           </Box>
         </Stack>
@@ -329,11 +363,16 @@ function RecordRow({
   record,
   logo,
   emphasis = false,
+  expandable = false,
+  expanded = false,
 }: {
   label: string;
   record: SeasonRecord;
   logo?: string;
   emphasis?: boolean;
+  /** Draws the disclosure chevron. The row itself is not the button. */
+  expandable?: boolean;
+  expanded?: boolean;
 }) {
   const theme = useTheme();
   const tally = [
@@ -378,6 +417,20 @@ function RecordRow({
         >
           {label}
         </Typography>
+        {expandable && (
+          <ExpandMoreRounded
+            sx={{
+              fontSize: 18,
+              opacity: 0.5,
+              flexShrink: 0,
+              transition: "transform 0.2s ease",
+              transform: expanded ? "rotate(180deg)" : "none",
+              "@media (prefers-reduced-motion: reduce)": {
+                transition: "none",
+              },
+            }}
+          />
+        )}
       </Stack>
 
       <Stack
