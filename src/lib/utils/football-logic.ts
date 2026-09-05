@@ -1,33 +1,97 @@
+export interface SeasonRecord {
+  w: number;
+  d: number;
+  l: number;
+  /** Goals for and against, from `goals` — so a shootout is its 120' score. */
+  gf: number;
+  ga: number;
+  played: number;
+}
+
+export interface SeasonSummary extends SeasonRecord {
+  /** Same records split by competition, busiest first. */
+  competitions: Array<SeasonRecord & { name: string; logo?: string }>;
+}
+
+const emptyRecord = (): SeasonRecord => ({
+  w: 0,
+  d: 0,
+  l: 0,
+  gf: 0,
+  ga: 0,
+  played: 0,
+});
+
+const addGame = (
+  into: SeasonRecord,
+  game: any,
+  isHome: boolean,
+  result: "W" | "D" | "L",
+) => {
+  into.played++;
+  if (result === "W") into.w++;
+  else if (result === "D") into.d++;
+  else into.l++;
+
+  const home = game.goals?.home ?? 0;
+  const away = game.goals?.away ?? 0;
+  into.gf += isHome ? home : away;
+  into.ga += isHome ? away : home;
+};
+
 /**
- * Shared utility to calculate W/D/L stats from a fixture list.
+ * The season's record, overall and per competition.
+ *
+ * There is no points total here on purpose. This list is every competition a
+ * club played, so 3-1-0 across it would add a cup second round to a title
+ * race and call the sum a league position. Goals are the thing that does
+ * survive the aggregation — a goal in a cup tie is the same act as a goal in
+ * the league — so goal difference is what the card leads on.
+ *
  * Works on both Server and Client.
  */
-export const calculateStats = (fixtures: any[], clubId: string | number) => {
+export const summariseSeason = (
+  fixtures: any[],
+  clubId: string | number,
+): SeasonSummary => {
   const teamId = Number(clubId);
+  const overall = emptyRecord();
+  const byCompetition = new Map<
+    string,
+    SeasonRecord & { name: string; logo?: string }
+  >();
 
-  // 1. Filter only finished games
-  const played = fixtures.filter((f) =>
-    ["FT", "AET", "PEN"].includes(f.fixture.status.short),
-  );
+  fixtures
+    .filter((f) => ["FT", "AET", "PEN"].includes(f.fixture.status.short))
+    .forEach((game) => {
+      const isHome = game.teams.home.id === teamId;
+      const homeWin = game.teams.home.winner;
+      const awayWin = game.teams.away.winner;
 
-  const stats = { w: 0, d: 0, l: 0 };
+      // Winner === null means a Draw
+      let result: "W" | "D" | "L" = "D";
+      if (homeWin === null && awayWin === null) result = "D";
+      else if ((isHome && homeWin) || (!isHome && awayWin)) result = "W";
+      else result = "L";
 
-  played.forEach((game) => {
-    const isHome = game.teams.home.id === teamId;
-    const homeWin = game.teams.home.winner;
-    const awayWin = game.teams.away.winner;
+      addGame(overall, game, isHome, result);
 
-    // Winner === null means a Draw
-    if (homeWin === null && awayWin === null) {
-      stats.d++;
-    } else if ((isHome && homeWin) || (!isHome && awayWin)) {
-      stats.w++;
-    } else {
-      stats.l++;
-    }
-  });
+      const name = game.league?.name;
+      if (!name) return;
+      let bucket = byCompetition.get(name);
+      if (!bucket) {
+        bucket = { ...emptyRecord(), name, logo: game.league?.logo };
+        byCompetition.set(name, bucket);
+      }
+      addGame(bucket, game, isHome, result);
+    });
 
-  return stats;
+  return {
+    ...overall,
+    competitions: [...byCompetition.values()].sort(
+      (a, b) => b.played - a.played || a.name.localeCompare(b.name),
+    ),
+  };
 };
 
 /**

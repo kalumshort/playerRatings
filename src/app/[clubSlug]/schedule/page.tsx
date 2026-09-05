@@ -7,7 +7,7 @@ import {
   getFixturesByClubServer,
   getGroupBySlugServer,
 } from "@/lib/firebase/firebase-admin-queries";
-import { calculateStats, getPlayed } from "@/lib/utils/football-logic";
+import { getPlayed, summariseSeason } from "@/lib/utils/football-logic";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
 import { Box } from "@mui/material";
 import {
@@ -85,7 +85,7 @@ export default async function SchedulePage({
   const fixtures = await getFixturesByClubServer(clubId, season);
 
   // 5. DATA PROCESSING
-  const stats = calculateStats(fixtures, clubId);
+  const summary = summariseSeason(fixtures, clubId);
   const played = getPlayed(fixtures, clubId);
 
   return (
@@ -103,7 +103,7 @@ export default async function SchedulePage({
         pb: 8,
       }}
     >
-      <SeasonOverview stats={stats} played={played} season={season} />
+      <SeasonOverview summary={summary} played={played} season={season} />
       <ScheduleView
         initialFixtures={fixtures}
         season={season}
