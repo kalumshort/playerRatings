@@ -45,7 +45,11 @@ export default function MoodArc({ matchMoods, events }: MoodArcProps) {
         )}
       </Stack>
 
-      <MoodAreaChart matchMoods={matchMoods} events={events} />
+      {/* The chart lays its labels out as absolute layers against the full
+          height of this box, so it needs a real one to sit in. */}
+      <Box sx={{ height: { xs: 320, sm: 350 } }}>
+        <MoodAreaChart matchMoods={matchMoods} events={events} />
+      </Box>
 
       {swing && Math.abs(swing.delta) >= 5 && (
         <Box

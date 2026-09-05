@@ -130,7 +130,19 @@ export default function MoodAreaChart({
   );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", position: "relative", p: 3 }}>
+    // The header, the event chip and the distribution bar are absolute layers
+    // pinned to this box's edges. Given an unsized parent they would all land on
+    // top of each other, so the box refuses to collapse below the height the
+    // chart's own margins were drawn for.
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        minHeight: 300,
+        position: "relative",
+        p: 3,
+      }}
+    >
       {/* HEADER */}
       <Stack
         spacing={0.75}
