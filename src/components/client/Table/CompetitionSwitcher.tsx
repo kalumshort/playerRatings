@@ -18,6 +18,8 @@ interface CompetitionSwitcherProps {
   selected: number | null;
   clubSlug: string;
   season: string;
+  /** Which club page the tabs navigate within. */
+  basePath?: "table" | "cups";
 }
 
 /**
@@ -31,6 +33,7 @@ export default function CompetitionSwitcher({
   selected,
   clubSlug,
   season,
+  basePath = "table",
 }: CompetitionSwitcherProps) {
   const router = useRouter();
 
@@ -42,7 +45,9 @@ export default function CompetitionSwitcher({
     // same rule withSeasonParam applies everywhere else.
     if (isArchivedSeason(season)) params.set("season", season);
 
-    router.push(`/${clubSlug}/table?${params.toString()}`, { scroll: false });
+    router.push(`/${clubSlug}/${basePath}?${params.toString()}`, {
+      scroll: false,
+    });
   };
 
   return (

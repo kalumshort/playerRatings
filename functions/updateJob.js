@@ -14,6 +14,7 @@ const {
   reconcileClubGroups,
   writeClubDirectory,
 } = require("./helperFunctions");
+const { readTrackedTeamIds, toFixtureDoc } = require("./fixtureDoc");
 
 /**
  * Reads this season's league members from the catalogue that
@@ -121,6 +122,10 @@ const runUpdateJob = async ({
   const uniqueMatchesMap = {};
   let squadsWritten = 0;
 
+  // Read once, before the loop: the directory has just been rebuilt above, so
+  // this is the current set of clubs the app has hubs for.
+  const trackedTeamIds = await readTrackedTeamIds(db);
+
   logger.info(`Processing ${teams.length} teams...`);
 
   for (const teamObj of teams) {
@@ -134,22 +139,11 @@ const runUpdateJob = async ({
         (await fetchFootballApi("fixtures", { team: teamId, season })) || [];
 
       teamFixtures.forEach((fixtureObj) => {
-        const matchId = fixtureObj.fixture.id;
-        uniqueMatchesMap[matchId] = {
-          matchId: matchId.toString(),
-          homeTeamId: fixtureObj.teams.home.id,
-          awayTeamId: fixtureObj.teams.away.id,
-          status: fixtureObj.fixture.status.short,
-          kickoffTime: fixtureObj.fixture.date,
-          timestamp: fixtureObj.fixture.timestamp,
-          leagueId: fixtureObj.league.id,
-          leagueName: fixtureObj.league.name,
-          fixture: fixtureObj.fixture,
-          league: fixtureObj.league,
-          teams: fixtureObj.teams,
-          goals: fixtureObj.goals,
-          score: fixtureObj.score,
-        };
+        // The shared mapper, so this job and the league-wide cup ingest write
+        // the same shape — including the poll tier, which flaps if the two
+        // writers disagree about it.
+        const doc = toFixtureDoc(fixtureObj, { trackedTeamIds });
+        if (doc) uniqueMatchesMap[doc.matchId] = doc;
       });
 
       // --- B. FETCH SQUADS ---

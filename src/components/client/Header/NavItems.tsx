@@ -6,6 +6,7 @@ import {
   Medal,
   Globe,
   ListOrdered,
+  Swords,
 } from "lucide-react";
 
 /**
@@ -39,6 +40,11 @@ export const getNavItems = (clubSlug, { isAuthed = true } = {}) => {
       text: "League Table",
       icon: <ListOrdered size={20} />,
       path: `/${clubSlug}/table`,
+    },
+    {
+      text: "Cups",
+      icon: <Swords size={20} />,
+      path: `/${clubSlug}/cups`,
     },
     {
       text: "Player Ratings",

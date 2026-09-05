@@ -18,6 +18,7 @@ import {
   ShowcasePlayer,
 } from "@/lib/homepageShowcase";
 import type { LeagueStandings } from "@/lib/league/standings";
+import type { CupBracket } from "@/lib/league/bracket";
 import {
   buildLiveTable,
   toTableFixture,
@@ -449,6 +450,45 @@ export const getLeagueStandingsServer = cache(
       } as LeagueStandings;
     } catch (error) {
       console.error("❌ League standings fetch failed:", error);
+      return null;
+    }
+  },
+);
+
+/**
+ * A competition's knockout bracket.
+ *
+ * One document read: functions/bracket.js has already paired the legs, worked
+ * out the aggregates and scaffolded the rounds that are not drawn yet, so
+ * nothing here has to reason about fixtures.
+ */
+export const getCupBracketServer = cache(
+  async (
+    leagueId: string | number,
+    season: string,
+  ): Promise<CupBracket | null> => {
+    try {
+      const snapshot = await adminDb
+        .collection("leagues")
+        .doc("season")
+        .collection(season)
+        .doc(String(leagueId))
+        .collection("bracket")
+        .doc("current")
+        .get();
+
+      if (!snapshot.exists) return null;
+
+      const data = snapshot.data() as any;
+
+      // Timestamps can't cross the server/client boundary.
+      return {
+        ...data,
+        builtAt: undefined,
+        updatedAt: undefined,
+      } as CupBracket;
+    } catch (error) {
+      console.error("❌ Cup bracket fetch failed:", error);
       return null;
     }
   },

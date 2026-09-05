@@ -120,6 +120,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/${slug}`, priority: 0.9 },
     { url: `${BASE_URL}/${slug}/schedule`, priority: 0.6 },
     { url: `${BASE_URL}/${slug}/table`, priority: 0.6 },
+    { url: `${BASE_URL}/${slug}/cups`, priority: 0.5 },
     { url: `${BASE_URL}/${slug}/player-stats`, priority: 0.6 },
     { url: `${BASE_URL}/${slug}/fans`, priority: 0.6 },
   ]);

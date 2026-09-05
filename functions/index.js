@@ -28,7 +28,8 @@ const {
   syncLeagueTeams,
 } = require("./leagueCatalogue");
 const { standingsDocRef, syncStandings } = require("./standings");
-const { DECIDED, IN_PLAY } = require("./bracket");
+const { DECIDED, IN_PLAY, syncBrackets } = require("./bracket");
+const { ingestCompetitionFixtures } = require("./competitionFixtures");
 const { onCall, HttpsError, onRequest } = require("firebase-functions/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { computeMatchXp } = require("./gamification/computeMatchXp");
@@ -48,6 +49,18 @@ const CONTACT_EMAIL = "kalum@11votes.com";
 
 // Default ceiling so a traffic spike or retry storm can't scale out unbounded.
 const MAX_INSTANCES = 10;
+
+// --- LIVE POLLING BUDGET ---
+// The live poller costs one API call per fixture per minute, so its spend is
+// set by how many fixtures are in its window rather than by anything it does.
+// These two numbers are what keep a European matchday from consuming the day.
+//
+// Fixtures for clubs the app has hubs for are polled every minute as before;
+// everything that arrived with league-wide cup ingestion is polled on this
+// stride. A hard cap sits behind that as a backstop, applied after sorting
+// club-tier first so an unusual night degrades the right way round.
+const WIDE_POLL_STRIDE_MINUTES = 5;
+const MAX_LIVE_FIXTURES = 30;
 
 // UIDs allowed to run admin-only callables. Comma-separated, set in
 // functions/.env. Default-deny: with nothing configured, nobody passes, so an
@@ -284,13 +297,16 @@ exports.scheduledLiveMatchUpdate = onSchedule(
         return;
       }
 
-      const matchesToUpdate = [];
+      const candidates = [];
 
       // 3. FILTER LOGIC (Decide what actually needs an API call)
       snapshot.forEach((doc) => {
         const data = doc.data();
         const status = data.fixture.status.short; // e.g., 'NS', 'FT', '1H', '2H'
         const matchTime = data.timestamp;
+        // Absent on fixtures written before league-wide ingestion existed;
+        // treating those as club-tier keeps the old behaviour for them.
+        const tier = data.livePollTier || "club";
 
         // A. Is the match already marked as FINISHED in our DB?
         // If yes, we don't need to check it again every minute.
@@ -304,15 +320,46 @@ exports.scheduledLiveMatchUpdate = onSchedule(
           // the API publishes lineups, which the fixture response embeds.
           const timeUntilKickoff = matchTime - now;
           if (timeUntilKickoff <= 3600) {
-            matchesToUpdate.push(doc.id);
+            candidates.push({ id: doc.id, tier });
           }
           return;
         }
 
         // C. If we are here, the status is likely LIVE (1H, 2H, HT, ET, etc.)
         // OR the status is 'NS' but the time has passed (Kickoff just happened)
-        matchesToUpdate.push(doc.id);
+        candidates.push({ id: doc.id, tier });
       });
+
+      // 3b. TIER GATE
+      //
+      // This query has no team filter — it takes everything in the window —
+      // so league-wide cup ingestion put a Conference League Thursday's
+      // eighteen simultaneous fixtures in front of it, alongside a UCL
+      // matchday's eighteen and an FA Cup third round's thirty-two. At one
+      // call per fixture per minute for the ~175 minutes a match is in the
+      // window, that is most of a day's API budget in one evening, spent on
+      // matches nobody on the site is rating.
+      //
+      // Club-tier fixtures — anything involving a club with a hub — keep the
+      // every-minute cadence. Everything else is polled on a five-minute
+      // stride, which is well inside what a bracket needs.
+      const minuteOfHour = new Date().getUTCMinutes();
+      const includeWide = minuteOfHour % WIDE_POLL_STRIDE_MINUTES === 0;
+
+      const matchesToUpdate = candidates
+        .filter((c) => c.tier === "club" || includeWide)
+        // Club tier first, so if the cap bites it is the wide tier that loses.
+        .sort((a, b) => (a.tier === b.tier ? 0 : a.tier === "club" ? -1 : 1))
+        .slice(0, MAX_LIVE_FIXTURES)
+        .map((c) => c.id);
+
+      if (candidates.length > matchesToUpdate.length) {
+        logger.info(
+          `Live update: polling ${matchesToUpdate.length} of ` +
+            `${candidates.length} in-window fixtures ` +
+            `(wide tier ${includeWide ? "included" : "skipped"} this minute).`,
+        );
+      }
 
       if (matchesToUpdate.length === 0) {
         logger.info(
@@ -481,6 +528,68 @@ exports.refreshStandings = onSchedule(
       }
     } catch (error) {
       logger.error("Error in refreshStandings:", error);
+      throw error;
+    }
+  },
+);
+
+/**
+ * Keeps the cup brackets current.
+ *
+ * Two steps, one run: pull each cup's fixtures league-wide, then rebuild the
+ * brackets from what is now stored. The second step costs no API calls at all
+ * — a bracket is pure derivation from fixtures — so the hourly cadence is set
+ * entirely by the first, at one call per competition.
+ *
+ * League-wide rather than per-club because a bracket needs the whole draw: the
+ * nightly job only ever sees matches involving a club with a hub, which leaves
+ * every tie between two other clubs missing and the round looking half-drawn.
+ */
+exports.ingestCupData = onSchedule(
+  {
+    schedule: "every 60 minutes",
+    timeoutSeconds: 300,
+    memory: "512MiB",
+    secrets: [FOOTBALL_API_KEY],
+  },
+  async () => {
+    try {
+      const ingest = await ingestCompetitionFixtures({ db, season: SEASON });
+
+      logger.info(
+        `Cup fixtures: ${ingest.fixturesWritten} written across ` +
+          `${ingest.competitionsRequested} competitions.`,
+        { results: ingest.results, failures: ingest.failures },
+      );
+
+      const brackets = await syncBrackets({ db, season: SEASON });
+
+      logger.info(
+        `Brackets: rebuilt ${brackets.results.length} of ` +
+          `${brackets.competitionsRequested} competitions.`,
+        { results: brackets.results, failures: brackets.failures },
+      );
+
+      // A round the ladder could not classify is a round that silently
+      // vanishes from the bracket, so it is logged loudly rather than counted.
+      const unmatched = brackets.results.filter((r) => r.unmatched > 0);
+      if (unmatched.length) {
+        logger.error(
+          "Brackets: some rounds could not be classified — check ROUND_LADDER.",
+          unmatched,
+        );
+      }
+
+      if (
+        ingest.failures.length === ingest.competitionsRequested &&
+        ingest.competitionsRequested > 0
+      ) {
+        throw new Error(
+          `All ${ingest.failures.length} cup ingests failed this cycle.`,
+        );
+      }
+    } catch (error) {
+      logger.error("Error in ingestCupData:", error);
       throw error;
     }
   },
