@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:rules": "firebase emulators:exec --only firestore \"node test/rules.test.mjs\"",
-    "test:mirrors": "node scripts/check-gamification-mirrors.mjs"
+    "test:mirrors": "node scripts/check-gamification-mirrors.mjs",
+    "test:table": "node --experimental-strip-types --no-warnings test/leagueTable.test.mjs"
   },
   "keywords": [],
   "author": "",

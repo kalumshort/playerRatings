@@ -12,14 +12,16 @@ import {
   useTheme,
 } from "@mui/material";
 
-import {
-  type LeagueStandings,
-  type StandingRow,
-  zoneOf,
-} from "@/lib/league/standings";
+import { type LeagueStandings, zoneOf } from "@/lib/league/standings";
+import type { LiveStandingRow, LiveTable } from "@/lib/league/liveTable";
 
 interface LeagueTableProps {
   standings: LeagueStandings;
+  /**
+   * The provisional table. When absent the official rows are rendered as-is,
+   * which is what an archived season wants.
+   */
+  live?: LiveTable;
   /** The club whose page this is, highlighted in the table. */
   clubId?: string;
 }
@@ -41,19 +43,38 @@ const COLS = {
  * Renders whatever groups the standings document carries: one for a domestic
  * league or a European league phase, several for a group stage.
  */
-export default function LeagueTable({ standings, clubId }: LeagueTableProps) {
+export default function LeagueTable({
+  standings,
+  live,
+  clubId,
+}: LeagueTableProps) {
   const theme = useTheme() as any;
-  const deducted = standings.groups
+
+  // The live table when there is one, otherwise the official rows widened to
+  // the same shape so the row renderer only has one case to handle.
+  const groups =
+    live?.groups ??
+    standings.groups.map((group) => ({
+      name: group.name,
+      rows: group.rows.map((row) => ({
+        ...row,
+        baseRank: row.rank,
+        rankDelta: 0,
+        provisional: false,
+      })) as LiveStandingRow[],
+    }));
+
+  const deducted = groups
     .flatMap((group) => group.rows)
     .some((row) => row.pointsAdjustment !== 0);
 
   return (
     <Paper sx={{ ...theme.clay?.card, p: { xs: 1.5, md: 2.5 } }}>
-      {standings.groups.map((group, index) => (
+      {groups.map((group, index) => (
         <Box key={group.name} sx={{ mt: index === 0 ? 0 : 3 }}>
           {/* A single-table competition already has its name in the page
               heading, so only a real group stage labels its groups. */}
-          {standings.groups.length > 1 && (
+          {groups.length > 1 && (
             <Typography
               variant="caption"
               sx={{
@@ -119,6 +140,7 @@ const HeaderRow = () => (
     }}
   >
     <Box sx={{ width: COLS.rank }} />
+    <Box sx={{ width: 14 }} />
     <Box sx={{ width: 26 }} />
     <Box sx={{ flex: 1, minWidth: 0 }}>CLUB</Box>
     <Box sx={{ width: COLS.played, textAlign: "center" }}>P</Box>
@@ -131,7 +153,7 @@ const HeaderRow = () => (
 );
 
 /** Zone stripe colours, keyed off the API's own free-text description. */
-const zoneColour = (row: StandingRow, theme: any): string | null => {
+const zoneColour = (row: LiveStandingRow, theme: any): string | null => {
   switch (zoneOf(row.description)) {
     case "champions-league":
       return theme.palette.info.main;
@@ -150,7 +172,13 @@ const zoneColour = (row: StandingRow, theme: any): string | null => {
   }
 };
 
-const TableRow = ({ row, isClub }: { row: StandingRow; isClub: boolean }) => {
+const TableRow = ({
+  row,
+  isClub,
+}: {
+  row: LiveStandingRow;
+  isClub: boolean;
+}) => {
   const theme = useTheme() as any;
   const stripe = zoneColour(row, theme);
 
@@ -163,6 +191,8 @@ const TableRow = ({ row, isClub }: { row: StandingRow; isClub: boolean }) => {
         px: 1.25,
         py: 0.75,
         borderRadius: "8px",
+        transition: "background-color 0.4s ease",
+        "@media (prefers-reduced-motion: reduce)": { transition: "none" },
         // The club whose page this is, highlighted the same way the fan
         // leaderboard marks the signed-in user.
         bgcolor: isClub
@@ -186,6 +216,31 @@ const TableRow = ({ row, isClub }: { row: StandingRow; isClub: boolean }) => {
         }}
       >
         {row.rank ?? "–"}
+      </Box>
+
+      {/* Movement against the official table. Fixed width so a row that has
+          not moved still lines up with one that has. */}
+      <Box
+        sx={{
+          width: 14,
+          textAlign: "center",
+          fontSize: "0.6rem",
+          fontWeight: 900,
+          lineHeight: 1,
+          color:
+            row.rankDelta > 0
+              ? theme.palette.success.main
+              : row.rankDelta < 0
+                ? theme.palette.error.main
+                : "transparent",
+        }}
+        aria-label={
+          row.rankDelta === 0
+            ? undefined
+            : `${Math.abs(row.rankDelta)} ${row.rankDelta > 0 ? "up" : "down"} on the official table`
+        }
+      >
+        {row.rankDelta > 0 ? "▲" : row.rankDelta < 0 ? "▼" : "·"}
       </Box>
 
       <Avatar
@@ -246,6 +301,9 @@ const TableRow = ({ row, isClub }: { row: StandingRow; isClub: boolean }) => {
           textAlign: "right",
           fontWeight: 900,
           fontSize: "0.85rem",
+          // A points total that includes a match still being played is tinted,
+          // so the number never silently claims to be the official one.
+          color: row.provisional ? theme.palette.primary.main : "text.primary",
         }}
       >
         {row.points}

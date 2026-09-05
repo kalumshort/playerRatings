@@ -64,21 +64,11 @@ export interface LeagueStandings {
   fetchedAt: string | null;
 }
 
-/** Statuses where a result is final and counted by the provider. */
-export const DECIDED_STATUSES = ["FT", "AET", "PEN"];
-
-/** Statuses where the match is under way. */
-export const IN_PLAY_STATUSES = [
-  "1H",
-  "HT",
-  "2H",
-  "ET",
-  "BT",
-  "P",
-  "LIVE",
-  "SUSP",
-  "INT",
-];
+/**
+ * Match statuses live in ./liveTable, next to the only code that branches on
+ * them. Re-exported here so this module stays the one import a caller needs.
+ */
+export { DECIDED_STATUSES, IN_PLAY_STATUSES } from "./liveTable";
 
 /** A zone stripe for a table row, matched loosely from the API's free text. */
 export type StandingZone =

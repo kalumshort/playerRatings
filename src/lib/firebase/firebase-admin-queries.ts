@@ -18,6 +18,12 @@ import {
   ShowcasePlayer,
 } from "@/lib/homepageShowcase";
 import type { LeagueStandings } from "@/lib/league/standings";
+import {
+  buildLiveTable,
+  toTableFixture,
+  type LiveTable,
+  type TableFixture,
+} from "@/lib/league/liveTable";
 import { summariseSeason, type CompetitionRecord } from "@/lib/utils/football-logic";
 import { competitionById } from "@/lib/config/competitions";
 
@@ -445,6 +451,71 @@ export const getLeagueStandingsServer = cache(
       console.error("❌ League standings fetch failed:", error);
       return null;
     }
+  },
+);
+
+/**
+ * How far back to look for results the official table may not hold yet.
+ *
+ * Wider than the live poller's 4-hour hot zone, because the lag being covered
+ * is the provider's, not ours: a Saturday 15:00 result can still be missing
+ * from a table fetched that evening.
+ */
+const LIVE_WINDOW_LOOKBACK_SECONDS = 36 * 60 * 60;
+const LIVE_WINDOW_LOOKAHEAD_SECONDS = 60 * 60;
+
+/**
+ * The competition's fixtures that could move its table right now.
+ *
+ * Narrow by design: everything outside this window is either already in the
+ * official table or has not kicked off, and the overlay ignores both.
+ */
+async function getLeagueWindowFixtures(
+  leagueId: string | number,
+  season: string,
+): Promise<TableFixture[]> {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+
+    const snapshot = await adminDb
+      .collection("fixtures")
+      .doc(season)
+      .collection("fixtures")
+      // A number, not a string: updateJob writes `fixtureObj.league.id`
+      // unconverted, the same way it writes the team ids.
+      .where("leagueId", "==", Number(leagueId))
+      .where("timestamp", ">=", now - LIVE_WINDOW_LOOKBACK_SECONDS)
+      .where("timestamp", "<=", now + LIVE_WINDOW_LOOKAHEAD_SECONDS)
+      .get();
+
+    return snapshot.docs
+      .map((doc) => toTableFixture(doc.data()))
+      .filter((fixture): fixture is TableFixture => fixture !== null);
+  } catch (error) {
+    // A missing index or a failed read must not cost the official table.
+    console.error("❌ League window fixtures fetch failed:", error);
+    return [];
+  }
+}
+
+/**
+ * The table as it stands right now, official base plus what we can see.
+ *
+ * The server does the hard half — reconciling finished matches the provider
+ * has not absorbed — and hands the settled rows to the client, which only ever
+ * has to fold in matches that are actually in play.
+ */
+export const getLeagueTableServer = cache(
+  async (
+    leagueId: string | number,
+    season: string,
+  ): Promise<{ standings: LeagueStandings; live: LiveTable } | null> => {
+    const standings = await getLeagueStandingsServer(leagueId, season);
+    if (!standings) return null;
+
+    const fixtures = await getLeagueWindowFixtures(leagueId, season);
+
+    return { standings, live: buildLiveTable(standings, fixtures) };
   },
 );
 

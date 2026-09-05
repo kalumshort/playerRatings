@@ -6,11 +6,11 @@ import { getUserIdFromSession } from "@/lib/auth-server";
 import {
   getClubCompetitionsServer,
   getGroupBySlugServer,
-  getLeagueStandingsServer,
+  getLeagueTableServer,
   isGroupMemberServer,
 } from "@/lib/firebase/firebase-admin-queries";
 import PrivateGroupPlaceholder from "@/components/ui/PrivateGroupPlaceholder";
-import LeagueTable from "@/components/client/Table/LeagueTable";
+import LiveTableClient from "@/components/client/Table/LiveTableClient";
 import CompetitionSwitcher from "@/components/client/Table/CompetitionSwitcher";
 import SeasonSwitcher from "@/components/client/Widgets/SeasonSwitcher";
 import JsonLd from "@/components/seo/JsonLd";
@@ -82,9 +82,9 @@ export default async function TablePage({ params, searchParams }: PageProps) {
     withTables[0]?.leagueId ?? null,
   );
 
-  const standings = selected
-    ? await getLeagueStandingsServer(selected, season)
-    : null;
+  // The official table plus any result it has not absorbed yet. The client
+  // takes it from here and folds in whatever is actually being played.
+  const table = selected ? await getLeagueTableServer(selected, season) : null;
 
   const selectedName =
     withTables.find((c) => c.leagueId === selected)?.name ?? "League Table";
@@ -118,7 +118,7 @@ export default async function TablePage({ params, searchParams }: PageProps) {
             </Typography>
             <Typography color="text.secondary" sx={{ fontSize: "1rem" }}>
               {formatSeason(season)}
-              {standings?.country ? ` · ${standings.country}` : ""}
+              {table?.standings.country ? ` · ${table.standings.country}` : ""}
             </Typography>
           </Box>
           <SeasonSwitcher season={season} />
@@ -135,8 +135,14 @@ export default async function TablePage({ params, searchParams }: PageProps) {
           </Box>
         )}
 
-        {standings ? (
-          <LeagueTable standings={standings} clubId={String(clubId)} />
+        {table && selected ? (
+          <LiveTableClient
+            standings={table.standings}
+            initialLive={table.live}
+            leagueId={selected}
+            season={season}
+            clubId={String(clubId)}
+          />
         ) : (
           <Typography
             color="text.secondary"
